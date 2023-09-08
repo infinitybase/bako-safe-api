@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
 
-import User from '@src/models/master/User';
+import User from '@src/models/User';
 import { ErrorTypes } from '@src/utils/error';
 import { UnauthorizedErrorTitles } from '@src/utils/error/Unauthorized';
 import { JwtUtils } from '@src/utils/jwt';

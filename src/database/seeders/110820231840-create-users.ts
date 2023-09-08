@@ -1,5 +1,5 @@
-import Role from '@src/models/master/Role';
-import User, { Languages } from '@src/models/master/User';
+import Role from '@src/models/Role';
+import User, { Languages } from '@src/models/User';
 
 export default async function () {
   const roles = await Role.find({

@@ -1,6 +1,6 @@
 import Joi from 'joi';
 
-import { Languages } from '@src/models/master/User';
+import { Languages } from '@src/models/User';
 
 import validator from '@utils/validator';
 

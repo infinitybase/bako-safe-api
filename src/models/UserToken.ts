@@ -9,11 +9,11 @@ import {
 
 import EncryptUtils from '@src/utils/EncryptUtils';
 
-import ByMaster from './ByMaster';
+import Base from './Base';
 import User from './User';
 
 @Entity('user_tokens')
-class UserToken extends ByMaster {
+class UserToken extends Base {
   @Column()
   token: string;
 

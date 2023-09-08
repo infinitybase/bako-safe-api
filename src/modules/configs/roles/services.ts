@@ -1,4 +1,4 @@
-import Role from '@src/models/master/Role';
+import Role from '@src/models/Role';
 import { ErrorTypes, NotFound } from '@src/utils/error';
 import Internal from '@src/utils/error/Internal';
 import { IOrdination, setOrdination } from '@src/utils/ordination';

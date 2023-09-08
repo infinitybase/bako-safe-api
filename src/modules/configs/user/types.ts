@@ -1,8 +1,8 @@
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 
 import { AuthValidatedRequest } from '@src/middlewares/auth/types';
-import Role from '@src/models/master/Role';
-import User, { Languages } from '@src/models/master/User';
+import Role from '@src/models/Role';
+import User, { Languages } from '@src/models/User';
 import { IOrdination } from '@src/utils/ordination';
 import { IPagination, PaginationParams } from '@src/utils/pagination';
 

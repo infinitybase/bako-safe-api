@@ -1,5 +1,5 @@
 import { Modules } from '@src/middlewares/permissions/types';
-import Role, { PermissionsItem, Permissions } from '@src/models/master/Role';
+import Role, { PermissionsItem, Permissions } from '@src/models/Role';
 
 type RoleName = 'Administrador';
 // | 'Vendedor';

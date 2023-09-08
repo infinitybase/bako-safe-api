@@ -9,7 +9,7 @@ import {
 
 import EncryptUtils from '@src/utils/EncryptUtils';
 
-import ByMaster from './ByMaster';
+import Base from './Base';
 import Role from './Role';
 
 export enum Languages {
@@ -18,7 +18,7 @@ export enum Languages {
 }
 
 @Entity('users')
-class User extends ByMaster {
+class User extends Base {
   @Column()
   name: string;
 

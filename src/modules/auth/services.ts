@@ -1,7 +1,7 @@
 import { JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
 
-import User from '@src/models/master/User';
-import UserToken from '@src/models/master/UserToken';
+import User from '@src/models/User';
+import UserToken from '@src/models/UserToken';
 import EncryptUtils from '@src/utils/EncryptUtils';
 import Internal from '@src/utils/error/Internal';
 import Unauthorized, {
