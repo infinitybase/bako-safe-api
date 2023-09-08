@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "CommonJS",
+    "outDir": "build",
+    "baseUrl": "./src",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "paths": {
+      "@src/*": ["./*"],
+      "@config/*": ["./config/*"],
+      "@database/*": ["./database/*"],
+      "@middlewares/*": ["./middlewares/*"],
+      "@modules/*": ["./modules/*"],
+      "@models/*": ["./models/*"],
+      "@utils/*": ["./utils/*"]
+    }
+  },
+  "include": ["src/**/*", "src/*"],
+  "exclude": ["node_modules"]
+}

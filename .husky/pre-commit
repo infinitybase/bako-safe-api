@@ -1,0 +1,14 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+bold=$(tput bold)
+normal=$(tput sgr0)
+
+echo "\n🐶 ${bold}[Husky]${normal} Running prettier:"
+yarn pretty-quick --staged --pattern '**/*.*(js|ts)'
+
+echo "\n🐶 ${bold}[Husky]${normal} Running ESLint:"
+yarn lint-staged
+
+echo "\n🐶 ${bold}[Husky]${normal} Running tests:"
+yarn jest

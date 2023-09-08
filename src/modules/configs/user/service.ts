@@ -1,0 +1,130 @@
+import { Brackets } from 'typeorm';
+
+import User from '@src/models/master/User';
+import { ErrorTypes, NotFound } from '@src/utils/error';
+import Internal from '@src/utils/error/Internal';
+import { IOrdination, setOrdination } from '@src/utils/ordination';
+import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination';
+
+import { IFilterParams, IUserService, IUserPayload } from './types';
+
+export class UserService implements IUserService {
+  private _pagination: PaginationParams;
+  private _filter: IFilterParams;
+  private _ordination: IOrdination<User>;
+
+  filter(filter: IFilterParams) {
+    this._filter = filter;
+    return this;
+  }
+
+  paginate(pagination: PaginationParams) {
+    this._pagination = pagination;
+    return this;
+  }
+
+  ordination(ordination: IOrdination<User>) {
+    this._ordination = setOrdination(ordination);
+    return this;
+  }
+
+  async find(): Promise<IPagination<User> | User[]> {
+    try {
+      const hasPagination = this._pagination.page && this._pagination.perPage;
+      const qb = User.createQueryBuilder('u')
+        .select()
+        .innerJoinAndSelect('u.role', 'role');
+
+      qb.andWhere(
+        new Brackets(subQuery => {
+          this._filter.user &&
+            subQuery
+              .where('LOWER(u.name) LIKE LOWER(:name)', {
+                name: `%${this._filter.user}%`,
+              })
+              .orWhere('LOWER(u.email) LIKE LOWER(:email)', {
+                email: `%${this._filter.user}%`,
+              })
+              .orWhere('LOWER(role.name) LIKE LOWER(:role)', {
+                role: `%${this._filter.user}%`,
+              });
+        }),
+      );
+
+      this._filter.active &&
+        qb.andWhere('u.active = :active', { active: this._filter.active });
+
+      qb.orderBy(`u.${this._ordination.orderBy}`, this._ordination.sort);
+
+      return hasPagination
+        ? await Pagination.create(qb).paginate(this._pagination)
+        : await qb.getMany();
+    } catch (error) {
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on user find',
+        detail: error,
+      });
+    }
+  }
+
+  async create(payload: IUserPayload): Promise<User> {
+    return await User.create(payload)
+      .save()
+      .then(data => {
+        delete data.password;
+        return data;
+      })
+      .catch(error => {
+        throw new Internal({
+          type: ErrorTypes.Create,
+          title: 'Error on user create',
+          detail: error,
+        });
+      });
+  }
+
+  async findOne(id: number): Promise<User> {
+    const user = await User.findOne({
+      where: { id },
+      relations: ['role'],
+    });
+
+    if (!user) {
+      throw new NotFound({
+        type: ErrorTypes.NotFound,
+        title: 'User not found',
+        detail: `User with id ${id} not found`,
+      });
+    }
+
+    return user;
+  }
+
+  async update(id: number, payload: IUserPayload) {
+    return this.findOne(id)
+      .then(async data => {
+        const user = Object.assign(data, payload);
+        return await user.save();
+      })
+      .catch(e => {
+        throw new Internal({
+          type: ErrorTypes.Update,
+          title: `User with id ${id} not updated`,
+          detail: e,
+        });
+      });
+  }
+
+  async delete(id: number) {
+    return await User.update({ id }, { deletedAt: new Date() })
+      .then(() => true)
+      .catch(() => {
+        throw new NotFound({
+          type: ErrorTypes.NotFound,
+          title: 'User not found',
+          detail: `User with id ${id} not found`,
+        });
+      });
+  }
+}
