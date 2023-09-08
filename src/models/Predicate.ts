@@ -14,7 +14,7 @@ class Predicate extends Base {
   description: string;
 
   @Column()
-  minSigners: string;
+  minSigners: number;
 
   @Column('simple-json')
   addresses: { type: string }[];
@@ -33,6 +33,9 @@ class Predicate extends Base {
 
   @Column()
   network: string;
+
+  @Column()
+  chainID: number;
 }
 
-export default Predicate;
+export { Predicate };
