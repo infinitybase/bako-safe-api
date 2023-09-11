@@ -39,7 +39,7 @@ export class PredicateService implements IPredicateService {
       }
       throw new Internal({
         type: ErrorTypes.Internal,
-        title: 'Error on predicate listing',
+        title: 'Error on predicate findAll',
         detail: e,
       });
     }
@@ -60,7 +60,7 @@ export class PredicateService implements IPredicateService {
       }
       throw new Internal({
         type: ErrorTypes.Internal,
-        title: 'Error on predicate listing',
+        title: 'Error on predicate findById',
         detail: e,
       });
     }
@@ -81,7 +81,7 @@ export class PredicateService implements IPredicateService {
       }
       throw new Internal({
         type: ErrorTypes.Internal,
-        title: 'Error on predicate creation',
+        title: 'Error on predicate findByAdresses',
         detail: e,
       });
     }
