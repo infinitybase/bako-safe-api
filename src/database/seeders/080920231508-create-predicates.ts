@@ -9,11 +9,11 @@ export default async function () {
       configurable: 'configurable',
       bytes: 'bytes',
       description: 'description',
-      addresses: [{ type: 'type' }],
+      addresses: ['asjdhakjsdhas', 'asjdghajdhsgasd'],
       minSigners: 3,
       owner: 'owner',
       network: 'network',
-      chainID: 22312345234,
+      chainId: 22312345234,
     },
   ];
 

@@ -57,6 +57,7 @@ export class createTablePredicates1694193586666 implements MigrationInterface {
           {
             name: 'chainId',
             type: 'integer',
+            isNullable: true,
           },
           {
             name: 'created_at',

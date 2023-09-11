@@ -33,6 +33,9 @@ class Predicate extends Base {
 
   @Column()
   network: string;
+
+  @Column({ nullable: true })
+  chainId?: number;
 }
 
 export { Predicate };
