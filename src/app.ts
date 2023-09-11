@@ -8,7 +8,7 @@ import router from '@src/routes';
 import handleErrors from '@middlewares/handleErrors';
 import * as process from "process";
 
-const { API_PORT } = process.env;
+const { API_PORT, PORT } = process.env;
 
 class App {
   private readonly app: Express.Application;
@@ -44,7 +44,7 @@ class App {
     await App.connectDatabase();
 
     // App
-    const port = API_PORT || 80;
+    const port = API_PORT || PORT || 80;
     console.log('[APP] Starting application.');
     this.app.listen(port, () => {
       console.log(`[APP] Application running in http://localhost:${port}`);
