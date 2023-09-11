@@ -1,10 +1,10 @@
 import { Router } from 'express';
 
-import AuthMiddleware from '@src/middlewares/auth';
-import PermissionsMiddleware from '@src/middlewares/permissions';
 import { Modules } from '@src/middlewares/permissions/types';
 
-import handleResponse from '@utils/handleResponse';
+import { authMiddleware, PermissionsMiddleware } from '@middlewares/index';
+
+import { handleResponse } from '@utils/index';
 
 import { RoleController } from './controller';
 import { RoleService } from './services';
@@ -14,7 +14,7 @@ const router = Router();
 const roleService = new RoleService();
 const roleController = new RoleController(roleService);
 
-router.use(AuthMiddleware);
+router.use(authMiddleware);
 router.use(PermissionsMiddleware(Modules.ROLES));
 
 router.get('/modules', handleResponse(roleController.findModules));

@@ -1,7 +1,7 @@
-import { ModulesList } from '@src/middlewares/permissions/types';
-import { bindMethods } from '@src/utils/bindMethods';
-import error from '@src/utils/error';
-import successful, { Responses } from '@src/utils/successful';
+import { ModulesList } from '@middlewares/permissions/types';
+
+import { error } from '@utils/error';
+import { successful, Responses, bindMethods } from '@utils/index';
 
 import {
   IUpdateRequest,

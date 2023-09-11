@@ -1,7 +1,8 @@
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 
 import { AuthValidatedRequest } from '@src/middlewares/auth/types';
-import User from '@src/models/User';
+
+import { User } from '@models/index';
 
 export interface ISignInPayload {
   email: string;

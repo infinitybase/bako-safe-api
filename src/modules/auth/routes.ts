@@ -1,7 +1,7 @@
 import { Router } from 'express';
 
-import AuthMiddleware from '@src/middlewares/auth';
-import handleResponse from '@src/utils/handleResponse';
+import { authMiddleware } from '@src/middlewares/auth';
+import { handleResponse } from '@src/utils/index';
 
 import { AuthController } from './controller';
 import { AuthService } from './services';
@@ -19,7 +19,7 @@ router.post(
   validatePayloadSignIn,
   handleResponse(authController.signIn),
 );
-router.delete('/sign-out', AuthMiddleware, handleResponse(authController.signOut));
+router.delete('/sign-out', authMiddleware, handleResponse(authController.signOut));
 router.post(
   '/refresh-token',
   validatePayloadAuthWithRefreshToken,

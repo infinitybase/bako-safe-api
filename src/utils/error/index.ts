@@ -25,4 +25,4 @@ const error = <ResponsePayload>(
   };
 };
 
-export default error;
+export { error };

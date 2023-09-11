@@ -36,4 +36,4 @@ class Base extends BaseEntity {
   }
 }
 
-export default Base;
+export { Base };

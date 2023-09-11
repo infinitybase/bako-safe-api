@@ -1,6 +1,6 @@
 import Joi from 'joi';
 
-import validator from '@utils/validator';
+import { validator } from '@utils/index';
 
 export const validatePayloadSignIn = validator.body(
   Joi.object({

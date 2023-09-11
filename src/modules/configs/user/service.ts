@@ -1,6 +1,6 @@
 import { Brackets } from 'typeorm';
 
-import User from '@src/models/User';
+import { User } from '@src/models';
 import { ErrorTypes, NotFound } from '@src/utils/error';
 import Internal from '@src/utils/error/Internal';
 import { IOrdination, setOrdination } from '@src/utils/ordination';

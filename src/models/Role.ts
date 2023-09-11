@@ -1,8 +1,8 @@
 import { Column, Entity } from 'typeorm';
 
-import { Modules } from '@src/middlewares/permissions/types';
+import { Modules } from '@middlewares/permissions/types';
 
-import Base from './Base';
+import { Base } from './Base';
 
 export type PermissionsItem = {
   view: boolean;

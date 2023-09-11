@@ -2,7 +2,7 @@ import { Request } from 'express';
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 import { ParsedQs } from 'qs';
 
-import User from '@src/models/User';
+import { User } from '@models/index';
 
 export interface AuthValidatedRequest<T extends ValidatedRequestSchema>
   extends Request {

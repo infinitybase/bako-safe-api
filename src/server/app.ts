@@ -2,9 +2,9 @@ import cors from 'cors';
 import Express from 'express';
 import morgan from 'morgan';
 
-import router from '@src/routes';
+import { router } from '@src/routes';
 
-import handleErrors from '@middlewares/handleErrors';
+import { handleErrors } from '@middlewares/index';
 
 const { API_PORT } = process.env;
 

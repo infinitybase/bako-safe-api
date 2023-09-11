@@ -7,9 +7,9 @@ import {
   ManyToOne,
 } from 'typeorm';
 
-import EncryptUtils from '@src/utils/EncryptUtils';
+import { EncryptUtils } from '@utils/index';
 
-import Base from './Base';
+import { Base } from './Base';
 import Role from './Role';
 
 export enum Languages {
@@ -47,4 +47,4 @@ class User extends Base {
   }
 }
 
-export default User;
+export { User };

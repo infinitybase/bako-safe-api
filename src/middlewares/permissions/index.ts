@@ -1,7 +1,8 @@
 import { Response, NextFunction } from 'express';
 
-import { ErrorTypes } from '@src/utils/error';
 import { UnauthorizedErrorTitles } from '@src/utils/error/Unauthorized';
+
+import { ErrorTypes } from '@utils/error';
 
 import { IAuthRequest } from '../auth/types';
 import { Modules } from './types';
@@ -42,4 +43,4 @@ function PermissionsMiddleware(module: Modules) {
   };
 }
 
-export default PermissionsMiddleware;
+export { PermissionsMiddleware };

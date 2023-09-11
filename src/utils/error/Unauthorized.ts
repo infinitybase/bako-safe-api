@@ -19,7 +19,7 @@ export enum UnauthorizedErrorTitles {
   INVALID_PERMISSION = 'Invalid permission',
 }
 
-interface UnauthorizedError extends Omit<Error, 'title'> {
+export interface UnauthorizedError extends Omit<Error, 'title'> {
   title: UnauthorizedErrorTitles;
 }
 
@@ -30,4 +30,4 @@ class Unauthorized extends GeneralError {
   }
 }
 
-export default Unauthorized;
+export { Unauthorized };

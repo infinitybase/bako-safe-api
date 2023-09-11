@@ -1,6 +1,6 @@
 import { Column, Entity } from 'typeorm';
 
-import Base from './Base';
+import { Base } from './Base';
 
 @Entity('predicates')
 class Predicate extends Base {
@@ -17,7 +17,7 @@ class Predicate extends Base {
   minSigners: number;
 
   @Column('simple-json')
-  addresses: { type: string }[];
+  addresses: string[];
 
   @Column()
   owner: string;
@@ -33,9 +33,6 @@ class Predicate extends Base {
 
   @Column()
   network: string;
-
-  @Column()
-  chainID: number;
 }
 
 export { Predicate };

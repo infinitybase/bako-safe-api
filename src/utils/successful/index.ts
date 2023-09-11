@@ -21,4 +21,4 @@ const successful = <ResponsePayload>(
   statusCode,
 });
 
-export default successful;
+export { successful };

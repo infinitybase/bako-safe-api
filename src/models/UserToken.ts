@@ -7,10 +7,10 @@ import {
   OneToOne,
 } from 'typeorm';
 
-import EncryptUtils from '@src/utils/EncryptUtils';
+import { EncryptUtils } from '@utils/index';
 
-import Base from './Base';
-import User from './User';
+import { Base } from './Base';
+import { User } from './User';
 
 @Entity('user_tokens')
 class UserToken extends Base {
