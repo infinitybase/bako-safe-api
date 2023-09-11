@@ -10,6 +10,7 @@ const {
   DATABASE_URL,
   DATABASE_USERNAME,
   DATABASE_NAME,
+  DATABASE_PORT,
   NODE_ENV,
 } = process.env;
 
@@ -67,7 +68,7 @@ const test: ConnectionOptions = {
 const production: ConnectionOptions = {
   type: 'postgres',
   host,
-  port: Number(port),
+  port: Number(DATABASE_PORT),
   username: DATABASE_USERNAME,
   password: DATABASE_PASSWORD,
   database: DATABASE_NAME,
