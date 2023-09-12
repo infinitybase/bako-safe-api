@@ -40,7 +40,7 @@ export class createTableTransactions1694536141266 implements MigrationInterface 
           },
           {
             name: 'sendTime',
-            type: 'varchar',
+            type: 'timestamp',
           },
           {
             name: 'gasUsed',
