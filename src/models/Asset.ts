@@ -21,6 +21,9 @@ class Asset extends Base {
   @Column()
   amount: number;
 
+  @Column()
+  transactionID: number;
+
   @JoinColumn({ name: 'transactionID' })
   @ManyToOne(() => Transaction)
   transaction: Transaction;

@@ -11,6 +11,9 @@ class Witness extends Base {
   @Column()
   account: string;
 
+  @Column()
+  transactionID: number;
+
   @JoinColumn({ name: 'transactionID' })
   @ManyToOne(() => Transaction)
   transaction: Transaction;
