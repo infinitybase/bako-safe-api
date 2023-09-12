@@ -27,14 +27,6 @@ export class createTableTransactions1694536141266 implements MigrationInterface 
             type: 'varchar',
           },
           {
-            name: 'assets',
-            type: 'text',
-          },
-          {
-            name: 'witnesses',
-            type: 'text',
-          },
-          {
             name: 'txData',
             type: 'varchar',
           },
