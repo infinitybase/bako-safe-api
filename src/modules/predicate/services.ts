@@ -1,15 +1,26 @@
 import { IOrdination, setOrdination } from '@src/utils/ordination';
+import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination';
 
 import { Predicate } from '@models/index';
 
 import { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
-import { Unauthorized } from '@utils/error/Unauthorized';
 
 import { IAddPredicatePayload, IPredicateService } from './types';
 
 export class PredicateService implements IPredicateService {
   private _ordination: IOrdination<Predicate>;
+  private _pagination: PaginationParams;
+
+  paginate(pagination?: PaginationParams) {
+    this._pagination = pagination;
+    return this;
+  }
+
+  ordination(ordination?: IOrdination<Predicate>) {
+    this._ordination = setOrdination(ordination);
+    return this;
+  }
 
   async add(payload: IAddPredicatePayload): Promise<Predicate> {
     try {
@@ -17,9 +28,6 @@ export class PredicateService implements IPredicateService {
 
       return predicate;
     } catch (e) {
-      if (e instanceof Unauthorized) {
-        throw e;
-      }
       throw new Internal({
         type: ErrorTypes.Internal,
         title: 'Error on predicate creation',
@@ -28,15 +36,20 @@ export class PredicateService implements IPredicateService {
     }
   }
 
-  async findAll(): Promise<Predicate[]> {
+  async findAll(): Promise<IPagination<Predicate> | Predicate[]> {
     try {
-      const predicate = await Predicate.find();
+      const hasPagination = this._pagination?.page && this._pagination?.perPage;
 
-      return predicate;
+      const queryBuilder = Predicate.createQueryBuilder('p').select();
+      console.log(this._ordination);
+
+      queryBuilder.orderBy(`p.${this._ordination.orderBy}`, this._ordination.sort);
+
+      return hasPagination
+        ? await Pagination.create(queryBuilder).paginate(this._pagination)
+        : await queryBuilder.getMany();
     } catch (e) {
-      if (e instanceof Unauthorized) {
-        throw e;
-      }
+      console.log(e);
       throw new Internal({
         type: ErrorTypes.Internal,
         title: 'Error on predicate findAll',
@@ -55,9 +68,6 @@ export class PredicateService implements IPredicateService {
 
       return predicate;
     } catch (e) {
-      if (e instanceof Unauthorized) {
-        throw e;
-      }
       throw new Internal({
         type: ErrorTypes.Internal,
         title: 'Error on predicate findById',
@@ -66,29 +76,21 @@ export class PredicateService implements IPredicateService {
     }
   }
 
-  async findByAdresses(addresses: string[]): Promise<Predicate> {
+  async findByAdresses(addresses: string): Promise<Predicate> {
     try {
-      const predicate = await Predicate.findOne({
-        where: {
-          addresses,
-        },
-      });
+      const queryBuilder = Predicate.createQueryBuilder('p').select();
 
-      return predicate;
+      addresses &&
+        queryBuilder.where('LOWER(p.addresses) LIKE LOWER(:addresses)', {
+          addresses: `%${addresses}%`,
+        });
+      return await queryBuilder.getOne();
     } catch (e) {
-      if (e instanceof Unauthorized) {
-        throw e;
-      }
       throw new Internal({
         type: ErrorTypes.Internal,
         title: 'Error on predicate findByAdresses',
         detail: e,
       });
     }
-  }
-
-  ordination(ordination: IOrdination<Predicate>) {
-    this._ordination = setOrdination(ordination);
-    return this;
   }
 }

@@ -1,5 +1,5 @@
 import { error } from '@utils/error';
-import { Responses, successful, bindMethods } from '@utils/index';
+import { Responses, bindMethods, successful } from '@utils/index';
 
 import {
   IAddPredicateRequest,
@@ -27,7 +27,10 @@ export class PredicateController {
 
   async findAll() {
     try {
-      const response = await this.predicateService.findAll();
+      const response = await this.predicateService
+        .ordination()
+        .paginate()
+        .findAll();
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error[0], e.statusCode);

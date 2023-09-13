@@ -1,15 +1,17 @@
+import { defaultValues } from '@src/utils/constantes';
+
 import { Predicate } from '@models/index';
 
 export default async function () {
   const predicates: Partial<Predicate>[] = [
     {
       name: 'predicate_name',
-      address: '8CAD6FD8-1CB9-41CD-9862-BB14ABDD27E4',
+      address: defaultValues['address'],
       abi: 'abi',
       configurable: 'configurable',
       bytes: 'bytes',
       description: 'description',
-      addresses: ['asjdhakjsdhas', 'asjdghajdhsgasd'],
+      addresses: [defaultValues['address'], defaultValues['address']],
       minSigners: 3,
       owner: 'owner',
       network: 'network',

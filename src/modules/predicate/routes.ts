@@ -1,7 +1,5 @@
 import { Router } from 'express';
 
-import { authMiddleware } from '@middlewares/index';
-
 import { handleResponse } from '@utils/index';
 
 import { PredicateController } from './controller';
@@ -14,17 +12,15 @@ const { findAll, findByAddresses, add, findById } = new PredicateController(
   predicateService,
 );
 
+//router.use(authMiddleware)
+
 // Add Predicate
-router.post('/', authMiddleware, validateAddPredicatePayload, handleResponse(add));
+router.post('/', validateAddPredicatePayload, handleResponse(add));
 // List all predicates
-router.get('/', authMiddleware, handleResponse(findAll));
+router.get('/', handleResponse(findAll));
 // List predicate by id
-router.get('/:id', authMiddleware, handleResponse(findById));
+router.get('/:id', handleResponse(findById));
 // List predicate by adresses [fuel2sa..ska0]
-router.get(
-  '/by-addresses/:addresses',
-  authMiddleware,
-  handleResponse(findByAddresses),
-);
+router.get('/by-addresses/:addresses', handleResponse(findByAddresses));
 
 export default router;
