@@ -18,7 +18,7 @@ const {
   findByPredicateAddress,
 } = new PredicateController(predicateService);
 
-// router.use(authMiddleware);
+router.use(authMiddleware);
 
 // Add Predicate
 router.post('/', validateAddPredicatePayload, handleResponse(add));
