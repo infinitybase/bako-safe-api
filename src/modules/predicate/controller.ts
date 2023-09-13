@@ -1,10 +1,11 @@
 import { error } from '@utils/error';
-import { Responses, successful, bindMethods } from '@utils/index';
+import { Responses, bindMethods, successful } from '@utils/index';
 
 import {
   IAddPredicateRequest,
   IFindByAdressesRequest,
   IFindByIdRequest,
+  IFindByPredicateAdressRequest,
   IPredicateService,
 } from './types';
 
@@ -27,7 +28,10 @@ export class PredicateController {
 
   async findAll() {
     try {
-      const response = await this.predicateService.findAll();
+      const response = await this.predicateService
+        .ordination()
+        .paginate()
+        .findAll();
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error[0], e.statusCode);
@@ -43,9 +47,22 @@ export class PredicateController {
     }
   }
 
-  async findByAddresses({ params: { addresses } }: IFindByAdressesRequest) {
+  async findByAddresses({ params: { address } }: IFindByAdressesRequest) {
     try {
-      const response = await this.predicateService.findByAdresses(addresses);
+      const response = await this.predicateService.findByAdresses(address);
+      return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error[0], e.statusCode);
+    }
+  }
+
+  async findByPredicateAddress({
+    params: { predicateAddress },
+  }: IFindByPredicateAdressRequest) {
+    try {
+      const response = await this.predicateService.findByPredicateAddress(
+        predicateAddress,
+      );
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error[0], e.statusCode);

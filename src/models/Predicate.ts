@@ -1,4 +1,4 @@
-import { Column, Entity } from 'typeorm';
+import { AfterLoad, BeforeInsert, Column, Entity } from 'typeorm';
 
 import { Base } from './Base';
 
@@ -8,7 +8,7 @@ class Predicate extends Base {
   name: string;
 
   @Column()
-  address: string;
+  predicateAddress: string;
 
   @Column()
   description: string;
@@ -16,8 +16,8 @@ class Predicate extends Base {
   @Column()
   minSigners: number;
 
-  @Column('simple-json')
-  addresses: string[];
+  @Column()
+  addresses: string;
 
   @Column()
   owner: string;
@@ -36,6 +36,20 @@ class Predicate extends Base {
 
   @Column({ nullable: true })
   chainId?: number;
+
+  @BeforeInsert()
+  saveAsJson() {
+    this.addresses = JSON.stringify(this.addresses);
+  }
+
+  @AfterLoad()
+  returnParsed() {
+    this.addresses = JSON.parse(this.addresses);
+  }
+
+  get AddressesArray() {
+    return JSON.parse(this.addresses);
+  }
 }
 
 export { Predicate };

@@ -1,15 +1,17 @@
+import { defaultValues } from '@src/utils/constantes';
+
 import { Predicate } from '@models/index';
 
 export default async function () {
   const predicates: Partial<Predicate>[] = [
     {
       name: 'predicate_name',
-      address: '8CAD6FD8-1CB9-41CD-9862-BB14ABDD27E4',
+      predicateAddress: defaultValues['address'],
       abi: 'abi',
       configurable: 'configurable',
       bytes: 'bytes',
       description: 'description',
-      addresses: ['asjdhakjsdhas', 'asjdghajdhsgasd'],
+      addresses: [defaultValues['address'], defaultValues['address']],
       minSigners: 3,
       owner: 'owner',
       network: 'network',
@@ -18,7 +20,10 @@ export default async function () {
   ];
 
   const existingPredicates = await Predicate.find({
-    where: [{ address: predicates[0].address }, { abi: predicates[0].abi }],
+    where: [
+      { predicateAddress: predicates[0].predicateAddress },
+      { abi: predicates[0].abi },
+    ],
   });
 
   if (existingPredicates.length) {

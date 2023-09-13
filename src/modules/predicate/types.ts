@@ -2,8 +2,9 @@ import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 
 import { AuthValidatedRequest } from '@src/middlewares/auth/types';
 import { IOrdination } from '@src/utils/ordination';
+import { IPagination, PaginationParams } from '@src/utils/pagination';
 
-import { Predicate, Base } from '@models/index';
+import { Base, Predicate } from '@models/index';
 
 export type IAddPredicatePayload = Omit<Predicate, keyof Base>;
 
@@ -16,17 +17,24 @@ interface IFindByIdRequestSchema extends ValidatedRequestSchema {
 }
 
 interface IFindByAdressesRequestSchema extends ValidatedRequestSchema {
-  [ContainerTypes.Body]: { adresses: string[] };
+  [ContainerTypes.Params]: { address: string };
+}
+
+interface IFindByPredicateAdressRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Params]: { predicateAddress: string };
 }
 
 export type IAddPredicateRequest = AuthValidatedRequest<IAddPredicateRequestSchema>;
 export type IFindByIdRequest = AuthValidatedRequest<IFindByIdRequestSchema>;
 export type IFindByAdressesRequest = AuthValidatedRequest<IFindByAdressesRequestSchema>;
+export type IFindByPredicateAdressRequest = AuthValidatedRequest<IFindByPredicateAdressRequestSchema>;
 
 export interface IPredicateService {
   add: (payload: IAddPredicatePayload) => Promise<Predicate>;
-  findAll: () => Promise<Predicate[]>;
+  findAll: () => Promise<IPagination<Predicate> | Predicate[]>;
   findById: (id: number) => Promise<Predicate>;
-  findByAdresses: (addresses: string[]) => Promise<Predicate>;
-  ordination(ordination: IOrdination<Predicate>): this;
+  findByAdresses: (addresses: string) => Promise<Predicate[]>;
+  findByPredicateAddress: (predicateAddress: string) => Promise<Predicate>;
+  ordination(ordination?: IOrdination<Predicate>): this;
+  paginate(pagination?: PaginationParams): this;
 }
