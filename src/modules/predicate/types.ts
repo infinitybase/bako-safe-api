@@ -17,18 +17,24 @@ interface IFindByIdRequestSchema extends ValidatedRequestSchema {
 }
 
 interface IFindByAdressesRequestSchema extends ValidatedRequestSchema {
-  [ContainerTypes.Body]: { adresses: string };
+  [ContainerTypes.Params]: { address: string };
+}
+
+interface IFindByPredicateAdressRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Params]: { predicateAddress: string };
 }
 
 export type IAddPredicateRequest = AuthValidatedRequest<IAddPredicateRequestSchema>;
 export type IFindByIdRequest = AuthValidatedRequest<IFindByIdRequestSchema>;
 export type IFindByAdressesRequest = AuthValidatedRequest<IFindByAdressesRequestSchema>;
+export type IFindByPredicateAdressRequest = AuthValidatedRequest<IFindByPredicateAdressRequestSchema>;
 
 export interface IPredicateService {
   add: (payload: IAddPredicatePayload) => Promise<Predicate>;
   findAll: () => Promise<IPagination<Predicate> | Predicate[]>;
   findById: (id: number) => Promise<Predicate>;
-  findByAdresses: (addresses: string) => Promise<Predicate>;
+  findByAdresses: (addresses: string) => Promise<Predicate[]>;
+  findByPredicateAddress: (predicateAddress: string) => Promise<Predicate>;
   ordination(ordination?: IOrdination<Predicate>): this;
   paginate(pagination?: PaginationParams): this;
 }
