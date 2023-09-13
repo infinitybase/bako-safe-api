@@ -33,7 +33,9 @@ export interface IPredicateService {
   add: (payload: IAddPredicatePayload) => Promise<Predicate>;
   findAll: () => Promise<IPagination<Predicate> | Predicate[]>;
   findById: (id: number) => Promise<Predicate>;
-  findByAdresses: (addresses: string) => Promise<Predicate[]>;
+  findByAdresses: (
+    addresses: string,
+  ) => Promise<IPagination<Predicate> | Predicate[]>;
   findByPredicateAddress: (predicateAddress: string) => Promise<Predicate>;
   ordination(ordination?: IOrdination<Predicate>): this;
   paginate(pagination?: PaginationParams): this;

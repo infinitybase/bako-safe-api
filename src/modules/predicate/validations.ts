@@ -5,7 +5,7 @@ import { validator } from '@utils/index';
 export const validateAddPredicatePayload = validator.body(
   Joi.object({
     name: Joi.string().required(),
-    address: Joi.string().required(),
+    predicateAddress: Joi.string().required(),
     description: Joi.string().required(),
     minSigners: Joi.number().required(),
     addresses: Joi.array().required(),
