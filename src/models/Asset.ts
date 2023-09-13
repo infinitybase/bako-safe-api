@@ -1,6 +1,7 @@
 import {
   BeforeInsert,
   BeforeUpdate,
+  AfterLoad,
   Column,
   Entity,
   JoinColumn,
@@ -34,6 +35,11 @@ class Asset extends Base {
     if (this.amount) {
       this.amount = this.amount * 100;
     }
+  }
+
+  @AfterLoad()
+  integerToDecimal() {
+    this.amount = this.amount / 100;
   }
 }
 
