@@ -5,6 +5,7 @@ import {
   IAddPredicateRequest,
   IFindByAdressesRequest,
   IFindByIdRequest,
+  IFindByPredicateAdressRequest,
   IPredicateService,
 } from './types';
 
@@ -46,9 +47,22 @@ export class PredicateController {
     }
   }
 
-  async findByAddresses({ params: { addresses } }: IFindByAdressesRequest) {
+  async findByAddresses({ params: { address } }: IFindByAdressesRequest) {
     try {
-      const response = await this.predicateService.findByAdresses(addresses);
+      const response = await this.predicateService.findByAdresses(address);
+      return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error[0], e.statusCode);
+    }
+  }
+
+  async findByPredicateAddress({
+    params: { predicateAddress },
+  }: IFindByPredicateAdressRequest) {
+    try {
+      const response = await this.predicateService.findByPredicateAddress(
+        predicateAddress,
+      );
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error[0], e.statusCode);

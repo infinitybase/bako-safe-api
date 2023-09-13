@@ -1,9 +1,10 @@
+import { NotFound } from '@src/utils/error';
 import { IOrdination, setOrdination } from '@src/utils/ordination';
 import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination';
 
 import { Predicate } from '@models/index';
 
-import { ErrorTypes } from '@utils/error/GeneralError';
+import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
 
 import { IAddPredicatePayload, IPredicateService } from './types';
@@ -76,16 +77,61 @@ export class PredicateService implements IPredicateService {
     }
   }
 
-  async findByAdresses(addresses: string): Promise<Predicate> {
+  async findByPredicateAddress(predicateAddress: string): Promise<Predicate> {
+    try {
+      const predicate = await Predicate.findOne({
+        where: { predicateAddress },
+      });
+
+      if (!predicate) {
+        throw new NotFound({
+          type: ErrorTypes.NotFound,
+          title: 'Predicates not found',
+          detail: `No predicate was found for the provided predicate's address.`,
+        });
+      }
+
+      return predicate;
+    } catch (e) {
+      if (e instanceof GeneralError) {
+        throw e;
+      }
+
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on predicate findByPredicateAddress',
+        detail: e,
+      });
+    }
+  }
+
+  async findByAdresses(address: string): Promise<Predicate[]> {
     try {
       const queryBuilder = Predicate.createQueryBuilder('p').select();
 
-      addresses &&
-        queryBuilder.where('LOWER(p.addresses) LIKE LOWER(:addresses)', {
-          addresses: `%${addresses}%`,
+      if (address) {
+        queryBuilder.where(
+          `:address = ANY(SELECT jsonb_array_elements_text(p.addresses::jsonb)::text)`,
+          { address: address },
+        );
+      }
+
+      const predicates = await queryBuilder.getMany();
+
+      if (!predicates.length) {
+        throw new NotFound({
+          type: ErrorTypes.NotFound,
+          title: 'Predicates not found',
+          detail: `No predicates were found for the provided address.`,
         });
-      return await queryBuilder.getOne();
+      }
+
+      return predicates;
     } catch (e) {
+      if (e instanceof GeneralError) {
+        throw e;
+      }
+
       throw new Internal({
         type: ErrorTypes.Internal,
         title: 'Error on predicate findByAdresses',

@@ -10,11 +10,15 @@ import { validateAddPredicatePayload } from './validations';
 
 const router = Router();
 const predicateService = new PredicateService();
-const { findAll, findByAddresses, add, findById } = new PredicateController(
-  predicateService,
-);
+const {
+  findAll,
+  findByAddresses,
+  add,
+  findById,
+  findByPredicateAddress,
+} = new PredicateController(predicateService);
 
-router.use(authMiddleware);
+// router.use(authMiddleware);
 
 // Add Predicate
 router.post('/', validateAddPredicatePayload, handleResponse(add));
@@ -22,7 +26,12 @@ router.post('/', validateAddPredicatePayload, handleResponse(add));
 router.get('/', handleResponse(findAll));
 // List predicate by id
 router.get('/:id', handleResponse(findById));
+// List by adresses [fuel2sa..ska0]
+router.get('/by-addresses/:address', handleResponse(findByAddresses));
 // List predicate by adresses [fuel2sa..ska0]
-router.get('/by-addresses/:addresses', handleResponse(findByAddresses));
+router.get(
+  '/by-predicate-address/:predicateAddress',
+  handleResponse(findByPredicateAddress),
+);
 
 export default router;
