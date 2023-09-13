@@ -19,7 +19,7 @@ export class createTablePredicates1694193586666 implements MigrationInterface {
             type: 'varchar',
           },
           {
-            name: 'address',
+            name: 'predicateAddress',
             type: 'varchar',
           },
           {

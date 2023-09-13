@@ -6,7 +6,7 @@ export default async function () {
   const predicates: Partial<Predicate>[] = [
     {
       name: 'predicate_name',
-      address: defaultValues['address'],
+      predicateAddress: defaultValues['address'],
       abi: 'abi',
       configurable: 'configurable',
       bytes: 'bytes',
@@ -20,7 +20,10 @@ export default async function () {
   ];
 
   const existingPredicates = await Predicate.find({
-    where: [{ address: predicates[0].address }, { abi: predicates[0].abi }],
+    where: [
+      { predicateAddress: predicates[0].predicateAddress },
+      { abi: predicates[0].abi },
+    ],
   });
 
   if (existingPredicates.length) {
