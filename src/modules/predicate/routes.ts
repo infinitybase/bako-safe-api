@@ -1,5 +1,7 @@
 import { Router } from 'express';
 
+import { authMiddleware } from '@src/middlewares';
+
 import { handleResponse } from '@utils/index';
 
 import { PredicateController } from './controller';
@@ -12,7 +14,7 @@ const { findAll, findByAddresses, add, findById } = new PredicateController(
   predicateService,
 );
 
-//router.use(authMiddleware)
+router.use(authMiddleware);
 
 // Add Predicate
 router.post('/', validateAddPredicatePayload, handleResponse(add));
