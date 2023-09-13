@@ -11,7 +11,10 @@ export default async function () {
       configurable: 'configurable',
       bytes: 'bytes',
       description: 'description',
-      addresses: [defaultValues['address'], defaultValues['address']],
+      addresses: JSON.stringify([
+        defaultValues['address'],
+        defaultValues['address'],
+      ]),
       minSigners: 3,
       owner: 'owner',
       network: 'network',

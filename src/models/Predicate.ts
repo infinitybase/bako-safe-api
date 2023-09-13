@@ -39,7 +39,9 @@ class Predicate extends Base {
 
   @BeforeInsert()
   saveAsJson() {
-    this.addresses = JSON.stringify(this.addresses);
+    if (typeof this.addresses !== 'string') {
+      this.addresses = JSON.stringify(this.addresses);
+    }
   }
 
   @AfterLoad()
