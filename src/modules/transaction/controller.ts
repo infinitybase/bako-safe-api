@@ -7,6 +7,7 @@ import {
   IFindTransactionByIdRequest,
   IFindTransactionByPredicateIdRequest,
   IFindTransactionByToRequest,
+  ISignerByIdRequest,
   ITransactionService,
 } from './types';
 
@@ -32,7 +33,10 @@ export class TransactionController {
 
   async findAll() {
     try {
-      const response = await this.transactionService.findAll();
+      const response = await this.transactionService
+        .ordination()
+        .paginate()
+        .findAll();
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error[0], e.statusCode);
@@ -52,9 +56,10 @@ export class TransactionController {
     params: { predicateId },
   }: IFindTransactionByPredicateIdRequest) {
     try {
-      const response = await this.transactionService.findByPredicateId(
-        Number(predicateId),
-      );
+      const response = await this.transactionService
+        .ordination()
+        .paginate()
+        .findByPredicateId(Number(predicateId));
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error[0], e.statusCode);
@@ -63,19 +68,26 @@ export class TransactionController {
 
   async findByTo({ params: { to } }: IFindTransactionByToRequest) {
     try {
-      const response = await this.transactionService.findByTo(to);
+      const response = await this.transactionService
+        .ordination()
+        .paginate()
+        .findByTo(to);
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error[0], e.statusCode);
     }
   }
 
-  async close({ body: transaction, params: { id } }: ICloseTransactionRequest) {
+  async close({
+    body: { gasUsed, transactionResult },
+    params: { id },
+  }: ICloseTransactionRequest) {
     try {
       const response = await this.transactionService.close(Number(id), {
-        ...transaction,
         status: 'DONE',
         sendTime: new Date(),
+        gasUsed,
+        resume: transactionResult,
       });
       return successful(response, Responses.Ok);
     } catch (e) {
@@ -83,12 +95,18 @@ export class TransactionController {
     }
   }
 
-  // async findByAddresses({ params: { addresses } }: IFindByAdressesRequest) {
-  //   try {
-  //     const response = await this.predicateService.findByAdresses(addresses);
-  //     return successful(response, Responses.Ok);
-  //   } catch (e) {
-  //     return error(e.error[0], e.statusCode);
-  //   }
-  // }
+  async signerByID({
+    body: { account, signer },
+    params: { id },
+  }: ISignerByIdRequest) {
+    try {
+      const response = await this.transactionService.signerByID(Number(id), {
+        account,
+        signer,
+      });
+      return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error[0], e.statusCode);
+    }
+  }
 }
