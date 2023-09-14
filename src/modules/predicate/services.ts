@@ -131,10 +131,12 @@ export class PredicateService implements IPredicateService {
     const queryBuilder = Predicate.createQueryBuilder('p').select();
 
     if (address) {
-      queryBuilder.where(
-        `:address = ANY(SELECT jsonb_array_elements_text(p.addresses::jsonb)::text)`,
-        { address: address },
-      );
+      queryBuilder
+        .where(
+          `:address = ANY(SELECT jsonb_array_elements_text(p.addresses::jsonb)::text)`,
+          { address: address },
+        )
+        .orderBy(`p.${this._ordination.orderBy}`, this._ordination.sort);
     }
 
     return hasPagination

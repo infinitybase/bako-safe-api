@@ -49,7 +49,10 @@ export class PredicateController {
 
   async findByAddresses({ params: { address } }: IFindByAdressesRequest) {
     try {
-      const response = await this.predicateService.findByAdresses(address);
+      const response = await this.predicateService
+        .ordination()
+        .paginate()
+        .findByAdresses(address);
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error[0], e.statusCode);
