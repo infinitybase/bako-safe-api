@@ -80,7 +80,7 @@ export class TransactionService implements ITransactionService {
           });
   }
 
-  async findById(id: number): Promise<Transaction> {
+  async findById(id: string): Promise<Transaction> {
     return Transaction.findOne({
       where: { id },
       relations: ['assets', 'witnesses', 'predicate'],
@@ -109,7 +109,7 @@ export class TransactionService implements ITransactionService {
   }
 
   async findByPredicateId(
-    predicateId: number,
+    predicateId: string,
   ): Promise<IPagination<Transaction> | Transaction[]> {
     const hasPagination = this._pagination?.page && this._pagination?.perPage;
     const queryBuilder = Transaction.createQueryBuilder('t').select();
@@ -209,31 +209,10 @@ export class TransactionService implements ITransactionService {
               detail: e,
             });
           });
-
-    // try {
-    //   const transactions = await getConnection()
-    //     .createQueryBuilder()
-    //     .select('transaction')
-    //     .from(Transaction, 'transaction')
-    //     .innerJoin('transaction.assets', 'asset')
-    //     .where('asset.to = :to', { to })
-    //     .leftJoinAndSelect('transaction.assets', 'assets')
-    //     .leftJoinAndSelect('transaction.witnesses', 'witnesses')
-    //     .getMany();
-
-    //   return transactions;
-    // } catch (e) {
-    //   throw new Internal({
-    //     type: ErrorTypes.Internal,
-    //     title: 'Error on transactions findByTo',
-    //     detail: e,
-    //   });
-    // }
   }
 
-  async close(id: number, payload: ICloseTransactionPayload): Promise<Transaction> {
-    return Transaction.create({ ...payload, id })
-      .save()
+  async close(id: string, payload: ICloseTransactionPayload): Promise<Transaction> {
+    return Transaction.update({ id }, payload)
       .then(async () => {
         return Transaction.findOne({ where: { id } }).then(updated => updated);
       })
@@ -246,7 +225,7 @@ export class TransactionService implements ITransactionService {
       });
   }
 
-  async signerByID(id: number, payload: ISignerByIdPayload): Promise<Transaction> {
+  async signerByID(id: string, payload: ISignerByIdPayload): Promise<Transaction> {
     let statusField: string;
 
     return Transaction.findOne({
