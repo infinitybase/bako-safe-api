@@ -1,7 +1,8 @@
-import { Column, Entity, OneToMany } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 
 import { Asset } from './Asset';
 import { Base } from './Base';
+import { Predicate } from './Predicate';
 import { Witness } from './Witness';
 
 @Entity('transactions')
@@ -38,6 +39,10 @@ class Transaction extends Base {
 
   @OneToMany(() => Witness, witness => witness.transaction)
   witnesses: Witness[];
+
+  @JoinColumn({ name: 'predicateID' })
+  @ManyToOne(() => Predicate)
+  predicate: Predicate;
 }
 
 export { Transaction };
