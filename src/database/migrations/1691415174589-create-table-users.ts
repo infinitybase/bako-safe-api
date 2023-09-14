@@ -8,11 +8,11 @@ export class createTableUsers1691415174589 implements MigrationInterface {
         columns: [
           {
             name: 'id',
-            type: 'integer',
-            unsigned: true,
+            type: 'uuid',
             isPrimary: true,
-            isGenerated: true,
-            generationStrategy: 'increment',
+            isUnique: true,
+            generationStrategy: 'uuid',
+            default: `uuid_generate_v4()`,
           },
           {
             name: 'name',
@@ -37,7 +37,7 @@ export class createTableUsers1691415174589 implements MigrationInterface {
           },
           {
             name: 'role_id',
-            type: 'integer',
+            type: 'uuid',
           },
           {
             name: 'created_at',

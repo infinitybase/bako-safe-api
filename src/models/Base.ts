@@ -10,8 +10,8 @@ import {
 } from 'typeorm';
 
 class Base extends BaseEntity {
-  @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

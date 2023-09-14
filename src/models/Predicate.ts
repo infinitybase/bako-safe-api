@@ -1,4 +1,4 @@
-import { AfterLoad, BeforeInsert, Column, Entity } from 'typeorm';
+import { AfterInsert, AfterLoad, BeforeInsert, Column, Entity } from 'typeorm';
 
 import { Base } from './Base';
 
@@ -42,6 +42,11 @@ class Predicate extends Base {
     if (typeof this.addresses !== 'string') {
       this.addresses = JSON.stringify(this.addresses);
     }
+  }
+
+  @AfterInsert()
+  returnParsedOnSave() {
+    this.addresses = JSON.parse(this.addresses);
   }
 
   @AfterLoad()

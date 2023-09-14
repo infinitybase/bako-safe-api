@@ -32,7 +32,7 @@ export type IFindByPredicateAdressRequest = AuthValidatedRequest<IFindByPredicat
 export interface IPredicateService {
   add: (payload: IAddPredicatePayload) => Promise<Predicate>;
   findAll: () => Promise<IPagination<Predicate> | Predicate[]>;
-  findById: (id: number) => Promise<Predicate>;
+  findById: (id: string) => Promise<Predicate>;
   findByAdresses: (
     addresses: string,
   ) => Promise<IPagination<Predicate> | Predicate[]>;

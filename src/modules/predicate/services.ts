@@ -68,7 +68,7 @@ export class PredicateService implements IPredicateService {
           });
   }
 
-  async findById(id: number): Promise<Predicate> {
+  async findById(id: string): Promise<Predicate> {
     return Predicate.findOne({
       where: { id },
     })
