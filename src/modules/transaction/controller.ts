@@ -45,7 +45,7 @@ export class TransactionController {
 
   async findById({ params: { id } }: IFindTransactionByIdRequest) {
     try {
-      const response = await this.transactionService.findById(Number(id));
+      const response = await this.transactionService.findById(id);
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error[0], e.statusCode);
@@ -59,7 +59,7 @@ export class TransactionController {
       const response = await this.transactionService
         .ordination()
         .paginate()
-        .findByPredicateId(Number(predicateId));
+        .findByPredicateId(predicateId);
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error[0], e.statusCode);
@@ -83,7 +83,7 @@ export class TransactionController {
     params: { id },
   }: ICloseTransactionRequest) {
     try {
-      const response = await this.transactionService.close(Number(id), {
+      const response = await this.transactionService.close(id, {
         status: 'DONE',
         sendTime: new Date(),
         gasUsed,
@@ -100,7 +100,7 @@ export class TransactionController {
     params: { id },
   }: ISignerByIdRequest) {
     try {
-      const response = await this.transactionService.signerByID(Number(id), {
+      const response = await this.transactionService.signerByID(id, {
         account,
         signer,
       });

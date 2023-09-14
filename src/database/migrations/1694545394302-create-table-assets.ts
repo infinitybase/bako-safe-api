@@ -20,7 +20,7 @@ export class createTableAssets1694545394302 implements MigrationInterface {
           },
           {
             name: 'transactionID',
-            type: 'integer',
+            type: 'uuid',
           },
           {
             name: 'to',

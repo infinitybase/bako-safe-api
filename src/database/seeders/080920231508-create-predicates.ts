@@ -5,6 +5,7 @@ import { Predicate } from '@models/index';
 export default async function () {
   const predicates: Partial<Predicate>[] = [
     {
+      id: '624DA56F-F5E8-4BC2-B3A5-B181FF2B5097',
       name: 'predicate_name',
       predicateAddress: defaultValues['address'],
       abi: 'abi',
@@ -19,6 +20,7 @@ export default async function () {
       owner: 'owner',
       network: 'network',
       chainId: 2231,
+      createdAt: new Date(),
     },
   ];
 

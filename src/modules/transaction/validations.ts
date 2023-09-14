@@ -7,7 +7,7 @@ import { allowedStatus } from './types';
 export const validateAddTransactionPayload = validator.body(
   Joi.object({
     predicateAdress: Joi.string().required(),
-    predicateID: Joi.number().required(),
+    predicateID: Joi.string().uuid().required(),
     name: Joi.string().required(),
     txData: Joi.string().required(),
     hash: Joi.string().required(),

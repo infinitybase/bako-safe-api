@@ -12,7 +12,7 @@ class Witness extends Base {
   account: string;
 
   @Column()
-  transactionID: number;
+  transactionID: string;
 
   @JoinColumn({ name: 'transactionID' })
   @ManyToOne(() => Transaction)

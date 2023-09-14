@@ -55,7 +55,7 @@ export class RoleController {
     try {
       const { id } = req.params;
 
-      const response = await this.roleService.findOne(parseInt(id));
+      const response = await this.roleService.findOne(id);
 
       return successful(response, Responses.Ok);
     } catch (e) {
@@ -68,7 +68,7 @@ export class RoleController {
       const { id } = req.params;
       const { name, active, permissions } = req.body;
 
-      const response = await this.roleService.update(parseInt(id), {
+      const response = await this.roleService.update(id, {
         name,
         active,
         permissions,
@@ -84,7 +84,7 @@ export class RoleController {
     try {
       const { id } = req.params;
 
-      const response = await this.roleService.delete(parseInt(id));
+      const response = await this.roleService.delete(id);
 
       return successful(response, Responses.Ok);
     } catch (e) {

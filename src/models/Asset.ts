@@ -23,7 +23,7 @@ class Asset extends Base {
   amount: number;
 
   @Column()
-  transactionID: number;
+  transactionID: string;
 
   @JoinColumn({ name: 'transactionID' })
   @ManyToOne(() => Transaction)

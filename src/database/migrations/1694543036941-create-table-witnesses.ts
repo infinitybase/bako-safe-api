@@ -24,7 +24,7 @@ export class createTableWitnesses1694543036941 implements MigrationInterface {
           },
           {
             name: 'transactionID',
-            type: 'integer',
+            type: 'uuid',
           },
           {
             name: 'created_at',

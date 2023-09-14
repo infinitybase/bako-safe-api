@@ -62,13 +62,13 @@ export type IFindTransactionByToRequest = AuthValidatedRequest<IFindTransactionB
 export interface ITransactionService {
   add: (payload: IAddTransactionPayload) => Promise<Transaction>;
   findAll: () => Promise<IPagination<Transaction> | Transaction[]>;
-  findById: (id: number) => Promise<Transaction>;
+  findById: (id: string) => Promise<Transaction>;
   findByPredicateId: (
-    predicateId: number,
+    predicateId: string,
   ) => Promise<IPagination<Transaction> | Transaction[]>;
   findByTo: (to: string) => Promise<IPagination<Transaction> | Transaction[]>;
-  close: (id: number, payload: ICloseTransactionPayload) => Promise<Transaction>;
-  signerByID: (id: number, payload: ISignerByIdPayload) => Promise<Transaction>;
+  close: (id: string, payload: ICloseTransactionPayload) => Promise<Transaction>;
+  signerByID: (id: string, payload: ISignerByIdPayload) => Promise<Transaction>;
   ordination(ordination?: IOrdination<Transaction>): this;
   paginate(pagination?: PaginationParams): this;
 }

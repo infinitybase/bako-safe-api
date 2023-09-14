@@ -2,17 +2,18 @@ import { MigrationInterface, QueryRunner, Table } from 'typeorm';
 
 export class createTableTransactions1694536141266 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
     await queryRunner.createTable(
       new Table({
         name: 'transactions',
         columns: [
           {
             name: 'id',
-            type: 'integer',
-            unsigned: true,
+            type: 'uuid',
             isPrimary: true,
-            isGenerated: true,
-            generationStrategy: 'increment',
+            isUnique: true,
+            generationStrategy: 'uuid',
+            default: `uuid_generate_v4()`,
           },
           {
             name: 'predicateAdress',
@@ -20,7 +21,7 @@ export class createTableTransactions1694536141266 implements MigrationInterface 
           },
           {
             name: 'predicateID',
-            type: 'integer',
+            type: 'uuid',
           },
           {
             name: 'name',

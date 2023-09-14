@@ -11,7 +11,7 @@ class Transaction extends Base {
   predicateAdress: string;
 
   @Column()
-  predicateID: number;
+  predicateID: string;
 
   @Column()
   name: string;

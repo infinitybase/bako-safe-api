@@ -3,7 +3,7 @@ import { Witness } from '@models/index';
 export default async function () {
   const witnesses: Partial<Witness>[] = [
     {
-      transactionID: 1,
+      transactionID: 'F4082213-EB62-4D8C-B81F-3C71BE7FE7B2',
       account: 'fuel..asdaa37yf',
       signature: 'asduyhxNORX8T2XRX3NWUS',
     },
