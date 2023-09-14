@@ -1,4 +1,4 @@
-import { defaultValues } from '@src/utils/constantes';
+import { defaultValues } from 'bsafe';
 
 import { Predicate } from '@models/index';
 
