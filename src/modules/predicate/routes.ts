@@ -1,5 +1,7 @@
 import { Router } from 'express';
 
+import { authMiddleware } from '@src/middlewares';
+
 import { handleResponse } from '@utils/index';
 
 import { PredicateController } from './controller';
