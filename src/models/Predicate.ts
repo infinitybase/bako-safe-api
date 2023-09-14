@@ -32,7 +32,7 @@ class Predicate extends Base {
   configurable: string;
 
   @Column()
-  network: string;
+  provider: string;
 
   @Column({ nullable: true })
   chainId?: number;

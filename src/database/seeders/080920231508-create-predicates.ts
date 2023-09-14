@@ -17,7 +17,7 @@ export default async function () {
       ]),
       minSigners: 3,
       owner: 'owner',
-      network: 'network',
+      provider: 'provider',
       chainId: 2231,
     },
   ];

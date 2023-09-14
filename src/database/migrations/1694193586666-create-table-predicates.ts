@@ -51,7 +51,7 @@ export class createTablePredicates1694193586666 implements MigrationInterface {
             type: 'varchar',
           },
           {
-            name: 'network',
+            name: 'provider',
             type: 'varchar',
           },
           {
