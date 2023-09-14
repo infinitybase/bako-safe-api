@@ -40,7 +40,7 @@ export class PredicateController {
 
   async findById({ params: { id } }: IFindByIdRequest) {
     try {
-      const response = await this.predicateService.findById(Number(id));
+      const response = await this.predicateService.findById(id);
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error[0], e.statusCode);

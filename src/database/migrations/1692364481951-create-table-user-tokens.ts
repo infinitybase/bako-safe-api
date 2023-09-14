@@ -8,11 +8,11 @@ export class createTableUserTokens1692364481951 implements MigrationInterface {
         columns: [
           {
             name: 'id',
-            type: 'integer',
-            unsigned: true,
+            type: 'uuid',
             isPrimary: true,
-            isGenerated: true,
-            generationStrategy: 'increment',
+            isUnique: true,
+            generationStrategy: 'uuid',
+            default: `uuid_generate_v4()`,
           },
           {
             name: 'token',
@@ -20,7 +20,7 @@ export class createTableUserTokens1692364481951 implements MigrationInterface {
           },
           {
             name: 'user_id',
-            type: 'integer',
+            type: 'uuid',
             isUnique: true,
           },
           {
