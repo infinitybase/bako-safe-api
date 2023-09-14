@@ -60,7 +60,7 @@ export interface IRoleService {
   ordination(ordination: IOrdination<Role>): this;
   create(payload: IRolePayload): Promise<Role>;
   find(): Promise<IPagination<Role> | Role[]>;
-  findOne(id: number): Promise<Role>;
-  update(id: number, payload: IRolePayload): Promise<Role>;
-  delete(id: number): Promise<boolean>;
+  findOne(id: string): Promise<Role>;
+  update(id: string, payload: IRolePayload): Promise<Role>;
+  delete(id: string): Promise<boolean>;
 }

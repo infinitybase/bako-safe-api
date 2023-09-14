@@ -62,10 +62,9 @@ export interface IUserService {
   filter(filter: IFilterParams): this;
   paginate(pagination: PaginationParams): this;
   ordination(ordination: IOrdination<User>): this;
-
   find(): Promise<IPagination<User> | User[]>;
   create(payload: IUserPayload): Promise<User>;
-  findOne(id: number): Promise<User>;
-  update(id: number, payload: IUserPayload): Promise<User>;
-  delete(id: number): Promise<boolean>;
+  findOne(id: string): Promise<User>;
+  update(id: string, payload: IUserPayload): Promise<User>;
+  delete(id: string): Promise<boolean>;
 }
