@@ -6,7 +6,11 @@ import { handleResponse } from '@utils/index';
 
 import { TransactionController } from './controller';
 import { TransactionService } from './services';
-import { validateAddTransactionPayload } from './validations';
+import {
+  validateAddTransactionPayload,
+  validateCloseTransactionPayload,
+  validateSignerByIdPayload,
+} from './validations';
 
 const router = Router();
 const transactionService = new TransactionService();
@@ -15,8 +19,7 @@ const {
   findAll,
   findById,
   findByTo,
-  // findByAddress,
-  // signerByID,
+  signerByID,
   close,
   findByPredicateId,
 } = new TransactionController(transactionService);
@@ -39,12 +42,9 @@ router.get('/predicate/:predicateId', handleResponse(findByPredicateId));
 router.get('/destination/:to', handleResponse(findByTo));
 
 //close transaction after sending
-router.put('/close/:id', handleResponse(close));
+router.put('/close/:id', validateCloseTransactionPayload, handleResponse(close));
 
 //update transaction
-// router.put('/signer/:id', handleResponse(signerByID));
-
-// list by address
-// router.get('/by-address/:address', handleResponse(findByAddress));
+router.put('/signer/:id', validateSignerByIdPayload, handleResponse(signerByID));
 
 export default router;

@@ -19,3 +19,17 @@ export const validateAddTransactionPayload = validator.body(
     resume: Joi.string().required(),
   }),
 );
+
+export const validateSignerByIdPayload = validator.body(
+  Joi.object({
+    signer: Joi.string().required(),
+    account: Joi.string().required(),
+  }),
+);
+
+export const validateCloseTransactionPayload = validator.body(
+  Joi.object({
+    gasUsed: Joi.string().required(),
+    transactionResult: Joi.string().required(),
+  }),
+);
