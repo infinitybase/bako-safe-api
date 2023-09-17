@@ -2,11 +2,11 @@ import { error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
 
 import {
-  IAddPredicateRequest,
-  IFindByAdressesRequest,
+  ICreatePredicateRequest,
+  IDeletePredicateRequest,
   IFindByIdRequest,
-  IFindByPredicateAdressRequest,
   IPredicateService,
+  IUpdatePredicateRequest,
 } from './types';
 
 export class PredicateController {
@@ -17,21 +17,30 @@ export class PredicateController {
     bindMethods(this);
   }
 
-  async add({ body: predicate }: IAddPredicateRequest) {
+  async create({ body: payload }: ICreatePredicateRequest) {
     try {
-      const response = await this.predicateService.add(predicate);
+      const response = await this.predicateService.create(payload);
+
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error[0], e.statusCode);
     }
   }
 
-  async findAll() {
+  async update({ params: { id }, body: payload }: IUpdatePredicateRequest) {
     try {
-      const response = await this.predicateService
-        .ordination()
-        .paginate()
-        .findAll();
+      const response = await this.predicateService.update(id, payload);
+
+      return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error[0], e.statusCode);
+    }
+  }
+
+  async delete({ params: { id } }: IDeletePredicateRequest) {
+    try {
+      const response = await this.predicateService.delete(id);
+
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error[0], e.statusCode);
@@ -41,28 +50,32 @@ export class PredicateController {
   async findById({ params: { id } }: IFindByIdRequest) {
     try {
       const response = await this.predicateService.findById(id);
+
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error[0], e.statusCode);
     }
   }
 
-  async findByAddresses({ params: { address } }: IFindByAdressesRequest) {
-    try {
-      const response = await this.predicateService.findByAdresses(address);
-      return successful(response, Responses.Ok);
-    } catch (e) {
-      return error(e.error[0], e.statusCode);
-    }
-  }
+  async list(req: IFindByIdRequest) {
+    const {
+      address,
+      signer,
+      provider,
+      owner,
+      orderBy,
+      sort,
+      page,
+      perPage,
+    } = req.query;
 
-  async findByPredicateAddress({
-    params: { predicateAddress },
-  }: IFindByPredicateAdressRequest) {
     try {
-      const response = await this.predicateService.findByPredicateAddress(
-        predicateAddress,
-      );
+      const response = await this.predicateService
+        .filter({ address, signer, provider, owner })
+        .ordination({ orderBy, sort })
+        .paginate({ page, perPage })
+        .list();
+
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error[0], e.statusCode);

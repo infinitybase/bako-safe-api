@@ -13,7 +13,7 @@ export const validateAddPredicatePayload = validator.body(
     bytes: Joi.string().required(),
     abi: Joi.string().required(),
     configurable: Joi.string().required(),
-    network: Joi.string().required(),
+    provider: Joi.string().required(),
     chainId: Joi.number(),
   }),
 );
