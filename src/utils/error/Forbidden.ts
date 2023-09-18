@@ -2,7 +2,7 @@ import GeneralError, { Error } from './GeneralError';
 
 // -> erro de permissao [sem acesso ao recurso]
 class Forbidden extends GeneralError {
-  constructor(error: Error | Error[]) {
+  constructor(error: Error) {
     super(error, 403);
   }
 }

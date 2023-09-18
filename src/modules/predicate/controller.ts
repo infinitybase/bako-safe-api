@@ -22,19 +22,19 @@ export class PredicateController {
 
       return successful(response, Responses.Ok);
     } catch (e) {
-      return error(e.error[0], e.statusCode);
+      return error(e.error, e.statusCode);
     }
   }
 
   // async update({ params: { id }, body: payload }: IUpdatePredicateRequest) {
   //   try {
   //     const response = await this.predicateService.update(id, payload);
-
   //     return successful(response, Responses.Ok);
   //   } catch (e) {
   //     return error(e.error[0], e.statusCode);
   //   }
   // }
+
 
   async delete({ params: { id } }: IDeletePredicateRequest) {
     try {
@@ -42,7 +42,7 @@ export class PredicateController {
 
       return successful(response, Responses.Ok);
     } catch (e) {
-      return error(e.error[0], e.statusCode);
+      return error(e.error, e.statusCode);
     }
   }
 
@@ -52,7 +52,7 @@ export class PredicateController {
 
       return successful(response, Responses.Ok);
     } catch (e) {
-      return error(e.error[0], e.statusCode);
+      return error(e.error, e.statusCode);
     }
   }
 
@@ -77,7 +77,7 @@ export class PredicateController {
 
       return successful(response, Responses.Ok);
     } catch (e) {
-      return error(e.error[0], e.statusCode);
+      return error(e.error, e.statusCode);
     }
   }
 }

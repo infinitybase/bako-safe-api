@@ -18,7 +18,6 @@ const error = <ResponsePayload>(
   payload: ResponsePayload,
   statusCode: Responses,
 ): ErrorResponse<ResponsePayload> => {
-  console.log(payload);
   return {
     payload: payload,
     statusCode,
