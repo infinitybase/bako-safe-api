@@ -19,15 +19,15 @@ export enum UnauthorizedErrorTitles {
   INVALID_PERMISSION = 'Invalid permission',
 }
 
-interface UnauthorizedError extends Omit<Error, 'title'> {
+export interface UnauthorizedError extends Omit<Error, 'title'> {
   title: UnauthorizedErrorTitles;
 }
 
 // -> retornado quando o usuário nao está autenticado
 class Unauthorized extends GeneralError {
-  constructor(error: UnauthorizedError | UnauthorizedError[]) {
+  constructor(error: UnauthorizedError) {
     super(error, 401);
   }
 }
 
-export default Unauthorized;
+export { Unauthorized };

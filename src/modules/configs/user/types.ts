@@ -1,8 +1,8 @@
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 
 import { AuthValidatedRequest } from '@src/middlewares/auth/types';
-import Role from '@src/models/master/Role';
-import User, { Languages } from '@src/models/master/User';
+import { Languages, User } from '@src/models';
+import Role from '@src/models/Role';
 import { IOrdination } from '@src/utils/ordination';
 import { IPagination, PaginationParams } from '@src/utils/pagination';
 
@@ -62,10 +62,9 @@ export interface IUserService {
   filter(filter: IFilterParams): this;
   paginate(pagination: PaginationParams): this;
   ordination(ordination: IOrdination<User>): this;
-
   find(): Promise<IPagination<User> | User[]>;
   create(payload: IUserPayload): Promise<User>;
-  findOne(id: number): Promise<User>;
-  update(id: number, payload: IUserPayload): Promise<User>;
-  delete(id: number): Promise<boolean>;
+  findOne(id: string): Promise<User>;
+  update(id: string, payload: IUserPayload): Promise<User>;
+  delete(id: string): Promise<boolean>;
 }

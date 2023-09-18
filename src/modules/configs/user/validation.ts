@@ -1,8 +1,8 @@
 import Joi from 'joi';
 
-import { Languages } from '@src/models/master/User';
+import { Languages } from '@src/models';
 
-import validator from '@utils/validator';
+import { validator } from '@utils/index';
 
 export const PayloadCreateUserSchema = validator.body(
   Joi.object({

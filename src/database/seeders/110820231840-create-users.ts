@@ -1,12 +1,10 @@
-import Role from '@src/models/master/Role';
-import User, { Languages } from '@src/models/master/User';
+import Role from '@src/models/Role';
+
+import { Languages, User } from '@models/index';
 
 export default async function () {
   const roles = await Role.find({
-    where: [
-      { name: 'Administrador' },
-      // { name: 'Vendedor' }
-    ],
+    where: [{ name: 'Administrador' }],
     order: { name: 'ASC' },
   });
 
@@ -23,14 +21,6 @@ export default async function () {
       language: Languages.PORTUGUESE,
       role: roles[0],
     },
-    // {
-    //   name: 'Vendedor',
-    //   active: true,
-    //   email: 'vendedor@netmore.com',
-    //   password: 'vendedor123',
-    //   language: Languages.PORTUGUESE,
-    //   role: roles[1],
-    // },
   ];
 
   const existingUsers = await User.find({

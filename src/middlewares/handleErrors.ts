@@ -48,4 +48,4 @@ const handleErrors = (
   });
 };
 
-export default handleErrors;
+export { handleErrors };

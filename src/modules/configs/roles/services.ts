@@ -1,4 +1,4 @@
-import Role from '@src/models/master/Role';
+import Role from '@src/models/Role';
 import { ErrorTypes, NotFound } from '@src/utils/error';
 import Internal from '@src/utils/error/Internal';
 import { IOrdination, setOrdination } from '@src/utils/ordination';
@@ -68,7 +68,7 @@ export class RoleService implements IRoleService {
     }
   }
 
-  async findOne(id: number): Promise<Role> {
+  async findOne(id: string): Promise<Role> {
     const role = await Role.findOne({ where: { id } });
 
     if (!role) {
@@ -82,7 +82,7 @@ export class RoleService implements IRoleService {
     return role;
   }
 
-  async update(id: number, payload: IRolePayload): Promise<Role> {
+  async update(id: string, payload: IRolePayload): Promise<Role> {
     return await Role.update({ id }, { ...payload })
       .then(async () => await this.findOne(id))
       .catch(() => {
@@ -94,7 +94,7 @@ export class RoleService implements IRoleService {
       });
   }
 
-  async delete(id: number): Promise<boolean> {
+  async delete(id: string): Promise<boolean> {
     return await Role.update({ id }, { deletedAt: new Date() })
       .then(() => true)
       .catch(() => {

@@ -1,7 +1,7 @@
 import { IAuthRequest } from '@src/middlewares/auth/types';
-import { bindMethods } from '@src/utils/bindMethods';
-import error from '@src/utils/error';
-import successful, { Responses } from '@src/utils/successful';
+
+import { error } from '@utils/error';
+import { Responses, successful, bindMethods } from '@utils/index';
 
 import {
   IAuthService,

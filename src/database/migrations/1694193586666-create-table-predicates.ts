@@ -1,10 +1,10 @@
 import { MigrationInterface, QueryRunner, Table } from 'typeorm';
 
-export class createTableUsers1691415174589 implements MigrationInterface {
+export class createTablePredicates1694193586666 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.createTable(
       new Table({
-        name: 'users',
+        name: 'predicates',
         columns: [
           {
             name: 'id',
@@ -19,25 +19,45 @@ export class createTableUsers1691415174589 implements MigrationInterface {
             type: 'varchar',
           },
           {
-            name: 'active',
-            type: 'boolean',
-            default: true,
-          },
-          {
-            name: 'email',
+            name: 'predicateAddress',
             type: 'varchar',
           },
           {
-            name: 'password',
+            name: 'description',
             type: 'varchar',
           },
           {
-            name: 'language',
+            name: 'minSigners',
+            type: 'integer',
+          },
+          {
+            name: 'addresses',
+            type: 'text',
+          },
+          {
+            name: 'owner',
             type: 'varchar',
           },
           {
-            name: 'role_id',
-            type: 'uuid',
+            name: 'bytes',
+            type: 'varchar',
+          },
+          {
+            name: 'abi',
+            type: 'varchar',
+          },
+          {
+            name: 'configurable',
+            type: 'varchar',
+          },
+          {
+            name: 'provider',
+            type: 'varchar',
+          },
+          {
+            name: 'chainId',
+            type: 'integer',
+            isNullable: true,
           },
           {
             name: 'created_at',
@@ -54,20 +74,11 @@ export class createTableUsers1691415174589 implements MigrationInterface {
             isNullable: true,
           },
         ],
-        foreignKeys: [
-          {
-            name: 'FK-user-role',
-            columnNames: ['role_id'],
-            referencedColumnNames: ['id'],
-            referencedTableName: 'roles',
-            onDelete: 'CASCADE',
-          },
-        ],
       }),
     );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.dropTable('users');
+    await queryRunner.dropTable('predicates');
   }
 }

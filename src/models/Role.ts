@@ -1,8 +1,8 @@
 import { Column, Entity } from 'typeorm';
 
-import { Modules } from '@src/middlewares/permissions/types';
+import { Modules } from '@middlewares/permissions/types';
 
-import ByMaster from './ByMaster';
+import { Base } from './Base';
 
 export type PermissionsItem = {
   view: boolean;
@@ -13,7 +13,7 @@ export type PermissionsItem = {
 export type Permissions = { [K in Modules]: PermissionsItem };
 
 @Entity('roles')
-class Role extends ByMaster {
+class Role extends Base {
   @Column()
   name: string;
 

@@ -3,10 +3,9 @@ import Express from 'express';
 import morgan from 'morgan';
 import { createConnection } from 'typeorm';
 
-import router from '@src/routes';
+import { router } from '@src/routes';
 
-import handleErrors from '@middlewares/handleErrors';
-import * as process from "process";
+import { handleErrors } from '@middlewares/index';
 
 const { API_PORT, PORT } = process.env;
 
@@ -30,7 +29,7 @@ class App {
         username: process.env.DATABASE_USERNAME,
         password: process.env.DATABASE_PASSWORD,
         database: process.env.DATABASE_NAME,
-        entities: [__dirname + '/entities/**/*.ts'],
+        entities: [__dirname + '/models/**/*.ts'],
         synchronize: false,
         migrationsRun: process.env.NODE_ENV === 'production',
       });

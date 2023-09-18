@@ -1,7 +1,7 @@
 export interface IAccessTokenPayload {
-  userId: number;
+  userId: string;
 }
 
 export interface IRefreshTokenPayload {
-  userId: number;
+  userId: string;
 }

@@ -1,6 +1,6 @@
 import { Brackets } from 'typeorm';
 
-import User from '@src/models/master/User';
+import { User } from '@src/models';
 import { ErrorTypes, NotFound } from '@src/utils/error';
 import Internal from '@src/utils/error/Internal';
 import { IOrdination, setOrdination } from '@src/utils/ordination';
@@ -84,7 +84,7 @@ export class UserService implements IUserService {
       });
   }
 
-  async findOne(id: number): Promise<User> {
+  async findOne(id: string): Promise<User> {
     const user = await User.findOne({
       where: { id },
       relations: ['role'],
@@ -101,7 +101,7 @@ export class UserService implements IUserService {
     return user;
   }
 
-  async update(id: number, payload: IUserPayload) {
+  async update(id: string, payload: IUserPayload) {
     return this.findOne(id)
       .then(async data => {
         const user = Object.assign(data, payload);
@@ -116,7 +116,7 @@ export class UserService implements IUserService {
       });
   }
 
-  async delete(id: number) {
+  async delete(id: string) {
     return await User.update({ id }, { deletedAt: new Date() })
       .then(() => true)
       .catch(() => {

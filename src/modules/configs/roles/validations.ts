@@ -1,6 +1,6 @@
 import Joi from 'joi';
 
-import validator from '@utils/validator';
+import { validator } from '@utils/index';
 
 const PermissionSchema = Joi.object({
   view: Joi.boolean().required(),

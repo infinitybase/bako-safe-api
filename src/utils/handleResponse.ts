@@ -39,4 +39,4 @@ const handleResponse = (controllerEndpoint: ControllerEndpoint) => {
   return response;
 };
 
-export default handleResponse;
+export { handleResponse };

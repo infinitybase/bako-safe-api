@@ -1,10 +1,11 @@
 import { Router } from 'express';
 
-import AuthMiddleware from '@src/middlewares/auth';
-import PermissionsMiddleware from '@src/middlewares/permissions';
 import { Modules } from '@src/middlewares/permissions/types';
 
-import handleResponse from '@utils/handleResponse';
+import { PermissionsMiddleware } from '@middlewares/index';
+import { authMiddleware } from '@middlewares/index';
+
+import { handleResponse } from '@utils/index';
 
 import { UserController } from './controller';
 import { UserService } from './service';
@@ -14,7 +15,7 @@ const router = Router();
 const userService = new UserService();
 const userController = new UserController(userService);
 
-router.use(AuthMiddleware);
+router.use(authMiddleware);
 router.use(PermissionsMiddleware(Modules.CONFIGS));
 
 router.get('/', handleResponse(userController.find));

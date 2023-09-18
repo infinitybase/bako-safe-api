@@ -9,9 +9,9 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-class ByMaster extends BaseEntity {
-  @PrimaryGeneratedColumn({ type: 'int', name: 'id' })
-  id: number;
+class Base extends BaseEntity {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
@@ -36,4 +36,4 @@ class ByMaster extends BaseEntity {
   }
 }
 
-export default ByMaster;
+export { Base };

@@ -29,4 +29,4 @@ class EncryptUtils {
   }
 }
 
-export default EncryptUtils;
+export { EncryptUtils };

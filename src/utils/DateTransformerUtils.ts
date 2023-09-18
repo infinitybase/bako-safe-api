@@ -10,4 +10,4 @@ const dateTransformer = {
   },
 };
 
-export default dateTransformer;
+export { dateTransformer };

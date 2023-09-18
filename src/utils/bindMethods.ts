@@ -1,4 +1,4 @@
-export function bindMethods(instance: unknown) {
+function bindMethods(instance: unknown) {
   const methodNames = Object.getOwnPropertyNames(Object.getPrototypeOf(instance));
 
   methodNames
@@ -10,3 +10,5 @@ export function bindMethods(instance: unknown) {
       instance[methodName] = instance[methodName].bind(instance);
     });
 }
+
+export { bindMethods };

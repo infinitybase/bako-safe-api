@@ -1,7 +1,7 @@
 import GeneralError, { Error } from './GeneralError';
 
 class NotFound extends GeneralError {
-  constructor(error: Error | Error[]) {
+  constructor(error: Error) {
     super(error, 404);
   }
 }

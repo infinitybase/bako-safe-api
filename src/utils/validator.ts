@@ -6,4 +6,4 @@ const validator = createValidator({
   passError: true,
 });
 
-export default validator;
+export { validator };

@@ -7,9 +7,9 @@ import {
   ManyToOne,
 } from 'typeorm';
 
-import EncryptUtils from '@src/utils/EncryptUtils';
+import { EncryptUtils } from '@utils/index';
 
-import ByMaster from './ByMaster';
+import { Base } from './Base';
 import Role from './Role';
 
 export enum Languages {
@@ -18,7 +18,7 @@ export enum Languages {
 }
 
 @Entity('users')
-class User extends ByMaster {
+class User extends Base {
   @Column()
   name: string;
 
@@ -47,4 +47,4 @@ class User extends ByMaster {
   }
 }
 
-export default User;
+export { User };

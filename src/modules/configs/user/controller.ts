@@ -1,6 +1,7 @@
 import { bindMethods } from '@src/utils/bindMethods';
-import error from '@src/utils/error';
-import successful, { Responses } from '@src/utils/successful';
+
+import { error } from '@utils/error';
+import { Responses, successful } from '@utils/index';
 
 import {
   ICreateRequest,
@@ -58,7 +59,7 @@ export class UserController {
     try {
       const { id } = req.params;
 
-      const response = await this.userService.findOne(parseInt(id));
+      const response = await this.userService.findOne(id);
 
       return successful(response, Responses.Ok);
     } catch (e) {
@@ -70,7 +71,7 @@ export class UserController {
     try {
       const { id } = req.params;
 
-      const response = await this.userService.update(parseInt(id), {
+      const response = await this.userService.update(id, {
         ...req.body,
       });
 
@@ -83,7 +84,7 @@ export class UserController {
   async delete(req: IDeleteRequest) {
     try {
       const { id } = req.params;
-      const response = await this.userService.delete(parseInt(id));
+      const response = await this.userService.delete(id);
 
       return successful(response, Responses.Ok);
     } catch (e) {

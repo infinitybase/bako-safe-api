@@ -25,11 +25,11 @@ export interface Error {
 }
 
 class GeneralError {
-  public readonly error: Error[];
+  public readonly error: Error;
   public readonly statusCode: number;
 
-  constructor(error: Error | Error[], statusCode: number) {
-    this.error = Array.isArray(error) ? error : [error];
+  constructor(error: Error, statusCode: number) {
+    this.error = error;
     this.statusCode = statusCode;
     console.log(error, statusCode);
   }

@@ -1,15 +1,17 @@
 import { Request, Response, NextFunction } from 'express';
 import { JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
 
-import User from '@src/models/master/User';
-import { ErrorTypes } from '@src/utils/error';
-import { UnauthorizedErrorTitles } from '@src/utils/error/Unauthorized';
 import { JwtUtils } from '@src/utils/jwt';
 import { IAccessTokenPayload } from '@src/utils/jwt/types';
 
+import { User } from '@models/index';
+
+import { ErrorTypes } from '@utils/error';
+import { UnauthorizedErrorTitles } from '@utils/error/Unauthorized';
+
 import { IAuthRequest } from './types';
 
-async function AuthMiddleware(req: Request, res: Response, next: NextFunction) {
+async function authMiddleware(req: Request, res: Response, next: NextFunction) {
   try {
     const requestAuth: IAuthRequest = req;
     const tokenString = JwtUtils.getTokenFromHeader(requestAuth);
@@ -71,4 +73,4 @@ async function AuthMiddleware(req: Request, res: Response, next: NextFunction) {
   }
 }
 
-export default AuthMiddleware;
+export { authMiddleware };
