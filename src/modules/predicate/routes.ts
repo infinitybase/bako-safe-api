@@ -14,7 +14,7 @@ const {
   create,
   findById,
   list,
-  update,
+  // update,
   delete: deleteService,
 } = new PredicateController(predicateService);
 
@@ -23,7 +23,7 @@ router.use(authMiddleware);
 router.post('/', validateAddPredicatePayload, handleResponse(create));
 router.get('/', handleResponse(list));
 router.get('/:id', handleResponse(findById));
-router.put('/:id', handleResponse(update));
+// router.put('/:id', handleResponse(update));
 router.delete('/:id', handleResponse(deleteService));
 
 export default router;
