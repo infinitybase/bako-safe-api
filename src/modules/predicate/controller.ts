@@ -5,6 +5,7 @@ import {
   ICreatePredicateRequest,
   IDeletePredicateRequest,
   IFindByIdRequest,
+  IListRequest,
   IPredicateService, // IUpdatePredicateRequest,
 } from './types';
 
@@ -19,7 +20,6 @@ export class PredicateController {
   async create({ body: payload }: ICreatePredicateRequest) {
     try {
       const response = await this.predicateService.create(payload);
-
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
@@ -46,7 +46,7 @@ export class PredicateController {
     }
   }
 
-  async list(req: IFindByIdRequest) {
+  async list(req: IListRequest) {
     const {
       address,
       signer,

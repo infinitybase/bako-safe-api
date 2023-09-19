@@ -4,14 +4,13 @@ import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination
 
 import { Predicate } from '@models/index';
 
-import { ErrorTypes } from '@utils/error/GeneralError';
+import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
 
 import {
-  ICreatePredicatePayload,
   IPredicateFilterParams,
+  IPredicatePayload,
   IPredicateService,
-  IUpdatePredicatePayload,
 } from './types';
 
 export class PredicateService implements IPredicateService {
@@ -34,8 +33,11 @@ export class PredicateService implements IPredicateService {
     return this;
   }
 
-  async create(payload: ICreatePredicatePayload): Promise<Predicate> {
-    return Predicate.create(payload)
+  async create(payload: IPredicatePayload): Promise<Predicate> {
+    return Predicate.create({
+      ...payload,
+      addresses: JSON.stringify(payload.addresses),
+    })
       .save()
       .then(predicate => predicate)
       .catch(e => {
@@ -74,6 +76,8 @@ export class PredicateService implements IPredicateService {
     const queryBuilder = Predicate.createQueryBuilder('p').select();
 
     const handleInternalError = e => {
+      if (e instanceof GeneralError) throw e;
+
       throw new Internal({
         type: ErrorTypes.Internal,
         title: 'Error on predicate list',
@@ -112,12 +116,28 @@ export class PredicateService implements IPredicateService {
           .catch(handleInternalError)
       : queryBuilder
           .getMany()
-          .then(predicates => predicates)
+          .then(predicates => {
+            if (!predicates.length) {
+              throw new NotFound({
+                type: ErrorTypes.NotFound,
+                title: 'Error on predicate list',
+                detail: 'No predicate was found for the provided params',
+              });
+            }
+
+            return predicates;
+          })
           .catch(handleInternalError);
   }
 
-  async update(id: string, payload: IUpdatePredicatePayload): Promise<Predicate> {
-    return Predicate.update({ id }, payload)
+  async update(id: string, payload: IPredicatePayload): Promise<Predicate> {
+    return Predicate.update(
+      { id },
+      {
+        ...payload,
+        addresses: JSON.stringify(payload.addresses),
+      },
+    )
       .then(() => this.findById(id))
       .catch(e => {
         throw new Internal({

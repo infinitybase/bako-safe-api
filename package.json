@@ -5,20 +5,21 @@
   "license": "MIT",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register -r dotenv/config src/server/index.ts",
-    "test": "jest",
+    "test": "chmod +x ./scripts/init_test.sh && ./scripts/init_test.sh",
     "start": "ts-node -r dotenv/config ./build/index.js",
     "build": "tsc --project . && tscpaths -p tsconfig.json -s ./src -o ./build",
     "migration:run": "ts-node -r tsconfig-paths/register -r dotenv/config ./node_modules/typeorm/cli.js migration:run",
     "migration:create": "ts-node -r tsconfig-paths/register -r dotenv/config ./node_modules/typeorm/cli.js migration:create -n",
     "migration:revert": "ts-node -r tsconfig-paths/register -r dotenv/config ./node_modules/typeorm/cli.js migration:revert",
     "prepare": "husky install",
-    "database:init": "docker run --name postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_USER=postgres -e POSTGRES_DB=postgres -p 5432:5432 -d postgres",
-    "database:stop": "docker stop postgres",
-    "database:start": "docker start postgres"
+    "database:test": "make -C ./docker/database start env_file=.env.test",
+    "database:dev": "make -C ./docker/database start env_file=.env.dev",
+    "database:stop": "make -C ./docker/database start",
+    "database:start": "make -C ./docker/database start"
   },
   "dependencies": {
     "bcrypt": "5.1.0",
-    "bsafe": "0.0.8",
+    "bsafe": "0.0.10",
     "class-validator": "0.14.0",
     "cors": "2.8.5",
     "dotenv": "8.2.0",

@@ -4,7 +4,7 @@ import { AuthValidatedRequest } from '@src/middlewares/auth/types';
 import { IOrdination } from '@src/utils/ordination';
 import { IPagination, PaginationParams } from '@src/utils/pagination';
 
-import { Base, Predicate } from '@models/index';
+import { Predicate } from '@models/index';
 
 export enum OrderBy {
   name = 'name',
@@ -17,8 +17,20 @@ export enum Sort {
   desc = 'DESC',
 }
 
-export type ICreatePredicatePayload = Omit<Predicate, keyof Base>;
-export type IUpdatePredicatePayload = Partial<Predicate>;
+export interface IPredicatePayload {
+  name: string;
+  description: string;
+  predicateAddress: string;
+  minSigners: number;
+  addresses: string[];
+  owner: string;
+  bytes: string;
+  abi: string;
+  configurable: string;
+  provider: string;
+  chainId?: number;
+}
+
 export interface IPredicateFilterParams {
   address?: string;
   signer?: string;
@@ -27,11 +39,11 @@ export interface IPredicateFilterParams {
 }
 
 interface ICreatePredicateRequestSchema extends ValidatedRequestSchema {
-  [ContainerTypes.Body]: ICreatePredicatePayload;
+  [ContainerTypes.Body]: IPredicatePayload;
 }
 
 interface IUpdatePredicateRequestSchema extends ValidatedRequestSchema {
-  [ContainerTypes.Body]: IUpdatePredicatePayload;
+  [ContainerTypes.Body]: IPredicatePayload;
   [ContainerTypes.Params]: { id: string };
 }
 
@@ -67,8 +79,8 @@ export interface IPredicateService {
   paginate(pagination?: PaginationParams): this;
   filter(filter: IPredicateFilterParams): this;
 
-  create: (payload: ICreatePredicatePayload) => Promise<Predicate>;
-  update: (id: string, payload: IUpdatePredicatePayload) => Promise<Predicate>;
+  create: (payload: IPredicatePayload) => Promise<Predicate>;
+  update: (id: string, payload: IPredicatePayload) => Promise<Predicate>;
   delete: (id: string) => Promise<boolean>;
   findById: (id: string) => Promise<Predicate>;
   list: () => Promise<IPagination<Predicate> | Predicate[]>;

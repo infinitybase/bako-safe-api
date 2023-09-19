@@ -10,5 +10,3 @@ yarn pretty-quick --staged --pattern '**/*.*(js|ts)'
 echo "\n🐶 ${bold}[Husky]${normal} Running ESLint:"
 yarn lint-staged
 
-echo "\n🐶 ${bold}[Husky]${normal} Running tests:"
-yarn jest
