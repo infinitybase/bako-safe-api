@@ -5,6 +5,7 @@ import {
   ICreatePredicateRequest,
   IDeletePredicateRequest,
   IFindByIdRequest,
+  IListRequest,
   IPredicateService, // IUpdatePredicateRequest,
 } from './types';
 
@@ -54,7 +55,7 @@ export class PredicateController {
     }
   }
 
-  async list(req: IFindByIdRequest) {
+  async list(req: IListRequest) {
     const {
       address,
       signer,

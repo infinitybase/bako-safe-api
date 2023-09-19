@@ -4,7 +4,7 @@ import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination
 
 import { Predicate } from '@models/index';
 
-import { ErrorTypes } from '@utils/error/GeneralError';
+import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
 
 import {
@@ -76,6 +76,8 @@ export class PredicateService implements IPredicateService {
     const queryBuilder = Predicate.createQueryBuilder('p').select();
 
     const handleInternalError = e => {
+      if (e instanceof GeneralError) throw e;
+
       throw new Internal({
         type: ErrorTypes.Internal,
         title: 'Error on predicate list',
@@ -114,7 +116,17 @@ export class PredicateService implements IPredicateService {
           .catch(handleInternalError)
       : queryBuilder
           .getMany()
-          .then(predicates => predicates)
+          .then(predicates => {
+            if (!predicates.length) {
+              throw new NotFound({
+                type: ErrorTypes.NotFound,
+                title: 'Error on predicate list',
+                detail: 'No predicate was found for the provided params',
+              });
+            }
+
+            return predicates;
+          })
           .catch(handleInternalError);
   }
 
