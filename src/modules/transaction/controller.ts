@@ -1,43 +1,57 @@
 import { error } from '@utils/error';
 import { Responses, successful, bindMethods } from '@utils/index';
 
+import { IPredicateService } from '../predicate/types';
+import { IWitnessService } from '../witness/types';
 import {
-  IAddTransactionRequest,
-  ICloseTransactionRequest,
+  ICreateTransactionRequest,
   IFindTransactionByIdRequest,
-  IFindTransactionByPredicateIdRequest,
-  IFindTransactionByToRequest,
-  ISignerByIdRequest,
+  ISignByIdRequest,
   ITransactionService,
+  TransactionStatus,
+  IListRequest,
 } from './types';
 
 export class TransactionController {
   private transactionService: ITransactionService;
+  private predicateService: IPredicateService;
+  private witnessService: IWitnessService;
 
-  constructor(transactionService: ITransactionService) {
+  constructor(
+    transactionService: ITransactionService,
+    predicateService: IPredicateService,
+    witnessService: IWitnessService,
+  ) {
     this.transactionService = transactionService;
+    this.predicateService = predicateService;
+    this.witnessService = witnessService;
+
     bindMethods(this);
   }
 
-  async add({ body: transaction }: IAddTransactionRequest) {
+  async create({ body: transaction }: ICreateTransactionRequest) {
     try {
-      const response = await this.transactionService.add({
+      const newTransaction = await this.transactionService.create({
         ...transaction,
-        status: 'AWAIT',
+        status: TransactionStatus.AWAIT,
       });
-      return successful(response, Responses.Ok);
-    } catch (e) {
-      return error(e.error[0], e.statusCode);
-    }
-  }
 
-  async findAll() {
-    try {
-      const response = await this.transactionService
-        .ordination()
-        .paginate()
-        .findAll();
-      return successful(response, Responses.Ok);
+      const predicate = await this.predicateService.findById(
+        newTransaction.predicateID,
+      );
+
+      const witnesses = ((predicate.addresses as unknown) as string[]).map(
+        (address: string) => ({
+          account: address,
+          transactionID: newTransaction.id,
+        }),
+      );
+
+      for await (const witness of witnesses) {
+        await this.witnessService.create(witness);
+      }
+
+      return successful(newTransaction, Responses.Ok);
     } catch (e) {
       return error(e.error[0], e.statusCode);
     }
@@ -52,61 +66,44 @@ export class TransactionController {
     }
   }
 
-  async findByPredicateId({
-    params: { predicateId },
-  }: IFindTransactionByPredicateIdRequest) {
+  async signByID({ body: { account, signer }, params: { id } }: ISignByIdRequest) {
+    try {
+      const transaction = await this.transactionService.findById(id);
+      const witness = transaction.witnesses.find(w => w.account === account);
+
+      if (transaction && witness) {
+        await this.witnessService.update(witness.id, { signature: signer });
+
+        const statusField =
+          Number(transaction.predicate.minSigners) <=
+          transaction.witnesses.length + 1
+            ? TransactionStatus.PENDING
+            : TransactionStatus.AWAIT;
+
+        const updatedTransaction = await this.transactionService.update(id, {
+          status: statusField,
+        });
+
+        return successful(updatedTransaction, Responses.Ok);
+      }
+    } catch (e) {
+      return error(e.error[0], e.statusCode);
+    }
+  }
+
+  async list(req: IListRequest) {
+    const { predicateId, to, orderBy, sort, page, perPage } = req.query;
+
     try {
       const response = await this.transactionService
-        .ordination()
-        .paginate()
-        .findByPredicateId(predicateId);
-      return successful(response, Responses.Ok);
-    } catch (e) {
-      return error(e.error[0], e.statusCode);
-    }
-  }
+        .filter({ predicateId, to })
+        .ordination({ orderBy, sort })
+        .paginate({ page, perPage })
+        .list();
 
-  async findByTo({ params: { to } }: IFindTransactionByToRequest) {
-    try {
-      const response = await this.transactionService
-        .ordination()
-        .paginate()
-        .findByTo(to);
       return successful(response, Responses.Ok);
     } catch (e) {
-      return error(e.error[0], e.statusCode);
-    }
-  }
-
-  async close({
-    body: { gasUsed, transactionResult },
-    params: { id },
-  }: ICloseTransactionRequest) {
-    try {
-      const response = await this.transactionService.close(id, {
-        status: 'DONE',
-        sendTime: new Date(),
-        gasUsed,
-        resume: transactionResult,
-      });
-      return successful(response, Responses.Ok);
-    } catch (e) {
-      return error(e.error[0], e.statusCode);
-    }
-  }
-
-  async signerByID({
-    body: { account, signer },
-    params: { id },
-  }: ISignerByIdRequest) {
-    try {
-      const response = await this.transactionService.signerByID(id, {
-        account,
-        signer,
-      });
-      return successful(response, Responses.Ok);
-    } catch (e) {
-      return error(e.error[0], e.statusCode);
+      return error(e.error, e.statusCode);
     }
   }
 }
