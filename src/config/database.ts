@@ -15,17 +15,17 @@ const {
 } = process.env;
 
 console.log({
-    DATABASE_PASSWORD,
-    DATABASE_HOST,
-    DATABASE_URL,
-    DATABASE_USERNAME,
-    DATABASE_NAME,
-    DATABASE_PORT,
-    NODE_ENV,
-})
+  DATABASE_PASSWORD,
+  DATABASE_HOST,
+  DATABASE_URL,
+  DATABASE_USERNAME,
+  DATABASE_NAME,
+  DATABASE_PORT,
+  NODE_ENV,
+});
 
 const [host, port] = String(DATABASE_URL).split(':');
-
+const environment = NODE_ENV;
 const entitiesDir = path.resolve(__dirname, '..', 'models', '**', '*{.ts,.js}');
 const migrationsDir = path.resolve(
   __dirname,
@@ -63,16 +63,20 @@ const development: ConnectionOptions = {
 };
 
 const test: ConnectionOptions = {
-  database: path.resolve(__dirname, '..', '..', '__data__', 'database.test.sqlite'),
-  type: 'sqlite',
-  entities: [path.resolve(__dirname, '..', 'models', '**', '*{.ts,.js}')],
+  type: 'postgres',
+  host: DATABASE_HOST,
+  port: Number(port),
+  username: DATABASE_USERNAME,
+  password: DATABASE_PASSWORD,
+  database: DATABASE_NAME,
+  entities: [entitiesDir],
   migrations: [migrationsDir, seedersDir],
   cli: {
     entitiesDir: './src/models/',
     migrationsDir: './src/database/migrations/',
   },
   synchronize: false,
-  migrationsRun: true,
+  migrationsRun: false,
 };
 
 const production: ConnectionOptions = {
@@ -115,4 +119,4 @@ const database = {
   test,
 };
 
-export default database[NODE_ENV || 'development'];
+export default database['test'];

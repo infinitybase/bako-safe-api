@@ -8,10 +8,9 @@ import { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
 
 import {
-  ICreatePredicatePayload,
   IPredicateFilterParams,
+  IPredicatePayload,
   IPredicateService,
-  IUpdatePredicatePayload,
 } from './types';
 
 export class PredicateService implements IPredicateService {
@@ -34,8 +33,11 @@ export class PredicateService implements IPredicateService {
     return this;
   }
 
-  async create(payload: ICreatePredicatePayload): Promise<Predicate> {
-    return Predicate.create(payload)
+  async create(payload: IPredicatePayload): Promise<Predicate> {
+    return Predicate.create({
+      ...payload,
+      addresses: JSON.stringify(payload.addresses),
+    })
       .save()
       .then(predicate => predicate)
       .catch(e => {
@@ -116,8 +118,14 @@ export class PredicateService implements IPredicateService {
           .catch(handleInternalError);
   }
 
-  async update(id: string, payload: IUpdatePredicatePayload): Promise<Predicate> {
-    return Predicate.update({ id }, payload)
+  async update(id: string, payload: IPredicatePayload): Promise<Predicate> {
+    return Predicate.update(
+      { id },
+      {
+        ...payload,
+        addresses: JSON.stringify(payload.addresses),
+      },
+    )
       .then(() => this.findById(id))
       .catch(e => {
         throw new Internal({
