@@ -15,7 +15,8 @@
       "@middlewares/*": ["./middlewares/*"],
       "@modules/*": ["./modules/*"],
       "@models/*": ["./models/*"],
-      "@utils/*": ["./utils/*"]
+      "@utils/*": ["./utils/*"],
+      "@mocks/*": ["./mocks/*"]
     }
   },
   "include": ["src/**/*", "src/*"],

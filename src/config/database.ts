@@ -14,16 +14,6 @@ const {
   NODE_ENV,
 } = process.env;
 
-console.log({
-    DATABASE_PASSWORD,
-    DATABASE_HOST,
-    DATABASE_URL,
-    DATABASE_USERNAME,
-    DATABASE_NAME,
-    DATABASE_PORT,
-    NODE_ENV,
-})
-
 const [host, port] = String(DATABASE_URL).split(':');
 
 const entitiesDir = path.resolve(__dirname, '..', 'models', '**', '*{.ts,.js}');
@@ -63,16 +53,20 @@ const development: ConnectionOptions = {
 };
 
 const test: ConnectionOptions = {
-  database: path.resolve(__dirname, '..', '..', '__data__', 'database.test.sqlite'),
-  type: 'sqlite',
-  entities: [path.resolve(__dirname, '..', 'models', '**', '*{.ts,.js}')],
+  type: 'postgres',
+  host: DATABASE_HOST,
+  port: Number(port),
+  username: DATABASE_USERNAME,
+  password: DATABASE_PASSWORD,
+  database: DATABASE_NAME,
+  entities: [entitiesDir],
   migrations: [migrationsDir, seedersDir],
   cli: {
     entitiesDir: './src/models/',
     migrationsDir: './src/database/migrations/',
   },
   synchronize: false,
-  migrationsRun: true,
+  migrationsRun: false,
 };
 
 const production: ConnectionOptions = {

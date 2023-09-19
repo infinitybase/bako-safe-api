@@ -31,7 +31,6 @@ class GeneralError {
   constructor(error: Error, statusCode: number) {
     this.error = error;
     this.statusCode = statusCode;
-    console.log(error, statusCode);
   }
 }
 

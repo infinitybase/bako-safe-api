@@ -15,7 +15,7 @@ export interface SuccessResponse<T> {
 
 const successful = <ResponsePayload>(
   payload: ResponsePayload,
-  statusCode = Responses.Ok,
+  statusCode,
 ): SuccessResponse<ResponsePayload> => ({
   payload,
   statusCode,

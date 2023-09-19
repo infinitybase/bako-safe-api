@@ -19,7 +19,7 @@ const error = <ResponsePayload>(
   statusCode: Responses,
 ): ErrorResponse<ResponsePayload> => {
   return {
-    payload: payload,
+    payload,
     statusCode,
   };
 };

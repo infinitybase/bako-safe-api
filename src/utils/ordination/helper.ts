@@ -4,10 +4,9 @@ export interface IOrdination<T> {
 }
 
 export const setOrdination = <T>(order: IOrdination<T>) => {
-  console.log('->> order: ', order);
   const _order: IOrdination<T> = {
-    orderBy: order?.orderBy ?? ('updatedAt' as keyof T),
-    sort: order?.sort ?? 'DESC',
+    orderBy: order?.orderBy ? order.orderBy : ('updatedAt' as keyof T),
+    sort: order?.sort ? order.sort : 'DESC',
   };
 
   return _order;

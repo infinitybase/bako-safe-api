@@ -14,12 +14,31 @@ class Bootstrap {
   }
 
   static async start() {
+    const {
+      DATABASE_HOST,
+      DATABASE_PORT,
+      DATABASE_USERNAME,
+      DATABASE_PASSWORD,
+      DATABASE_NAME,
+      NODE_ENV,
+    } = process.env;
+
+    console.log('[DATABASE CONST]: ', {
+      DATABASE_HOST,
+      DATABASE_PORT,
+      DATABASE_USERNAME,
+      DATABASE_PASSWORD,
+      DATABASE_NAME,
+      NODE_ENV,
+    });
+
     this.startEnv();
     await this.connectDatabase();
-    if (process.env.NODE_ENV === 'test') {
-      await getConnection().runMigrations();
-    }
-    await this.runSeeders();
+    const isTest = NODE_ENV === 'test';
+
+    isTest && (await getConnection().runMigrations());
+
+    !isTest && (await this.runSeeders());
   }
 
   static async clearAllEntities() {
