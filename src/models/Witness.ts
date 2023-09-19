@@ -6,7 +6,7 @@ import { Transaction } from './Transaction';
 @Entity('witnesses')
 class Witness extends Base {
   @Column()
-  signature: string;
+  signature?: string;
 
   @Column()
   account: string;
@@ -16,7 +16,7 @@ class Witness extends Base {
 
   @JoinColumn({ name: 'transactionID' })
   @ManyToOne(() => Transaction)
-  transaction: Transaction;
+  transaction?: Transaction;
 }
 
 export { Witness };

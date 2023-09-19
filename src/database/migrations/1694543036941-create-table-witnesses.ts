@@ -17,6 +17,7 @@ export class createTableWitnesses1694543036941 implements MigrationInterface {
           {
             name: 'signature',
             type: 'varchar',
+            isNullable: true,
           },
           {
             name: 'account',
