@@ -1,14 +1,18 @@
-import { Base, Witness } from '@src/models';
-import { IOrdination } from '@src/utils/ordination';
-import { PaginationParams } from '@src/utils/pagination';
+import { Witness } from '@src/models';
 
-export type ICreateWitnessPayload = Omit<Witness, keyof Base>;
-export type IUpdateWitnessPayload = Partial<ICreateWitnessPayload>;
+export interface ICreateWitnessPayload {
+  signature?: string;
+  account: string;
+  transactionID: string;
+}
+
+export interface IUpdateWitnessPayload {
+  signature?: string;
+}
 
 export interface IWitnessService {
   create: (payload: ICreateWitnessPayload) => Promise<Witness>;
   update: (id: string, payload: IUpdateWitnessPayload) => Promise<Witness>;
   findById: (id: string) => Promise<Witness>;
-  ordination(ordination?: IOrdination<Witness>): this;
-  paginate(pagination?: PaginationParams): this;
+  list: () => Promise<Witness[]>;
 }

@@ -3,8 +3,6 @@ import { Witness } from '@models/index';
 import { NotFound } from '@utils/error';
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
-import { IOrdination, setOrdination } from '@utils/ordination';
-import { PaginationParams } from '@utils/pagination';
 
 import {
   IWitnessService,
@@ -13,25 +11,6 @@ import {
 } from './types';
 
 export class WitnessService implements IWitnessService {
-  private _ordination: IOrdination<Witness>;
-  private _pagination: PaginationParams;
-  // private _filter: ITransactionFilterParams;
-
-  // filter(filter: ITransactionFilterParams) {
-  //   this._filter = filter;
-  //   return this;
-  // }
-
-  paginate(pagination?: PaginationParams) {
-    this._pagination = pagination;
-    return this;
-  }
-
-  ordination(ordination?: IOrdination<Witness>) {
-    this._ordination = setOrdination(ordination);
-    return this;
-  }
-
   async create(payload: ICreateWitnessPayload): Promise<Witness> {
     return Witness.create(payload)
       .save()
@@ -88,6 +67,18 @@ export class WitnessService implements IWitnessService {
         throw new Internal({
           type: ErrorTypes.Internal,
           title: 'Error on witness deletion',
+          detail: e,
+        });
+      });
+  }
+
+  async list(): Promise<Witness[]> {
+    return Witness.find()
+      .then(witnesses => witnesses)
+      .catch(e => {
+        throw new Internal({
+          type: ErrorTypes.Internal,
+          title: 'Error on witnesses list',
           detail: e,
         });
       });
