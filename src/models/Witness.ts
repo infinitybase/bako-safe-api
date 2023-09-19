@@ -16,7 +16,7 @@ class Witness extends Base {
 
   @JoinColumn({ name: 'transactionID' })
   @ManyToOne(() => Transaction)
-  transaction?: Transaction;
+  transaction: Transaction;
 }
 
 export { Witness };

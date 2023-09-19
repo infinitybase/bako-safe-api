@@ -5,6 +5,12 @@ import { Base } from './Base';
 import { Predicate } from './Predicate';
 import { Witness } from './Witness';
 
+export enum TransactionStatus {
+  AWAIT = 'AWAIT',
+  DONE = 'DONE',
+  PENDING = 'PENDING',
+}
+
 @Entity('transactions')
 class Transaction extends Base {
   @Column()
@@ -22,8 +28,8 @@ class Transaction extends Base {
   @Column()
   hash: string;
 
-  @Column()
-  status: string;
+  @Column({ enum: TransactionStatus })
+  status: TransactionStatus;
 
   @Column()
   sendTime: Date;
