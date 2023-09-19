@@ -25,7 +25,7 @@ export interface UnauthorizedError extends Omit<Error, 'title'> {
 
 // -> retornado quando o usuário nao está autenticado
 class Unauthorized extends GeneralError {
-  constructor(error: UnauthorizedError | UnauthorizedError[]) {
+  constructor(error: UnauthorizedError) {
     super(error, 401);
   }
 }

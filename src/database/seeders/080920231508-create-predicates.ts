@@ -1,4 +1,4 @@
-import { defaultValues } from '@src/utils/constantes';
+import { defaultValues } from 'bsafe';
 
 import { Predicate } from '@models/index';
 
@@ -18,7 +18,7 @@ export default async function () {
       ]),
       minSigners: 3,
       owner: 'owner',
-      network: 'network',
+      provider: 'provider',
       chainId: 2231,
       createdAt: new Date(),
     },

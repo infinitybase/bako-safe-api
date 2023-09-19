@@ -4,14 +4,25 @@ import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination
 
 import { Predicate } from '@models/index';
 
-import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
+import { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
 
-import { IAddPredicatePayload, IPredicateService } from './types';
+import {
+  ICreatePredicatePayload,
+  IPredicateFilterParams,
+  IPredicateService,
+  IUpdatePredicatePayload,
+} from './types';
 
 export class PredicateService implements IPredicateService {
   private _ordination: IOrdination<Predicate>;
   private _pagination: PaginationParams;
+  private _filter: IPredicateFilterParams;
+
+  filter(filter: IPredicateFilterParams) {
+    this._filter = filter;
+    return this;
+  }
 
   paginate(pagination?: PaginationParams) {
     this._pagination = pagination;
@@ -23,7 +34,7 @@ export class PredicateService implements IPredicateService {
     return this;
   }
 
-  async add(payload: IAddPredicatePayload): Promise<Predicate> {
+  async create(payload: ICreatePredicatePayload): Promise<Predicate> {
     return Predicate.create(payload)
       .save()
       .then(predicate => predicate)
@@ -36,58 +47,20 @@ export class PredicateService implements IPredicateService {
       });
   }
 
-  async findAll(): Promise<IPagination<Predicate> | Predicate[]> {
-    const hasPagination = this._pagination?.page && this._pagination?.perPage;
-
-    const queryBuilder = Predicate.createQueryBuilder('p').select();
-
-    queryBuilder.orderBy(`p.${this._ordination.orderBy}`, this._ordination.sort);
-
-    return hasPagination
-      ? Pagination.create(queryBuilder)
-          .paginate(this._pagination)
-          .then(paginationResult => paginationResult)
-          .catch(e => {
-            console.log(e);
-            throw new Internal({
-              type: ErrorTypes.Internal,
-              title: 'Error on predicate findAll',
-              detail: e,
-            });
-          })
-      : queryBuilder
-          .getMany()
-          .then(predicates => predicates)
-          .catch(e => {
-            console.log(e);
-            throw new Internal({
-              type: ErrorTypes.Internal,
-              title: 'Error on predicate findAll',
-              detail: e,
-            });
-          });
-  }
-
   async findById(id: string): Promise<Predicate> {
-    return Predicate.findOne({
-      where: { id },
-    })
+    return Predicate.findOne({ where: { id } })
       .then(predicate => {
         if (!predicate) {
           throw new NotFound({
             type: ErrorTypes.NotFound,
             title: 'Predicate not found',
-            detail: `No predicate was found for the provided ID: ${id}.`,
+            detail: `Predicate with id ${id} not found`,
           });
         }
 
         return predicate;
       })
       .catch(e => {
-        if (e instanceof GeneralError) {
-          throw e;
-        }
-
         throw new Internal({
           type: ErrorTypes.Internal,
           title: 'Error on predicate findById',
@@ -96,84 +69,74 @@ export class PredicateService implements IPredicateService {
       });
   }
 
-  async findByPredicateAddress(predicateAddress: string): Promise<Predicate> {
-    return Predicate.findOne({
-      where: { predicateAddress },
-    })
-      .then(predicate => {
-        if (!predicate) {
-          throw new NotFound({
-            type: ErrorTypes.NotFound,
-            title: 'Predicates not found',
-            detail: `No predicate was found for the provided predicate's address.`,
-          });
-        }
-
-        return predicate;
-      })
-      .catch(e => {
-        if (e instanceof GeneralError) {
-          throw e;
-        }
-
-        throw new Internal({
-          type: ErrorTypes.Internal,
-          title: 'Error on predicate findByPredicateAddress',
-          detail: e,
-        });
-      });
-  }
-
-  async findByAdresses(
-    address: string,
-  ): Promise<IPagination<Predicate> | Predicate[]> {
-    const hasPagination = this._pagination?.page && this._pagination?.perPage;
+  async list(): Promise<IPagination<Predicate> | Predicate[]> {
+    const hasPagination = this._pagination.page && this._pagination.perPage;
     const queryBuilder = Predicate.createQueryBuilder('p').select();
 
-    if (address) {
-      queryBuilder
-        .where(
-          `:address = ANY(SELECT jsonb_array_elements_text(p.addresses::jsonb)::text)`,
-          { address: address },
-        )
-        .orderBy(`p.${this._ordination.orderBy}`, this._ordination.sort);
-    }
+    const handleInternalError = e => {
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on predicate list',
+        detail: e,
+      });
+    };
+
+    this._filter.address &&
+      queryBuilder.where(
+        'LOWER(p.predicatedAddress) LIKE LOWER(:predicatedAddress)',
+        { predicateAddress: `%${this._filter.address}%` },
+      );
+
+    this._filter.provider &&
+      queryBuilder.where('LOWER(p.provider) LIKE LOWER(:provider)', {
+        provider: `%${this._filter.provider}%`,
+      });
+
+    this._filter.owner &&
+      queryBuilder.where('LOWER(p.owner) LIKE LOWER(:owner)', {
+        owner: `%${this._filter.owner}%`,
+      });
+
+    this._filter.signer &&
+      queryBuilder.where(
+        `:address = ANY(SELECT jsonb_array_elements_text(p.addresses::jsonb)::text)`,
+        { address: this._filter.signer },
+      );
+
+    queryBuilder.orderBy(`p.${this._ordination.orderBy}`, this._ordination.sort);
 
     return hasPagination
       ? Pagination.create(queryBuilder)
           .paginate(this._pagination)
           .then(paginationResult => paginationResult)
-          .catch(e => {
-            console.log(e);
-            throw new Internal({
-              type: ErrorTypes.Internal,
-              title: 'Error on predicate findByAddresses',
-              detail: e,
-            });
-          })
+          .catch(handleInternalError)
       : queryBuilder
           .getMany()
-          .then(predicates => {
-            if (!predicates.length) {
-              throw new NotFound({
-                type: ErrorTypes.NotFound,
-                title: 'Predicates not found',
-                detail: `No predicates were found for the provided address.`,
-              });
-            }
+          .then(predicates => predicates)
+          .catch(handleInternalError);
+  }
 
-            return predicates;
-          })
-          .catch(e => {
-            if (e instanceof GeneralError) {
-              throw e;
-            }
+  async update(id: string, payload: IUpdatePredicatePayload): Promise<Predicate> {
+    return Predicate.update({ id }, payload)
+      .then(() => this.findById(id))
+      .catch(e => {
+        throw new Internal({
+          type: ErrorTypes.Internal,
+          title: 'Error on predicate update',
+          detail: e,
+        });
+      });
+  }
 
-            throw new Internal({
-              type: ErrorTypes.Internal,
-              title: 'Error on predicate findByAdresses',
-              detail: e,
-            });
-          });
+  async delete(id: string): Promise<boolean> {
+    return await Predicate.update({ id }, { deletedAt: new Date() })
+      .then(() => true)
+      .catch(() => {
+        throw new NotFound({
+          type: ErrorTypes.NotFound,
+          title: 'Predicate not found',
+          detail: `Predicate with id ${id} not found`,
+        });
+      });
   }
 }

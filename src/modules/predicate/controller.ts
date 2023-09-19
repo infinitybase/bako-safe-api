@@ -2,11 +2,10 @@ import { error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
 
 import {
-  IAddPredicateRequest,
-  IFindByAdressesRequest,
+  ICreatePredicateRequest,
+  IDeletePredicateRequest,
   IFindByIdRequest,
-  IFindByPredicateAdressRequest,
-  IPredicateService,
+  IPredicateService, // IUpdatePredicateRequest,
 } from './types';
 
 export class PredicateController {
@@ -17,58 +16,58 @@ export class PredicateController {
     bindMethods(this);
   }
 
-  async add({ body: predicate }: IAddPredicateRequest) {
+  async create({ body: payload }: ICreatePredicateRequest) {
     try {
-      const response = await this.predicateService.add(predicate);
+      const response = await this.predicateService.create(payload);
+
       return successful(response, Responses.Ok);
     } catch (e) {
-      return error(e.error[0], e.statusCode);
+      return error(e.error, e.statusCode);
     }
   }
 
-  async findAll() {
+  async delete({ params: { id } }: IDeletePredicateRequest) {
     try {
-      const response = await this.predicateService
-        .ordination()
-        .paginate()
-        .findAll();
+      const response = await this.predicateService.delete(id);
+
       return successful(response, Responses.Ok);
     } catch (e) {
-      return error(e.error[0], e.statusCode);
+      return error(e.error, e.statusCode);
     }
   }
 
   async findById({ params: { id } }: IFindByIdRequest) {
     try {
       const response = await this.predicateService.findById(id);
+
       return successful(response, Responses.Ok);
     } catch (e) {
-      return error(e.error[0], e.statusCode);
+      return error(e.error, e.statusCode);
     }
   }
 
-  async findByAddresses({ params: { address } }: IFindByAdressesRequest) {
+  async list(req: IFindByIdRequest) {
+    const {
+      address,
+      signer,
+      provider,
+      owner,
+      orderBy,
+      sort,
+      page,
+      perPage,
+    } = req.query;
+
     try {
       const response = await this.predicateService
-        .ordination()
-        .paginate()
-        .findByAdresses(address);
-      return successful(response, Responses.Ok);
-    } catch (e) {
-      return error(e.error[0], e.statusCode);
-    }
-  }
+        .filter({ address, signer, provider, owner })
+        .ordination({ orderBy, sort })
+        .paginate({ page, perPage })
+        .list();
 
-  async findByPredicateAddress({
-    params: { predicateAddress },
-  }: IFindByPredicateAdressRequest) {
-    try {
-      const response = await this.predicateService.findByPredicateAddress(
-        predicateAddress,
-      );
       return successful(response, Responses.Ok);
     } catch (e) {
-      return error(e.error[0], e.statusCode);
+      return error(e.error, e.statusCode);
     }
   }
 }

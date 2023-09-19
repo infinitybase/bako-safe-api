@@ -11,27 +11,19 @@ import { validateAddPredicatePayload } from './validations';
 const router = Router();
 const predicateService = new PredicateService();
 const {
-  findAll,
-  findByAddresses,
-  add,
+  create,
   findById,
-  findByPredicateAddress,
+  list,
+  // update,
+  delete: deleteService,
 } = new PredicateController(predicateService);
 
 router.use(authMiddleware);
 
-// Add Predicate
-router.post('/', validateAddPredicatePayload, handleResponse(add));
-// List all predicates
-router.get('/', handleResponse(findAll));
-// List predicate by id
+router.post('/', validateAddPredicatePayload, handleResponse(create));
+router.get('/', handleResponse(list));
 router.get('/:id', handleResponse(findById));
-// List by adresses [fuel2sa..ska0]
-router.get('/by-addresses/:address', handleResponse(findByAddresses));
-// List predicate by adresses [fuel2sa..ska0]
-router.get(
-  '/by-predicate-address/:predicateAddress',
-  handleResponse(findByPredicateAddress),
-);
+// router.put('/:id', handleResponse(update));
+router.delete('/:id', handleResponse(deleteService));
 
 export default router;
