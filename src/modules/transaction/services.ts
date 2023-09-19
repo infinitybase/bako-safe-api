@@ -1,11 +1,10 @@
-import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination';
-
 import { Transaction } from '@models/index';
 
 import { NotFound } from '@utils/error';
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
 import { IOrdination, setOrdination } from '@utils/ordination';
+import { IPagination, Pagination, PaginationParams } from '@utils/pagination';
 
 import {
   ICreateTransactionPayload,
@@ -35,7 +34,6 @@ export class TransactionService implements ITransactionService {
   }
 
   async create(payload: ICreateTransactionPayload): Promise<Transaction> {
-    // TODO: quando criada a transacao, ja inserir na tabela witnesses com uma coluna de status
     return Transaction.create(payload)
       .save()
       .then(transaction => transaction)
@@ -76,6 +74,7 @@ export class TransactionService implements ITransactionService {
             detail: `No transaction was found for the provided ID: ${id}.`,
           });
         }
+
         return transaction;
       })
       .catch(e => {
@@ -93,14 +92,6 @@ export class TransactionService implements ITransactionService {
     const hasPagination = this._pagination.page && this._pagination.perPage;
     const queryBuilder = Transaction.createQueryBuilder('t').select();
 
-    const handleInternalError = e => {
-      throw new Internal({
-        type: ErrorTypes.Internal,
-        title: 'Error on transaction list',
-        detail: e,
-      });
-    };
-
     this._filter.predicateId &&
       queryBuilder.where({ predicateID: this._filter.predicateId });
 
@@ -114,24 +105,35 @@ export class TransactionService implements ITransactionService {
       .leftJoinAndSelect('t.witnesses', 'witnesses')
       .orderBy(`t.${this._ordination.orderBy}`, this._ordination.sort);
 
+    const handleInternalError = e => {
+      if (e instanceof GeneralError) throw e;
+
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on transaction list',
+        detail: e,
+      });
+    };
+
     return hasPagination
       ? Pagination.create(queryBuilder)
           .paginate(this._pagination)
           .then(paginationResult => paginationResult)
-          .catch(e => handleInternalError(e))
+          .catch(handleInternalError)
       : queryBuilder
           .getMany()
           .then(transactions => {
             if (!transactions.length) {
               throw new NotFound({
                 type: ErrorTypes.NotFound,
-                title: 'Transactions not found',
-                detail: `No transactions were found with the provided params.`,
+                title: 'Error on transaction list',
+                detail: 'No transactions found with the provided params',
               });
             }
+
             return transactions;
           })
-          .catch(e => handleInternalError(e));
+          .catch(handleInternalError);
   }
 
   async delete(id: string): Promise<boolean> {
@@ -140,7 +142,7 @@ export class TransactionService implements ITransactionService {
       .catch(e => {
         throw new Internal({
           type: ErrorTypes.Internal,
-          title: 'Error on transaction update',
+          title: 'Error on transaction delete',
           detail: e,
         });
       });

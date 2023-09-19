@@ -1,18 +1,11 @@
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 
-import { AuthValidatedRequest } from '@src/middlewares/auth/types';
-import { IOrdination } from '@src/utils/ordination';
-import { IPagination, PaginationParams } from '@src/utils/pagination';
+import { Transaction, TransactionStatus } from '@models/index';
 
-import { Base, Transaction } from '@models/index';
+import { AuthValidatedRequest } from '@middlewares/auth/types';
 
-export const allowedStatus = ['PENDING', 'DONE', 'AWAIT'];
-
-export enum TransactionStatus {
-  AWAIT = 'AWAIT',
-  DONE = 'DONE',
-  PENDING = 'PENDING',
-}
+import { IOrdination } from '@utils/ordination';
+import { IPagination, PaginationParams } from '@utils/pagination';
 
 export enum OrderBy {
   name = 'name',
@@ -26,8 +19,26 @@ export enum Sort {
   desc = 'DESC',
 }
 
-export type ICreateTransactionPayload = Omit<Transaction, keyof Base>;
-export type IUpdateTransactionPayload = Partial<ICreateTransactionPayload>;
+export interface ICreateTransactionPayload {
+  predicateAdress: string;
+  predicateID: string;
+  name: string;
+  txData: string;
+  hash: string;
+  status: TransactionStatus;
+  sendTime: Date;
+  gasUsed: string;
+  resume: string;
+}
+
+export interface IUpdateTransactionPayload {
+  name?: string;
+  status?: TransactionStatus;
+  resume?: string;
+  sendTime?: Date;
+  gasUsed?: string;
+}
+
 export type ICloseTransactionPayload = {
   gasUsed: string;
   status: TransactionStatus;
@@ -53,6 +64,16 @@ export interface ISignByIdPayload {
 interface ICreateTransactionRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Body]: ICreateTransactionPayload;
 }
+
+interface IUpdateTransactionRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Body]: IUpdateTransactionPayload;
+  [ContainerTypes.Params]: { id: string };
+}
+
+interface IDeleteTransactionRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Params]: { id: string };
+}
+
 interface ICloseTransactionRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Body]: ICloseTransactionBody;
   [ContainerTypes.Params]: { id: string };
@@ -87,6 +108,8 @@ interface IListRequestSchema extends ValidatedRequestSchema {
 }
 
 export type ICreateTransactionRequest = AuthValidatedRequest<ICreateTransactionRequestSchema>;
+export type IUpdateTransactionRequest = AuthValidatedRequest<IUpdateTransactionRequestSchema>;
+export type IDeleteTransactionRequest = AuthValidatedRequest<IDeleteTransactionRequestSchema>;
 export type ICloseTransactionRequest = AuthValidatedRequest<ICloseTransactionRequestSchema>;
 export type ISignByIdRequest = AuthValidatedRequest<ISignByIdRequestSchema>;
 export type IFindTransactionByIdRequest = AuthValidatedRequest<IFindTransactionByIdRequestSchema>;
@@ -103,4 +126,5 @@ export interface ITransactionService {
   update: (id: string, payload: IUpdateTransactionPayload) => Promise<Transaction>;
   list: () => Promise<IPagination<Transaction> | Transaction[]>;
   findById: (id: string) => Promise<Transaction>;
+  delete: (id: string) => Promise<boolean>;
 }

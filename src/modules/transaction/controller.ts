@@ -1,15 +1,18 @@
+import { TransactionStatus } from '@models/index';
+
+import { IPredicateService } from '@modules/predicate/types';
+import { IWitnessService } from '@modules/witness/types';
+
 import { error } from '@utils/error';
 import { Responses, successful, bindMethods } from '@utils/index';
 
-import { IPredicateService } from '../predicate/types';
-import { IWitnessService } from '../witness/types';
 import {
   ICreateTransactionRequest,
   IFindTransactionByIdRequest,
   ISignByIdRequest,
   ITransactionService,
-  TransactionStatus,
   IListRequest,
+  ICloseTransactionRequest,
 } from './types';
 
 export class TransactionController {
@@ -22,10 +25,7 @@ export class TransactionController {
     predicateService: IPredicateService,
     witnessService: IWitnessService,
   ) {
-    this.transactionService = transactionService;
-    this.predicateService = predicateService;
-    this.witnessService = witnessService;
-
+    Object.assign(this, { transactionService, predicateService, witnessService });
     bindMethods(this);
   }
 
@@ -80,11 +80,11 @@ export class TransactionController {
             ? TransactionStatus.PENDING
             : TransactionStatus.AWAIT;
 
-        const updatedTransaction = await this.transactionService.update(id, {
+        await this.transactionService.update(id, {
           status: statusField,
         });
 
-        return successful(updatedTransaction, Responses.Ok);
+        return successful(true, Responses.Ok);
       }
     } catch (e) {
       return error(e.error[0], e.statusCode);
@@ -104,6 +104,23 @@ export class TransactionController {
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
+    }
+  }
+
+  async close({
+    body: { gasUsed, transactionResult },
+    params: { id },
+  }: ICloseTransactionRequest) {
+    try {
+      const response = await this.transactionService.update(id, {
+        status: TransactionStatus.DONE,
+        sendTime: new Date(),
+        gasUsed,
+        resume: transactionResult,
+      });
+      return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error[0], e.statusCode);
     }
   }
 }

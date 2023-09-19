@@ -1,8 +1,10 @@
 import Joi from 'joi';
 
+import { TransactionStatus } from '@models/index';
+
 import { validator } from '@utils/index';
 
-import { allowedStatus } from './types';
+const allowedStatus = Object.values(TransactionStatus);
 
 export const validateAddTransactionPayload = validator.body(
   Joi.object({
