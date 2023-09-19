@@ -31,6 +31,12 @@ class User extends Base {
   @Column({ select: false })
   password: string;
 
+  @Column()
+  provider: string;
+
+  @Column()
+  connected_users: string;
+
   @Column({ enum: Languages })
   language: Languages;
 

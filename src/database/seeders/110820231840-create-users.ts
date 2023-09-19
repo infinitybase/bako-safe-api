@@ -19,6 +19,8 @@ export default async function () {
       email: process.env.APP_ADMIN_EMAIL,
       password: process.env.APP_ADMIN_PASSWORD,
       language: Languages.PORTUGUESE,
+      provider: 'provider',
+      connected_users: '["user1","user2"]',
       role: roles[0],
     },
   ];
