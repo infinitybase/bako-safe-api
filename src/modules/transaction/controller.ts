@@ -9,6 +9,7 @@ import { Responses, bindMethods, successful } from '@utils/index';
 import {
   ICloseTransactionRequest,
   ICreateTransactionRequest,
+  IFindTransactionByHashRequest,
   IFindTransactionByIdRequest,
   IListRequest,
   ISignByIdRequest,
@@ -29,15 +30,12 @@ export class TransactionController {
     bindMethods(this);
   }
 
-  async create({ body: transaction, params }: ICreateTransactionRequest) {
+  async create({ body: transaction }: ICreateTransactionRequest) {
     try {
-      const { orderBy, sort, page, perPage } = params;
       const predicate = await this.predicateService
         .filter({
           address: transaction.predicateAdress,
         })
-        .paginate({ page, perPage })
-        .ordination({ orderBy, sort })
         .list();
 
       const newTransaction = await this.transactionService.create({
@@ -70,6 +68,16 @@ export class TransactionController {
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error[0], e.statusCode);
+    }
+  }
+
+  async findByHash({ params: { hash } }: IFindTransactionByHashRequest) {
+    try {
+      const response = await this.transactionService.filter({ hash }).list();
+      return successful(response[0], Responses.Ok);
+    } catch (e) {
+      console.log(e);
+      return error(e.error, e.statusCode);
     }
   }
 

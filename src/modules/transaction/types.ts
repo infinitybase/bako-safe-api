@@ -49,6 +49,7 @@ export type ICloseTransactionPayload = {
 export interface ITransactionFilterParams {
   predicateId?: string;
   to?: string;
+  hash?: string;
 }
 
 export type ICloseTransactionBody = {
@@ -88,6 +89,10 @@ interface IFindTransactionByIdRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Params]: { id: string };
 }
 
+interface IFindTransactionByHashRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Params]: { hash: string };
+}
+
 interface IFindTransactionByPredicateIdRequestSchema
   extends ValidatedRequestSchema {
   [ContainerTypes.Params]: { predicateId: string };
@@ -113,6 +118,7 @@ export type IDeleteTransactionRequest = AuthValidatedRequest<IDeleteTransactionR
 export type ICloseTransactionRequest = AuthValidatedRequest<ICloseTransactionRequestSchema>;
 export type ISignByIdRequest = AuthValidatedRequest<ISignByIdRequestSchema>;
 export type IFindTransactionByIdRequest = AuthValidatedRequest<IFindTransactionByIdRequestSchema>;
+export type IFindTransactionByHashRequest = AuthValidatedRequest<IFindTransactionByHashRequestSchema>;
 export type IFindTransactionByPredicateIdRequest = AuthValidatedRequest<IFindTransactionByPredicateIdRequestSchema>;
 export type IFindTransactionByToRequest = AuthValidatedRequest<IFindTransactionByToRequestSchema>;
 export type IListRequest = AuthValidatedRequest<IListRequestSchema>;

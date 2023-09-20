@@ -14,7 +14,10 @@ import {
 } from './types';
 
 export class PredicateService implements IPredicateService {
-  private _ordination: IOrdination<Predicate>;
+  private _ordination: IOrdination<Predicate> = {
+    orderBy: 'updatedAt',
+    sort: 'DESC',
+  };
   private _pagination: PaginationParams;
   private _filter: IPredicateFilterParams;
 
@@ -72,7 +75,7 @@ export class PredicateService implements IPredicateService {
   }
 
   async list(): Promise<IPagination<Predicate> | Predicate[]> {
-    const hasPagination = this._pagination.page && this._pagination.perPage;
+    const hasPagination = this._pagination?.page && this._pagination?.perPage;
     const queryBuilder = Predicate.createQueryBuilder('p').select();
 
     const handleInternalError = e => {

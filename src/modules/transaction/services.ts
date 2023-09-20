@@ -8,13 +8,16 @@ import { IPagination, Pagination, PaginationParams } from '@utils/pagination';
 
 import {
   ICreateTransactionPayload,
+  ITransactionFilterParams,
   ITransactionService,
   IUpdateTransactionPayload,
-  ITransactionFilterParams,
 } from './types';
 
 export class TransactionService implements ITransactionService {
-  private _ordination: IOrdination<Transaction>;
+  private _ordination: IOrdination<Transaction> = {
+    orderBy: 'updatedAt',
+    sort: 'DESC',
+  };
   private _pagination: PaginationParams;
   private _filter: ITransactionFilterParams;
 
@@ -89,7 +92,7 @@ export class TransactionService implements ITransactionService {
   }
 
   async list(): Promise<IPagination<Transaction> | Transaction[]> {
-    const hasPagination = this._pagination.page && this._pagination.perPage;
+    const hasPagination = this._pagination?.page && this._pagination?.perPage;
     const queryBuilder = Transaction.createQueryBuilder('t').select();
 
     this._filter.predicateId &&
@@ -99,6 +102,11 @@ export class TransactionService implements ITransactionService {
       queryBuilder
         .innerJoin('t.assets', 'asset')
         .where('asset.to = :to', { to: this._filter.to });
+
+    this._filter.hash &&
+      queryBuilder.where('LOWER(t.hash) = LOWER(:hash)', {
+        hash: this._filter.hash,
+      });
 
     queryBuilder
       .leftJoinAndSelect('t.assets', 'assets')
