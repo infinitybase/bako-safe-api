@@ -1,6 +1,6 @@
 import { Router } from 'express';
 
-import { authMiddleware } from '@middlewares/index';
+import { authMiddleware } from '@src/middlewares';
 
 import { PredicateService } from '@modules/predicate/services';
 import { WitnessService } from '@modules/witness/services';
@@ -11,8 +11,8 @@ import { TransactionController } from './controller';
 import { TransactionService } from './services';
 import {
   validateAddTransactionPayload,
-  validateSignerByIdPayload,
   validateCloseTransactionPayload,
+  validateSignerByIdPayload,
 } from './validations';
 
 const router = Router();

@@ -4,15 +4,15 @@ import { IPredicateService } from '@modules/predicate/types';
 import { IWitnessService } from '@modules/witness/types';
 
 import { error } from '@utils/error';
-import { Responses, successful, bindMethods } from '@utils/index';
+import { Responses, bindMethods, successful } from '@utils/index';
 
 import {
+  ICloseTransactionRequest,
   ICreateTransactionRequest,
   IFindTransactionByIdRequest,
+  IListRequest,
   ISignByIdRequest,
   ITransactionService,
-  IListRequest,
-  ICloseTransactionRequest,
 } from './types';
 
 export class TransactionController {
@@ -29,18 +29,24 @@ export class TransactionController {
     bindMethods(this);
   }
 
-  async create({ body: transaction }: ICreateTransactionRequest) {
+  async create({ body: transaction, params }: ICreateTransactionRequest) {
     try {
+      const { orderBy, sort, page, perPage } = params;
+      const predicate = await this.predicateService
+        .filter({
+          address: transaction.predicateAdress,
+        })
+        .paginate({ page, perPage })
+        .ordination({ orderBy, sort })
+        .list();
+
       const newTransaction = await this.transactionService.create({
         ...transaction,
         status: TransactionStatus.AWAIT,
+        predicateID: predicate[0].id,
       });
 
-      const predicate = await this.predicateService.findById(
-        newTransaction.predicateID,
-      );
-
-      const witnesses = ((predicate.addresses as unknown) as string[]).map(
+      const witnesses = ((predicate[0].addresses as unknown) as string[]).map(
         (address: string) => ({
           account: address,
           transactionID: newTransaction.id,
@@ -53,7 +59,8 @@ export class TransactionController {
 
       return successful(newTransaction, Responses.Ok);
     } catch (e) {
-      return error(e.error[0], e.statusCode);
+      console.log(e);
+      return error(e.error, e.statusCode);
     }
   }
 

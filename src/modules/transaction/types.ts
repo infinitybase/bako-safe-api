@@ -21,7 +21,7 @@ export enum Sort {
 
 export interface ICreateTransactionPayload {
   predicateAdress: string;
-  predicateID: string;
+  predicateID?: string;
   name: string;
   txData: string;
   hash: string;
