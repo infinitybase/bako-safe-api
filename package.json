@@ -62,5 +62,8 @@
     "ts-jest": "26.5.4",
     "ts-node-dev": "1.1.6",
     "tscpaths": "0.0.9"
+  },
+  "resolutions": {
+    "string-width": "4.1.0"
   }
 }
