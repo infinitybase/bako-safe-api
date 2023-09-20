@@ -26,15 +26,6 @@ export class PredicateController {
     }
   }
 
-  // async update({ params: { id }, body: payload }: IUpdatePredicateRequest) {
-  //   try {
-  //     const response = await this.predicateService.update(id, payload);
-  //     return successful(response, Responses.Ok);
-  //   } catch (e) {
-  //     return error(e.error[0], e.statusCode);
-  //   }
-  // }
-
   async delete({ params: { id } }: IDeletePredicateRequest) {
     try {
       const response = await this.predicateService.delete(id);
