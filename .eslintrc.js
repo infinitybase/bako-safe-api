@@ -21,4 +21,5 @@ module.exports = {
     '@typescript-eslint/no-unused-vars': ['off'], // Enable TS no unused var role
     '@typescript-eslint/no-explicit-any': ['error'], // Block "any" as a type
   },
+  ignorePatterns: ['node_modules'],
 };
