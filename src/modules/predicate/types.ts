@@ -54,7 +54,9 @@ interface IDeletePredicateRequestSchema extends ValidatedRequestSchema {
 interface IFindByIdRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Params]: { id: string };
 }
-
+interface IFindByHashRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Params]: { address: string };
+}
 interface IListRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Query]: {
     address: string;
@@ -72,6 +74,7 @@ export type ICreatePredicateRequest = AuthValidatedRequest<ICreatePredicateReque
 export type IUpdatePredicateRequest = AuthValidatedRequest<IUpdatePredicateRequestSchema>;
 export type IDeletePredicateRequest = AuthValidatedRequest<IDeletePredicateRequestSchema>;
 export type IFindByIdRequest = AuthValidatedRequest<IFindByIdRequestSchema>;
+export type IFindByHashRequest = AuthValidatedRequest<IFindByHashRequestSchema>;
 export type IListRequest = AuthValidatedRequest<IListRequestSchema>;
 
 export interface IPredicateService {

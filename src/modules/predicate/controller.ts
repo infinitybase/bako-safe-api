@@ -4,6 +4,7 @@ import { Responses, bindMethods, successful } from '@utils/index';
 import {
   ICreatePredicateRequest,
   IDeletePredicateRequest,
+  IFindByHashRequest,
   IFindByIdRequest,
   IListRequest,
   IPredicateService, // IUpdatePredicateRequest,
@@ -26,15 +27,6 @@ export class PredicateController {
     }
   }
 
-  // async update({ params: { id }, body: payload }: IUpdatePredicateRequest) {
-  //   try {
-  //     const response = await this.predicateService.update(id, payload);
-  //     return successful(response, Responses.Ok);
-  //   } catch (e) {
-  //     return error(e.error[0], e.statusCode);
-  //   }
-  // }
-
   async delete({ params: { id } }: IDeletePredicateRequest) {
     try {
       const response = await this.predicateService.delete(id);
@@ -50,6 +42,20 @@ export class PredicateController {
       const response = await this.predicateService.findById(id);
 
       return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async findByAddress({ params: { address } }: IFindByHashRequest) {
+    try {
+      const response = await this.predicateService
+        .filter({
+          address,
+        })
+        .list();
+
+      return successful(response[0], Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }

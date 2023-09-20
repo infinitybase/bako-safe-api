@@ -14,7 +14,10 @@ import {
 } from './types';
 
 export class PredicateService implements IPredicateService {
-  private _ordination: IOrdination<Predicate>;
+  private _ordination: IOrdination<Predicate> = {
+    orderBy: 'updatedAt',
+    sort: 'DESC',
+  };
   private _pagination: PaginationParams;
   private _filter: IPredicateFilterParams;
 
@@ -72,7 +75,7 @@ export class PredicateService implements IPredicateService {
   }
 
   async list(): Promise<IPagination<Predicate> | Predicate[]> {
-    const hasPagination = this._pagination.page && this._pagination.perPage;
+    const hasPagination = this._pagination?.page && this._pagination?.perPage;
     const queryBuilder = Predicate.createQueryBuilder('p').select();
 
     const handleInternalError = e => {
@@ -86,19 +89,18 @@ export class PredicateService implements IPredicateService {
     };
 
     this._filter.address &&
-      queryBuilder.where(
-        'LOWER(p.predicatedAddress) LIKE LOWER(:predicatedAddress)',
-        { predicateAddress: `%${this._filter.address}%` },
-      );
+      queryBuilder.where('LOWER(p.predicateAddress) = LOWER(:predicateAddress)', {
+        predicateAddress: this._filter.address.toLowerCase(),
+      });
 
     this._filter.provider &&
-      queryBuilder.where('LOWER(p.provider) LIKE LOWER(:provider)', {
-        provider: `%${this._filter.provider}%`,
+      queryBuilder.where('LOWER(p.provider) = LOWER(:provider)', {
+        provider: `${this._filter.provider}`,
       });
 
     this._filter.owner &&
-      queryBuilder.where('LOWER(p.owner) LIKE LOWER(:owner)', {
-        owner: `%${this._filter.owner}%`,
+      queryBuilder.where('LOWER(p.owner) = LOWER(:owner)', {
+        owner: `${this._filter.owner}`,
       });
 
     this._filter.signer &&
