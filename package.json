@@ -15,11 +15,12 @@
     "database:test": "make -C ./docker/database start env_file=.env.test",
     "database:dev": "make -C ./docker/database start env_file=.env.dev",
     "database:stop": "make -C ./docker/database start",
-    "database:start": "make -C ./docker/database start"
+    "database:start": "make -C ./docker/database start",
+    "postinstall": "patch-package"
   },
   "dependencies": {
     "bcrypt": "5.1.0",
-    "bsafe": "0.0.10",
+    "bsafe": "0.0.11",
     "class-validator": "0.14.0",
     "cors": "2.8.5",
     "dotenv": "8.2.0",
@@ -28,6 +29,7 @@
     "joi": "17.4.0",
     "jsonwebtoken": "9.0.1",
     "morgan": "1.10.0",
+    "patch-package": "8.0.0",
     "pg": "8.5.1",
     "reflect-metadata": "0.1.13",
     "ts-node": "^10.9.1",
@@ -58,10 +60,10 @@
     "pretty-quick": "3.1.0",
     "supertest": "6.1.3",
     "ts-jest": "26.5.4",
-    "ts-node": "9.1.1",
     "ts-node-dev": "1.1.6",
-    "tsconfig-paths": "3.9.0",
-    "tscpaths": "0.0.9",
-    "typescript": "4.2.3"
+    "tscpaths": "0.0.9"
+  },
+  "resolutions": {
+    "string-width": "4.1.0"
   }
 }
