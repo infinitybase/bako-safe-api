@@ -7,6 +7,8 @@ import { AuthValidatedRequest } from '@middlewares/auth/types';
 import { IOrdination } from '@utils/ordination';
 import { IPagination, PaginationParams } from '@utils/pagination';
 
+import { ICreateAssetPayload } from '../asset/types';
+
 export enum OrderBy {
   name = 'name',
   status = 'name',
@@ -20,15 +22,16 @@ export enum Sort {
 }
 
 export interface ICreateTransactionPayload {
-  predicateAdress: string;
+  predicateAddress: string;
   predicateID?: string;
   name: string;
   txData: string;
   hash: string;
   status: TransactionStatus;
-  sendTime: Date;
-  gasUsed: string;
-  resume: string;
+  assets: ICreateAssetPayload[];
+  sendTime?: Date;
+  gasUsed?: string;
+  resume?: string;
 }
 
 export interface IUpdateTransactionPayload {

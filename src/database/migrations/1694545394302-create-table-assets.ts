@@ -2,20 +2,21 @@ import { MigrationInterface, QueryRunner, Table } from 'typeorm';
 
 export class createTableAssets1694545394302 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
     await queryRunner.createTable(
       new Table({
         name: 'assets',
         columns: [
           {
             name: 'id',
-            type: 'integer',
-            unsigned: true,
+            type: 'uuid',
             isPrimary: true,
-            isGenerated: true,
-            generationStrategy: 'increment',
+            isUnique: true,
+            generationStrategy: 'uuid',
+            default: `uuid_generate_v4()`,
           },
           {
-            name: 'assetID',
+            name: 'assetId',
             type: 'varchar',
           },
           {
@@ -28,7 +29,7 @@ export class createTableAssets1694545394302 implements MigrationInterface {
           },
           {
             name: 'amount',
-            type: 'integer',
+            type: 'varchar',
           },
           {
             name: 'created_at',

@@ -67,7 +67,7 @@ export class TransactionService implements ITransactionService {
   async findById(id: string): Promise<Transaction> {
     return Transaction.findOne({
       where: { id },
-      relations: ['assets', 'witnesses', 'predicate'],
+      relations: ['assets', 'witnesses'],
     })
       .then(transaction => {
         if (!transaction) {

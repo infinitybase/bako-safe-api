@@ -5,14 +5,14 @@ import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
 
 import {
-  IWitnessService,
   ICreateWitnessPayload,
   IUpdateWitnessPayload,
+  IWitnessService,
 } from './types';
 
 export class WitnessService implements IWitnessService {
   async create(payload: ICreateWitnessPayload): Promise<Witness> {
-    return Witness.create(payload)
+    return await Witness.create(payload)
       .save()
       .then(witness => witness)
       .catch(e => {

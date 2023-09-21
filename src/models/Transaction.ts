@@ -1,20 +1,29 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  JoinTable,
+  ManyToMany,
+  ManyToOne,
+  OneToMany,
+} from 'typeorm';
 
 import { Asset } from './Asset';
 import { Base } from './Base';
 import { Predicate } from './Predicate';
 import { Witness } from './Witness';
 
+//todo -> import to sdk package
 export enum TransactionStatus {
-  AWAIT = 'AWAIT',
-  DONE = 'DONE',
-  PENDING = 'PENDING',
+  AWAIT_REQUIREMENTS = 'AWAIT_REQUIREMENTS', // -> AWAIT SIGNATURES
+  PENDING_SENDER = 'PENDING', // -> AWAIT SENDER, BEFORE AWAIT STATUS
+  DONE = 'DONE', // -> SENDED
 }
 
 @Entity('transactions')
 class Transaction extends Base {
   @Column()
-  predicateAdress: string;
+  predicateAddress: string;
 
   @Column()
   predicateID: string;
@@ -32,15 +41,20 @@ class Transaction extends Base {
   status: TransactionStatus;
 
   @Column()
-  sendTime: Date;
+  sendTime?: Date;
 
   @Column()
-  gasUsed: string;
+  gasUsed?: string;
 
   @Column()
   resume: string;
 
-  @OneToMany(() => Asset, asset => asset.transaction)
+  @ManyToMany(() => Asset)
+  @JoinTable({
+    name: 'transactions_assets',
+    joinColumn: { name: 'asset_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'transaction_id', referencedColumnName: 'id' },
+  })
   assets: Asset[];
 
   @OneToMany(() => Witness, witness => witness.transaction)

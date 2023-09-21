@@ -8,17 +8,23 @@ const allowedStatus = Object.values(TransactionStatus);
 
 export const validateAddTransactionPayload = validator.body(
   Joi.object({
-    predicateAdress: Joi.string().required(),
-    predicateID: Joi.string().uuid(),
+    predicateAddress: Joi.string().required(),
     name: Joi.string().required(),
     txData: Joi.string().required(),
     hash: Joi.string().required(),
     status: Joi.string()
       .required()
       .valid(...allowedStatus),
-    sendTime: Joi.string().required(),
-    gasUsed: Joi.string().required(),
-    resume: Joi.string().required(),
+    assets: Joi.array()
+      .items({
+        assetId: Joi.string().required(),
+        to: Joi.string().required(),
+        amount: Joi.string().required(),
+      })
+      .required(),
+    sendTime: Joi.string(),
+    gasUsed: Joi.string(),
+    resume: Joi.string(),
   }),
 );
 

@@ -1,12 +1,11 @@
 import { Router } from 'express';
 
-import { authMiddleware } from '@src/middlewares';
-
 import { PredicateService } from '@modules/predicate/services';
 import { WitnessService } from '@modules/witness/services';
 
 import { handleResponse } from '@utils/index';
 
+import { AssetService } from '../asset/services';
 import { TransactionController } from './controller';
 import { TransactionService } from './services';
 import {
@@ -19,6 +18,7 @@ const router = Router();
 const transactionService = new TransactionService();
 const predicateService = new PredicateService();
 const witnessService = new WitnessService();
+const assetService = new AssetService();
 
 const {
   create,
@@ -27,9 +27,14 @@ const {
   findById,
   close,
   findByHash,
-} = new TransactionController(transactionService, predicateService, witnessService);
+} = new TransactionController(
+  transactionService,
+  predicateService,
+  witnessService,
+  assetService,
+);
 
-router.use(authMiddleware);
+//router.use(authMiddleware);
 
 router.post('/', validateAddTransactionPayload, handleResponse(create));
 router.get('/', handleResponse(list));

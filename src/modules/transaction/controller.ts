@@ -1,4 +1,4 @@
-import { TransactionStatus } from '@models/index';
+import { Predicate, TransactionStatus } from '@models/index';
 
 import { IPredicateService } from '@modules/predicate/types';
 import { IWitnessService } from '@modules/witness/types';
@@ -6,6 +6,7 @@ import { IWitnessService } from '@modules/witness/types';
 import { error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
 
+import { IAssetService } from '../asset/types';
 import {
   ICloseTransactionRequest,
   ICreateTransactionRequest,
@@ -20,13 +21,20 @@ export class TransactionController {
   private transactionService: ITransactionService;
   private predicateService: IPredicateService;
   private witnessService: IWitnessService;
+  private assetService: IAssetService;
 
   constructor(
     transactionService: ITransactionService,
     predicateService: IPredicateService,
     witnessService: IWitnessService,
+    assetService: IAssetService,
   ) {
-    Object.assign(this, { transactionService, predicateService, witnessService });
+    Object.assign(this, {
+      transactionService,
+      predicateService,
+      witnessService,
+      assetService,
+    });
     bindMethods(this);
   }
 
@@ -34,31 +42,34 @@ export class TransactionController {
     try {
       const predicate = await this.predicateService
         .filter({
-          address: transaction.predicateAdress,
+          address: transaction.predicateAddress,
         })
-        .list();
+        .list()
+        .then((result: Predicate[]) => result[0]);
 
       const newTransaction = await this.transactionService.create({
         ...transaction,
-        status: TransactionStatus.AWAIT,
-        predicateID: predicate[0].id,
+        status: TransactionStatus.AWAIT_REQUIREMENTS,
+        predicateID: predicate.id,
       });
 
-      const witnesses = ((predicate[0].addresses as unknown) as string[]).map(
-        (address: string) => ({
-          account: address,
+      for await (const witnesses of predicate.addresses) {
+        await this.witnessService.create({
           transactionID: newTransaction.id,
-        }),
-      );
+          account: witnesses,
+        });
+      }
 
-      for await (const witness of witnesses) {
-        await this.witnessService.create(witness);
+      for await (const asset of transaction.assets) {
+        await this.assetService.create({
+          ...asset,
+          transactionID: newTransaction.id,
+        });
       }
 
       return successful(newTransaction, Responses.Ok);
     } catch (e) {
-      console.log(e);
-      return error(e.error, e.statusCode);
+      return error(e.error[0], e.statusCode);
     }
   }
 
@@ -76,7 +87,6 @@ export class TransactionController {
       const response = await this.transactionService.filter({ hash }).list();
       return successful(response[0], Responses.Ok);
     } catch (e) {
-      console.log(e);
       return error(e.error, e.statusCode);
     }
   }
@@ -92,8 +102,8 @@ export class TransactionController {
         const statusField =
           Number(transaction.predicate.minSigners) <=
           transaction.witnesses.length + 1
-            ? TransactionStatus.PENDING
-            : TransactionStatus.AWAIT;
+            ? TransactionStatus.PENDING_SENDER
+            : TransactionStatus.AWAIT_REQUIREMENTS;
 
         await this.transactionService.update(id, {
           status: statusField,
