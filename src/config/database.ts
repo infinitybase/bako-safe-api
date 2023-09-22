@@ -33,7 +33,7 @@ export const migrationsDir = path.resolve(
   'database',
   'migrations',
   '**',
-  '*.ts',
+  '*{.ts,.js}',
 );
 export const seedersDir = path.resolve(
   __dirname,
@@ -42,7 +42,7 @@ export const seedersDir = path.resolve(
   'database',
   'seeders',
   '**',
-  '*.ts',
+  '*{.ts,.js}',
 );
 
 const development: ConnectionOptions = {
