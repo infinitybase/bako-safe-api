@@ -24,6 +24,7 @@ class App {
 
   static async connectDatabase() {
     try {
+      console.log({ migrations: [migrationsDir, seedersDir] });
       await createConnection({
         type: 'postgres',
         host: process.env.DATABASE_HOST,
