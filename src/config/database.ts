@@ -27,7 +27,7 @@ console.log({
 const [host, port] = String(DATABASE_URL).split(':');
 const environment = NODE_ENV;
 const entitiesDir = path.resolve(__dirname, '..', 'models', '**', '*{.ts,.js}');
-const migrationsDir = path.resolve(
+export const migrationsDir = path.resolve(
   __dirname,
   '..',
   'database',
@@ -35,7 +35,7 @@ const migrationsDir = path.resolve(
   '**',
   '*.ts',
 );
-const seedersDir = path.resolve(
+export const seedersDir = path.resolve(
   __dirname,
   '..',
   '..',
