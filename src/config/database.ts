@@ -76,7 +76,7 @@ const test: ConnectionOptions = {
     migrationsDir: './src/database/migrations/',
   },
   synchronize: false,
-  migrationsRun: false,
+  migrationsRun: true,
 };
 
 const production: ConnectionOptions = {

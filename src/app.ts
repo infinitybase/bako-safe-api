@@ -5,7 +5,7 @@ import { createConnection } from 'typeorm';
 
 import { router } from '@src/routes';
 
-import { migrationsDir, seedersDir } from '@config/database';
+import database from '@config/database';
 
 import { handleErrors } from '@middlewares/index';
 
@@ -24,18 +24,7 @@ class App {
 
   static async connectDatabase() {
     try {
-      await createConnection({
-        type: 'postgres',
-        host: process.env.DATABASE_HOST,
-        port: Number(process.env.DATABASE_PORT),
-        username: process.env.DATABASE_USERNAME,
-        password: process.env.DATABASE_PASSWORD,
-        database: process.env.DATABASE_NAME,
-        entities: [__dirname + '/models/**/*.ts'],
-        migrations: [migrationsDir, seedersDir],
-        synchronize: false,
-        migrationsRun: process.env.NODE_ENV !== 'development',
-      });
+      await createConnection(database);
     } catch (e) {
       console.log('[DB] Error connecting to database', e);
     }
