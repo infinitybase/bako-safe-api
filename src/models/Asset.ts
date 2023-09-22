@@ -14,9 +14,6 @@ class Asset extends Base {
   @Column()
   amount: string;
 
-  @Column({ name: 'on_predicate' })
-  onPredicate: string;
-
   @Column()
   utxo: string;
 
