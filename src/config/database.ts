@@ -93,7 +93,7 @@ const production: ConnectionOptions = {
     migrationsDir: './src/database/migrations/',
   },
   synchronize: false,
-  migrationsRun: false,
+  migrationsRun: true,
 };
 
 const staging: ConnectionOptions = {
@@ -109,6 +109,7 @@ const staging: ConnectionOptions = {
     entitiesDir: './src/models/',
     migrationsDir: './src/database/migrations/',
   },
+  migrationsRun: true,
   synchronize: false,
 };
 
