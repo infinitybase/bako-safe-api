@@ -120,4 +120,4 @@ const database = {
   test,
 };
 
-export default database['test'];
+export default database[environment || 'development'];
