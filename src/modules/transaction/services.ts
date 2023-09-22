@@ -81,8 +81,6 @@ export class TransactionService implements ITransactionService {
         return transaction;
       })
       .catch(e => {
-        if (e instanceof GeneralError) throw e;
-
         throw new Internal({
           type: ErrorTypes.Internal,
           title: 'Error on transaction findById',

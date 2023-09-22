@@ -1,12 +1,4 @@
-import {
-  Column,
-  Entity,
-  JoinColumn,
-  JoinTable,
-  ManyToMany,
-  ManyToOne,
-  OneToMany,
-} from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 
 import { Asset } from './Asset';
 import { Base } from './Base';
@@ -46,12 +38,7 @@ class Transaction extends Base {
   @Column()
   resume: string;
 
-  @ManyToMany(() => Asset)
-  @JoinTable({
-    name: 'transactions_assets',
-    joinColumn: { name: 'asset_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'transaction_id', referencedColumnName: 'id' },
-  })
+  @OneToMany(() => Asset, asset => asset.transaction)
   assets: Asset[];
 
   @OneToMany(() => Witness, witness => witness.transaction)
