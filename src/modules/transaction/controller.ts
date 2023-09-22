@@ -1,4 +1,4 @@
-import { TransactionStatus } from '@models/index';
+import { Asset, TransactionStatus } from '@models/index';
 
 import { IPredicateService } from '@modules/predicate/types';
 import { IWitnessService } from '@modules/witness/types';
@@ -40,6 +40,7 @@ export class TransactionController {
 
       const newTransaction = await this.transactionService.create({
         ...transaction,
+        assets: transaction.assets.map(asset => Asset.create(asset)),
         status: TransactionStatus.AWAIT,
         predicateID: predicate[0].id,
       });

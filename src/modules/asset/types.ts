@@ -3,14 +3,14 @@ import { Asset } from '@src/models';
 export interface ICreateAssetPayload {
   assetId: string;
   to: string;
-  amount: number;
+  amount: string;
   transactionID: string;
 }
 
 export interface IUpdateAssetPayload {
   assetId?: string;
   to?: string;
-  amount?: number;
+  amount?: string;
   transactionID?: string;
 }
 

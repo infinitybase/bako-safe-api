@@ -29,7 +29,7 @@ const {
   findByHash,
 } = new TransactionController(transactionService, predicateService, witnessService);
 
-router.use(authMiddleware);
+// router.use(authMiddleware);
 
 router.post('/', validateAddTransactionPayload, handleResponse(create));
 router.get('/', handleResponse(list));
