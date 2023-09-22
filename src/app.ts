@@ -31,7 +31,7 @@ class App {
         database: process.env.DATABASE_NAME,
         entities: [__dirname + '/models/**/*.ts'],
         synchronize: false,
-        migrationsRun: process.env.NODE_ENV !== 'development',
+        migrationsRun: true,
       });
     } catch (e) {
       console.log('[DB] Error connecting to database', e);
