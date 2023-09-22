@@ -6,7 +6,6 @@ export default async function () {
       name: 'transaction_name',
       predicateAddress: 'predicate_adress',
       predicateID: '624da56f-f5e8-4bc2-b3a5-b181ff2b5097',
-      txData: 'txData',
       hash: 'hash',
       status: TransactionStatus.AWAIT_REQUIREMENTS,
       sendTime: new Date(),

@@ -25,7 +25,6 @@ export interface ICreateTransactionPayload {
   predicateAddress: string;
   predicateID?: string;
   name: string;
-  txData: string;
   hash: string;
   status: TransactionStatus;
   assets: ICreateAssetPayload[];

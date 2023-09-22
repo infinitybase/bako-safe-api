@@ -28,10 +28,6 @@ export class createTableTransactions1694536141266 implements MigrationInterface 
             type: 'varchar',
           },
           {
-            name: 'txData',
-            type: 'text',
-          },
-          {
             name: 'hash',
             type: 'varchar',
           },

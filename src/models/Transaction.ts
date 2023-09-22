@@ -32,9 +32,6 @@ class Transaction extends Base {
   name: string;
 
   @Column()
-  txData: string;
-
-  @Column()
   hash: string;
 
   @Column({ enum: TransactionStatus })

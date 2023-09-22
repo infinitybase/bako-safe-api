@@ -1,4 +1,4 @@
-import { Predicate, TransactionStatus } from '@models/index';
+import { Predicate, Transaction, TransactionStatus } from '@models/index';
 
 import { IPredicateService } from '@modules/predicate/types';
 import { IWitnessService } from '@modules/witness/types';
@@ -69,7 +69,8 @@ export class TransactionController {
 
       return successful(newTransaction, Responses.Ok);
     } catch (e) {
-      return error(e.error[0], e.statusCode);
+      console.log(e);
+      return error(e.error, e.statusCode);
     }
   }
 
@@ -78,14 +79,19 @@ export class TransactionController {
       const response = await this.transactionService.findById(id);
       return successful(response, Responses.Ok);
     } catch (e) {
-      return error(e.error[0], e.statusCode);
+      return error(e.error, e.statusCode);
     }
   }
 
   async findByHash({ params: { hash } }: IFindTransactionByHashRequest) {
     try {
-      const response = await this.transactionService.filter({ hash }).list();
-      return successful(response[0], Responses.Ok);
+      const response = await this.transactionService
+        .filter({ hash })
+        .list()
+        .then((result: Transaction[]) => {
+          result[0];
+        });
+      return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }
@@ -112,7 +118,7 @@ export class TransactionController {
         return successful(true, Responses.Ok);
       }
     } catch (e) {
-      return error(e.error[0], e.statusCode);
+      return error(e.error, e.statusCode);
     }
   }
 
@@ -145,7 +151,7 @@ export class TransactionController {
       });
       return successful(response, Responses.Ok);
     } catch (e) {
-      return error(e.error[0], e.statusCode);
+      return error(e.error, e.statusCode);
     }
   }
 }

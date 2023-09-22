@@ -10,7 +10,6 @@ export const validateAddTransactionPayload = validator.body(
   Joi.object({
     predicateAddress: Joi.string().required(),
     name: Joi.string().required(),
-    txData: Joi.string().required(),
     hash: Joi.string().required(),
     status: Joi.string()
       .required()
@@ -20,6 +19,8 @@ export const validateAddTransactionPayload = validator.body(
         assetId: Joi.string().required(),
         to: Joi.string().required(),
         amount: Joi.string().required(),
+        onPredicate: Joi.string().required(),
+        utxo: Joi.string().required(),
       })
       .required(),
     sendTime: Joi.string(),

@@ -5,16 +5,22 @@ export const assets: Partial<Asset>[] = [
     assetId: '0x000000000000000000000000000000000000000000000000000000',
     amount: '0.1',
     to: 'kajsakhksdhasda',
+    utxo: 'utxo',
+    onPredicate: 'onPredicate',
   },
   {
     assetId: '0x000000000000000000000000000000000000000000000000000000',
     amount: '0.13',
     to: 'kajsakhksdhasda',
+    utxo: 'utxo',
+    onPredicate: 'onPredicate',
   },
   {
     assetId: '0x000000000000000000000000000000000000000000000000000000',
     amount: '0.15',
     to: 'kajsakhksdhasda',
+    utxo: 'utxo',
+    onPredicate: 'onPredicate',
   },
 ];
 

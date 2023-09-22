@@ -25,7 +25,7 @@ console.log({
 });
 
 const [host, port] = String(DATABASE_URL).split(':');
-const environment = NODE_ENV;
+const environment: string = NODE_ENV;
 const entitiesDir = path.resolve(__dirname, '..', 'models', '**', '*{.ts,.js}');
 const migrationsDir = path.resolve(
   __dirname,
@@ -59,7 +59,7 @@ const development: ConnectionOptions = {
     migrationsDir: './src/database/migrations/',
   },
   synchronize: false,
-  migrationsRun: false,
+  migrationsRun: true,
 };
 
 const test: ConnectionOptions = {
@@ -119,4 +119,4 @@ const database = {
   test,
 };
 
-export default database['test'];
+export default database[environment || 'development'];
