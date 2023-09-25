@@ -40,7 +40,7 @@ class Transaction extends Base {
   @Column()
   resume: string;
 
-  @OneToMany(() => Asset, asset => asset.transaction)
+  @OneToMany(() => Asset, asset => asset.transaction, { cascade: true })
   assets: Asset[];
 
   @OneToMany(() => Witness, witness => witness.transaction)
