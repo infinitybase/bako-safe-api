@@ -12,9 +12,9 @@ import { EncryptUtils } from '@utils/index';
 import { Base } from './Base';
 import { User } from './User';
 
-export enum Encoders {
-  FUEL = 'fuel',
-  METAMASK = 'metamask',
+export enum Encoder {
+  fuel = 'fuel',
+  metamask = 'metamask',
 }
 
 @Entity('user_tokens')
@@ -23,13 +23,19 @@ class UserToken extends Base {
   token: string;
 
   @Column()
-  encoder: Encoders;
+  encoder: Encoder;
 
   @Column()
   provider: string;
 
   @Column()
+  payload: string;
+
+  @Column()
   expired_at?: Date;
+
+  @Column()
+  user_id: string;
 
   @JoinColumn({ name: 'user_id' })
   @OneToOne(() => User)
