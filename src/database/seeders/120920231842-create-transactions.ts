@@ -24,8 +24,6 @@ export default async function () {
     },
   ];
 
-  console.log(JSON.stringify(transactions));
-
   const existingTransactions = await Transaction.find({
     where: [{ hash: transactions[0].hash }, { name: transactions[0].name }],
   });
