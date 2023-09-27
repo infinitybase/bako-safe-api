@@ -20,25 +20,25 @@ export enum Languages {
 @Entity('users')
 class User extends Base {
   @Column()
-  name: string;
+  name?: string;
 
   @Column({ default: true })
   active: boolean;
 
   @Column()
-  email: string;
+  email?: string;
 
   @Column({ select: false })
-  password: string;
+  password?: string;
 
   @Column()
   provider: string;
 
   @Column()
-  connected_users: string;
+  address: string;
 
   @Column({ enum: Languages })
-  language: Languages;
+  language?: Languages;
 
   @JoinColumn({ name: 'role_id' })
   @ManyToOne(() => Role)

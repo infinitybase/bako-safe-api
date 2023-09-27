@@ -20,7 +20,7 @@ export default async function () {
       password: process.env.APP_ADMIN_PASSWORD,
       language: Languages.PORTUGUESE,
       provider: 'provider',
-      connected_users: '["user1","user2"]',
+      address: 'fuel14yleyeny9pm60ezpmm3s28z34h4f7jk9z2u3l69u6am',
       role: roles[0],
     },
   ];

@@ -38,7 +38,16 @@ export class UserController {
 
   async create(req: ICreateRequest) {
     try {
-      const { name, email, password, active, language, role } = req.body;
+      const {
+        name,
+        email,
+        password,
+        active,
+        language,
+        role,
+        address,
+        provider,
+      } = req.body;
 
       const response = await this.userService.create({
         name,
@@ -47,6 +56,8 @@ export class UserController {
         active,
         language,
         role,
+        address,
+        provider,
       });
 
       return successful(response, Responses.Created);

@@ -5,8 +5,8 @@ export class addParoviderAndConnectedToUsers1695162520664
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.addColumns('users', [
       new TableColumn({
-        name: 'connected_users',
-        type: 'text',
+        name: 'address',
+        type: 'varchar',
       }),
       new TableColumn({
         name: 'provider',

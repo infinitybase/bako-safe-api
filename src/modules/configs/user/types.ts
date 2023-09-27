@@ -13,6 +13,8 @@ export interface IUserPayload {
   active?: boolean;
   language: Languages;
   role: Role;
+  address: string;
+  provider: string;
 }
 
 export interface IFilterParams {
