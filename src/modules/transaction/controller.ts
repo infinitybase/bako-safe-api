@@ -239,9 +239,10 @@ export class TransactionController {
       };
 
       const _api_transaction: IUpdateTransactionPayload = {
-        status: result.status
-          ? TransactionStatus.SUCCESS
-          : TransactionStatus.FAILED,
+        status:
+          result.status === 'success'
+            ? TransactionStatus.SUCCESS
+            : TransactionStatus.FAILED,
         sendTime: new Date(),
         gasUsed: result.gasUsed.format(),
         resume: JSON.stringify(resume),
