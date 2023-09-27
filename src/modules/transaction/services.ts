@@ -37,7 +37,7 @@ export class TransactionService implements ITransactionService {
   }
 
   async create(payload: ICreateTransactionPayload): Promise<Transaction> {
-    return Transaction.create(payload)
+    return await Transaction.create(payload)
       .save()
       .then(transaction => transaction)
       .catch(e => {
@@ -143,7 +143,7 @@ export class TransactionService implements ITransactionService {
   }
 
   async delete(id: string): Promise<boolean> {
-    return Transaction.update({ id }, { deletedAt: new Date() })
+    return await Transaction.update({ id }, { deletedAt: new Date() })
       .then(() => true)
       .catch(e => {
         throw new Internal({

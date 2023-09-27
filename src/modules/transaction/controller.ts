@@ -62,6 +62,10 @@ export class TransactionController {
         ...transaction,
         status: TransactionStatus.AWAIT_REQUIREMENTS,
         predicateID: predicate.id,
+        resume: JSON.stringify({
+          witnesses: [],
+          outputs: transaction.assets,
+        }),
       });
 
       for await (const witnesses of predicate.addresses) {
