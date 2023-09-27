@@ -101,11 +101,31 @@ export class TransactionService implements ITransactionService {
     this._filter.to &&
       queryBuilder
         .innerJoin('t.assets', 'asset')
-        .where('asset.to = :to', { to: this._filter.to });
+        .andWhere('asset.to = :to', { to: this._filter.to });
+
+    this._filter.startDate &&
+      queryBuilder.andWhere('t.createdAt >= :startDate', {
+        startDate: this._filter.startDate,
+      });
+
+    this._filter.endDate &&
+      queryBuilder.andWhere('t.createdAt <= :endDate', {
+        endDate: this._filter.endDate,
+      });
+
+    this._filter.createdBy &&
+      queryBuilder.andWhere('t.createdBy = :createdBy', {
+        createdBy: this._filter.createdBy,
+      });
 
     this._filter.hash &&
-      queryBuilder.where('LOWER(t.hash) = LOWER(:hash)', {
+      queryBuilder.andWhere('LOWER(t.hash) = LOWER(:hash)', {
         hash: this._filter.hash,
+      });
+
+    this._filter.status &&
+      queryBuilder.andWhere('t.status = :status', {
+        status: this._filter.status,
       });
 
     queryBuilder

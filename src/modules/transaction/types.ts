@@ -46,9 +46,13 @@ export type ICloseTransactionPayload = {
 };
 
 export interface ITransactionFilterParams {
+  startDate?: string;
+  endDate?: string;
   predicateId?: string;
+  createdBy?: string;
   to?: string;
   hash?: string;
+  status?: TransactionStatus;
 }
 
 export type ICloseTransactionBody = {
@@ -102,8 +106,12 @@ interface IFindTransactionByToRequestSchema extends ValidatedRequestSchema {
 }
 interface IListRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Query]: {
+    status: TransactionStatus;
     predicateId: string;
     to: string;
+    startDate: string;
+    endDate: string;
+    createdBy: string;
     orderBy: OrderBy;
     sort: Sort;
     page: string;
