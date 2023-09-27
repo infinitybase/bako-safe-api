@@ -27,7 +27,7 @@ export interface ICreateTransactionPayload {
   hash: string;
   status: TransactionStatus;
   assets: Asset[];
-  createdBy?: User;
+  createdBy: User;
 }
 
 export interface IUpdateTransactionPayload {
