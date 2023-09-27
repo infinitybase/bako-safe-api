@@ -20,7 +20,7 @@
   "dependencies": {
     "bcrypt": "5.1.0",
     "bsafe": "../bsafe/",
-    "fuels": "^0.55.0",
+    "fuels": "0.55.0",
     "class-validator": "0.14.0",
     "cors": "2.8.5",
     "dotenv": "8.2.0",
