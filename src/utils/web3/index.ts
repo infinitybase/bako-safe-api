@@ -4,54 +4,41 @@ import { Signer, hashMessage } from 'fuels';
 
 import UserToken from '@models/UserToken';
 
-import { bindMethods } from '../bindMethods';
-import { ErrorTypes } from '../error';
-import { Unauthorized, UnauthorizedErrorTitles } from '../error/Unauthorized';
+import { bindMethods } from '@utils/bindMethods';
+import { ErrorTypes } from '@utils/error';
+import { Unauthorized, UnauthorizedErrorTitles } from '@utils/error/Unauthorized';
+
+interface Web3UtilsParams {
+  signature: string;
+  userToken?: UserToken;
+  message?: string;
+  signerAddress: string;
+}
 
 export class Web3Utils {
-  private message: string;
   private signature: string;
-  private signerAddress: string;
   private userToken?: UserToken;
+  private message?: string;
+  private signerAddress: string;
 
-  constructor(
-    message: string,
-    signature: string,
-    signerAddress: string,
-    userToken: UserToken,
-  ) {
-    Object.assign(this, { message, signature, signerAddress, userToken });
+  constructor({ signature, userToken, message, signerAddress }: Web3UtilsParams) {
+    Object.assign(this, { signature, userToken, message, signerAddress });
     bindMethods(this);
-  }
-
-  verifyMissingParams() {
-    const requiredParams = ['signature', 'signerAddress', 'message', 'userToken'];
-    const isMissingParams = requiredParams.some(param => !this?.[param]);
-
-    if (isMissingParams) {
-      throw new Unauthorized({
-        type: ErrorTypes.Unauthorized,
-        title: UnauthorizedErrorTitles.MISSING_AUTH_PARAMS,
-        detail: 'Missing required params for authentication',
-      });
-    }
-
-    return this;
   }
 
   verifySignature() {
     const decodedAddress = Signer.recoverAddress(
-      hashMessage(this.message),
+      hashMessage(this.message ?? this.userToken.payload),
       this.signature,
     ).bech32Address;
 
-    const addressMatches = decodedAddress === this.signerAddress;
+    const addressMatches = decodedAddress === this?.signerAddress;
 
     if (!addressMatches) {
       throw new Unauthorized({
         type: ErrorTypes.Unauthorized,
         title: UnauthorizedErrorTitles.INVALID_ADDRESS,
-        detail: 'Invalid credentials',
+        detail: `The provided address does not match with the message's signer address`,
       });
     }
 
@@ -59,12 +46,12 @@ export class Web3Utils {
   }
 
   verifyExpiredToken() {
-    const isExpired = isPast(this.userToken.expired_at);
+    const expiredToken = isPast(this.userToken.expired_at);
 
-    if (isExpired) {
+    if (expiredToken) {
       throw new Unauthorized({
         type: ErrorTypes.Unauthorized,
-        title: UnauthorizedErrorTitles.ACCESS_TOKEN_EXPIRED,
+        title: UnauthorizedErrorTitles.EXPIRED_TOKEN,
         detail: 'The provided token is expired, please sign in again',
       });
     }

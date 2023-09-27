@@ -1,12 +1,38 @@
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 
-import { AuthValidatedRequest } from '@src/middlewares/auth/types';
-
+import UserToken, { Encoder } from '@models/UserToken';
 import { User } from '@models/index';
 
+import { AuthValidatedRequest } from '@middlewares/auth/types';
+
+export interface ICreateUserTokenPayload {
+  token: string;
+  user_id: string;
+  expired_at: Date;
+  encoder: Encoder;
+  provider: string;
+  payload: string;
+}
+
 export interface ISignInPayload {
-  email: string;
-  password: string;
+  address: string;
+  hash: string;
+  createdAt: Date;
+  encoder: Encoder;
+  provider: string;
+  signature: string;
+  user_id: string;
+}
+
+interface IListRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Query]: {
+    user: string;
+    active: boolean;
+    page: string;
+    perPage: string;
+    sort: 'ASC' | 'DESC';
+    orderBy: 'name' | 'createdAt' | 'role';
+  };
 }
 
 interface ISignInRequestSchema extends ValidatedRequestSchema {
@@ -14,30 +40,14 @@ interface ISignInRequestSchema extends ValidatedRequestSchema {
 }
 
 export interface ISignInResponse {
-  user: User;
   accessToken: string;
-  refreshToken: string;
-}
-
-interface IAuthWithRefreshTokenRequestSchema extends ValidatedRequestSchema {
-  [ContainerTypes.Body]: {
-    refreshToken: string;
-  };
-}
-
-export interface IAuthWithRefreshTokenResponse {
-  accessToken: string;
-  refreshToken: string;
 }
 
 export type ISignInRequest = AuthValidatedRequest<ISignInRequestSchema>;
-
-export type IAuthWithRefreshTokenRequest = AuthValidatedRequest<IAuthWithRefreshTokenRequestSchema>;
+export type IListRequest = AuthValidatedRequest<IListRequestSchema>;
 
 export interface IAuthService {
-  signIn(payload: ISignInPayload): Promise<ISignInResponse>;
+  signIn(payload: ICreateUserTokenPayload): Promise<ISignInResponse>;
   signOut(user: User): Promise<void>;
-  authWithRefreshToken(
-    refreshToken: string,
-  ): Promise<IAuthWithRefreshTokenResponse>;
+  findToken(signature: string): Promise<UserToken | undefined>;
 }

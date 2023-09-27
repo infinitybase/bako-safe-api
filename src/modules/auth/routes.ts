@@ -5,25 +5,20 @@ import { handleResponse } from '@src/utils/index';
 
 import { AuthController } from './controller';
 import { AuthService } from './services';
-import {
-  validatePayloadAuthWithRefreshToken,
-  validatePayloadSignIn,
-} from './validations';
+import { validateSignInPayload } from './validations';
 
 const router = Router();
 const authService = new AuthService();
 const authController = new AuthController(authService);
 
+export const signOutPath = '/sign-out';
+
 router.post(
   '/sign-in',
-  validatePayloadSignIn,
+  validateSignInPayload,
   handleResponse(authController.signIn),
 );
-router.delete('/sign-out', authMiddleware, handleResponse(authController.signOut));
-router.post(
-  '/refresh-token',
-  validatePayloadAuthWithRefreshToken,
-  handleResponse(authController.authWithRefreshToken),
-);
+
+router.delete(signOutPath, authMiddleware, handleResponse(authController.signOut));
 
 export default router;
