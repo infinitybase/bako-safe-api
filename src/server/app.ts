@@ -1,3 +1,4 @@
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import Express from 'express';
 import morgan from 'morgan';
@@ -29,6 +30,7 @@ class App {
   }
 
   private initMiddlewares() {
+    this.app.use(cookieParser());
     this.app.use(Express.json());
     this.app.use(cors());
     this.app.use(morgan('dev'));
