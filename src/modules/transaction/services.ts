@@ -53,8 +53,8 @@ export class TransactionService implements ITransactionService {
     id: string,
     payload: IUpdateTransactionPayload,
   ): Promise<Transaction> {
-    return Transaction.update({ id }, payload)
-      .then(() => this.findById(id))
+    return await Transaction.update({ id }, payload)
+      .then(async () => await this.findById(id))
       .catch(e => {
         throw new Internal({
           type: ErrorTypes.Internal,
@@ -65,9 +65,9 @@ export class TransactionService implements ITransactionService {
   }
 
   async findById(id: string): Promise<Transaction> {
-    return Transaction.findOne({
+    return await Transaction.findOne({
       where: { id },
-      relations: ['assets', 'witnesses'],
+      relations: ['assets', 'witnesses', 'predicate'],
     })
       .then(transaction => {
         if (!transaction) {

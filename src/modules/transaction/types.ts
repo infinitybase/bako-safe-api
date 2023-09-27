@@ -81,6 +81,9 @@ interface ICloseTransactionRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Body]: ICloseTransactionBody;
   [ContainerTypes.Params]: { id: string };
 }
+interface ISendTransactionRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Params]: { id: string };
+}
 
 interface ISignByIdRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Body]: ISignByIdPayload;
@@ -118,6 +121,7 @@ export type ICreateTransactionRequest = AuthValidatedRequest<ICreateTransactionR
 export type IUpdateTransactionRequest = AuthValidatedRequest<IUpdateTransactionRequestSchema>;
 export type IDeleteTransactionRequest = AuthValidatedRequest<IDeleteTransactionRequestSchema>;
 export type ICloseTransactionRequest = AuthValidatedRequest<ICloseTransactionRequestSchema>;
+export type ISendTransactionRequest = AuthValidatedRequest<ISendTransactionRequestSchema>;
 export type ISignByIdRequest = AuthValidatedRequest<ISignByIdRequestSchema>;
 export type IFindTransactionByIdRequest = AuthValidatedRequest<IFindTransactionByIdRequestSchema>;
 export type IFindTransactionByHashRequest = AuthValidatedRequest<IFindTransactionByHashRequestSchema>;

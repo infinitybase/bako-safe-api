@@ -3,7 +3,7 @@ import { Asset } from '@src/models';
 export interface ICreateAssetPayload {
   assetId: string;
   to: string;
-  amount: number;
+  amount: string;
   onPredicate: string;
   transactionID: string;
 }

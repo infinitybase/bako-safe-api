@@ -8,8 +8,9 @@ import { Witness } from './Witness';
 //todo -> import to sdk package
 export enum TransactionStatus {
   AWAIT_REQUIREMENTS = 'AWAIT_REQUIREMENTS', // -> AWAIT SIGNATURES
-  PENDING_SENDER = 'PENDING', // -> AWAIT SENDER, BEFORE AWAIT STATUS
-  DONE = 'DONE', // -> SENDED
+  PENDING_SENDER = 'PENDING_SENDER', // -> AWAIT SENDER, BEFORE AWAIT STATUS
+  SUCCESS = 'SUCCESS', // -> SENDED
+  FAILED = 'FAILED', // -> FAILED
 }
 
 @Entity('transactions')

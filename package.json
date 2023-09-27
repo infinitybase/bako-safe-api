@@ -4,7 +4,7 @@
   "main": "src/index.ts",
   "license": "MIT",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register -r dotenv/config src/server/index.ts",
+    "dev": "NODE_ENV=development ts-node-dev --respawn --transpile-only -r tsconfig-paths/register -r dotenv/config src/server/index.ts",
     "test": "chmod +x ./scripts/init_test.sh && ./scripts/init_test.sh",
     "start": "ts-node -r dotenv/config ./build/index.js",
     "build": "tsc --project . && tscpaths -p tsconfig.json -s ./src -o ./build",
@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "bcrypt": "5.1.0",
-    "bsafe": "0.0.10",
+    "bsafe": "../bsafe/",
     "fuels": "^0.55.0",
     "class-validator": "0.14.0",
     "cors": "2.8.5",

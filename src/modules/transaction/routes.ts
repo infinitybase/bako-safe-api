@@ -27,6 +27,7 @@ const {
   findById,
   close,
   findByHash,
+  send,
 } = new TransactionController(
   transactionService,
   predicateService,
@@ -41,6 +42,7 @@ router.get('/', handleResponse(list));
 router.get('/:id', handleResponse(findById));
 router.get('/by-hash/:hash', handleResponse(findByHash));
 router.put('/close/:id', validateCloseTransactionPayload, handleResponse(close));
+router.post('/send/:id', handleResponse(send));
 router.put('/signer/:id', validateSignerByIdPayload, handleResponse(signByID));
 
 export default router;
