@@ -1,75 +1,60 @@
 import { Request, Response, NextFunction } from 'express';
-import { JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
 
-import { JwtUtils } from '@src/utils/jwt';
-import { IAccessTokenPayload } from '@src/utils/jwt/types';
-
-import { User } from '@models/index';
+import { signOutPath } from '@modules/auth/routes';
+import { AuthService } from '@modules/auth/services';
 
 import { ErrorTypes } from '@utils/error';
-import { UnauthorizedErrorTitles } from '@utils/error/Unauthorized';
+import { Unauthorized, UnauthorizedErrorTitles } from '@utils/error/Unauthorized';
+import { Web3Utils } from '@utils/web3';
 
 import { IAuthRequest } from './types';
 
 async function authMiddleware(req: Request, res: Response, next: NextFunction) {
   try {
     const requestAuth: IAuthRequest = req;
-    const tokenString = JwtUtils.getTokenFromHeader(requestAuth);
+    const signature = requestAuth?.cookies?.accessToken;
+    const signerAddress = requestAuth?.cookies?.signerAddress;
+    const isSignOut = requestAuth?.route?.path === signOutPath;
+    const authService = new AuthService();
 
-    if (!tokenString) {
-      return res.status(401).json({
+    if (!signature || !signerAddress) {
+      throw new Unauthorized({
         type: ErrorTypes.Unauthorized,
-        title: UnauthorizedErrorTitles.ACCESS_TOKEN_NOT_PROVIDED,
-        detail: 'Access token not provided',
+        title: UnauthorizedErrorTitles.MISSING_CREDENTIALS,
+        detail: 'Some required credentials are missing',
       });
     }
 
-    const tokenDecoded = JwtUtils.verifyAccessToken(
-      tokenString,
-    ) as IAccessTokenPayload;
+    // Busca um user_token vinculado à assinatura
+    const userToken = await authService.findToken(signature);
 
-    const user = await User.findOne({
-      where: { id: tokenDecoded.userId },
-      relations: ['role'],
-    });
-
-    if (!user) {
-      return res.status(401).json({
+    if (!userToken) {
+      throw new Unauthorized({
         type: ErrorTypes.Unauthorized,
-        title: UnauthorizedErrorTitles.INVALID_ACCESS_TOKEN,
-        detail: 'Invalid access token',
+        title: UnauthorizedErrorTitles.SESSION_NOT_FOUND,
+        detail: 'Could not find a session for the provided signature',
       });
     }
 
-    if (!user.active) {
-      return res.status(401).json({
-        type: ErrorTypes.Unauthorized,
-        title: UnauthorizedErrorTitles.INVALID_ACCESS_TOKEN,
-        detail: 'User inactive',
-      });
+    // Valida se o endereço informado foi o que gerou a assinatura
+    const web3Utils = new Web3Utils({
+      signature,
+      userToken,
+      signerAddress,
+    }).verifySignature();
+
+    // Se for signOut pula a validação de token expirado
+    if (!isSignOut) {
+      web3Utils.verifyExpiredToken();
     }
 
-    requestAuth.accessToken = tokenString;
-    requestAuth.user = user;
+    // Injeta token e user na request
+    // requestAuth.accessToken = signature;
+    requestAuth.user = userToken.user;
 
     return next();
   } catch (e) {
-    switch (e.constructor) {
-      case TokenExpiredError:
-        return res.status(401).json({
-          type: ErrorTypes.Unauthorized,
-          title: UnauthorizedErrorTitles.ACCESS_TOKEN_EXPIRED,
-          detail: 'Access token expired',
-        });
-      case JsonWebTokenError:
-        return res.status(401).json({
-          type: ErrorTypes.Unauthorized,
-          title: UnauthorizedErrorTitles.INVALID_ACCESS_TOKEN,
-          detail: 'Invalid access token',
-        });
-      default:
-        return next(e);
-    }
+    return next(e);
   }
 }
 
