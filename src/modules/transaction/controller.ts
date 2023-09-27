@@ -1,6 +1,5 @@
 import { IConfVault, Vault } from 'bsafe';
 import {
-  OutputCoin,
   Provider,
   TransactionResponse,
   hexlify,
@@ -226,16 +225,9 @@ export class TransactionController {
       const { witnesses, outputs } = result.transaction;
 
       const resume = {
-        // todo: import type ITransferResult from bsafe sdk
+        ...api_transaction,
         block: result.blockId,
         witnesses: witnesses.map(witness => witness.data),
-        outputs: outputs.map((out: OutputCoin) => {
-          return {
-            assetId: out.assetId,
-            amount: out.amount.format(),
-            to: out.to,
-          };
-        }),
         bsafeID: api_transaction.id,
         fee: result.fee.format(),
         gasUsed: result.gasUsed.format(),
