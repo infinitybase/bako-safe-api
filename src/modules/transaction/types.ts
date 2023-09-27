@@ -1,6 +1,6 @@
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 
-import { Asset, Transaction, TransactionStatus } from '@models/index';
+import { Asset, Transaction, TransactionStatus, User } from '@models/index';
 
 import { AuthValidatedRequest } from '@middlewares/auth/types';
 
@@ -27,7 +27,7 @@ export interface ICreateTransactionPayload {
   hash: string;
   status: TransactionStatus;
   assets: Asset[];
-  createdBy?: string;
+  createdBy?: User;
 }
 
 export interface IUpdateTransactionPayload {
