@@ -10,12 +10,14 @@ export enum ErrorTypes {
 }
 
 export enum UnauthorizedErrorTitles {
+  MISSING_CREDENTIALS = 'Missing credentials',
   INVALID_CREDENTIALS = 'Invalid credentials',
+  SESSION_NOT_FOUND = 'Session not found',
   ACCESS_TOKEN_NOT_PROVIDED = 'Access token not provided',
   MISSING_AUTH_PARAMS = 'Missing authentication params',
   INVALID_ADDRESS = 'Invalid address',
   INVALID_ACCESS_TOKEN = 'Invalid access token',
-  ACCESS_TOKEN_EXPIRED = 'Access token expired',
+  EXPIRED_TOKEN = 'Expired token',
   INVALID_PERMISSION = 'Invalid permission',
 }
 
