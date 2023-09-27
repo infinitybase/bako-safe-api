@@ -40,14 +40,6 @@ class UserToken extends Base {
   @JoinColumn({ name: 'user_id' })
   @OneToOne(() => User)
   user: User;
-
-  @BeforeInsert()
-  @BeforeUpdate()
-  async encryptToken() {
-    if (this.token) {
-      this.token = await EncryptUtils.encryptToken(this.token);
-    }
-  }
 }
 
 export default UserToken;
