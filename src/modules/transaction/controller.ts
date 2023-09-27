@@ -30,7 +30,7 @@ export class TransactionController {
     bindMethods(this);
   }
 
-  async create({ body: transaction }: ICreateTransactionRequest) {
+  async create({ body: transaction, user }: ICreateTransactionRequest) {
     try {
       const predicate = await this.predicateService
         .filter({
@@ -43,6 +43,7 @@ export class TransactionController {
         assets: transaction.assets.map(asset => Asset.create(asset)),
         status: TransactionStatus.AWAIT,
         predicateID: predicate[0].id,
+        createdBy: user,
       });
 
       const witnesses = ((predicate[0].addresses as unknown) as string[]).map(
