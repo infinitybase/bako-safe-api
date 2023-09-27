@@ -52,7 +52,8 @@ export interface ITransactionFilterParams {
   createdBy?: string;
   to?: string;
   hash?: string;
-  status?: TransactionStatus;
+  status?: TransactionStatus[];
+  name?: string;
 }
 
 export type ICloseTransactionBody = {
@@ -106,7 +107,8 @@ interface IFindTransactionByToRequestSchema extends ValidatedRequestSchema {
 }
 interface IListRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Query]: {
-    status: TransactionStatus;
+    status: TransactionStatus[];
+    name: string;
     predicateId: string;
     to: string;
     startDate: string;

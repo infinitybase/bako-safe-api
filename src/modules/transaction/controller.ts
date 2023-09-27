@@ -120,11 +120,12 @@ export class TransactionController {
       endDate,
       startDate,
       createdBy,
+      name,
     } = req.query;
 
     try {
       const response = await this.transactionService
-        .filter({ predicateId, to, status, endDate, startDate, createdBy })
+        .filter({ predicateId, to, status, endDate, startDate, createdBy, name })
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })
         .list();

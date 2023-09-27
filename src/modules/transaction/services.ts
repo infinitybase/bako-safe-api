@@ -1,3 +1,5 @@
+import { Brackets } from 'typeorm';
+
 import { Transaction } from '@models/index';
 
 import { NotFound } from '@utils/error';
@@ -103,6 +105,16 @@ export class TransactionService implements ITransactionService {
         .innerJoin('t.assets', 'asset')
         .andWhere('asset.to = :to', { to: this._filter.to });
 
+    this._filter.hash &&
+      queryBuilder.andWhere('LOWER(t.hash) = LOWER(:hash)', {
+        hash: this._filter.hash,
+      });
+
+    this._filter.status &&
+      queryBuilder.andWhere('t.status IN (:...status)', {
+        status: this._filter.status,
+      });
+
     this._filter.startDate &&
       queryBuilder.andWhere('t.createdAt >= :startDate', {
         startDate: this._filter.startDate,
@@ -118,15 +130,14 @@ export class TransactionService implements ITransactionService {
         createdBy: this._filter.createdBy,
       });
 
-    this._filter.hash &&
-      queryBuilder.andWhere('LOWER(t.hash) = LOWER(:hash)', {
-        hash: this._filter.hash,
-      });
-
-    this._filter.status &&
-      queryBuilder.andWhere('t.status = :status', {
-        status: this._filter.status,
-      });
+    queryBuilder.andWhere(
+      new Brackets(subQuery => {
+        this._filter.name &&
+          subQuery.where('LOWER(t.name) LIKE LOWER(:name)', {
+            name: `%${this._filter.name}%`,
+          });
+      }),
+    );
 
     queryBuilder
       .leftJoinAndSelect('t.assets', 'assets')
