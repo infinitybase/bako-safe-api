@@ -131,7 +131,7 @@ export class TransactionService implements ITransactionService {
       });
 
     this._filter.name &&
-      subQuery.where('LOWER(t.name) LIKE LOWER(:name)', {
+      queryBuilder.where('LOWER(t.name) LIKE LOWER(:name)', {
         name: `%${this._filter.name}%`,
       });
       
