@@ -104,6 +104,14 @@ export class UserService implements IUserService {
     return user;
   }
 
+  async findByAddress(address: string): Promise<User | undefined> {
+    const user = await User.findOne({
+      where: { address },
+    });
+
+    return user;
+  }
+
   async update(id: string, payload: IUserPayload) {
     return this.findOne(id)
       .then(async data => {

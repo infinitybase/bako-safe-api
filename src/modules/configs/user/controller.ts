@@ -49,6 +49,10 @@ export class UserController {
         provider,
       } = req.body;
 
+      const existingUser = await this.userService.findByAddress(address);
+
+      if (existingUser) return successful(existingUser, Responses.Created);
+
       const response = await this.userService.create({
         name,
         email,

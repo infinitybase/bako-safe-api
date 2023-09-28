@@ -67,6 +67,7 @@ export interface IUserService {
   find(): Promise<IPagination<User> | User[]>;
   create(payload: IUserPayload): Promise<User>;
   findOne(id: string): Promise<User>;
+  findByAddress(address: string): Promise<User | undefined>;
   update(id: string, payload: IUserPayload): Promise<User>;
   delete(id: string): Promise<boolean>;
 }
