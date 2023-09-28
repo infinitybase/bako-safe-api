@@ -130,14 +130,11 @@ export class TransactionService implements ITransactionService {
         createdBy: this._filter.createdBy,
       });
 
-    queryBuilder.andWhere(
-      new Brackets(subQuery => {
-        this._filter.name &&
-          subQuery.where('LOWER(t.name) LIKE LOWER(:name)', {
-            name: `%${this._filter.name}%`,
-          });
-      }),
-    );
+    this._filter.name &&
+      subQuery.where('LOWER(t.name) LIKE LOWER(:name)', {
+        name: `%${this._filter.name}%`,
+      });
+      
 
     queryBuilder
       .leftJoinAndSelect('t.assets', 'assets')
