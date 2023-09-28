@@ -109,11 +109,23 @@ export class TransactionController {
   }
 
   async list(req: IListRequest) {
-    const { predicateId, to, orderBy, sort, page, perPage } = req.query;
+    const {
+      predicateId,
+      to,
+      status,
+      orderBy,
+      sort,
+      page,
+      perPage,
+      endDate,
+      startDate,
+      createdBy,
+      name,
+    } = req.query;
 
     try {
       const response = await this.transactionService
-        .filter({ predicateId, to })
+        .filter({ predicateId, to, status, endDate, startDate, createdBy, name })
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })
         .list();
