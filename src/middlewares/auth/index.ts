@@ -13,7 +13,7 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
   try {
     const requestAuth: IAuthRequest = req;
     const signature = requestAuth?.headers?.authorization;
-    const signerAddress = requestAuth?.headers?.signerAddress;
+    const signerAddress = requestAuth.get('signerAddress');
     const isSignOut = requestAuth?.route?.path === signOutPath;
     const authService = new AuthService();
 
