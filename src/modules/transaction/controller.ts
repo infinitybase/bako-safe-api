@@ -113,19 +113,22 @@ export class TransactionController {
   async signByID({ body: { account, signer }, params: { id } }: ISignByIdRequest) {
     try {
       const transaction = await this.transactionService.findById(id);
-      const witness = transaction.witnesses.find(w => w.account === account);
+      const { predicate, witnesses, resume } = transaction;
+      const _resume = JSON.parse(resume);
 
-      if (transaction && witness) {
+      const witness = witnesses.find(w => w.account === account);
+
+      if (witness) {
         await this.witnessService.update(witness.id, {
           signature: signer,
         });
+
+        _resume.witnesses.push(signer);
 
         const signatures = await this.witnessService.findByTransactionId(
           transaction.id,
           true,
         );
-
-        const { predicate } = await this.transactionService.findById(id);
 
         const statusField =
           Number(predicate.minSigners) <= signatures.length
@@ -134,6 +137,10 @@ export class TransactionController {
 
         await this.transactionService.update(id, {
           status: statusField,
+          resume: JSON.stringify({
+            ..._resume,
+            status: statusField,
+          }),
         });
         return successful(true, Responses.Ok);
       }
@@ -222,10 +229,10 @@ export class TransactionController {
 
       const result = await sender.waitForResult();
 
-      const { witnesses, outputs } = result.transaction;
+      const { witnesses } = result.transaction;
 
       const resume = {
-        ...api_transaction,
+        ...JSON.parse(api_transaction.resume),
         block: result.blockId,
         witnesses: witnesses.map(witness => witness.data),
         bsafeID: api_transaction.id,
@@ -245,7 +252,7 @@ export class TransactionController {
       };
 
       await this.transactionService.update(api_transaction.id, _api_transaction);
-      return successful(result, Responses.Ok);
+      return successful(true, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }

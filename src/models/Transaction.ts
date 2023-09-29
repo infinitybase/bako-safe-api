@@ -7,15 +7,15 @@ import { Witness } from './Witness';
 
 //todo -> import to sdk package
 export enum TransactionStatus {
-  AWAIT_REQUIREMENTS = 'AWAIT_REQUIREMENTS', // -> AWAIT SIGNATURES
-  PENDING_SENDER = 'PENDING_SENDER', // -> AWAIT SENDER, BEFORE AWAIT STATUS
-  SUCCESS = 'SUCCESS', // -> SENDED
-  FAILED = 'FAILED', // -> FAILED
+  AWAIT_REQUIREMENTS = 'await_requirements', // -> AWAIT SIGNATURES
+  PENDING_SENDER = 'pending_sender', // -> AWAIT SENDER, BEFORE AWAIT STATUS
+  SUCCESS = 'success', // -> SENDED
+  FAILED = 'failed', // -> FAILED
 }
 
 @Entity('transactions')
 class Transaction extends Base {
-  @Column()
+  @Column({ name: 'predicate_address' })
   predicateAddress: string;
 
   @Column()
