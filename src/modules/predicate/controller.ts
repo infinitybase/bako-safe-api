@@ -1,20 +1,28 @@
+import { Asset, Transaction, TransactionStatus } from '@models/index';
+
 import { error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
 
+import { ITransactionService } from '../transaction/types';
 import {
   ICreatePredicateRequest,
   IDeletePredicateRequest,
   IFindByHashRequest,
   IFindByIdRequest,
   IListRequest,
-  IPredicateService, // IUpdatePredicateRequest,
+  IPredicateService,
 } from './types';
 
 export class PredicateController {
   private predicateService: IPredicateService;
+  private transactionService: ITransactionService;
 
-  constructor(predicateService: IPredicateService) {
+  constructor(
+    predicateService: IPredicateService,
+    transactionService: ITransactionService,
+  ) {
     this.predicateService = predicateService;
+    this.transactionService = transactionService;
     bindMethods(this);
   }
 
@@ -56,6 +64,38 @@ export class PredicateController {
         .list();
 
       return successful(response[0], Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async hasReservedCoins({ params: { address } }: IFindByHashRequest) {
+    try {
+      const response = await this.transactionService
+        .filter({
+          predicateAddress: address,
+        })
+        .list()
+        .then((data: Transaction[]) => {
+          const a: string[] = [];
+          data
+            .filter(
+              (transaction: Transaction) =>
+                transaction.status == TransactionStatus.AWAIT_REQUIREMENTS ||
+                transaction.status == TransactionStatus.PENDING_SENDER,
+            )
+            .map((_filteredTransactions: Transaction) => {
+              _filteredTransactions.assets.map((_assets: Asset) =>
+                a.push(_assets.utxo),
+              );
+            });
+          return a;
+        })
+        .catch(() => {
+          return [];
+        });
+
+      return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }

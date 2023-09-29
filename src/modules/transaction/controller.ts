@@ -142,8 +142,9 @@ export class TransactionController {
             status: statusField,
           }),
         });
-        return successful(true, Responses.Ok);
       }
+
+      return successful(!!witness, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }

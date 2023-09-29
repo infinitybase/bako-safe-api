@@ -50,6 +50,7 @@ export type ICloseTransactionPayload = {
 
 export interface ITransactionFilterParams {
   predicateId?: string;
+  predicateAddress?: string;
   to?: string;
   hash?: string;
 }

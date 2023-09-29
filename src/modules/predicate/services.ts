@@ -53,7 +53,7 @@ export class PredicateService implements IPredicateService {
   }
 
   async findById(id: string): Promise<Predicate> {
-    return Predicate.findOne({ where: { id } })
+    return await Predicate.findOne({ where: { id } })
       .then(predicate => {
         if (!predicate) {
           throw new NotFound({
@@ -62,7 +62,6 @@ export class PredicateService implements IPredicateService {
             detail: `Predicate with id ${id} not found`,
           });
         }
-
         return predicate;
       })
       .catch(e => {
@@ -88,6 +87,12 @@ export class PredicateService implements IPredicateService {
       });
     };
 
+    // todo:
+    /**
+     * include inner join to transactions and assets
+     * return itens
+     * and filter just assets ID
+     */
     this._filter.address &&
       queryBuilder.where('LOWER(p.predicateAddress) = LOWER(:predicateAddress)', {
         predicateAddress: this._filter.address.toLowerCase(),
