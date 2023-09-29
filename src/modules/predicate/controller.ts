@@ -62,20 +62,11 @@ export class PredicateController {
   }
 
   async list(req: IListRequest) {
-    const {
-      address,
-      signer,
-      provider,
-      owner,
-      orderBy,
-      sort,
-      page,
-      perPage,
-    } = req.query;
+    const { address, provider, owner, orderBy, sort, page, perPage } = req.query;
 
     try {
       const response = await this.predicateService
-        .filter({ address, signer, provider, owner })
+        .filter({ address, signer: req.user.address, provider, owner })
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })
         .list();
