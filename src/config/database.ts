@@ -27,22 +27,22 @@ console.log({
 const [host, port] = String(DATABASE_URL).split(':');
 const environment = NODE_ENV;
 const entitiesDir = path.resolve(__dirname, '..', 'models', '**', '*{.ts,.js}');
-const migrationsDir = path.resolve(
+export const migrationsDir = path.resolve(
   __dirname,
   '..',
   'database',
   'migrations',
   '**',
-  '*.ts',
+  '*{.ts,.js}',
 );
-const seedersDir = path.resolve(
+export const seedersDir = path.resolve(
   __dirname,
   '..',
   '..',
   'database',
   'seeders',
   '**',
-  '*.ts',
+  '*{.ts,.js}',
 );
 
 const development: ConnectionOptions = {
@@ -76,16 +76,16 @@ const test: ConnectionOptions = {
     migrationsDir: './src/database/migrations/',
   },
   synchronize: false,
-  migrationsRun: false,
+  migrationsRun: true,
 };
 
 const production: ConnectionOptions = {
   type: 'postgres',
-  host,
-  port: Number(DATABASE_PORT),
-  username: DATABASE_USERNAME,
-  password: DATABASE_PASSWORD,
-  database: DATABASE_NAME,
+  host: process.env.DATABASE_HOST,
+  port: Number(process.env.DATABASE_PORT),
+  username: process.env.DATABASE_USERNAME,
+  password: process.env.DATABASE_PASSWORD,
+  database: process.env.DATABASE_NAME,
   entities: [entitiesDir],
   migrations: [migrationsDir, seedersDir],
   cli: {
@@ -93,7 +93,7 @@ const production: ConnectionOptions = {
     migrationsDir: './src/database/migrations/',
   },
   synchronize: false,
-  migrationsRun: false,
+  migrationsRun: true,
 };
 
 const staging: ConnectionOptions = {
@@ -109,6 +109,7 @@ const staging: ConnectionOptions = {
     entitiesDir: './src/models/',
     migrationsDir: './src/database/migrations/',
   },
+  migrationsRun: true,
   synchronize: false,
 };
 
@@ -119,4 +120,4 @@ const database = {
   test,
 };
 
-export default database['test'];
+export default database[environment || 'development'];
