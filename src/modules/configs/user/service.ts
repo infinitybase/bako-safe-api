@@ -2,6 +2,7 @@ import { Brackets } from 'typeorm';
 
 import { User } from '@src/models';
 import { ErrorTypes, NotFound } from '@src/utils/error';
+import GeneralError from '@src/utils/error/GeneralError';
 import Internal from '@src/utils/error/Internal';
 import { IOrdination, setOrdination } from '@src/utils/ordination';
 import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination';
@@ -76,6 +77,8 @@ export class UserService implements IUserService {
         return data;
       })
       .catch(error => {
+        if (error instanceof GeneralError) throw error;
+
         throw new Internal({
           type: ErrorTypes.Create,
           title: 'Error on user create',
@@ -97,6 +100,14 @@ export class UserService implements IUserService {
         detail: `User with id ${id} not found`,
       });
     }
+
+    return user;
+  }
+
+  async findByAddress(address: string): Promise<User | undefined> {
+    const user = await User.findOne({
+      where: { address },
+    });
 
     return user;
   }
