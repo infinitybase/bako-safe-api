@@ -19,50 +19,30 @@ export const predicate: IPredicatePayload = {
 };
 
 export const predicateNegativeMinSigners: IPredicatePayload = {
-  name: '123',
-  predicateAddress:
-    '0x0000000000000000000000000000000000000000000000000000000000000001',
-  description: 'desc_test',
+  ...predicate,
   minSigners: -1,
-  addresses: [
-    '0x0000000000000000000000000000000000000000000000000000000000000002',
-    '0x0000000000000000000000000000000000000000000000000000000000000003',
-  ],
-  owner: '0x0000000000000000000000000000000000000000000000000000000000007654',
-  bytes: 'Bytes*#*@&@',
-  abi: 'abi#&@&@*',
-  configurable: 'configurable',
-  provider: 'network',
-  chainId: 12,
 };
-export const predicateNullAddress: IPredicatePayload = {
-  name: 'Alberto Felchado',
-  predicateAddress:
-    '0x0000000000000000000000000000000000000000000000000000000000000001',
-  description: 'desc_test',
-  minSigners: -1,
-  addresses: [null],
-  owner: '0x0000000000000000000000000000000000000000000000000000000000007654',
-  bytes: 'Bytes*#*@&@',
-  abi: 'abi#&@&@*',
-  configurable: 'configurable',
-  provider: 'network',
-  chainId: 12,
-};
-export const predicateMinSignersNotInter: IPredicatePayload = {
-  name: 'Roy Mustang',
-  predicateAddress:
-    '0x0000000000000000000000000000000000000000000000000000000000000001',
-  description: 'desc_test',
-  minSigners: 2.5,
+
+export const predicateEmptyAddresses: IPredicatePayload = {
+  ...predicate,
   addresses: [],
-  owner: '0x0000000000000000000000000000000000000000000000000000000000007654',
-  bytes: 'Bytes*#*@&@',
-  abi: 'abi#&@&@*',
-  configurable: 'configurable',
-  provider: 'network',
-  chainId: 12,
 };
+
+export const predicateDecimalMinSigners: IPredicatePayload = {
+  ...predicate,
+  minSigners: 2.5,
+};
+
+export const predicateStringMinSigners: IPredicatePayload = {
+  ...predicate,
+  minSigners: ('2' as unknown) as number,
+};
+
+export const predicateStringChainId: IPredicatePayload = {
+  ...predicate,
+  chainId: ('15' as unknown) as number,
+};
+
 export const predicateForUpdate: IPredicatePayload = {
   name: 'Roy Mustang',
   predicateAddress:
@@ -76,18 +56,4 @@ export const predicateForUpdate: IPredicatePayload = {
   configurable: 'configurabled',
   provider: 'network',
   chainId: 12,
-};
-export const wrongPredicate: IPredicatePayload = {
-  name: 'Apagado',
-  predicateAddress:
-    '0x0000000000000000000000000000000000000000000000000000000000000001',
-  description: 'desc_test',
-  minSigners: -1,
-  addresses: [],
-  owner: '0x0000000000000000000000000000000000000000000000000000000000007777',
-  bytes: 'Bytes*#*@&@',
-  abi: 'abi#&@&@*',
-  configurable: 'configurable',
-  provider: 'network',
-  chainId: -512312,
 };
