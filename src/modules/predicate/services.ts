@@ -66,6 +66,8 @@ export class PredicateService implements IPredicateService {
         return predicate;
       })
       .catch(e => {
+        if (e instanceof GeneralError) throw e;
+
         throw new Internal({
           type: ErrorTypes.Internal,
           title: 'Error on predicate findById',
