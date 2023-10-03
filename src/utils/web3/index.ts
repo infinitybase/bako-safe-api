@@ -1,4 +1,3 @@
-import 'bsafe';
 import { isPast } from 'date-fns';
 import { Signer, hashMessage } from 'fuels';
 
