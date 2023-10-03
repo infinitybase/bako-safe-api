@@ -7,7 +7,7 @@ export const validateAddPredicatePayload = validator.body(
     name: Joi.string().required(),
     predicateAddress: Joi.string().required(),
     description: Joi.string().allow(''),
-    minSigners: Joi.number().strict(true).min(1).required(),
+    minSigners: Joi.number().strict(true).integer().min(1).required(),
     addresses: Joi.array().items(Joi.string()).min(1).required(),
     owner: Joi.string().required(),
     bytes: Joi.string().required(),
