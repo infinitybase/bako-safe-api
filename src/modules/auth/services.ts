@@ -5,7 +5,12 @@ import { User } from '@models/index';
 import { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
 
-import { IAuthService, ICreateUserTokenPayload, ISignInResponse } from './types';
+import {
+  IAuthService,
+  ICreateUserTokenPayload,
+  IFindTokenParams,
+  ISignInResponse,
+} from './types';
 
 export class AuthService implements IAuthService {
   async signIn(payload: ICreateUserTokenPayload): Promise<ISignInResponse> {
@@ -35,11 +40,20 @@ export class AuthService implements IAuthService {
     }
   }
 
-  async findToken(signature: string): Promise<UserToken | undefined> {
-    return UserToken.findOne({
-      where: { token: signature },
-      relations: ['user'],
-    })
+  async findToken(params: IFindTokenParams): Promise<UserToken | undefined> {
+    const queryBuilder = UserToken.createQueryBuilder('ut').innerJoinAndSelect(
+      'ut.user',
+      'user',
+    );
+
+    params.userId &&
+      queryBuilder.where('ut.user = :userId', { userId: params.userId });
+
+    params.signature &&
+      queryBuilder.where('ut.token = :signature', { signature: params.signature });
+
+    return queryBuilder
+      .getOne()
       .then(userToken => userToken)
       .catch(e => {
         throw new Internal({

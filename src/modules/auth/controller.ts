@@ -29,7 +29,9 @@ export class AuthController {
         signerAddress: req.body.address,
       }).verifySignature();
 
-      const existingToken = await this.authService.findToken(signature);
+      const existingToken = await this.authService.findToken({
+        userId: req.body.user_id,
+      });
 
       if (existingToken) {
         await this.authService.signOut(existingToken.user);

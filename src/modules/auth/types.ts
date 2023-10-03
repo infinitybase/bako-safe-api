@@ -39,6 +39,11 @@ interface ISignInRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Body]: ISignInPayload;
 }
 
+export interface IFindTokenParams {
+  userId?: string;
+  signature?: string;
+}
+
 export interface ISignInResponse {
   accessToken: string;
 }
@@ -49,5 +54,5 @@ export type IListRequest = AuthValidatedRequest<IListRequestSchema>;
 export interface IAuthService {
   signIn(payload: ICreateUserTokenPayload): Promise<ISignInResponse>;
   signOut(user: User): Promise<void>;
-  findToken(signature: string): Promise<UserToken | undefined>;
+  findToken(params: IFindTokenParams): Promise<UserToken | undefined>;
 }

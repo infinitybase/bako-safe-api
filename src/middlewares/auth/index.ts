@@ -25,7 +25,7 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
       });
     }
 
-    const userToken = await authService.findToken(signature);
+    const userToken = await authService.findToken({ signature });
 
     if (!userToken) {
       throw new Unauthorized({
