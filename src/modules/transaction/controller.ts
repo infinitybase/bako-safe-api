@@ -1,4 +1,4 @@
-import { TransactionStatus } from '@models/index';
+import { Asset, TransactionStatus } from '@models/index';
 
 import { IPredicateService } from '@modules/predicate/types';
 import { IWitnessService } from '@modules/witness/types';
@@ -30,7 +30,7 @@ export class TransactionController {
     bindMethods(this);
   }
 
-  async create({ body: transaction }: ICreateTransactionRequest) {
+  async create({ body: transaction, user }: ICreateTransactionRequest) {
     try {
       const predicate = await this.predicateService
         .filter({
@@ -40,8 +40,10 @@ export class TransactionController {
 
       const newTransaction = await this.transactionService.create({
         ...transaction,
+        assets: transaction.assets.map(asset => Asset.create(asset)),
         status: TransactionStatus.AWAIT,
         predicateID: predicate[0].id,
+        createdBy: user,
       });
 
       const witnesses = ((predicate[0].addresses as unknown) as string[]).map(
@@ -107,11 +109,23 @@ export class TransactionController {
   }
 
   async list(req: IListRequest) {
-    const { predicateId, to, orderBy, sort, page, perPage } = req.query;
+    const {
+      predicateId,
+      to,
+      status,
+      orderBy,
+      sort,
+      page,
+      perPage,
+      endDate,
+      startDate,
+      createdBy,
+      name,
+    } = req.query;
 
     try {
       const response = await this.transactionService
-        .filter({ predicateId, to })
+        .filter({ predicateId, to, status, endDate, startDate, createdBy, name })
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })
         .list();

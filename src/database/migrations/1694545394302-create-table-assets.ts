@@ -28,7 +28,7 @@ export class createTableAssets1694545394302 implements MigrationInterface {
           },
           {
             name: 'amount',
-            type: 'integer',
+            type: 'varchar',
           },
           {
             name: 'created_at',

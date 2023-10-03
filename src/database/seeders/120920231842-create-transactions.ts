@@ -1,4 +1,4 @@
-import { Transaction, TransactionStatus } from '@models/index';
+import { Asset, Transaction, TransactionStatus } from '@models/index';
 
 export default async function () {
   const transactions: Partial<Transaction>[] = [
@@ -8,12 +8,19 @@ export default async function () {
       predicateAdress: 'predicate_adress',
       predicateID: '624da56f-f5e8-4bc2-b3a5-b181ff2b5097',
       txData: 'txData',
-      hash: 'hash',
+      hash: 'hash2',
       status: TransactionStatus.AWAIT,
       sendTime: new Date(),
       gasUsed: 'gasUsed',
       resume: 'resume',
       createdAt: new Date(),
+      assets: [
+        Asset.create({
+          assetID: '0x000000000000000000000000000000000000000000000000000000',
+          amount: '0.0000001',
+          to: 'kajsakhksdhasda',
+        }),
+      ],
     },
   ];
 

@@ -1,6 +1,6 @@
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 
-import { Transaction, TransactionStatus } from '@models/index';
+import { Asset, Transaction, TransactionStatus, User } from '@models/index';
 
 import { AuthValidatedRequest } from '@middlewares/auth/types';
 
@@ -26,9 +26,8 @@ export interface ICreateTransactionPayload {
   txData: string;
   hash: string;
   status: TransactionStatus;
-  sendTime: Date;
-  gasUsed: string;
-  resume: string;
+  assets: Asset[];
+  createdBy: User;
 }
 
 export interface IUpdateTransactionPayload {
@@ -47,9 +46,14 @@ export type ICloseTransactionPayload = {
 };
 
 export interface ITransactionFilterParams {
+  startDate?: string;
+  endDate?: string;
   predicateId?: string;
+  createdBy?: string;
   to?: string;
   hash?: string;
+  status?: TransactionStatus[];
+  name?: string;
 }
 
 export type ICloseTransactionBody = {
@@ -103,8 +107,13 @@ interface IFindTransactionByToRequestSchema extends ValidatedRequestSchema {
 }
 interface IListRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Query]: {
+    status: TransactionStatus[];
+    name: string;
     predicateId: string;
     to: string;
+    startDate: string;
+    endDate: string;
+    createdBy: string;
     orderBy: OrderBy;
     sort: Sort;
     page: string;
