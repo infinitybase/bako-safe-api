@@ -10,7 +10,6 @@ export interface AuthValidatedRequest<T extends ValidatedRequestSchema>
   query: T[ContainerTypes.Query] & ParsedQs;
   headers: T[ContainerTypes.Headers];
   params: T[ContainerTypes.Params];
-  cookies: T[ContainerTypes.Cookies];
   accessToken?: string;
   user?: User;
 }
