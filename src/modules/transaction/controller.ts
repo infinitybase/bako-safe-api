@@ -91,9 +91,12 @@ export class TransactionController {
       if (transaction && witness) {
         await this.witnessService.update(witness.id, { signature: signer });
 
+        const witnesses = transaction.witnesses.filter(
+          witness => !!witness.signature,
+        );
+
         const statusField =
-          Number(transaction.predicate.minSigners) <=
-          transaction.witnesses.length + 1
+          Number(transaction.predicate.minSigners) <= witnesses.length + 1
             ? TransactionStatus.PENDING
             : TransactionStatus.AWAIT;
 
