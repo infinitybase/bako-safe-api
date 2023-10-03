@@ -119,15 +119,7 @@ export class PredicateService implements IPredicateService {
       : queryBuilder
           .getMany()
           .then(predicates => {
-            if (!predicates.length) {
-              throw new NotFound({
-                type: ErrorTypes.NotFound,
-                title: 'Error on predicate list',
-                detail: 'No predicate was found for the provided params',
-              });
-            }
-
-            return predicates;
+            return predicates ?? [];
           })
           .catch(handleInternalError);
   }

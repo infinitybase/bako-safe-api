@@ -134,7 +134,6 @@ export class TransactionService implements ITransactionService {
       queryBuilder.where('LOWER(t.name) LIKE LOWER(:name)', {
         name: `%${this._filter.name}%`,
       });
-      
 
     queryBuilder
       .leftJoinAndSelect('t.assets', 'assets')
@@ -159,15 +158,7 @@ export class TransactionService implements ITransactionService {
       : queryBuilder
           .getMany()
           .then(transactions => {
-            if (!transactions.length) {
-              throw new NotFound({
-                type: ErrorTypes.NotFound,
-                title: 'Error on transaction list',
-                detail: 'No transactions found with the provided params',
-              });
-            }
-
-            return transactions;
+            return transactions ?? [];
           })
           .catch(handleInternalError);
   }
