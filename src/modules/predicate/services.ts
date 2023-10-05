@@ -1,3 +1,5 @@
+import { Brackets } from 'typeorm';
+
 import { NotFound } from '@src/utils/error';
 import { IOrdination, setOrdination } from '@src/utils/ordination';
 import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination';
@@ -107,6 +109,19 @@ export class PredicateService implements IPredicateService {
       queryBuilder.where(
         `:address = ANY(SELECT jsonb_array_elements_text(p.addresses::jsonb)::text)`,
         { address: this._filter.signer },
+      );
+
+    this._filter.q &&
+      queryBuilder.andWhere(
+        new Brackets(qb =>
+          qb
+            .where('LOWER(p.name) LIKE LOWER(:name)', {
+              name: `%${this._filter.q}%`,
+            })
+            .orWhere('LOWER(p.description) LIKE LOWER(:description)', {
+              description: `%${this._filter.q}%`,
+            }),
+        ),
       );
 
     queryBuilder.orderBy(`p.${this._ordination.orderBy}`, this._ordination.sort);

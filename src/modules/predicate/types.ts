@@ -32,6 +32,7 @@ export interface IPredicatePayload {
 }
 
 export interface IPredicateFilterParams {
+  q?: string;
   address?: string;
   signer?: string;
   provider?: string;
@@ -59,6 +60,7 @@ interface IFindByHashRequestSchema extends ValidatedRequestSchema {
 }
 interface IListRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Query]: {
+    q: string;
     address: string;
     signer: string;
     provider: string;
