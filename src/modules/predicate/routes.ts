@@ -19,7 +19,7 @@ const {
   delete: deleteService,
 } = new PredicateController(predicateService);
 
-router.use(authMiddleware);
+//router.use(authMiddleware);
 
 router.post('/', validateAddPredicatePayload, handleResponse(create));
 router.get('/', handleResponse(list));

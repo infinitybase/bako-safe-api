@@ -89,8 +89,8 @@ export class PredicateService implements IPredicateService {
     };
 
     this._filter.address &&
-      queryBuilder.where('LOWER(p.predicateAddress) = LOWER(:predicateAddress)', {
-        predicateAddress: this._filter.address.toLowerCase(),
+      queryBuilder.where('p.predicateAddress =:predicateAddress', {
+        predicateAddress: this._filter.address,
       });
 
     this._filter.provider &&
@@ -110,7 +110,6 @@ export class PredicateService implements IPredicateService {
       );
 
     queryBuilder.orderBy(`p.${this._ordination.orderBy}`, this._ordination.sort);
-
     return hasPagination
       ? Pagination.create(queryBuilder)
           .paginate(this._pagination)

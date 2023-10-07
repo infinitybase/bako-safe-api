@@ -59,7 +59,6 @@ export class TransactionController {
 
       return successful(newTransaction, Responses.Ok);
     } catch (e) {
-      console.log(e);
       return error(e.error, e.statusCode);
     }
   }
@@ -78,7 +77,6 @@ export class TransactionController {
       const response = await this.transactionService.filter({ hash }).list();
       return successful(response[0], Responses.Ok);
     } catch (e) {
-      console.log(e);
       return error(e.error, e.statusCode);
     }
   }

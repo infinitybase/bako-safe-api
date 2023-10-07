@@ -1,3 +1,5 @@
+import { Predicate } from '@src/models/Predicate';
+
 import { error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
 
@@ -53,9 +55,10 @@ export class PredicateController {
         .filter({
           address,
         })
-        .list();
+        .list()
+        .then((data: Predicate[]) => data[0]);
 
-      return successful(response[0], Responses.Ok);
+      return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }
