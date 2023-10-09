@@ -98,8 +98,9 @@ export class TransactionService implements ITransactionService {
     const queryBuilder = Transaction.createQueryBuilder('t').select();
 
     this._filter.predicateId &&
-      queryBuilder.where({ predicateID: this._filter.predicateId });
-
+      queryBuilder.andWhere('t.predicateID IN (:...predicates)', {
+        predicates: this._filter.predicateId,
+      });
     this._filter.to &&
       queryBuilder
         .innerJoin('t.assets', 'asset')

@@ -1,4 +1,4 @@
-import { Asset, TransactionStatus } from '@models/index';
+import { Asset, Predicate, TransactionStatus } from '@models/index';
 
 import { IPredicateService } from '@modules/predicate/types';
 import { IWitnessService } from '@modules/witness/types';
@@ -122,11 +122,30 @@ export class TransactionController {
       startDate,
       createdBy,
       name,
+      allOfUser,
     } = req.query;
-
+    const { user } = req;
     try {
+      const predicateIds: string[] = allOfUser
+        ? await this.predicateService
+            .filter({ signer: user.address })
+            .list()
+            .then((data: Predicate[]) => {
+              return data.map(predicate => predicate.id);
+            })
+        : predicateId
+        ? predicateId
+        : undefined;
       const response = await this.transactionService
-        .filter({ predicateId, to, status, endDate, startDate, createdBy, name })
+        .filter({
+          predicateId: predicateIds,
+          to,
+          status,
+          endDate,
+          startDate,
+          createdBy,
+          name,
+        })
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })
         .list();

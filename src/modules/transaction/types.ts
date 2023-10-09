@@ -48,7 +48,7 @@ export type ICloseTransactionPayload = {
 export interface ITransactionFilterParams {
   startDate?: string;
   endDate?: string;
-  predicateId?: string;
+  predicateId?: string[];
   createdBy?: string;
   to?: string;
   hash?: string;
@@ -109,7 +109,8 @@ interface IListRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Query]: {
     status: TransactionStatus[];
     name: string;
-    predicateId: string;
+    allOfUser: boolean;
+    predicateId: string[];
     to: string;
     startDate: string;
     endDate: string;
