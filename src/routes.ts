@@ -5,6 +5,7 @@ import roles from '@modules/configs/roles/routes';
 import users from '@modules/configs/user/routes';
 import predicates from '@modules/predicate/routes';
 import transactions from '@modules/transaction/routes';
+import vaultTemplate from '@modules/vaultTemplate/routes';
 
 const router = Router();
 
@@ -13,5 +14,6 @@ router.use('/role', roles);
 router.use('/user', users);
 router.use('/predicate', predicates);
 router.use('/transaction', transactions);
+router.use('/template', vaultTemplate);
 
 export { router };
