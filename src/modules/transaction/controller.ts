@@ -1,4 +1,9 @@
-import { Asset, Predicate, TransactionStatus } from '@models/index';
+import {
+  Asset,
+  Predicate,
+  TransactionStatus,
+  WitnessesStatus,
+} from '@models/index';
 
 import { IPredicateService } from '@modules/predicate/types';
 import { IWitnessService } from '@modules/witness/types';
@@ -81,25 +86,22 @@ export class TransactionController {
     }
   }
 
-  async signByID({ body: { account, signer }, params: { id } }: ISignByIdRequest) {
+  async signByID({
+    body: { account, signer, confirm },
+    params: { id },
+  }: ISignByIdRequest) {
     try {
       const transaction = await this.transactionService.findById(id);
       const witness = transaction.witnesses.find(w => w.account === account);
 
       if (transaction && witness) {
-        await this.witnessService.update(witness.id, { signature: signer });
-
-        const witnesses = transaction.witnesses.filter(
-          witness => !!witness.signature,
-        );
-
-        const statusField =
-          Number(transaction.predicate.minSigners) <= witnesses.length + 1
-            ? TransactionStatus.PENDING
-            : TransactionStatus.AWAIT;
+        await this.witnessService.update(witness.id, {
+          signature: signer,
+          status: confirm ? WitnessesStatus.DONE : WitnessesStatus.REJECTED,
+        });
 
         await this.transactionService.update(id, {
-          status: statusField,
+          status: await this.transactionService.validateStatus(id),
         });
 
         return successful(true, Responses.Ok);

@@ -1,4 +1,13 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
+import {
+  BeforeUpdate,
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+} from 'typeorm';
+
+import { TransactionService } from '@src/modules/transaction/services';
 
 import { User } from '@models/User';
 
@@ -11,6 +20,7 @@ export enum TransactionStatus {
   AWAIT = 'AWAIT',
   DONE = 'DONE',
   PENDING = 'PENDING',
+  REJECTED = 'REJECTED',
 }
 
 @Entity('transactions')
@@ -46,7 +56,7 @@ class Transaction extends Base {
   @ManyToOne(() => User)
   createdBy: User;
 
-  @OneToMany(() => Asset, asset => asset.transaction, { cascade: true })
+  @OneToMany(() => Asset, asset => asset.transaction)
   assets: Asset[];
 
   @OneToMany(() => Witness, witness => witness.transaction)

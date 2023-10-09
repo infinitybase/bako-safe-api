@@ -1,6 +1,12 @@
-import { Brackets } from 'typeorm';
+import { predicate } from '@mocks/predicate';
+import { Brackets, In } from 'typeorm';
 
-import { Transaction } from '@models/index';
+import {
+  Transaction,
+  TransactionStatus,
+  Witness,
+  WitnessesStatus,
+} from '@models/index';
 
 import { NotFound } from '@utils/error';
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
@@ -22,7 +28,8 @@ export class TransactionService implements ITransactionService {
   };
   private _pagination: PaginationParams;
   private _filter: ITransactionFilterParams;
-
+  private nativeAssetId =
+    '0x000000000000000000000000000000000000000000000000000000';
   filter(filter: ITransactionFilterParams) {
     this._filter = filter;
     return this;
@@ -53,7 +60,7 @@ export class TransactionService implements ITransactionService {
 
   async update(
     id: string,
-    payload: IUpdateTransactionPayload,
+    payload?: IUpdateTransactionPayload,
   ): Promise<Transaction> {
     return Transaction.update({ id }, payload)
       .then(() => this.findById(id))
@@ -171,6 +178,48 @@ export class TransactionService implements ITransactionService {
         throw new Internal({
           type: ErrorTypes.Internal,
           title: 'Error on transaction delete',
+          detail: e,
+        });
+      });
+  }
+
+  async validateStatus(transactionId: string): Promise<TransactionStatus> {
+    return await this.findById(transactionId)
+      .then((transaction: Transaction) => {
+        const witness: {
+          DONE: number;
+          REJECTED: number;
+          PENDING: number;
+        } = {
+          DONE: 0,
+          REJECTED: 0,
+          PENDING: 0,
+        };
+        transaction.witnesses.map((item: Witness) => {
+          witness[item.status]++;
+        });
+        const totalSigners =
+          predicate.addresses.filter((item: string) => {
+            return item !== this.nativeAssetId;
+          }).length + 1;
+
+        if (witness[WitnessesStatus.DONE] >= transaction.predicate.minSigners) {
+          return TransactionStatus.PENDING;
+        }
+
+        if (
+          totalSigners - witness[WitnessesStatus.REJECTED] <
+          transaction.predicate.minSigners
+        ) {
+          return TransactionStatus.REJECTED;
+        }
+
+        return TransactionStatus.AWAIT;
+      })
+      .catch(e => {
+        throw new Internal({
+          type: ErrorTypes.Internal,
+          title: 'Error on transaction validateStatus',
           detail: e,
         });
       });

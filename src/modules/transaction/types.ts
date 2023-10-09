@@ -64,6 +64,7 @@ export type ICloseTransactionBody = {
 export interface ISignByIdPayload {
   signer: string;
   account: string;
+  confirm: boolean;
 }
 
 interface ICreateTransactionRequestSchema extends ValidatedRequestSchema {
@@ -138,6 +139,7 @@ export interface ITransactionService {
   paginate(pagination?: PaginationParams): this;
   filter(filter: ITransactionFilterParams): this;
 
+  validateStatus: (transactionId: string) => Promise<TransactionStatus>;
   create: (payload: ICreateTransactionPayload) => Promise<Transaction>;
   update: (id: string, payload: IUpdateTransactionPayload) => Promise<Transaction>;
   list: () => Promise<IPagination<Transaction> | Transaction[]>;
