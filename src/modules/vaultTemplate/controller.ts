@@ -6,6 +6,7 @@ import {
   ICreateVaultTemplateRequest,
   ILisVaultTemplatetRequest,
   IUpdateVaultTemplateRequest,
+  IFindByIdRequest,
 } from './types';
 
 export class VaultTemplateController {
@@ -30,17 +31,28 @@ export class VaultTemplateController {
   }
 
   async list(req: ILisVaultTemplatetRequest) {
-    const { orderBy, sort, page, perPage, name } = req.query;
+    const { orderBy, sort, page, perPage, q } = req.query;
     const { user } = req;
     try {
       const response = await this.vaultTemplateService
         .filter({
           user,
-          name,
+          q,
         })
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })
         .list();
+
+      return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async findById(req: IFindByIdRequest) {
+    const { id } = req.params;
+    try {
+      const response = await this.vaultTemplateService.findById(id);
 
       return successful(response, Responses.Ok);
     } catch (e) {

@@ -94,9 +94,9 @@ export class VaultTemplateService implements IVaultTemplateService {
     const hasPagination = this._pagination?.page && this._pagination?.perPage;
     const queryBuilder = VaultTemplate.createQueryBuilder('t').select();
 
-    this._filter.name &&
+    this._filter.q &&
       queryBuilder.where('LOWER(t.name) LIKE LOWER(:name)', {
-        name: `%${this._filter.name}%`,
+        name: `%${this._filter.q}%`,
       });
 
     queryBuilder.orderBy(`t.${this._ordination.orderBy}`, this._ordination.sort);

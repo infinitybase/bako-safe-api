@@ -36,7 +36,7 @@ export interface IUpdatePayload {
 }
 
 export interface IFilterParams {
-  name?: string;
+  q?: string;
   user?: User;
 }
 
@@ -51,7 +51,7 @@ interface IUpdateVaultTemplate extends ValidatedRequestSchema {
 
 interface IListVaultTemplate extends ValidatedRequestSchema {
   [ContainerTypes.Query]: {
-    name: string;
+    q: string;
     orderBy: OrderBy;
     sort: Sort;
     page: string;
@@ -59,9 +59,16 @@ interface IListVaultTemplate extends ValidatedRequestSchema {
   };
 }
 
+interface IFindByIdVaultTemplate extends ValidatedRequestSchema {
+  [ContainerTypes.Params]: {
+    id: string;
+  };
+}
+
 export type ICreateVaultTemplateRequest = AuthValidatedRequest<ICreateVaultTemplate>;
 export type IUpdateVaultTemplateRequest = AuthValidatedRequest<IUpdateVaultTemplate>;
 export type ILisVaultTemplatetRequest = AuthValidatedRequest<IListVaultTemplate>;
+export type IFindByIdRequest = AuthValidatedRequest<IFindByIdVaultTemplate>;
 
 export interface IVaultTemplateService {
   ordination(ordination?: IOrdination<VaultTemplate>): this;
@@ -71,4 +78,5 @@ export interface IVaultTemplateService {
   create: (payload: ICreatePayload) => Promise<VaultTemplate>;
   update: (id: string, payload: IUpdatePayload) => Promise<VaultTemplate>;
   list: () => Promise<IPagination<VaultTemplate> | VaultTemplate[]>;
+  findById: (id: string) => Promise<VaultTemplate>;
 }
