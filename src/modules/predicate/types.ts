@@ -4,7 +4,7 @@ import { AuthValidatedRequest } from '@src/middlewares/auth/types';
 import { IOrdination } from '@src/utils/ordination';
 import { IPagination, PaginationParams } from '@src/utils/pagination';
 
-import { Predicate } from '@models/index';
+import { Predicate, User } from '@models/index';
 
 export enum OrderBy {
   name = 'name',
@@ -27,8 +27,10 @@ export interface IPredicatePayload {
   bytes: string;
   abi: string;
   configurable: string;
+  isTemplate: boolean;
   provider: string;
   chainId?: number;
+  user: User;
 }
 
 export interface IPredicateFilterParams {

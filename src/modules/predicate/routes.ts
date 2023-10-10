@@ -4,12 +4,14 @@ import { authMiddleware } from '@src/middlewares';
 
 import { handleResponse } from '@utils/index';
 
+import { VaultTemplateService } from '../vaultTemplate/services';
 import { PredicateController } from './controller';
 import { PredicateService } from './services';
 import { validateAddPredicatePayload } from './validations';
 
 const router = Router();
 const predicateService = new PredicateService();
+const vaultTemplateService = new VaultTemplateService();
 const {
   create,
   findById,
@@ -17,7 +19,7 @@ const {
   findByAddress,
   // update,
   delete: deleteService,
-} = new PredicateController(predicateService);
+} = new PredicateController(predicateService, vaultTemplateService);
 
 router.use(authMiddleware);
 
