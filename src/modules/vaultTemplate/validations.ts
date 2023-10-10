@@ -7,7 +7,7 @@ export const validateCreatePayload = validator.body(
     name: Joi.string().required(),
     description: Joi.string().required(),
     minSigners: Joi.number().required(),
-    signers: Joi.array().items(Joi.string()).required(),
+    addresses: Joi.array().items(Joi.string()).required(),
   }),
 );
 

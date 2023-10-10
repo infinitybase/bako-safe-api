@@ -23,7 +23,7 @@ class UserToken extends Base {
   minSigners: number;
 
   @Column()
-  signers: string;
+  addresses: string;
 
   @JoinColumn({ name: 'created_by' })
   @OneToOne(() => User)
@@ -31,19 +31,19 @@ class UserToken extends Base {
 
   @BeforeInsert()
   saveAsJson() {
-    if (typeof this.signers !== 'string') {
-      this.signers = JSON.stringify(this.signers);
+    if (typeof this.addresses !== 'string') {
+      this.addresses = JSON.stringify(this.addresses);
     }
   }
 
   @AfterInsert()
   returnParsedOnSave() {
-    this.signers = JSON.parse(this.signers);
+    this.addresses = JSON.parse(this.addresses);
   }
 
   @AfterLoad()
   returnParsed() {
-    this.signers = JSON.parse(this.signers);
+    this.addresses = JSON.parse(this.addresses);
   }
 }
 
