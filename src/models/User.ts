@@ -1,3 +1,4 @@
+import axios from 'axios';
 import {
   BeforeInsert,
   BeforeUpdate,
@@ -11,6 +12,8 @@ import { EncryptUtils } from '@utils/index';
 
 import { Base } from './Base';
 import Role from './Role';
+
+const { UI_URL } = process.env;
 
 export enum Languages {
   ENGLISH = 'English',
@@ -44,11 +47,22 @@ class User extends Base {
   @ManyToOne(() => Role)
   role: Role;
 
+  @Column()
+  avatar?: string;
+
   @BeforeInsert()
   @BeforeUpdate()
   async encryptPassword() {
     if (this.password) {
       this.password = await EncryptUtils.encrypt(this.password);
+    }
+    if (!this.avatar) {
+      const avatars_json = await axios
+        .get(`${UI_URL}/icons/icons.json`)
+        .then(({ data }) => data);
+      const avatars = avatars_json.values;
+      const random = Math.floor(Math.random() * avatars.length);
+      this.avatar = `${UI_URL}/${avatars[random]}`;
     }
   }
 }
