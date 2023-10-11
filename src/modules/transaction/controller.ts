@@ -127,6 +127,8 @@ export class TransactionController {
       allOfUser,
     } = req.query;
     const { user } = req;
+    const _predicateId =
+      typeof predicateId == 'string' ? [predicateId] : predicateId;
     try {
       const predicateIds: string[] = allOfUser
         ? await this.predicateService
@@ -136,8 +138,9 @@ export class TransactionController {
               return data.map(predicate => predicate.id);
             })
         : predicateId
-        ? predicateId
+        ? _predicateId
         : undefined;
+
       const response = await this.transactionService
         .filter({
           predicateId: predicateIds,

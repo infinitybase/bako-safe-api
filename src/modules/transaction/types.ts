@@ -111,7 +111,7 @@ interface IListRequestSchema extends ValidatedRequestSchema {
     status: TransactionStatus[];
     name: string;
     allOfUser: boolean;
-    predicateId: string[];
+    predicateId: string[] | string;
     to: string;
     startDate: string;
     endDate: string;
