@@ -120,6 +120,7 @@ export class TransactionController {
       sort,
       page,
       perPage,
+      limit,
       endDate,
       startDate,
       createdBy,
@@ -147,6 +148,7 @@ export class TransactionController {
           startDate,
           createdBy,
           name,
+          limit,
         })
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })

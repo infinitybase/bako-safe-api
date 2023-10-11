@@ -54,6 +54,7 @@ export interface ITransactionFilterParams {
   hash?: string;
   status?: TransactionStatus[];
   name?: string;
+  limit?: number;
 }
 
 export type ICloseTransactionBody = {
@@ -120,6 +121,7 @@ interface IListRequestSchema extends ValidatedRequestSchema {
     sort: Sort;
     page: string;
     perPage: string;
+    limit: number;
   };
 }
 
