@@ -28,7 +28,7 @@ export class addTableVaultTemplate1696881120692 implements MigrationInterface {
             type: 'integer',
           },
           {
-            name: 'signers',
+            name: 'addresses',
             type: 'text',
           },
           {
