@@ -15,6 +15,5 @@ export const validateAddPredicatePayload = validator.body(
     configurable: Joi.string().required(),
     provider: Joi.string().required(),
     chainId: Joi.number().strict(true),
-    isTemplate: Joi.boolean().optional(),
   }),
 );

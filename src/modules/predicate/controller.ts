@@ -15,30 +15,14 @@ import {
 
 export class PredicateController {
   private predicateService: IPredicateService;
-  private vaultTemplateService: IVaultTemplateService;
 
-  constructor(
-    predicateService: IPredicateService,
-    vaultTemplateService: IVaultTemplateService,
-  ) {
+  constructor(predicateService: IPredicateService) {
     this.predicateService = predicateService;
-    this.vaultTemplateService = vaultTemplateService;
     bindMethods(this);
   }
 
   async create({ body: payload }: ICreatePredicateRequest) {
     try {
-      if (payload.isTemplate) {
-        const { name, description, minSigners, addresses, user } = payload;
-        const template: ICreatePayload = {
-          name,
-          description,
-          minSigners,
-          signers: JSON.stringify(addresses),
-          createdBy: user,
-        };
-        payload.isTemplate && (await this.vaultTemplateService.create(template));
-      }
       const response = await this.predicateService.create(payload);
       return successful(response, Responses.Ok);
     } catch (e) {

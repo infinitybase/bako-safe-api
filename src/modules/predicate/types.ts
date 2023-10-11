@@ -27,7 +27,6 @@ export interface IPredicatePayload {
   bytes: string;
   abi: string;
   configurable: string;
-  isTemplate: boolean;
   provider: string;
   chainId?: number;
   user: User;

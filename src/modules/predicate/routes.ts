@@ -19,7 +19,7 @@ const {
   findByAddress,
   // update,
   delete: deleteService,
-} = new PredicateController(predicateService, vaultTemplateService);
+} = new PredicateController(predicateService);
 
 router.use(authMiddleware);
 
