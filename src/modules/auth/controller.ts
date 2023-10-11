@@ -46,7 +46,10 @@ export class AuthController {
         user_id: req.body.user_id,
       });
 
-      return successful({ accessToken: userToken.accessToken }, Responses.Ok);
+      return successful(
+        { accessToken: userToken.accessToken, avatar: existingToken.user.avatar },
+        Responses.Ok,
+      );
     } catch (e) {
       if (e instanceof GeneralError) throw e;
 
