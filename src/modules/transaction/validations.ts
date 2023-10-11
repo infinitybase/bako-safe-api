@@ -30,7 +30,7 @@ export const validateAddTransactionPayload = validator.body(
 
 export const validateSignerByIdPayload = validator.body(
   Joi.object({
-    signer: Joi.string().required(),
+    signer: Joi.string(),
     account: Joi.string().required(),
     confirm: Joi.boolean().required(),
   }),
