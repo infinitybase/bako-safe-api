@@ -16,7 +16,7 @@ export default async function () {
 
   const users: Partial<User>[] = [
     {
-      name: `[${netoworks['local']}] ${accounts['STORE']}`,
+      name: `[${netoworks['local']}] ${accounts['STORE'].account}`,
       active: true,
       email: process.env.APP_ADMIN_EMAIL,
       password: process.env.APP_ADMIN_PASSWORD,
@@ -27,7 +27,7 @@ export default async function () {
     },
 
     {
-      name: `[${netoworks['local']}] ${accounts['USER_1']}`,
+      name: `[${netoworks['local']}] ${accounts['USER_1'].account}`,
       active: true,
       email: process.env.APP_ADMIN_EMAIL,
       password: process.env.APP_ADMIN_PASSWORD,
@@ -38,7 +38,7 @@ export default async function () {
     },
 
     {
-      name: `[${netoworks['local']}] ${accounts['USER_2']}`,
+      name: `[${netoworks['local']}] ${accounts['USER_2'].account}`,
       active: true,
       email: process.env.APP_ADMIN_EMAIL,
       password: process.env.APP_ADMIN_PASSWORD,
