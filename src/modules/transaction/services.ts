@@ -1,5 +1,4 @@
 import { predicate } from '@mocks/predicate';
-import { Brackets, In } from 'typeorm';
 
 import {
   Transaction,
@@ -143,9 +142,12 @@ export class TransactionService implements ITransactionService {
         name: `%${this._filter.name}%`,
       });
 
+    this._filter.limit && !hasPagination && queryBuilder.limit(this._filter.limit);
+
     queryBuilder
       .leftJoinAndSelect('t.assets', 'assets')
       .leftJoinAndSelect('t.witnesses', 'witnesses')
+      .leftJoinAndSelect('t.predicate', 'predicate')
       .orderBy(`t.${this._ordination.orderBy}`, this._ordination.sort);
 
     const handleInternalError = e => {
