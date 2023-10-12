@@ -98,9 +98,10 @@ export class VaultTemplateService implements IVaultTemplateService {
         name: `%${this._filter.q}%`,
       });
 
+    console.log(this._filter.user);
     this._filter.user &&
-      queryBuilder.where('t.createdBy =:createdBy', {
-        createdBy: this._filter.user,
+      queryBuilder.andWhere('t.created_by = :createdBy', {
+        createdBy: this._filter.user.id,
       });
 
     queryBuilder.orderBy(`t.${this._ordination.orderBy}`, this._ordination.sort);
