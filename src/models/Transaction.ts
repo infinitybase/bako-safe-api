@@ -21,6 +21,7 @@ export enum TransactionStatus {
   DONE = 'DONE',
   PENDING = 'PENDING',
   REJECTED = 'REJECTED',
+  ERROR = 'ERROR',
 }
 
 @Entity('transactions')

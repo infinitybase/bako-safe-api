@@ -164,12 +164,12 @@ export class TransactionController {
   }
 
   async close({
-    body: { gasUsed, transactionResult },
+    body: { gasUsed, transactionResult, hasError },
     params: { id },
   }: ICloseTransactionRequest) {
     try {
       const response = await this.transactionService.update(id, {
-        status: TransactionStatus.DONE,
+        status: hasError ? TransactionStatus.ERROR : TransactionStatus.DONE,
         sendTime: new Date(),
         gasUsed,
         resume: transactionResult,

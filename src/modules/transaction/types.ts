@@ -60,6 +60,7 @@ export interface ITransactionFilterParams {
 export type ICloseTransactionBody = {
   gasUsed: string;
   transactionResult: string;
+  hasError: boolean;
 };
 
 export interface ISignByIdPayload {

@@ -43,5 +43,6 @@ export const validateCloseTransactionPayload = validator.body(
   Joi.object({
     gasUsed: Joi.string().required(),
     transactionResult: Joi.string().required(),
+    hasError: Joi.boolean(),
   }),
 );
