@@ -127,10 +127,10 @@ export class PredicateService implements IPredicateService {
       );
 
     queryBuilder
-      .leftJoinAndSelect('p.transactions', 'transactions')
-      .leftJoinAndSelect('transactions.assets', 'assets')
-      .leftJoinAndSelect('transactions.witnesses', 'witnesses')
-      .leftJoinAndSelect('transactions.predicate', 'predicate')
+      .leftJoinAndSelect('p.transactions', 't')
+      .leftJoinAndSelect('t.assets', 'assets')
+      .leftJoinAndSelect('t.witnesses', 'witnesses')
+      .leftJoinAndSelect('t.predicate', 'predicate')
       .orderBy(`p.${this._ordination.orderBy}`, this._ordination.sort);
 
     return hasPagination
