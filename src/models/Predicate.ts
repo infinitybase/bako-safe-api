@@ -10,9 +10,8 @@ import {
 import { UserService } from '@src/modules/configs/user/service';
 
 import { Base } from './Base';
-import { ResumedUser, randomAvatar } from './User';
 import { Transaction } from './Transaction';
-
+import { ResumedUser, randomAvatar } from './User';
 
 @Entity('predicates')
 class Predicate extends Base {
