@@ -1,3 +1,4 @@
+import axios from 'axios';
 import {
   BeforeInsert,
   BeforeUpdate,
@@ -12,9 +13,17 @@ import { EncryptUtils } from '@utils/index';
 import { Base } from './Base';
 import Role from './Role';
 
+const { UI_URL } = process.env;
+
 export enum Languages {
   ENGLISH = 'English',
   PORTUGUESE = 'Portuguese',
+}
+
+export interface ResumedUser {
+  name?: string;
+  avatar: string;
+  address: string;
 }
 
 @Entity('users')
@@ -44,13 +53,28 @@ class User extends Base {
   @ManyToOne(() => Role)
   role: Role;
 
+  @Column()
+  avatar?: string;
+
   @BeforeInsert()
   @BeforeUpdate()
   async encryptPassword() {
     if (this.password) {
       this.password = await EncryptUtils.encrypt(this.password);
     }
+    if (!this.avatar) {
+      this.avatar = await randomAvatar();
+    }
   }
 }
 
 export { User };
+
+export const randomAvatar = async () => {
+  const avatars_json = await axios
+    .get(`${UI_URL}/icons/icons.json`)
+    .then(({ data }) => data);
+  const avatars = avatars_json.values;
+  const random = Math.floor(Math.random() * avatars.length);
+  return `${UI_URL}/${avatars[random]}`;
+};
