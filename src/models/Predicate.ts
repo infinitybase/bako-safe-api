@@ -1,9 +1,18 @@
-import { AfterInsert, AfterLoad, BeforeInsert, Column, Entity } from 'typeorm';
+import {
+  AfterInsert,
+  AfterLoad,
+  BeforeInsert,
+  Column,
+  Entity,
+  OneToMany,
+} from 'typeorm';
 
 import { UserService } from '@src/modules/configs/user/service';
 
 import { Base } from './Base';
 import { ResumedUser, randomAvatar } from './User';
+import { Transaction } from './Transaction';
+
 
 @Entity('predicates')
 class Predicate extends Base {
@@ -40,6 +49,9 @@ class Predicate extends Base {
 
   @Column({ nullable: true })
   chainId?: number;
+
+  @OneToMany(() => Transaction, transaction => transaction.predicate)
+  transactions: Transaction[];
 
   @BeforeInsert()
   saveAsJson() {

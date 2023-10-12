@@ -126,7 +126,13 @@ export class PredicateService implements IPredicateService {
         ),
       );
 
-    queryBuilder.orderBy(`p.${this._ordination.orderBy}`, this._ordination.sort);
+    queryBuilder
+      .leftJoinAndSelect('p.transactions', 'transactions')
+      .leftJoinAndSelect('transactions.assets', 'assets')
+      .leftJoinAndSelect('transactions.witnesses', 'witnesses')
+      .leftJoinAndSelect('transactions.predicate', 'predicate')
+      .orderBy(`p.${this._ordination.orderBy}`, this._ordination.sort);
+
     return hasPagination
       ? Pagination.create(queryBuilder)
           .paginate(this._pagination)

@@ -56,7 +56,7 @@ class Transaction extends Base {
   @ManyToOne(() => User)
   createdBy: User;
 
-  @OneToMany(() => Asset, asset => asset.transaction)
+  @OneToMany(() => Asset, asset => asset.transaction, { cascade: ['insert'] })
   assets: Asset[];
 
   @OneToMany(() => Witness, witness => witness.transaction)
