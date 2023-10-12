@@ -20,6 +20,12 @@ export enum Languages {
   PORTUGUESE = 'Portuguese',
 }
 
+export interface ResumedUser {
+  name?: string;
+  avatar: string;
+  address: string;
+}
+
 @Entity('users')
 class User extends Base {
   @Column()
