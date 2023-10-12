@@ -1,4 +1,3 @@
-import axios from 'axios';
 import {
   BeforeInsert,
   BeforeUpdate,
@@ -62,19 +61,7 @@ class User extends Base {
     if (this.password) {
       this.password = await EncryptUtils.encrypt(this.password);
     }
-    if (!this.avatar) {
-      this.avatar = await randomAvatar();
-    }
   }
 }
 
 export { User };
-
-export const randomAvatar = async () => {
-  const avatars_json = await axios
-    .get(`${UI_URL}/icons/icons.json`)
-    .then(({ data }) => data);
-  const avatars = avatars_json.values;
-  const random = Math.floor(Math.random() * avatars.length);
-  return `${UI_URL}/${avatars[random]}`;
-};

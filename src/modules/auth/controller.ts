@@ -8,13 +8,16 @@ import { IAuthRequest } from '@middlewares/auth/types';
 import { error } from '@utils/error';
 import { Responses, successful, bindMethods, Web3Utils } from '@utils/index';
 
+import { IUserService } from '../configs/user/types';
 import { IAuthService, ISignInRequest } from './types';
 
 export class AuthController {
   private authService: IAuthService;
+  private userService: IUserService;
 
-  constructor(authService: IAuthService) {
+  constructor(authService: IAuthService, userService: IUserService) {
     this.authService = authService;
+    this.userService = userService;
     bindMethods(this);
   }
 
@@ -43,17 +46,21 @@ export class AuthController {
         provider: req.body.provider,
         expired_at: addMinutes(req.body.createdAt, Number(expiresIn)),
         payload: JSON.stringify(payloadWithoutSignature),
-        user_id: req.body.user_id,
+        user: await this.userService.findOne(req.body.user_id),
       });
 
       return successful(
-        { accessToken: userToken.accessToken, avatar: existingToken.user.avatar },
+        {
+          accessToken: userToken.accessToken,
+          avatar: userToken.avatar,
+        },
         Responses.Ok,
       );
     } catch (e) {
+      console.log(e);
       if (e instanceof GeneralError) throw e;
 
-      return error(e.error[0], e.statusCode);
+      return error(e.error, e.statusCode);
     }
   }
 

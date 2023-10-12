@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { Brackets } from 'typeorm';
 
 import { User } from '@src/models';
@@ -8,6 +9,8 @@ import { IOrdination, setOrdination } from '@src/utils/ordination';
 import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination';
 
 import { IFilterParams, IUserService, IUserPayload } from './types';
+
+const { UI_URL } = process.env;
 
 export class UserService implements IUserService {
   private _pagination: PaginationParams;
@@ -73,6 +76,7 @@ export class UserService implements IUserService {
     return await User.create(payload)
       .save()
       .then(data => {
+        console.log(data);
         delete data.password;
         return data;
       })
@@ -107,17 +111,9 @@ export class UserService implements IUserService {
   async findByAddress(address: string): Promise<User | undefined> {
     const user = await User.findOne({
       where: { address },
-    })
-      .then(data => {
-        return data;
-      })
-      .catch(e => {
-        throw new Internal({
-          type: ErrorTypes.Internal,
-          title: 'Error on user findByAddress',
-          detail: e,
-        });
-      });
+    }).then(data => {
+      return data;
+    });
 
     return user;
   }
@@ -147,5 +143,14 @@ export class UserService implements IUserService {
           detail: `User with id ${id} not found`,
         });
       });
+  }
+
+  async randomAvatar() {
+    const avatars_json = await axios
+      .get(`${UI_URL}/icons/icons.json`)
+      .then(({ data }) => data);
+    const avatars = avatars_json.values;
+    const random = Math.floor(Math.random() * avatars.length);
+    return `${UI_URL}/${avatars[random]}`;
   }
 }

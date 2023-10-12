@@ -62,6 +62,7 @@ export class UserController {
         role,
         address,
         provider,
+        avatar: await this.userService.randomAvatar(),
       });
 
       return successful(response, Responses.Created);

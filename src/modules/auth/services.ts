@@ -16,7 +16,12 @@ export class AuthService implements IAuthService {
   async signIn(payload: ICreateUserTokenPayload): Promise<ISignInResponse> {
     return UserToken.create(payload)
       .save()
-      .then(({ token }) => ({ accessToken: token }))
+      .then(data => {
+        return {
+          accessToken: data.token,
+          avatar: data.user.avatar,
+        };
+      })
       .catch(e => {
         throw new Internal({
           type: ErrorTypes.Internal,

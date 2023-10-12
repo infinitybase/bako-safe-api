@@ -7,7 +7,7 @@ import { AuthValidatedRequest } from '@middlewares/auth/types';
 
 export interface ICreateUserTokenPayload {
   token: string;
-  user_id: string;
+  user: User;
   expired_at: Date;
   encoder: Encoder;
   provider: string;
@@ -46,6 +46,7 @@ export interface IFindTokenParams {
 
 export interface ISignInResponse {
   accessToken: string;
+  avatar: string;
 }
 
 export type ISignInRequest = AuthValidatedRequest<ISignInRequestSchema>;

@@ -11,7 +11,7 @@ import { UserService } from '@src/modules/configs/user/service';
 
 import { Base } from './Base';
 import { Transaction } from './Transaction';
-import { ResumedUser, randomAvatar } from './User';
+import { ResumedUser } from './User';
 
 @Entity('predicates')
 class Predicate extends Base {
@@ -68,8 +68,9 @@ class Predicate extends Base {
   async returnParsed() {
     this.addresses = JSON.parse(this.addresses);
     const _complete: ResumedUser[] = [];
+    const userService = new UserService();
     for await (const user of this.addresses) {
-      await new UserService().findByAddress(user).then(async _user =>
+      await userService.findByAddress(user).then(async _user =>
         _user
           ? _complete.push({
               address: _user.address,
@@ -79,7 +80,7 @@ class Predicate extends Base {
           : _complete.push({
               address: user,
               name: 'Unknown',
-              avatar: await randomAvatar(),
+              avatar: await userService.randomAvatar(),
             }),
       );
     }
