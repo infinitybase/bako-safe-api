@@ -43,7 +43,6 @@ export class VaultTemplateService implements IVaultTemplateService {
       .save()
       .then(template => template)
       .catch(e => {
-        console.log(e);
         throw new Internal({
           type: ErrorTypes.Internal,
           title: 'Error on vault template creation',
@@ -99,11 +98,15 @@ export class VaultTemplateService implements IVaultTemplateService {
         name: `%${this._filter.q}%`,
       });
 
+    this._filter.user &&
+      queryBuilder.where('t.createdBy =:createdBy', {
+        createdBy: this._filter.user,
+      });
+
     queryBuilder.orderBy(`t.${this._ordination.orderBy}`, this._ordination.sort);
 
     const handleInternalError = e => {
       if (e instanceof GeneralError) throw e;
-      console.log(e);
       throw new Internal({
         type: ErrorTypes.Internal,
         title: 'Error on vault template list',

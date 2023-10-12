@@ -5,7 +5,7 @@ import { validator } from '@utils/index';
 export const validateCreatePayload = validator.body(
   Joi.object({
     name: Joi.string().required(),
-    description: Joi.string().required(),
+    description: Joi.string().optional(),
     minSigners: Joi.number().required(),
     addresses: Joi.array().items(Joi.string()).required(),
   }),

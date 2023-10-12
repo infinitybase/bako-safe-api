@@ -76,7 +76,6 @@ export class UserService implements IUserService {
     return await User.create(payload)
       .save()
       .then(data => {
-        console.log(data);
         delete data.password;
         return data;
       })
