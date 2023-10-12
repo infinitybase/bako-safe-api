@@ -1,6 +1,9 @@
 import { AfterInsert, AfterLoad, BeforeInsert, Column, Entity } from 'typeorm';
 
+import { UserService } from '@src/modules/configs/user/service';
+
 import { Base } from './Base';
+import { User, randomAvatar } from './User';
 
 @Entity('predicates')
 class Predicate extends Base {
@@ -18,6 +21,7 @@ class Predicate extends Base {
 
   @Column()
   addresses: string;
+  completeAddress: User[];
 
   @Column()
   owner: string;
@@ -50,12 +54,22 @@ class Predicate extends Base {
   }
 
   @AfterLoad()
-  returnParsed() {
+  async returnParsed() {
     this.addresses = JSON.parse(this.addresses);
-  }
-
-  get AddressesArray() {
-    return JSON.parse(this.addresses);
+    const _complete: User[] = [];
+    for await (const user of this.addresses) {
+      await new UserService()
+        .findByAddress(user)
+        .then(user => _complete.push(user))
+        .catch(async () => {
+          return {
+            address: user,
+            name: 'Unknown',
+            avatar: await randomAvatar(),
+          };
+        });
+    }
+    this.completeAddress = _complete;
   }
 }
 

@@ -107,6 +107,16 @@ export class UserService implements IUserService {
   async findByAddress(address: string): Promise<User | undefined> {
     const user = await User.findOne({
       where: { address },
+    }).then(data => {
+      if (!data) {
+        throw new NotFound({
+          type: ErrorTypes.NotFound,
+          title: 'User not found',
+          detail: `User with address ${address} not found`,
+        });
+      }
+
+      return data;
     });
 
     return user;

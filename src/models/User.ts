@@ -57,14 +57,18 @@ class User extends Base {
       this.password = await EncryptUtils.encrypt(this.password);
     }
     if (!this.avatar) {
-      const avatars_json = await axios
-        .get(`${UI_URL}/icons/icons.json`)
-        .then(({ data }) => data);
-      const avatars = avatars_json.values;
-      const random = Math.floor(Math.random() * avatars.length);
-      this.avatar = `${UI_URL}/${avatars[random]}`;
+      this.avatar = await randomAvatar();
     }
   }
 }
 
 export { User };
+
+export const randomAvatar = async () => {
+  const avatars_json = await axios
+    .get(`${UI_URL}/icons/icons.json`)
+    .then(({ data }) => data);
+  const avatars = avatars_json.values;
+  const random = Math.floor(Math.random() * avatars.length);
+  return `${UI_URL}/${avatars[random]}`;
+};
