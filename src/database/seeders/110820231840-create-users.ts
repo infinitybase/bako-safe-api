@@ -1,6 +1,7 @@
 import { accounts } from '@src/mocks/accounts';
 import { netoworks } from '@src/mocks/networks';
 import Role from '@src/models/Role';
+import { UserService } from '@src/modules/configs/user/service';
 
 import { Languages, User } from '@models/index';
 
@@ -13,6 +14,7 @@ export default async function () {
   if (roles.length < 1) {
     return;
   }
+  const userService = new UserService();
 
   const users: Partial<User>[] = [
     {
@@ -24,6 +26,7 @@ export default async function () {
       provider: netoworks['local'],
       address: accounts['STORE'].address,
       role: roles[0],
+      avatar: await userService.randomAvatar(),
     },
 
     {
@@ -35,6 +38,7 @@ export default async function () {
       provider: netoworks['local'],
       address: accounts['USER_1'].address,
       role: roles[0],
+      avatar: await userService.randomAvatar(),
     },
 
     {
@@ -46,6 +50,7 @@ export default async function () {
       provider: netoworks['local'],
       address: accounts['USER_2'].address,
       role: roles[0],
+      avatar: await userService.randomAvatar(),
     },
   ];
 
