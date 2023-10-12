@@ -5,8 +5,6 @@ yarn.lock
 package-lock.json
 .editorconfig
 
-# Enviroment
-.env
 
 # Mac OS
 .DS_Store
