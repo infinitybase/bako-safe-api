@@ -31,7 +31,7 @@ class App {
   }
 
   private initMiddlewares() {
-    this.app.use(bodyParser.urlencoded({ extended: false })); // Parse application/x-www-form-urlencoded
+    this.app.use(bodyParser.urlencoded({ limit: '100mb', extended: false })); // Parse application/x-www-form-urlencoded
     this.app.use(bodyParser.json({ limit: '100mb' })); // Parse application/json
     this.app.use(cookieParser());
     this.app.use(Express.json());
