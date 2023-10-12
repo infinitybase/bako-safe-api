@@ -1,3 +1,4 @@
+import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import Express from 'express';
@@ -30,6 +31,8 @@ class App {
   }
 
   private initMiddlewares() {
+    this.app.use(bodyParser.urlencoded({ extended: false })); // Parse application/x-www-form-urlencoded
+    this.app.use(bodyParser.json({ limit: '50mb' })); // Parse application/json
     this.app.use(cookieParser());
     this.app.use(Express.json());
     this.app.use(cors());

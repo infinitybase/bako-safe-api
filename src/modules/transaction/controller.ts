@@ -64,6 +64,7 @@ export class TransactionController {
 
       return successful(newTransaction, Responses.Ok);
     } catch (e) {
+      console.log('error', e);
       return error(e.error, e.statusCode);
     }
   }

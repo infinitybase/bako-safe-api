@@ -1,3 +1,4 @@
+import bodyParser from 'body-parser';
 import cors from 'cors';
 import Express from 'express';
 import morgan from 'morgan';
