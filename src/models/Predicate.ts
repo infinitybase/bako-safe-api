@@ -69,22 +69,19 @@ class Predicate extends Base {
     this.addresses = JSON.parse(this.addresses);
     const _complete: ResumedUser[] = [];
     for await (const user of this.addresses) {
-      await new UserService()
-        .findByAddress(user)
-        .then(user =>
-          _complete.push({
-            address: user.address,
-            name: user.name,
-            avatar: user.avatar,
-          }),
-        )
-        .catch(async () => {
-          return _complete.push({
-            address: user,
-            name: 'Unknown',
-            avatar: await randomAvatar(),
-          });
-        });
+      await new UserService().findByAddress(user).then(async _user =>
+        _user
+          ? _complete.push({
+              address: _user.address,
+              name: _user.name,
+              avatar: _user.avatar,
+            })
+          : _complete.push({
+              address: user,
+              name: 'Unknown',
+              avatar: await randomAvatar(),
+            }),
+      );
     }
     this.completeAddress = _complete;
   }

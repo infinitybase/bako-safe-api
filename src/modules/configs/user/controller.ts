@@ -49,12 +49,9 @@ export class UserController {
         provider,
       } = req.body;
 
-      await this.userService
-        .findByAddress(address)
-        .then(existingUser => {
-          return successful(existingUser, Responses.Created);
-        })
-        .catch(() => {});
+      const existingUser = await this.userService.findByAddress(address);
+
+      if (existingUser) return successful(existingUser, Responses.Created);
 
       const response = await this.userService.create({
         name,
@@ -69,7 +66,7 @@ export class UserController {
 
       return successful(response, Responses.Created);
     } catch (e) {
-      return error(e.error, e.statusCode);
+      return error(e.error[0], e.statusCode);
     }
   }
 
