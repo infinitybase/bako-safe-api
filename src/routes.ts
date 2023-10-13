@@ -16,4 +16,8 @@ router.use('/predicate', predicates);
 router.use('/transaction', transactions);
 router.use('/template', vaultTemplate);
 
+// ping route
+router.get('/ping', ({ res }) =>
+  res.send(`${new Date().toISOString()} ${process.env.APP_NAME}`),
+);
 export { router };

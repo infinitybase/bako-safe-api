@@ -41,9 +41,6 @@ class App {
 
   private initRoutes() {
     this.app.use(router);
-    this.app.get('/ping', ({ res }) =>
-      res.send(`${new Date().toISOString()} ${process.env.APP_NAME}`),
-    );
   }
 
   private initErrorHandler() {

@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register -r dotenv/config src/server/index.ts",
     "test": "chmod +x ./scripts/init_test.sh && ./scripts/init_test.sh",
-    "start": "ts-node -r dotenv/config ./build/index.js",
+    "start": "ts-node -r dotenv/config ./build/server/index.js",
     "build": "tsc --project . && tscpaths -p tsconfig.json -s ./src -o ./build",
     "migration:run": "ts-node -r tsconfig-paths/register -r dotenv/config ./node_modules/typeorm/cli.js migration:run",
     "migration:create": "ts-node -r tsconfig-paths/register -r dotenv/config ./node_modules/typeorm/cli.js migration:create -n",
