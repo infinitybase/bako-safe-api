@@ -23,14 +23,14 @@ class Bootstrap {
       NODE_ENV,
     } = process.env;
 
-    console.log('[DATABASE CONST]: ', {
-      DATABASE_HOST,
-      DATABASE_PORT,
-      DATABASE_USERNAME,
-      DATABASE_PASSWORD,
-      DATABASE_NAME,
-      NODE_ENV,
-    });
+    // console.log('[DATABASE CONST]: ', {
+    //   DATABASE_HOST,
+    //   DATABASE_PORT,
+    //   DATABASE_USERNAME,
+    //   DATABASE_PASSWORD,
+    //   DATABASE_NAME,
+    //   NODE_ENV,
+    // });
 
     this.startEnv();
     await this.connectDatabase();

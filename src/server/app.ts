@@ -31,8 +31,8 @@ class App {
   }
 
   private initMiddlewares() {
-    this.app.use(bodyParser.urlencoded({ limit: '100mb', extended: false })); // Parse application/x-www-form-urlencoded
-    this.app.use(bodyParser.json({ limit: '100mb' })); // Parse application/json
+    this.app.use(bodyParser.urlencoded({ limit: '100mb', extended: false }));
+    this.app.use(bodyParser.json({ limit: '100mb' }));
     this.app.use(cookieParser());
     this.app.use(Express.json());
     this.app.use(cors());
@@ -41,6 +41,9 @@ class App {
 
   private initRoutes() {
     this.app.use(router);
+    this.app.get('/ping', ({ res }) =>
+      res.send(`${new Date().toISOString()} ${process.env.APP_NAME}`),
+    );
   }
 
   private initErrorHandler() {

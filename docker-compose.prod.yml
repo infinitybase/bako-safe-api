@@ -20,6 +20,7 @@ services:
       - DATABASE_NAME=railway
       # APP
       - API_PORT=3333
+      - APP_NAME=bsafe-api
       # ADMIN USER
       - APP_ADMIN_EMAIL=admin_user_email
       - APP_ADMIN_PASSWORD=admin_user_password
