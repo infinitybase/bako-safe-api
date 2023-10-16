@@ -202,9 +202,9 @@ export class TransactionService implements ITransactionService {
           witness[item.status]++;
         });
         const totalSigners =
-          predicate.addresses.filter((item: string) => {
-            return item !== this.nativeAssetId;
-          }).length + 1;
+          witness[WitnessesStatus.DONE] +
+          witness[WitnessesStatus.REJECTED] +
+          witness[WitnessesStatus.PENDING];
 
         if (witness[WitnessesStatus.DONE] >= transaction.predicate.minSigners) {
           return TransactionStatus.PENDING;
