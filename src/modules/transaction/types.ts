@@ -1,6 +1,6 @@
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 
-import { Transaction, TransactionStatus } from '@models/index';
+import { Asset, Transaction, TransactionStatus, User } from '@models/index';
 
 import { AuthValidatedRequest } from '@middlewares/auth/types';
 
@@ -53,16 +53,21 @@ export interface ITransactionFilterParams {
   predicateAddress?: string;
   to?: string;
   hash?: string;
+  status?: TransactionStatus[];
+  name?: string;
+  limit?: number;
 }
 
 export type ICloseTransactionBody = {
   gasUsed: string;
   transactionResult: string;
+  hasError: boolean;
 };
 
 export interface ISignByIdPayload {
   signer: string;
   account: string;
+  confirm: boolean;
 }
 
 interface ICreateTransactionRequestSchema extends ValidatedRequestSchema {
@@ -109,12 +114,19 @@ interface IFindTransactionByToRequestSchema extends ValidatedRequestSchema {
 }
 interface IListRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Query]: {
-    predicateId: string;
+    status: TransactionStatus[];
+    name: string;
+    allOfUser: boolean;
+    predicateId: string[] | string;
     to: string;
+    startDate: string;
+    endDate: string;
+    createdBy: string;
     orderBy: OrderBy;
     sort: Sort;
     page: string;
     perPage: string;
+    limit: number;
   };
 }
 
@@ -135,6 +147,7 @@ export interface ITransactionService {
   paginate(pagination?: PaginationParams): this;
   filter(filter: ITransactionFilterParams): this;
 
+  validateStatus: (transactionId: string) => Promise<TransactionStatus>;
   create: (payload: ICreateTransactionPayload) => Promise<Transaction>;
   update: (id: string, payload: IUpdateTransactionPayload) => Promise<Transaction>;
   list: () => Promise<IPagination<Transaction> | Transaction[]>;

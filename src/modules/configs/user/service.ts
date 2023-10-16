@@ -1,12 +1,16 @@
+import axios from 'axios';
 import { Brackets } from 'typeorm';
 
 import { User } from '@src/models';
 import { ErrorTypes, NotFound } from '@src/utils/error';
+import GeneralError from '@src/utils/error/GeneralError';
 import Internal from '@src/utils/error/Internal';
 import { IOrdination, setOrdination } from '@src/utils/ordination';
 import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination';
 
 import { IFilterParams, IUserService, IUserPayload } from './types';
+
+const { UI_URL } = process.env;
 
 export class UserService implements IUserService {
   private _pagination: PaginationParams;
@@ -76,6 +80,8 @@ export class UserService implements IUserService {
         return data;
       })
       .catch(error => {
+        if (error instanceof GeneralError) throw error;
+
         throw new Internal({
           type: ErrorTypes.Create,
           title: 'Error on user create',
@@ -97,6 +103,16 @@ export class UserService implements IUserService {
         detail: `User with id ${id} not found`,
       });
     }
+
+    return user;
+  }
+
+  async findByAddress(address: string): Promise<User | undefined> {
+    const user = await User.findOne({
+      where: { address },
+    }).then(data => {
+      return data;
+    });
 
     return user;
   }
@@ -126,5 +142,14 @@ export class UserService implements IUserService {
           detail: `User with id ${id} not found`,
         });
       });
+  }
+
+  async randomAvatar() {
+    const avatars_json = await axios
+      .get(`${UI_URL}/icons/icons.json`)
+      .then(({ data }) => data);
+    const avatars = avatars_json.values;
+    const random = Math.floor(Math.random() * avatars.length);
+    return `${UI_URL}/${avatars[random]}`;
   }
 }

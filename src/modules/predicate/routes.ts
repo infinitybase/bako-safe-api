@@ -2,7 +2,9 @@ import { Router } from 'express';
 
 import { handleResponse } from '@utils/index';
 
+
 import { TransactionService } from '../transaction/services';
+import { VaultTemplateService } from '../vaultTemplate/services';
 import { PredicateController } from './controller';
 import { PredicateService } from './services';
 import { validateAddPredicatePayload } from './validations';
@@ -10,6 +12,7 @@ import { validateAddPredicatePayload } from './validations';
 const router = Router();
 const predicateService = new PredicateService();
 const transactionService = new TransactionService();
+const vaultTemplateService = new VaultTemplateService();
 const {
   create,
   findById,

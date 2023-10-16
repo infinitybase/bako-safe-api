@@ -1,5 +1,3 @@
-import { defaultValues } from 'bsafe';
-
 import { Predicate } from '@models/index';
 
 export default async function () {
@@ -7,14 +5,14 @@ export default async function () {
     {
       id: '624DA56F-F5E8-4BC2-B3A5-B181FF2B5097',
       name: 'predicate_name',
-      predicateAddress: defaultValues['address'],
+      predicateAddress:
+        'fuel17jy0u3w2cfngtjwfcdrjmcpnushqas6ljvdkekq696m9vdgqhecsmjx7nm',
       abi: 'abi',
       configurable: 'configurable',
       bytes: 'bytes',
       description: 'description',
       addresses: JSON.stringify([
-        defaultValues['address'],
-        defaultValues['address'],
+        'fuel17jy0u3w2cfngtjwfcdrjmcpnushqas6ljvdkekq696m9vdgqhecsmjx7nm',
       ]),
       minSigners: 3,
       owner: 'owner',

@@ -1,3 +1,4 @@
+
 import { IConfVault, Vault } from 'bsafe';
 import {
   Provider,
@@ -7,6 +8,7 @@ import {
 } from 'fuels';
 
 import { Predicate, Transaction, TransactionStatus } from '@models/index';
+
 
 import { IPredicateService } from '@modules/predicate/types';
 import { IWitnessService } from '@modules/witness/types';
@@ -48,7 +50,7 @@ export class TransactionController {
     bindMethods(this);
   }
 
-  async create({ body: transaction }: ICreateTransactionRequest) {
+  async create({ body: transaction, user }: ICreateTransactionRequest) {
     try {
       const predicate = await this.predicateService
         .filter({
@@ -110,7 +112,10 @@ export class TransactionController {
     }
   }
 
-  async signByID({ body: { account, signer }, params: { id } }: ISignByIdRequest) {
+  async signByID({
+    body: { account, signer, confirm },
+    params: { id },
+  }: ISignByIdRequest) {
     try {
       const transaction = await this.transactionService.findById(id);
       const { predicate, witnesses, resume } = transaction;
@@ -151,11 +156,47 @@ export class TransactionController {
   }
 
   async list(req: IListRequest) {
-    const { predicateId, to, orderBy, sort, page, perPage } = req.query;
-
+    const {
+      predicateId,
+      to,
+      status,
+      orderBy,
+      sort,
+      page,
+      perPage,
+      limit,
+      endDate,
+      startDate,
+      createdBy,
+      name,
+      allOfUser,
+    } = req.query;
+    const { user } = req;
+    const _predicateId =
+      typeof predicateId == 'string' ? [predicateId] : predicateId;
     try {
+      const predicateIds: string[] = allOfUser
+        ? await this.predicateService
+            .filter({ signer: user.address })
+            .list()
+            .then((data: Predicate[]) => {
+              return data.map(predicate => predicate.id);
+            })
+        : predicateId
+        ? _predicateId
+        : undefined;
+
       const response = await this.transactionService
-        .filter({ predicateId, to })
+        .filter({
+          predicateId: predicateIds,
+          to,
+          status,
+          endDate,
+          startDate,
+          createdBy,
+          name,
+          limit,
+        })
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })
         .list();
@@ -167,7 +208,7 @@ export class TransactionController {
   }
 
   async close({
-    body: { gasUsed, transactionResult },
+    body: { gasUsed, transactionResult, hasError },
     params: { id },
   }: ICloseTransactionRequest) {
     try {

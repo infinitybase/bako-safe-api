@@ -24,6 +24,7 @@ export const assets: Partial<Asset>[] = [
   },
 ];
 
+
 export default async function () {
   const existingAssets = await Asset.find({
     where: [{ assetId: assets[0].assetId }, { to: assets[0].to }],

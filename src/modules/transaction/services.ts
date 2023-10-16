@@ -1,4 +1,11 @@
-import { Transaction } from '@models/index';
+import { predicate } from '@mocks/predicate';
+
+import {
+  Transaction,
+  TransactionStatus,
+  Witness,
+  WitnessesStatus,
+} from '@models/index';
 
 import { NotFound } from '@utils/error';
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
@@ -20,7 +27,8 @@ export class TransactionService implements ITransactionService {
   };
   private _pagination: PaginationParams;
   private _filter: ITransactionFilterParams;
-
+  private nativeAssetId =
+    '0x000000000000000000000000000000000000000000000000000000';
   filter(filter: ITransactionFilterParams) {
     this._filter = filter;
     return this;
@@ -51,7 +59,7 @@ export class TransactionService implements ITransactionService {
 
   async update(
     id: string,
-    payload: IUpdateTransactionPayload,
+    payload?: IUpdateTransactionPayload,
   ): Promise<Transaction> {
     return await Transaction.update({ id }, payload)
       .then(async () => await this.findById(id))
@@ -102,16 +110,44 @@ export class TransactionService implements ITransactionService {
     this._filter.to &&
       queryBuilder
         .innerJoin('t.assets', 'asset')
-        .where('asset.to = :to', { to: this._filter.to });
+        .andWhere('asset.to = :to', { to: this._filter.to });
 
     this._filter.hash &&
-      queryBuilder.where('LOWER(t.hash) = LOWER(:hash)', {
+      queryBuilder.andWhere('LOWER(t.hash) = LOWER(:hash)', {
         hash: this._filter.hash,
       });
+
+    this._filter.status &&
+      queryBuilder.andWhere('t.status IN (:...status)', {
+        status: this._filter.status,
+      });
+
+    this._filter.startDate &&
+      queryBuilder.andWhere('t.createdAt >= :startDate', {
+        startDate: this._filter.startDate,
+      });
+
+    this._filter.endDate &&
+      queryBuilder.andWhere('t.createdAt <= :endDate', {
+        endDate: this._filter.endDate,
+      });
+
+    this._filter.createdBy &&
+      queryBuilder.andWhere('t.createdBy = :createdBy', {
+        createdBy: this._filter.createdBy,
+      });
+
+    this._filter.name &&
+      queryBuilder.where('LOWER(t.name) LIKE LOWER(:name)', {
+        name: `%${this._filter.name}%`,
+      });
+
+    this._filter.limit && !hasPagination && queryBuilder.limit(this._filter.limit);
 
     queryBuilder
       .leftJoinAndSelect('t.assets', 'assets')
       .leftJoinAndSelect('t.witnesses', 'witnesses')
+      .leftJoinAndSelect('t.predicate', 'predicate')
       .orderBy(`t.${this._ordination.orderBy}`, this._ordination.sort);
 
     const handleInternalError = e => {
@@ -132,15 +168,7 @@ export class TransactionService implements ITransactionService {
       : queryBuilder
           .getMany()
           .then(transactions => {
-            if (!transactions.length) {
-              throw new NotFound({
-                type: ErrorTypes.NotFound,
-                title: 'Error on transaction list',
-                detail: 'No transactions found with the provided params',
-              });
-            }
-
-            return transactions;
+            return transactions ?? [];
           })
           .catch(handleInternalError);
   }
@@ -152,6 +180,48 @@ export class TransactionService implements ITransactionService {
         throw new Internal({
           type: ErrorTypes.Internal,
           title: 'Error on transaction delete',
+          detail: e,
+        });
+      });
+  }
+
+  async validateStatus(transactionId: string): Promise<TransactionStatus> {
+    return await this.findById(transactionId)
+      .then((transaction: Transaction) => {
+        const witness: {
+          DONE: number;
+          REJECTED: number;
+          PENDING: number;
+        } = {
+          DONE: 0,
+          REJECTED: 0,
+          PENDING: 0,
+        };
+        transaction.witnesses.map((item: Witness) => {
+          witness[item.status]++;
+        });
+        const totalSigners =
+          witness[WitnessesStatus.DONE] +
+          witness[WitnessesStatus.REJECTED] +
+          witness[WitnessesStatus.PENDING];
+
+        if (witness[WitnessesStatus.DONE] >= transaction.predicate.minSigners) {
+          return TransactionStatus.PENDING;
+        }
+
+        if (
+          totalSigners - witness[WitnessesStatus.REJECTED] <
+          transaction.predicate.minSigners
+        ) {
+          return TransactionStatus.REJECTED;
+        }
+
+        return TransactionStatus.AWAIT;
+      })
+      .catch(e => {
+        throw new Internal({
+          type: ErrorTypes.Internal,
+          title: 'Error on transaction validateStatus',
           detail: e,
         });
       });

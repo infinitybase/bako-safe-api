@@ -1,4 +1,15 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
+import {
+  BeforeUpdate,
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+} from 'typeorm';
+
+import { TransactionService } from '@src/modules/transaction/services';
+
+import { User } from '@models/User';
 
 import { Asset } from './Asset';
 import { Base } from './Base';
@@ -39,7 +50,11 @@ class Transaction extends Base {
   @Column()
   resume: string;
 
-  @OneToMany(() => Asset, asset => asset.transaction)
+  @JoinColumn({ name: 'created_by' })
+  @ManyToOne(() => User)
+  createdBy: User;
+
+  @OneToMany(() => Asset, asset => asset.transaction, { cascade: ['insert'] })
   assets: Asset[];
 
   @OneToMany(() => Witness, witness => witness.transaction)

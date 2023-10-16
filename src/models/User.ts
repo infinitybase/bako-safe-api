@@ -12,31 +12,48 @@ import { EncryptUtils } from '@utils/index';
 import { Base } from './Base';
 import Role from './Role';
 
+const { UI_URL } = process.env;
+
 export enum Languages {
   ENGLISH = 'English',
   PORTUGUESE = 'Portuguese',
 }
 
+export interface ResumedUser {
+  name?: string;
+  avatar: string;
+  address: string;
+}
+
 @Entity('users')
 class User extends Base {
   @Column()
-  name: string;
+  name?: string;
 
   @Column({ default: true })
   active: boolean;
 
   @Column()
-  email: string;
+  email?: string;
 
   @Column({ select: false })
-  password: string;
+  password?: string;
+
+  @Column()
+  provider: string;
+
+  @Column()
+  address: string;
 
   @Column({ enum: Languages })
-  language: Languages;
+  language?: Languages;
 
   @JoinColumn({ name: 'role_id' })
   @ManyToOne(() => Role)
   role: Role;
+
+  @Column()
+  avatar?: string;
 
   @BeforeInsert()
   @BeforeUpdate()

@@ -1,4 +1,4 @@
-import { Transaction, TransactionStatus } from '@models/index';
+import { Asset, Transaction, TransactionStatus } from '@models/index';
 
 export default async function () {
   const transactions: Partial<Transaction>[] = [
@@ -12,6 +12,13 @@ export default async function () {
       gasUsed: 'gasUsed',
       resume: 'resume',
       createdAt: new Date(),
+      assets: [
+        Asset.create({
+          assetID: '0x000000000000000000000000000000000000000000000000000000',
+          amount: '0.0000001',
+          to: 'kajsakhksdhasda',
+        }),
+      ],
     },
   ];
 

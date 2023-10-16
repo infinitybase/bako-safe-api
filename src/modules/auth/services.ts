@@ -1,107 +1,34 @@
-import { JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
-
-import UserToken from '@src/models/UserToken';
-import Internal from '@src/utils/error/Internal';
-import {
-  UnauthorizedErrorTitles,
-  Unauthorized,
-} from '@src/utils/error/Unauthorized';
-import { JwtUtils } from '@src/utils/jwt';
-import { IRefreshTokenPayload } from '@src/utils/jwt/types';
-
+// import { JwtUtils } from '@src/utils/jwt';
+import UserToken from '@models/UserToken';
 import { User } from '@models/index';
 
-import { EncryptUtils } from '@utils/index';
+import { ErrorTypes } from '@utils/error/GeneralError';
+import Internal from '@utils/error/Internal';
 
-import { ErrorTypes } from '../../utils/error/GeneralError';
 import {
   IAuthService,
-  IAuthWithRefreshTokenResponse,
-  ISignInPayload,
+  ICreateUserTokenPayload,
+  IFindTokenParams,
   ISignInResponse,
-} from './types.js';
+} from './types';
 
 export class AuthService implements IAuthService {
-  async signIn({ email, password }: ISignInPayload): Promise<ISignInResponse> {
-    try {
-      const user = await User.findOne(
-        { email },
-        {
-          select: [
-            'id',
-            'name',
-            'active',
-            'email',
-            'password',
-            'language',
-            'createdAt',
-            'updatedAt',
-          ],
-          relations: ['role'],
-        },
-      );
-
-      if (!user) {
-        throw new Unauthorized({
-          type: ErrorTypes.Unauthorized,
-          title: UnauthorizedErrorTitles.INVALID_CREDENTIALS,
-          detail: `User not found`,
+  async signIn(payload: ICreateUserTokenPayload): Promise<ISignInResponse> {
+    return UserToken.create(payload)
+      .save()
+      .then(data => {
+        return {
+          accessToken: data.token,
+          avatar: data.user.avatar,
+        };
+      })
+      .catch(e => {
+        throw new Internal({
+          type: ErrorTypes.Internal,
+          title: 'Error on token creation',
+          detail: e,
         });
-      }
-
-      if (!user.active) {
-        throw new Unauthorized({
-          type: ErrorTypes.Unauthorized,
-          title: UnauthorizedErrorTitles.INVALID_CREDENTIALS,
-          detail: 'User inactive',
-        });
-      }
-
-      const isValidPassword = await EncryptUtils.compare(password, user.password);
-
-      if (!isValidPassword) {
-        throw new Unauthorized({
-          type: ErrorTypes.Unauthorized,
-          title: UnauthorizedErrorTitles.INVALID_CREDENTIALS,
-          detail: `Invalid password`,
-        });
-      }
-
-      delete user.password;
-
-      const accessToken = JwtUtils.generateAccessToken({
-        userId: user.id,
       });
-
-      const refreshToken = JwtUtils.generateRefreshToken({
-        userId: user.id,
-      });
-
-      await UserToken.delete({
-        user: user,
-      });
-
-      await UserToken.create({
-        token: refreshToken,
-        user,
-      }).save();
-
-      return {
-        user,
-        accessToken,
-        refreshToken,
-      };
-    } catch (e) {
-      if (e instanceof Unauthorized) {
-        throw e;
-      }
-
-      throw new Internal({
-        type: ErrorTypes.Internal,
-        title: 'Error on sign in',
-        detail: e,
-      });
-    }
   }
 
   async signOut(user: User): Promise<void> {
@@ -118,94 +45,27 @@ export class AuthService implements IAuthService {
     }
   }
 
-  async authWithRefreshToken(
-    refreshToken: string,
-  ): Promise<IAuthWithRefreshTokenResponse> {
-    try {
-      const refreshTokenDecoded = JwtUtils.verifyRefreshToken(
-        refreshToken,
-      ) as IRefreshTokenPayload;
+  async findToken(params: IFindTokenParams): Promise<UserToken | undefined> {
+    const queryBuilder = UserToken.createQueryBuilder('ut').innerJoinAndSelect(
+      'ut.user',
+      'user',
+    );
 
-      const userToken = await UserToken.findOne({
-        where: {
-          user: refreshTokenDecoded.userId,
-        },
-        relations: ['user'],
-      });
+    params.userId &&
+      queryBuilder.where('ut.user = :userId', { userId: params.userId });
 
-      if (!userToken) {
-        throw new Unauthorized({
-          type: ErrorTypes.Unauthorized,
-          title: UnauthorizedErrorTitles.INVALID_REFRESH_TOKEN,
-          detail: 'Invalid refresh token',
+    params.signature &&
+      queryBuilder.where('ut.token = :signature', { signature: params.signature });
+
+    return queryBuilder
+      .getOne()
+      .then(userToken => userToken)
+      .catch(e => {
+        throw new Internal({
+          type: ErrorTypes.Internal,
+          title: 'Error on user token find',
+          detail: e,
         });
-      }
-
-      if (!userToken.user.active) {
-        throw new Unauthorized({
-          type: ErrorTypes.Unauthorized,
-          title: UnauthorizedErrorTitles.INVALID_REFRESH_TOKEN,
-          detail: 'User inactive',
-        });
-      }
-
-      const isValidRefreshToken = await EncryptUtils.compareToken(
-        refreshToken,
-        userToken.token,
-      );
-
-      if (!isValidRefreshToken) {
-        throw new Unauthorized({
-          type: ErrorTypes.Unauthorized,
-          title: UnauthorizedErrorTitles.INVALID_REFRESH_TOKEN,
-          detail: 'Invalid refresh token',
-        });
-      }
-
-      const newAccessToken = JwtUtils.generateAccessToken({
-        userId: refreshTokenDecoded.userId,
       });
-
-      const newRefreshToken = JwtUtils.generateRefreshToken({
-        userId: refreshTokenDecoded.userId,
-      });
-
-      await UserToken.delete({
-        id: userToken.id,
-      });
-
-      await UserToken.create({
-        token: newRefreshToken,
-        user: userToken.user,
-      }).save();
-
-      return {
-        accessToken: newAccessToken,
-        refreshToken: newRefreshToken,
-      };
-    } catch (e) {
-      switch (e.constructor) {
-        case Unauthorized:
-          throw e;
-        case TokenExpiredError:
-          throw new Unauthorized({
-            type: ErrorTypes.Unauthorized,
-            title: UnauthorizedErrorTitles.REFRESH_TOKEN_EXPIRED,
-            detail: 'Refresh token expired',
-          });
-        case JsonWebTokenError:
-          throw new Unauthorized({
-            type: ErrorTypes.Unauthorized,
-            title: UnauthorizedErrorTitles.INVALID_REFRESH_TOKEN,
-            detail: 'Invalid refresh token',
-          });
-        default:
-          throw new Internal({
-            type: ErrorTypes.Internal,
-            title: 'Error authenticating with refresh token',
-            detail: e,
-          });
-      }
-    }
   }
 }

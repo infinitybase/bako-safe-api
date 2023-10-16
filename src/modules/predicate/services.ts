@@ -1,3 +1,5 @@
+import { Brackets } from 'typeorm';
+
 import { NotFound } from '@src/utils/error';
 import { IOrdination, setOrdination } from '@src/utils/ordination';
 import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination';
@@ -65,6 +67,8 @@ export class PredicateService implements IPredicateService {
         return predicate;
       })
       .catch(e => {
+        if (e instanceof GeneralError) throw e;
+
         throw new Internal({
           type: ErrorTypes.Internal,
           title: 'Error on predicate findById',
@@ -94,8 +98,8 @@ export class PredicateService implements IPredicateService {
      * and filter just assets ID
      */
     this._filter.address &&
-      queryBuilder.where('LOWER(p.predicateAddress) = LOWER(:predicateAddress)', {
-        predicateAddress: this._filter.address.toLowerCase(),
+      queryBuilder.where('p.predicateAddress =:predicateAddress', {
+        predicateAddress: this._filter.address,
       });
 
     this._filter.provider &&
@@ -114,7 +118,25 @@ export class PredicateService implements IPredicateService {
         { address: this._filter.signer },
       );
 
-    queryBuilder.orderBy(`p.${this._ordination.orderBy}`, this._ordination.sort);
+    this._filter.q &&
+      queryBuilder.andWhere(
+        new Brackets(qb =>
+          qb
+            .where('LOWER(p.name) LIKE LOWER(:name)', {
+              name: `%${this._filter.q}%`,
+            })
+            .orWhere('LOWER(p.description) LIKE LOWER(:description)', {
+              description: `%${this._filter.q}%`,
+            }),
+        ),
+      );
+
+    queryBuilder
+      .leftJoinAndSelect('p.transactions', 't')
+      .leftJoinAndSelect('t.assets', 'assets')
+      .leftJoinAndSelect('t.witnesses', 'witnesses')
+      .leftJoinAndSelect('t.predicate', 'predicate')
+      .orderBy(`p.${this._ordination.orderBy}`, this._ordination.sort);
 
     return hasPagination
       ? Pagination.create(queryBuilder)
@@ -124,15 +146,7 @@ export class PredicateService implements IPredicateService {
       : queryBuilder
           .getMany()
           .then(predicates => {
-            if (!predicates.length) {
-              throw new NotFound({
-                type: ErrorTypes.NotFound,
-                title: 'Error on predicate list',
-                detail: 'No predicate was found for the provided params',
-              });
-            }
-
-            return predicates;
+            return predicates ?? [];
           })
           .catch(handleInternalError);
   }

@@ -30,8 +30,12 @@ export const validateAddTransactionPayload = validator.body(
 
 export const validateSignerByIdPayload = validator.body(
   Joi.object({
-    signer: Joi.string().required(),
+    signer: Joi.string().when('confirm', {
+      is: true,
+      then: Joi.required(),
+    }),
     account: Joi.string().required(),
+    confirm: Joi.boolean().required(),
   }),
 );
 
@@ -39,5 +43,6 @@ export const validateCloseTransactionPayload = validator.body(
   Joi.object({
     gasUsed: Joi.string().required(),
     transactionResult: Joi.string().required(),
+    hasError: Joi.boolean(),
   }),
 );

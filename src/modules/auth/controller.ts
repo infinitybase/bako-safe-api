@@ -1,51 +1,72 @@
-import { IAuthRequest } from '@src/middlewares/auth/types';
+import { addMinutes } from 'date-fns';
+
+import { Encoder } from '@src/models';
+import GeneralError from '@src/utils/error/GeneralError';
+
+import { IAuthRequest } from '@middlewares/auth/types';
 
 import { error } from '@utils/error';
-import { Responses, successful, bindMethods } from '@utils/index';
+import { Responses, successful, bindMethods, Web3Utils } from '@utils/index';
 
-import {
-  IAuthService,
-  IAuthWithRefreshTokenRequest,
-  ISignInRequest,
-} from './types';
+import { IUserService } from '../configs/user/types';
+import { IAuthService, ISignInRequest } from './types';
 
 export class AuthController {
   private authService: IAuthService;
+  private userService: IUserService;
 
-  constructor(authService: IAuthService) {
+  constructor(authService: IAuthService, userService: IUserService) {
     this.authService = authService;
+    this.userService = userService;
     bindMethods(this);
   }
 
   async signIn(req: ISignInRequest) {
     try {
-      const { email, password } = req.body;
+      const { signature, ...payloadWithoutSignature } = req.body;
+      const expiresIn = process.env.TOKEN_EXPIRATION_TIME ?? '15';
 
-      const response = await this.authService.signIn({ email, password });
+      new Web3Utils({
+        signature,
+        message: JSON.stringify(payloadWithoutSignature),
+        signerAddress: req.body.address,
+      }).verifySignature();
 
-      return successful(response, Responses.Ok);
+      const existingToken = await this.authService.findToken({
+        userId: req.body.user_id,
+      });
+
+      if (existingToken) {
+        await this.authService.signOut(existingToken.user);
+      }
+
+      const userToken = await this.authService.signIn({
+        token: req.body.signature,
+        encoder: Encoder[req.body.encoder],
+        provider: req.body.provider,
+        expired_at: addMinutes(req.body.createdAt, Number(expiresIn)),
+        payload: JSON.stringify(payloadWithoutSignature),
+        user: await this.userService.findOne(req.body.user_id),
+      });
+
+      return successful(
+        {
+          accessToken: userToken.accessToken,
+          avatar: userToken.avatar,
+        },
+        Responses.Ok,
+      );
     } catch (e) {
-      return error(e.error[0], e.statusCode);
+      console.log(e);
+      if (e instanceof GeneralError) throw e;
+
+      return error(e.error, e.statusCode);
     }
   }
 
   async signOut(req: IAuthRequest) {
     try {
-      const { user } = req;
-
-      const response = await this.authService.signOut(user);
-
-      return successful(response, Responses.Ok);
-    } catch (e) {
-      return error(e.error[0], e.statusCode);
-    }
-  }
-
-  async authWithRefreshToken(req: IAuthWithRefreshTokenRequest) {
-    try {
-      const { refreshToken } = req.body;
-
-      const response = await this.authService.authWithRefreshToken(refreshToken);
+      const response = await this.authService.signOut(req.user);
 
       return successful(response, Responses.Ok);
     } catch (e) {

@@ -13,6 +13,9 @@ export interface IUserPayload {
   active?: boolean;
   language: Languages;
   role: Role;
+  address: string;
+  provider: string;
+  avatar: string;
 }
 
 export interface IFilterParams {
@@ -65,6 +68,8 @@ export interface IUserService {
   find(): Promise<IPagination<User> | User[]>;
   create(payload: IUserPayload): Promise<User>;
   findOne(id: string): Promise<User>;
+  findByAddress(address: string): Promise<User | undefined>;
+  randomAvatar(): Promise<string>;
   update(id: string, payload: IUserPayload): Promise<User>;
   delete(id: string): Promise<boolean>;
 }

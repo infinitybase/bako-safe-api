@@ -4,7 +4,7 @@ import { AuthValidatedRequest } from '@src/middlewares/auth/types';
 import { IOrdination } from '@src/utils/ordination';
 import { IPagination, PaginationParams } from '@src/utils/pagination';
 
-import { Predicate } from '@models/index';
+import { Predicate, User } from '@models/index';
 
 export enum OrderBy {
   name = 'name',
@@ -29,9 +29,11 @@ export interface IPredicatePayload {
   configurable: string;
   provider: string;
   chainId?: number;
+  user: User;
 }
 
 export interface IPredicateFilterParams {
+  q?: string;
   address?: string;
   signer?: string;
   provider?: string;
@@ -59,6 +61,7 @@ interface IFindByHashRequestSchema extends ValidatedRequestSchema {
 }
 interface IListRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Query]: {
+    q: string;
     address: string;
     signer: string;
     provider: string;

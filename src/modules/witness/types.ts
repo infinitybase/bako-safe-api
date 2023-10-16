@@ -1,4 +1,4 @@
-import { Witness } from '@src/models';
+import { Witness, WitnessesStatus } from '@src/models';
 
 export interface ICreateWitnessPayload {
   signature?: string;
@@ -8,6 +8,7 @@ export interface ICreateWitnessPayload {
 
 export interface IUpdateWitnessPayload {
   signature?: string;
+  status: WitnessesStatus;
 }
 
 export interface IWitnessService {

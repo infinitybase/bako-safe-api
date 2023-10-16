@@ -1,6 +1,7 @@
 import { IPredicatePayload } from '@src/modules/predicate/types';
 
 export const predicate: IPredicatePayload = {
+  user: undefined,
   name: 'Testing',
   predicateAddress:
     '0x0000000000000000000000000000000000000000000000000000000000000000',

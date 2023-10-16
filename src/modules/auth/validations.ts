@@ -1,16 +1,21 @@
 import Joi from 'joi';
 
+import { Encoder } from '@src/models';
+
 import { validator } from '@utils/index';
 
-export const validatePayloadSignIn = validator.body(
-  Joi.object({
-    email: Joi.string().email().required(),
-    password: Joi.string().required(),
-  }),
-);
+const allowedEncoders = Object.values(Encoder);
 
-export const validatePayloadAuthWithRefreshToken = validator.body(
+export const validateSignInPayload = validator.body(
   Joi.object({
-    refreshToken: Joi.string().required(),
+    address: Joi.string().required(),
+    hash: Joi.string().required(),
+    createdAt: Joi.date().required(),
+    provider: Joi.string().required(),
+    signature: Joi.string().required(),
+    user_id: Joi.string().required(),
+    encoder: Joi.string()
+      .required()
+      .valid(...allowedEncoders),
   }),
 );

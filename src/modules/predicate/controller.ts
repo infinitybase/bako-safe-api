@@ -1,9 +1,12 @@
 import { Asset, Transaction, TransactionStatus } from '@models/index';
+import { Predicate } from '@src/models/Predicate';
 
 import { error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
 
+
 import { ITransactionService } from '../transaction/types';
+import { ICreatePayload, IVaultTemplateService } from '../vaultTemplate/types';
 import {
   ICreatePredicateRequest,
   IDeletePredicateRequest,
@@ -61,9 +64,10 @@ export class PredicateController {
         .filter({
           address,
         })
-        .list();
+        .list()
+        .then((data: Predicate[]) => data[0]);
 
-      return successful(response[0], Responses.Ok);
+      return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }
@@ -102,20 +106,12 @@ export class PredicateController {
   }
 
   async list(req: IListRequest) {
-    const {
-      address,
-      signer,
-      provider,
-      owner,
-      orderBy,
-      sort,
-      page,
-      perPage,
-    } = req.query;
+    const { provider, owner, orderBy, sort, page, perPage, q } = req.query;
+    const { address } = req.user;
 
     try {
       const response = await this.predicateService
-        .filter({ address, signer, provider, owner })
+        .filter({ address, signer: address, provider, owner, q })
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })
         .list();

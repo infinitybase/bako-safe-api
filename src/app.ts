@@ -1,9 +1,12 @@
+import bodyParser from 'body-parser';
 import cors from 'cors';
 import Express from 'express';
 import morgan from 'morgan';
 import { createConnection } from 'typeorm';
 
 import { router } from '@src/routes';
+
+import database from '@config/database';
 
 import { handleErrors } from '@middlewares/index';
 
@@ -22,17 +25,7 @@ class App {
 
   static async connectDatabase() {
     try {
-      await createConnection({
-        type: 'postgres',
-        host: process.env.DATABASE_HOST,
-        port: Number(process.env.DATABASE_PORT),
-        username: process.env.DATABASE_USERNAME,
-        password: process.env.DATABASE_PASSWORD,
-        database: process.env.DATABASE_NAME,
-        entities: [__dirname + '/models/**/*.ts'],
-        synchronize: false,
-        migrationsRun: process.env.NODE_ENV === 'production',
-      });
+      await createConnection(database);
     } catch (e) {
       console.log('[DB] Error connecting to database', e);
     }
