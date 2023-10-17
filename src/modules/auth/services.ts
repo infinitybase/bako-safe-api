@@ -46,10 +46,9 @@ export class AuthService implements IAuthService {
   }
 
   async findToken(params: IFindTokenParams): Promise<UserToken | undefined> {
-    const queryBuilder = UserToken.createQueryBuilder('ut').innerJoinAndSelect(
-      'ut.user',
-      'user',
-    );
+    const queryBuilder = await UserToken.createQueryBuilder(
+      'ut',
+    ).innerJoinAndSelect('ut.user', 'user');
 
     params.userId &&
       queryBuilder.where('ut.user = :userId', { userId: params.userId });
