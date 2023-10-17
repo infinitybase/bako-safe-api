@@ -54,7 +54,7 @@ class Predicate extends Base {
 
   @BeforeInsert()
   saveAsJson() {
-    if (typeof this.addresses !== 'string') {
+    if (this.addresses && typeof this.addresses != 'string') {
       this.addresses = JSON.stringify(this.addresses);
     }
   }
@@ -66,25 +66,29 @@ class Predicate extends Base {
 
   @AfterLoad()
   async returnParsed() {
-    this.addresses = JSON.parse(this.addresses);
-    const _complete: ResumedUser[] = [];
-    const userService = new UserService();
-    for await (const user of this.addresses) {
-      await userService.findByAddress(user).then(async _user =>
-        _user
-          ? _complete.push({
-              address: _user.address,
-              name: _user.name,
-              avatar: _user.avatar,
-            })
-          : _complete.push({
-              address: user,
-              name: 'Unknown',
-              avatar: await userService.randomAvatar(),
-            }),
-      );
+    const isValid = this.addresses && typeof this.addresses == 'string';
+
+    if (isValid) {
+      this.addresses = JSON.parse(this.addresses);
+      const _complete: ResumedUser[] = [];
+      const userService = new UserService();
+      for await (const user of this.addresses) {
+        await userService.findByAddress(user).then(async _user =>
+          _user
+            ? _complete.push({
+                address: _user.address,
+                name: _user.name,
+                avatar: _user.avatar,
+              })
+            : _complete.push({
+                address: user,
+                name: 'Unknown',
+                avatar: await userService.randomAvatar(),
+              }),
+        );
+      }
+      this.completeAddress = _complete;
     }
-    this.completeAddress = _complete;
   }
 }
 

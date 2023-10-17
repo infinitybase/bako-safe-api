@@ -101,7 +101,20 @@ export class TransactionService implements ITransactionService {
 
   async list(): Promise<IPagination<Transaction> | Transaction[]> {
     const hasPagination = this._pagination?.page && this._pagination?.perPage;
-    const queryBuilder = Transaction.createQueryBuilder('t').select();
+    const queryBuilder = Transaction.createQueryBuilder('t').select([
+      't.createdAt',
+      't.gasUsed',
+      't.hash',
+      't.createdAt',
+      't.id',
+      't.name',
+      't.predicateAdress',
+      't.predicateID',
+      't.resume',
+      't.sendTime',
+      't.status',
+      't.updatedAt',
+    ]);
 
     this._filter.predicateId &&
       this._filter.predicateId.length &&
@@ -148,12 +161,17 @@ export class TransactionService implements ITransactionService {
     queryBuilder
       .leftJoinAndSelect('t.assets', 'assets')
       .leftJoinAndSelect('t.witnesses', 'witnesses')
-      .leftJoinAndSelect('t.predicate', 'predicate')
+      .innerJoin('t.predicate', 'predicate')
+      .addSelect([
+        'predicate.name',
+        'predicate.id',
+        'predicate.minSigners',
+        'predicate.addresses',
+      ])
       .orderBy(`t.${this._ordination.orderBy}`, this._ordination.sort);
 
     const handleInternalError = e => {
       if (e instanceof GeneralError) throw e;
-
       throw new Internal({
         type: ErrorTypes.Internal,
         title: 'Error on transaction list',

@@ -139,7 +139,7 @@ export class PredicateService implements IPredicateService {
         ),
       );
 
-    //queryBuilder.orderBy(`p.${this._ordination.orderBy}`, this._ordination.sort);
+    queryBuilder.orderBy(`p.${this._ordination.orderBy}`, this._ordination.sort);
 
     return hasPagination
       ? Pagination.create(queryBuilder)
