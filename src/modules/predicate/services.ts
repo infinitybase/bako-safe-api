@@ -80,7 +80,7 @@ export class PredicateService implements IPredicateService {
 
   async list(): Promise<IPagination<Predicate> | Predicate[]> {
     const hasPagination = this._pagination?.page && this._pagination?.perPage;
-    const queryBuilder = Predicate.createQueryBuilder('p').select();
+    const queryBuilder = Predicate.createQueryBuilder('p');
 
     const handleInternalError = e => {
       if (e instanceof GeneralError) throw e;
@@ -131,6 +131,21 @@ export class PredicateService implements IPredicateService {
       .leftJoinAndSelect('t.assets', 'assets')
       .leftJoinAndSelect('t.witnesses', 'witnesses')
       .leftJoinAndSelect('t.predicate', 'predicate')
+      .select([
+        'p.id',
+        'p.createdAt',
+        'p.deletedAt',
+        'p.updatedAt',
+        'p.name',
+        'p.predicateAddress',
+        'p.description',
+        'p.minSigners',
+        'p.addresses',
+        'p.owner',
+        'p.configurable',
+        'p.provider',
+        'p.chainId',
+      ])
       .orderBy(`p.${this._ordination.orderBy}`, this._ordination.sort);
 
     return hasPagination
