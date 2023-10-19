@@ -49,13 +49,17 @@ export type ICloseTransactionPayload = {
 };
 
 export interface ITransactionFilterParams {
-  predicateId?: string;
+  predicateId?: string[];
   predicateAddress?: string;
   to?: string;
   hash?: string;
   status?: TransactionStatus[];
   name?: string;
   limit?: number;
+  allOfUser?: boolean;
+  startDate?: string;
+  endDate?: string;
+  createdBy?: string;
 }
 
 export type ICloseTransactionBody = {

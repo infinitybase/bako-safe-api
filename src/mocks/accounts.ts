@@ -42,3 +42,11 @@ export const accounts = {
       '0x4256a670740031e4e7cb7216c9fe8921a4485c187686b7ab0ae7c317d7de0a22',
   },
 };
+
+export type IAccountKeys = keyof typeof accounts;
+
+export type IDefaultAccount = {
+  account: string;
+  address: string;
+  privateKey: string;
+};

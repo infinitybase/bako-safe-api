@@ -206,17 +206,17 @@ export class TransactionService implements ITransactionService {
           witness[WitnessesStatus.PENDING];
 
         if (witness[WitnessesStatus.DONE] >= transaction.predicate.minSigners) {
-          return TransactionStatus.PENDING;
+          return TransactionStatus.PENDING_SENDER;
         }
 
         if (
           totalSigners - witness[WitnessesStatus.REJECTED] <
           transaction.predicate.minSigners
         ) {
-          return TransactionStatus.REJECTED;
+          return TransactionStatus.FAILED;
         }
 
-        return TransactionStatus.AWAIT;
+        return TransactionStatus.AWAIT_REQUIREMENTS;
       })
       .catch(e => {
         throw new Internal({

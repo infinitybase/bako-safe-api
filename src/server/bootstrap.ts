@@ -59,6 +59,7 @@ class Bootstrap {
   }
 
   static async runSeeders() {
+    console.log('[RUN_SEEDERS]');
     await runSeeders();
   }
 }

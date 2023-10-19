@@ -1,4 +1,3 @@
-
 import { IConfVault, Vault } from 'bsafe';
 import {
   Provider,
@@ -7,8 +6,12 @@ import {
   transactionRequestify,
 } from 'fuels';
 
-import { Predicate, Transaction, TransactionStatus } from '@models/index';
-
+import {
+  Predicate,
+  Transaction,
+  TransactionStatus,
+  WitnessesStatus,
+} from '@models/index';
 
 import { IPredicateService } from '@modules/predicate/types';
 import { IWitnessService } from '@modules/witness/types';
@@ -126,6 +129,7 @@ export class TransactionController {
       if (witness) {
         await this.witnessService.update(witness.id, {
           signature: signer,
+          status: confirm ? WitnessesStatus.DONE : WitnessesStatus.REJECTED,
         });
 
         _resume.witnesses.push(signer);
@@ -224,7 +228,7 @@ export class TransactionController {
     }
   }
 
-  async send({ params: { id } }: ISendTransactionRequest) {
+  async send({ params: { id }, userToken }: ISendTransactionRequest) {
     try {
       const api_transaction = await this.transactionService.findById(id);
       const api_predicate = await this.predicateService.findById(
@@ -251,6 +255,7 @@ export class TransactionController {
         },
         abi: api_predicate.abi,
         bytecode: api_predicate.bytes,
+        BSAFEAuth: userToken.token,
       });
 
       const sdk_transaction = await sdk_predicate.BSAFEIncludeTransaction(

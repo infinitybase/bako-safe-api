@@ -14,9 +14,10 @@ export default async function () {
       createdAt: new Date(),
       assets: [
         Asset.create({
-          assetID: '0x000000000000000000000000000000000000000000000000000000',
+          assetId: '0x000000000000000000000000000000000000000000000000000000',
           amount: '0.0000001',
           to: 'kajsakhksdhasda',
+          utxo: 'utxo',
         }),
       ],
     },

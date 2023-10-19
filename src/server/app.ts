@@ -12,7 +12,6 @@ const { API_PORT, PORT } = process.env;
 
 class App {
   private readonly app: Express.Application;
-
   constructor() {
     this.app = Express();
 
@@ -23,7 +22,7 @@ class App {
 
   async init() {
     // App
-    const port = API_PORT || PORT || 80;
+    const port = API_PORT || PORT || 3333;
     console.log('[APP] Starting application.');
     this.app.listen(port, () => {
       console.log(`[APP] Application running in http://localhost:${port}`);
