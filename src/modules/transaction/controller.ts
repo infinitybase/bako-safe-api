@@ -142,6 +142,9 @@ export class TransactionController {
         ? _predicateId
         : undefined;
 
+      if (predicateIds && predicateIds.length === 0)
+        return successful([], Responses.Ok);
+
       const response = await this.transactionService
         .filter({
           predicateId: predicateIds,
