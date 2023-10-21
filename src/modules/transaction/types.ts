@@ -1,6 +1,14 @@
+import { BSAFEScriptTransaction, Transfer, Vault } from 'bsafe';
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
+import { Predicate, Provider, ScriptTransactionRequest } from 'fuels';
 
-import { Asset, Transaction, TransactionStatus, User } from '@models/index';
+import {
+  Asset,
+  ITransactionResume,
+  Transaction,
+  TransactionStatus,
+  User,
+} from '@models/index';
 
 import { AuthValidatedRequest } from '@middlewares/auth/types';
 
@@ -22,15 +30,15 @@ export enum Sort {
 }
 
 export interface ICreateTransactionPayload {
-  predicateAddress: string;
-  predicateID?: string;
   name: string;
   hash: string;
+  predicateAddress: string;
   status: TransactionStatus;
   assets: ICreateAssetPayload[];
+  resume?: string;
   sendTime?: Date;
   gasUsed?: string;
-  resume?: string;
+  predicateID?: string;
 }
 
 export interface IUpdateTransactionPayload {
@@ -39,6 +47,7 @@ export interface IUpdateTransactionPayload {
   resume?: string;
   sendTime?: Date;
   gasUsed?: string;
+  idOnChain?: string;
 }
 
 export type ICloseTransactionPayload = {
@@ -151,7 +160,17 @@ export interface ITransactionService {
   paginate(pagination?: PaginationParams): this;
   filter(filter: ITransactionFilterParams): this;
 
+  instanceTransactionScript: (
+    api_transaction: Transaction,
+    vault: Vault,
+  ) => Promise<Transfer>;
   validateStatus: (transactionId: string) => Promise<TransactionStatus>;
+  checkInvalidConditions: (api_transaction: Transaction) => void;
+  verifyOnChain: (
+    api_transaction: Transaction,
+    provider: Provider,
+  ) => Promise<ITransactionResume>;
+  sendToChain: (bsafe_transaction: Transfer, provider: Provider) => Promise<string>;
   create: (payload: ICreateTransactionPayload) => Promise<Transaction>;
   update: (id: string, payload: IUpdateTransactionPayload) => Promise<Transaction>;
   list: () => Promise<IPagination<Transaction> | Transaction[]>;

@@ -1,13 +1,32 @@
 import { predicate } from '@mocks/predicate';
+import { Asset, IWitnesses, Transfer, Vault } from 'bsafe';
+import {
+  Address,
+  InputType,
+  InputValue,
+  Predicate,
+  Provider,
+  Resource,
+  ScriptTransactionRequest,
+  TransactionRequest,
+  TransactionResponse,
+  arrayify,
+  hexlify,
+  transactionRequestify,
+} from 'fuels';
+
+import { successful } from '@src/utils';
+import { defaultConfigurable } from '@src/utils/configurable';
 
 import {
   Transaction,
+  TransactionProcessStatus,
   TransactionStatus,
   Witness,
   WitnessesStatus,
 } from '@models/index';
 
-import { NotFound } from '@utils/error';
+import { NotFound, Responses } from '@utils/error';
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
 import { IOrdination, setOrdination } from '@utils/ordination';
@@ -19,6 +38,7 @@ import {
   ITransactionService,
   IUpdateTransactionPayload,
 } from './types';
+import { BSAFEScriptTransaction } from './utils';
 
 export class TransactionService implements ITransactionService {
   private _ordination: IOrdination<Transaction> = {
@@ -225,5 +245,96 @@ export class TransactionService implements ITransactionService {
           detail: e,
         });
       });
+  }
+
+  async instanceTransactionScript(
+    api_transaction: Transaction,
+    vault: Vault,
+  ): Promise<Transfer> {
+    const script_t = new Transfer(vault);
+
+    const witness = api_transaction.witnesses
+      .filter(w => w.signature)
+      .map(w => {
+        return {
+          id: w.id,
+          account: w.account,
+          signature: w.signature,
+          status: w.status as string,
+          createdAt: w.createdAt.toISOString(),
+          updatedAt: w.updatedAt.toISOString(),
+        };
+      });
+
+    await script_t.instanceTransaction({
+      ...api_transaction,
+      witnesses: witness,
+      createdAt: api_transaction.createdAt.toISOString(),
+      updatedAt: api_transaction.updatedAt.toISOString(),
+    });
+
+    return script_t;
+  }
+
+  checkInvalidConditions(api_transaction: Transaction) {
+    const invalidConditions =
+      !api_transaction ||
+      api_transaction.status === TransactionStatus.AWAIT_REQUIREMENTS ||
+      api_transaction.status === TransactionStatus.SUCCESS;
+
+    if (invalidConditions) {
+      throw new NotFound({
+        type: ErrorTypes.NotFound,
+        title: 'Error on transaction list',
+        detail: 'No transactions found with the provided params',
+      });
+    }
+  }
+
+  async sendToChain(bsafe_transaction: Transfer, provider: Provider) {
+    const _transaction: TransactionRequest = transactionRequestify(
+      bsafe_transaction.getScript(),
+    );
+    const tx_est = await provider.estimatePredicates(_transaction);
+
+    const encodedTransaction = hexlify(tx_est.toTransactionBytes());
+    const {
+      submit: { id: transactionId },
+    } = await provider.operations.submit({ encodedTransaction });
+
+    return transactionId;
+  }
+
+  async verifyOnChain(api_transaction: Transaction, provider: Provider) {
+    const sender = new TransactionResponse(api_transaction.idOnChain, provider);
+
+    const result = await sender.fetch();
+
+    if (result.status.type === TransactionProcessStatus.SUBMITED) {
+      return api_transaction.resume;
+    } else if (
+      result.status.type === TransactionProcessStatus.SUCCESS ||
+      result.status.type === TransactionProcessStatus.FAILED
+    ) {
+      const resume = {
+        ...JSON.parse(api_transaction.resume),
+        status:
+          result.status.type === TransactionProcessStatus.SUCCESS
+            ? TransactionStatus.SUCCESS
+            : TransactionStatus.FAILED,
+      };
+      const _api_transaction: IUpdateTransactionPayload = {
+        status:
+          result.status.type === TransactionProcessStatus.SUCCESS
+            ? TransactionStatus.SUCCESS
+            : TransactionStatus.FAILED,
+        sendTime: new Date(),
+        gasUsed: result.gasPrice,
+        resume: JSON.stringify(resume),
+      };
+      await this.update(api_transaction.id, _api_transaction);
+      return resume;
+    }
+    return api_transaction.resume;
   }
 }

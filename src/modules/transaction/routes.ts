@@ -1,4 +1,7 @@
+import { verify } from 'crypto';
 import { Router } from 'express';
+
+import { authMiddleware } from '@src/middlewares';
 
 import { PredicateService } from '@modules/predicate/services';
 import { WitnessService } from '@modules/witness/services';
@@ -28,6 +31,7 @@ const {
   close,
   findByHash,
   send,
+  verifyOnChain,
 } = new TransactionController(
   transactionService,
   predicateService,
@@ -35,7 +39,7 @@ const {
   assetService,
 );
 
-//router.use(authMiddleware);
+router.use(authMiddleware);
 
 router.post('/', validateAddTransactionPayload, handleResponse(create));
 router.get('/', handleResponse(list));
@@ -43,6 +47,7 @@ router.get('/:id', handleResponse(findById));
 router.get('/by-hash/:hash', handleResponse(findByHash));
 router.put('/close/:id', validateCloseTransactionPayload, handleResponse(close));
 router.post('/send/:id', handleResponse(send));
+router.post('/verify/:id', handleResponse(verifyOnChain));
 router.put('/signer/:id', validateSignerByIdPayload, handleResponse(signByID));
 
 export default router;

@@ -1,4 +1,6 @@
+import { Vault } from 'bsafe';
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
+import { Predicate as FUELPredicate } from 'fuels';
 
 import { AuthValidatedRequest } from '@src/middlewares/auth/types';
 import { IOrdination } from '@src/utils/ordination';
@@ -90,4 +92,5 @@ export interface IPredicateService {
   delete: (id: string) => Promise<boolean>;
   findById: (id: string) => Promise<Predicate>;
   list: () => Promise<IPagination<Predicate> | Predicate[]>;
+  instancePredicate: (predicateId: string) => Promise<Vault>;
 }

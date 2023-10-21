@@ -1,7 +1,8 @@
 import { Router } from 'express';
 
-import { handleResponse } from '@utils/index';
+import { authMiddleware } from '@src/middlewares';
 
+import { handleResponse } from '@utils/index';
 
 import { TransactionService } from '../transaction/services';
 import { VaultTemplateService } from '../vaultTemplate/services';
@@ -23,7 +24,7 @@ const {
   delete: deleteService,
 } = new PredicateController(predicateService, transactionService);
 
-//router.use(authMiddleware);
+router.use(authMiddleware);
 
 router.post('/', validateAddPredicatePayload, handleResponse(create));
 router.get('/', handleResponse(list));

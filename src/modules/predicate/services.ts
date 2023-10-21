@@ -1,5 +1,8 @@
+import { IConfVault, IPayloadVault, Vault } from 'bsafe';
+import { Predicate as FUELPredicate, InputValue, Provider } from 'fuels';
 import { Brackets } from 'typeorm';
 
+import { defaultConfigurable } from '@src/utils/configurable';
 import { NotFound } from '@src/utils/error';
 import { IOrdination, setOrdination } from '@src/utils/ordination';
 import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination';
@@ -179,5 +182,24 @@ export class PredicateService implements IPredicateService {
           detail: `Predicate with id ${id} not found`,
         });
       });
+  }
+
+  async instancePredicate(predicateId: string): Promise<Vault> {
+    const predicate = await this.findById(predicateId);
+    const predicateConfig: IConfVault = JSON.parse(predicate.configurable);
+    //const fuelProvider = new Provider(predicate.provider); // -> todo move to sdk
+    //const chainId = await fuelProvider.getChainId();
+    const a: IPayloadVault = {
+      configurable: {
+        ...defaultConfigurable,
+        ...predicateConfig,
+      },
+      abi: predicate.abi,
+      bytecode: predicate.bytes,
+    };
+
+    const aux = new Vault(a);
+
+    return aux;
   }
 }

@@ -20,8 +20,24 @@ import { Witness } from './Witness';
 export enum TransactionStatus {
   AWAIT_REQUIREMENTS = 'await_requirements', // -> AWAIT SIGNATURES
   PENDING_SENDER = 'pending_sender', // -> AWAIT SENDER, BEFORE AWAIT STATUS
+  PROCESS_ON_CHAIN = 'process_on_chain', // -> AWAIT DONE ON CHAIN
   SUCCESS = 'success', // -> SENDED
   FAILED = 'failed', // -> FAILED
+}
+
+export enum TransactionProcessStatus {
+  SUCCESS = 'SuccessStatus',
+  SQUIZED = 'SqueezedOutStatus',
+  SUBMITED = 'SubmittedStatus',
+  FAILED = 'FailureStatus',
+}
+
+export interface ITransactionResume {
+  status: TransactionProcessStatus;
+  hash?: string;
+  gasUsed?: string;
+  sendTime?: Date;
+  witnesses?: string[];
 }
 
 @Entity('transactions')
@@ -37,6 +53,9 @@ class Transaction extends Base {
 
   @Column()
   hash: string;
+
+  @Column({ name: 'id_on_chain' })
+  idOnChain: string;
 
   @Column({ enum: TransactionStatus })
   status: TransactionStatus;

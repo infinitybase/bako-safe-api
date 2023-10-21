@@ -1,6 +1,5 @@
 import { createHash } from 'crypto';
-import { af } from 'date-fns/locale';
-import { Provider, Wallet } from 'fuels';
+import { Wallet } from 'fuels';
 import supertest from 'supertest';
 
 import { IDefaultAccount, accounts } from '@src/mocks/accounts';
