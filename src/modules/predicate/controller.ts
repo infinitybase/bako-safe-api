@@ -1,12 +1,11 @@
-import { Asset, Transaction, TransactionStatus } from '@models/index';
 import { Predicate } from '@src/models/Predicate';
+
+import { Asset, Transaction, TransactionStatus } from '@models/index';
 
 import { error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
 
-
 import { ITransactionService } from '../transaction/types';
-import { ICreatePayload, IVaultTemplateService } from '../vaultTemplate/types';
 import {
   ICreatePredicateRequest,
   IDeletePredicateRequest,

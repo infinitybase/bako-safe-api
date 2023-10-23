@@ -1,6 +1,5 @@
 import { Vault } from 'bsafe';
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
-import { Predicate as FUELPredicate } from 'fuels';
 
 import { AuthValidatedRequest } from '@src/middlewares/auth/types';
 import { IOrdination } from '@src/utils/ordination';

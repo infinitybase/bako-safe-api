@@ -1,22 +1,11 @@
-import { predicate } from '@mocks/predicate';
-import { Asset, IWitnesses, Transfer, Vault } from 'bsafe';
+import { Transfer, Vault } from 'bsafe';
 import {
-  Address,
-  InputType,
-  InputValue,
-  Predicate,
   Provider,
-  Resource,
-  ScriptTransactionRequest,
   TransactionRequest,
   TransactionResponse,
-  arrayify,
   hexlify,
   transactionRequestify,
 } from 'fuels';
-
-import { successful } from '@src/utils';
-import { defaultConfigurable } from '@src/utils/configurable';
 
 import {
   Transaction,
@@ -26,7 +15,7 @@ import {
   WitnessesStatus,
 } from '@models/index';
 
-import { NotFound, Responses } from '@utils/error';
+import { NotFound } from '@utils/error';
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
 import { IOrdination, setOrdination } from '@utils/ordination';
@@ -38,7 +27,6 @@ import {
   ITransactionService,
   IUpdateTransactionPayload,
 } from './types';
-import { BSAFEScriptTransaction } from './utils';
 
 export class TransactionService implements ITransactionService {
   private _ordination: IOrdination<Transaction> = {
@@ -47,8 +35,7 @@ export class TransactionService implements ITransactionService {
   };
   private _pagination: PaginationParams;
   private _filter: ITransactionFilterParams;
-  private nativeAssetId =
-    '0x000000000000000000000000000000000000000000000000000000';
+
   filter(filter: ITransactionFilterParams) {
     this._filter = filter;
     return this;

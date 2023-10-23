@@ -1,5 +1,4 @@
 import { IConfVault, IPayloadVault, Vault } from 'bsafe';
-import { Predicate as FUELPredicate, InputValue, Provider } from 'fuels';
 import { Brackets } from 'typeorm';
 
 import { defaultConfigurable } from '@src/utils/configurable';

@@ -1,4 +1,3 @@
-import { verify } from 'crypto';
 import { Router } from 'express';
 
 import { authMiddleware } from '@src/middlewares';

@@ -1,6 +1,6 @@
-import { BSAFEScriptTransaction, Transfer, Vault } from 'bsafe';
+import { Transfer, Vault } from 'bsafe';
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
-import { Predicate, Provider, ScriptTransactionRequest } from 'fuels';
+import { Provider } from 'fuels';
 
 import {
   Asset,

@@ -1,15 +1,8 @@
-import {
-  Provider,
-  TransactionRequest,
-  TransactionResponse,
-  hexlify,
-  transactionRequestify,
-} from 'fuels';
+import { Provider } from 'fuels';
 
 import {
   Predicate,
   Transaction,
-  TransactionProcessStatus,
   TransactionStatus,
   WitnessesStatus,
 } from '@models/index';
