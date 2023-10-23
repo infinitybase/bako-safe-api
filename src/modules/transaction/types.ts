@@ -47,7 +47,7 @@ export interface IUpdateTransactionPayload {
   resume?: string;
   sendTime?: Date;
   gasUsed?: string;
-  idOnChain?: string;
+  hash?: string;
 }
 
 export type ICloseTransactionPayload = {
@@ -88,7 +88,7 @@ interface ICreateTransactionRequestSchema extends ValidatedRequestSchema {
 }
 
 interface IUpdateTransactionRequestSchema extends ValidatedRequestSchema {
-  [ContainerTypes.Body]: IUpdateTransactionPayload;
+  [ContainerTypes.Body]: Omit<IUpdateTransactionPayload, 'hash'>;
   [ContainerTypes.Params]: { id: string };
 }
 

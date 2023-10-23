@@ -108,9 +108,6 @@ export class TransactionService implements ITransactionService {
     const hasPagination = this._pagination?.page && this._pagination?.perPage;
     const queryBuilder = Transaction.createQueryBuilder('t').select();
 
-    this._filter.predicateId &&
-      queryBuilder.where({ predicateID: this._filter.predicateId });
-
     this._filter.predicateAddress &&
       queryBuilder.where({ predicateAddress: this._filter.predicateAddress });
 
@@ -122,6 +119,11 @@ export class TransactionService implements ITransactionService {
     this._filter.hash &&
       queryBuilder.andWhere('LOWER(t.hash) = LOWER(:hash)', {
         hash: this._filter.hash,
+      });
+
+    this._filter.predicateId &&
+      queryBuilder.andWhere('t.predicateID IN (:...predicateID)', {
+        predicateID: this._filter.predicateId,
       });
 
     this._filter.status &&
@@ -145,7 +147,7 @@ export class TransactionService implements ITransactionService {
       });
 
     this._filter.name &&
-      queryBuilder.where('LOWER(t.name) LIKE LOWER(:name)', {
+      queryBuilder.andWhere('LOWER(t.name) LIKE LOWER(:name)', {
         name: `%${this._filter.name}%`,
       });
 
@@ -293,7 +295,8 @@ export class TransactionService implements ITransactionService {
   }
 
   async verifyOnChain(api_transaction: Transaction, provider: Provider) {
-    const sender = new TransactionResponse(api_transaction.idOnChain, provider);
+    const idOnChain = `0x${api_transaction.hash}`;
+    const sender = new TransactionResponse(idOnChain, provider);
 
     const result = await sender.fetch();
 

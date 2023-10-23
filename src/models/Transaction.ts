@@ -54,9 +54,6 @@ class Transaction extends Base {
   @Column()
   hash: string;
 
-  @Column({ name: 'id_on_chain' })
-  idOnChain: string;
-
   @Column({ enum: TransactionStatus })
   status: TransactionStatus;
 

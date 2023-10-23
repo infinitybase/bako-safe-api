@@ -170,6 +170,7 @@ export class TransactionController {
       allOfUser,
     } = req.query;
     const { user } = req;
+
     const _predicateId =
       typeof predicateId == 'string' ? [predicateId] : predicateId;
     try {
@@ -253,7 +254,7 @@ export class TransactionController {
         status: TransactionStatus.PROCESS_ON_CHAIN,
         sendTime: new Date(),
         resume: JSON.stringify(resume),
-        idOnChain: transactionId,
+        hash: transactionId.substring(2),
       };
       await this.transactionService.update(api_transaction.id, _api_transaction);
       return successful(resume, Responses.Ok);
