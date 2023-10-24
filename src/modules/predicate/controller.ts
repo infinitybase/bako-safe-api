@@ -30,7 +30,20 @@ export class PredicateController {
 
   async create({ body: payload }: ICreatePredicateRequest) {
     try {
-      const response = await this.predicateService.create(payload);
+      const { predicateAddress } = payload;
+      const response = await this.predicateService
+        .filter({
+          address: predicateAddress,
+        })
+        .list()
+        .then(async (result: Predicate[]) => {
+          if (result.length > 0) {
+            return result[0];
+          }
+
+          return await this.predicateService.create(payload);
+        });
+
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);

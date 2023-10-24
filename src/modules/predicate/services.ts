@@ -99,6 +99,7 @@ export class PredicateService implements IPredicateService {
      * return itens
      * and filter just assets ID
      */
+
     this._filter.address &&
       queryBuilder.where('p.predicateAddress =:predicateAddress', {
         predicateAddress: this._filter.address,
