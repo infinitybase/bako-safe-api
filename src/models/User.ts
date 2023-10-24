@@ -19,12 +19,6 @@ export enum Languages {
   PORTUGUESE = 'Portuguese',
 }
 
-export interface ResumedUser {
-  name?: string;
-  avatar: string;
-  address: string;
-}
-
 @Entity('users')
 class User extends Base {
   @Column()
@@ -53,7 +47,7 @@ class User extends Base {
   role: Role;
 
   @Column()
-  avatar?: string;
+  avatar: string;
 
   @BeforeInsert()
   @BeforeUpdate()
