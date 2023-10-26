@@ -162,12 +162,9 @@ export class TransactionService implements ITransactionService {
       .leftJoinAndSelect('t.assets', 'assets')
       .leftJoinAndSelect('t.witnesses', 'witnesses')
       .innerJoin('t.predicate', 'predicate')
-      .addSelect([
-        'predicate.name',
-        'predicate.id',
-        'predicate.minSigners',
-        'predicate.addresses',
-      ])
+      .addSelect(['predicate.name', 'predicate.id', 'predicate.minSigners'])
+      .innerJoin('predicate.members', 'members')
+      .addSelect(['members.id', 'members.avatar', 'members.address'])
       .orderBy(`t.${this._ordination.orderBy}`, this._ordination.sort);
 
     const handleInternalError = e => {
