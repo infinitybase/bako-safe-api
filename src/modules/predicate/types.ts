@@ -22,7 +22,7 @@ export interface IPredicatePayload {
   description: string;
   predicateAddress: string;
   minSigners: number;
-  addresses: string[];
+  addresses?: string[];
   owner: string;
   bytes: string;
   abi: string;
@@ -30,6 +30,12 @@ export interface IPredicatePayload {
   provider: string;
   chainId?: number;
   user: User;
+  members?: User[];
+}
+
+export interface IPredicateMemberPayload {
+  user_id: string;
+  predicate_id: string;
 }
 
 export interface IPredicateFilterParams {
@@ -88,6 +94,6 @@ export interface IPredicateService {
   create: (payload: IPredicatePayload) => Promise<Predicate>;
   update: (id: string, payload: IPredicatePayload) => Promise<Predicate>;
   delete: (id: string) => Promise<boolean>;
-  findById: (id: string) => Promise<Predicate>;
+  findById: (id: string, signer: string) => Promise<Predicate>;
   list: () => Promise<IPagination<Predicate> | Predicate[]>;
 }
