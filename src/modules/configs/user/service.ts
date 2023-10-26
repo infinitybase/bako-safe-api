@@ -108,13 +108,15 @@ export class UserService implements IUserService {
   }
 
   async findByAddress(address: string): Promise<User | undefined> {
-    const user = await User.findOne({
-      where: { address },
-    }).then(data => {
-      return data;
-    });
-
-    return user;
+    return await User.findOne({ where: { address } })
+      .then(user => user)
+      .catch(() => {
+        throw new NotFound({
+          type: ErrorTypes.NotFound,
+          title: 'User not found',
+          detail: `User with address ${address} was not found`,
+        });
+      });
   }
 
   async update(id: string, payload: IUserPayload) {
