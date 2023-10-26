@@ -11,9 +11,6 @@ export default async function () {
       configurable: 'configurable',
       bytes: 'bytes',
       description: 'description',
-      addresses: JSON.stringify([
-        'fuel17jy0u3w2cfngtjwfcdrjmcpnushqas6ljvdkekq696m9vdgqhecsmjx7nm',
-      ]),
       minSigners: 3,
       owner: 'owner',
       provider: 'provider',
