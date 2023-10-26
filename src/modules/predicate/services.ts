@@ -1,4 +1,5 @@
 import { IConfVault, IPayloadVault, Vault } from 'bsafe';
+import { Provider } from 'fuels';
 import { Brackets } from 'typeorm';
 
 import { defaultConfigurable } from '@src/utils/configurable';
@@ -194,11 +195,13 @@ export class PredicateService implements IPredicateService {
         ...defaultConfigurable,
         ...predicateConfig,
       },
+      BSAFEVaultId: predicate.id,
       abi: predicate.abi,
+      provider: await Provider.create(predicate.provider),
       bytecode: predicate.bytes,
     };
 
-    const aux = new Vault(a);
+    const aux = await Vault.create(a);
 
     return aux;
   }

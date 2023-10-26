@@ -10,7 +10,7 @@ import {
 import { IPredicateService } from '@modules/predicate/types';
 import { IWitnessService } from '@modules/witness/types';
 
-import { ErrorTypes, NotFound, error } from '@utils/error';
+import { error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
 
 import { IAssetService } from '../asset/types';
@@ -231,7 +231,7 @@ export class TransactionController {
         api_transaction.predicateID,
       );
 
-      const provider = new Provider(predicate.provider);
+      const provider = await Provider.create(predicate.provider);
 
       const bsafe_transaction = await this.transactionService.instanceTransactionScript(
         api_transaction,
@@ -267,7 +267,7 @@ export class TransactionController {
     try {
       const api_transaction = await this.transactionService.findById(id);
       const { predicate } = api_transaction;
-      const provider = new Provider(predicate.provider);
+      const provider = await Provider.create(predicate.provider);
 
       this.transactionService.checkInvalidConditions(api_transaction);
 

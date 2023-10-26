@@ -1,5 +1,5 @@
 import { createHash } from 'crypto';
-import { Wallet } from 'fuels';
+import { Wallet, Provider } from 'fuels';
 import supertest from 'supertest';
 
 import { IDefaultAccount, accounts } from '@src/mocks/accounts';
@@ -83,7 +83,8 @@ export class AuthValidations {
   }
 
   async signer(message: string) {
-    const signer = Wallet.fromPrivateKey(this.account.privateKey, this.provider);
+    const provider = await Provider.create(this.provider);
+    const signer = Wallet.fromPrivateKey(this.account.privateKey, provider);
     return await signer.signMessage(message);
   }
 }
