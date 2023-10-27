@@ -47,7 +47,7 @@ export class PredicateController {
 
       const newPredicate = await this.predicateService.create({
         ...payload,
-        owner: user.id,
+        owner_id: user.id,
         members,
       });
 

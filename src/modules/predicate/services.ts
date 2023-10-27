@@ -72,12 +72,14 @@ export class PredicateService implements IPredicateService {
     return Predicate.createQueryBuilder('p')
       .where({ id })
       .leftJoinAndSelect('p.members', 'members')
+      .leftJoinAndSelect('p.owner', 'owner')
       .select([
         ...this.predicateFieldsSelection,
         'p.configurable',
-        'members.id',
         'members.avatar',
         'members.address',
+        'owner.id',
+        'owner.address',
       ])
       .getOne()
       .then(predicate => {
@@ -117,7 +119,14 @@ export class PredicateService implements IPredicateService {
     const queryBuilder = Predicate.createQueryBuilder('p')
       .select(this.predicateFieldsSelection)
       .innerJoin('p.members', 'members')
-      .addSelect(['members.id', 'members.address', 'members.avatar']);
+      .innerJoin('p.owner', 'owner')
+      .addSelect([
+        'members.id',
+        'members.address',
+        'members.avatar',
+        'owner.id',
+        'owner.address',
+      ]);
 
     const handleInternalError = e => {
       if (e instanceof GeneralError) throw e;

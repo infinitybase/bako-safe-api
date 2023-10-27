@@ -1,4 +1,12 @@
-import { Column, Entity, JoinTable, ManyToMany, OneToMany } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  JoinTable,
+  ManyToMany,
+  OneToMany,
+  OneToOne,
+} from 'typeorm';
 
 import { Base } from './Base';
 import { Transaction } from './Transaction';
@@ -24,7 +32,7 @@ class Predicate extends Base {
   minSigners: number;
 
   @Column()
-  owner: string;
+  owner_id: string;
 
   @Column()
   bytes: string;
@@ -43,6 +51,10 @@ class Predicate extends Base {
 
   @OneToMany(() => Transaction, transaction => transaction.predicate)
   transactions: Transaction[];
+
+  @JoinColumn({ name: 'owner_id' })
+  @OneToOne(() => User)
+  owner: User;
 
   @ManyToMany(() => User)
   @JoinTable({

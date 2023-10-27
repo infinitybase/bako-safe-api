@@ -12,7 +12,7 @@ export default async function () {
       bytes: 'bytes',
       description: 'description',
       minSigners: 3,
-      owner: 'owner',
+      owner_id: 'B8D94EFE-821B-4873-8D4B-A78A57F95BB5',
       provider: 'provider',
       chainId: 2231,
       createdAt: new Date(),

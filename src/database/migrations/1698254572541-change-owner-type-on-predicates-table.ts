@@ -6,14 +6,14 @@ import {
 } from 'typeorm';
 
 const colPredicateOwner = new TableColumn({
-  name: 'owner',
+  name: 'owner_id',
   type: 'uuid',
   isNullable: false,
 });
 
 const fkPredicateOwner = new TableForeignKey({
   name: 'FK-predicate-owner',
-  columnNames: ['owner'],
+  columnNames: ['owner_id'],
   referencedColumnNames: ['id'],
   referencedTableName: 'users',
   onDelete: 'CASCADE',
