@@ -24,7 +24,7 @@ export interface ICreatePayload {
   name: string;
   description: string;
   minSigners: number;
-  signers: string;
+  addresses: User[] | string[];
   createdBy: User;
 }
 
@@ -41,7 +41,7 @@ export interface IFilterParams {
 }
 
 interface ICreateVaultTemplate extends ValidatedRequestSchema {
-  [ContainerTypes.Body]: Omit<ICreatePayload, 'user'>;
+  [ContainerTypes.Body]: ICreatePayload;
 }
 
 interface IUpdateVaultTemplate extends ValidatedRequestSchema {

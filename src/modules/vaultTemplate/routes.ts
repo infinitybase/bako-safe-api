@@ -4,14 +4,17 @@ import { authMiddleware } from '@src/middlewares';
 
 import { handleResponse } from '@utils/index';
 
+import { UserService } from '../configs/user/service';
 import { VaultTemplateController } from './controller';
 import { VaultTemplateService } from './services';
 import { validateCreatePayload } from './validations';
 
 const router = Router();
 const vaultTemplateService = new VaultTemplateService();
+const userService = new UserService();
 const { create, list, update, findById } = new VaultTemplateController(
   vaultTemplateService,
+  userService,
 );
 
 router.use(authMiddleware);

@@ -1,6 +1,9 @@
+import Role from '@src/models/Role';
+
 import { error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
 
+import { IUserService } from '../configs/user/types';
 import {
   IVaultTemplateService,
   ICreateVaultTemplateRequest,
@@ -11,20 +14,43 @@ import {
 
 export class VaultTemplateController {
   private vaultTemplateService: IVaultTemplateService;
+  private userService: IUserService;
 
-  constructor(vaultTemplateService: IVaultTemplateService) {
-    Object.assign(this, { vaultTemplateService });
+  constructor(
+    vaultTemplateService: IVaultTemplateService,
+    userService: IUserService,
+  ) {
+    Object.assign(this, { vaultTemplateService, userService });
     bindMethods(this);
   }
 
   async create({ body, user }: ICreateVaultTemplateRequest) {
     try {
-      const result = await this.vaultTemplateService.create({
-        ...body,
-        signers: JSON.stringify(body.signers),
-        createdBy: user,
+      const roles = await Role.find({ where: [{ name: 'Administrador' }] });
+
+      const addMembers = body.addresses.map(async address => {
+        let user = await this.userService.findByAddress(address);
+
+        if (!user) {
+          user = await this.userService.create({
+            address,
+            // TODO: confirmar se todos users do template terao o mesmo provider
+            provider: user.provider,
+            role: roles[0],
+            avatar: await this.userService.randomAvatar(),
+          });
+        }
+
+        return user;
       });
-      return successful(result, Responses.Ok);
+
+      const members = await Promise.all(addMembers);
+      const newTemplate = await this.vaultTemplateService.create({
+        ...body,
+        createdBy: user,
+        addresses: members,
+      });
+      return successful(newTemplate, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }
