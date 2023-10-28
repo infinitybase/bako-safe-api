@@ -187,13 +187,25 @@ export class PredicateService implements IPredicateService {
     return hasPagination
       ? Pagination.create(queryBuilder)
           .paginate(this._pagination)
-          .then(paginationResult => paginationResult)
-
+          .then(result => {
+            return {
+              ...result,
+              data: result.data.map(predicate => ({
+                ...predicate,
+                members: predicate.members.map(({ id, ...rest }) => rest),
+              })),
+            } as IPagination<Predicate>;
+          })
           .catch(handleInternalError)
       : queryBuilder
           .getMany()
           .then(predicates => {
-            return predicates ?? [];
+            const result = predicates.map(predicate => ({
+              ...predicate,
+              members: predicate.members.map(({ id, ...rest }) => rest),
+            })) as Predicate[];
+
+            return result ?? [];
           })
           .catch(handleInternalError);
   }
