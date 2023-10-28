@@ -2,6 +2,7 @@ import {
   Asset,
   Predicate,
   TransactionStatus,
+  User,
   WitnessesStatus,
 } from '@models/index';
 
@@ -51,12 +52,10 @@ export class TransactionController {
         createdBy: user,
       });
 
-      const witnesses = ((predicate[0].addresses as unknown) as string[]).map(
-        (address: string) => ({
-          account: address,
-          transactionID: newTransaction.id,
-        }),
-      );
+      const witnesses = predicate[0].members.map((member: User) => ({
+        account: member.address,
+        transactionID: newTransaction.id,
+      }));
 
       for await (const witness of witnesses) {
         await this.witnessService.create(witness);
@@ -92,6 +91,7 @@ export class TransactionController {
   }: ISignByIdRequest) {
     try {
       const transaction = await this.transactionService.findById(id);
+
       const witness = transaction.witnesses.find(w => w.account === account);
 
       if (transaction && witness) {
