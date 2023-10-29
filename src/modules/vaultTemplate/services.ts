@@ -63,6 +63,7 @@ export class VaultTemplateService implements IVaultTemplateService {
   async findById(id: string): Promise<VaultTemplate> {
     return await VaultTemplate.findOne({
       where: { id },
+      relations: ['addresses'],
     })
       .then(template => {
         if (!template) {
