@@ -34,7 +34,6 @@ export class VaultTemplateController {
         if (!user) {
           user = await this.userService.create({
             address,
-            // TODO: confirmar se todos users do template terao o mesmo provider
             provider: user.provider,
             role: roles[0],
             avatar: await this.userService.randomAvatar(),
