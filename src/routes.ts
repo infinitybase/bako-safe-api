@@ -1,5 +1,6 @@
 import { Router } from 'express';
 
+import addressBook from '@modules/addressBook/routes';
 import auth from '@modules/auth/routes';
 import roles from '@modules/configs/roles/routes';
 import users from '@modules/configs/user/routes';
@@ -15,6 +16,7 @@ router.use('/user', users);
 router.use('/predicate', predicates);
 router.use('/transaction', transactions);
 router.use('/template', vaultTemplate);
+router.use('/address-book', addressBook);
 
 // ping route
 router.get('/ping', ({ res }) =>
