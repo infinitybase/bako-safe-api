@@ -21,6 +21,6 @@ router.post(
   handleResponse(authController.signIn),
 );
 
-router.delete(signOutPath, authMiddleware, handleResponse(authController.signOut));
+router.delete(signOutPath, handleResponse(authController.signOut));
 
 export default router;

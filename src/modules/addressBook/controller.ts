@@ -1,6 +1,8 @@
+import AddressBook from '@src/models/AddressBook';
 import Role from '@src/models/Role';
+import Internal from '@src/utils/error/Internal';
 
-import { error } from '@utils/error';
+import { ErrorTypes, error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
 
 import { IUserService } from '../configs/user/types';
@@ -21,17 +23,45 @@ export class AddressBookController {
     bindMethods(this);
   }
 
-  async create({ body, user: { provider } }: ICreateAddressBookRequest) {
+  async create({ body, user }: ICreateAddressBookRequest) {
     try {
-      const { address } = body;
-      const roles = await Role.find({ where: [{ name: 'Administrador' }] });
+      const { address, nickname } = body;
 
-      let user = await this.userService.findByAddress(address);
+      const duplicatedNickname = await this.addressBookService
+        .filter({
+          createdBy: user.id,
+          nickname,
+        })
+        .list();
 
-      if (!user) {
-        user = await this.userService.create({
+      const duplicatedAddress = await this.addressBookService
+        .filter({
+          createdBy: user.id,
+          contactAddress: address,
+        })
+        .list();
+
+      const hasDuplicate =
+        (duplicatedNickname as AddressBook[]).length ||
+        (duplicatedAddress as AddressBook[]).length;
+
+      if (hasDuplicate) {
+        throw new Internal({
+          type: ErrorTypes.Internal,
+          title: 'Error on contact creation',
+          detail: `Duplicated ${
+            (duplicatedNickname as AddressBook[]).length ? 'label' : 'address'
+          }`,
+        });
+      }
+
+      let savedUser = await this.userService.findByAddress(address);
+
+      if (!savedUser) {
+        const roles = await Role.find({ where: [{ name: 'Administrador' }] });
+        savedUser = await this.userService.create({
           address,
-          provider,
+          provider: user.provider,
           role: roles[0],
           avatar: await this.userService.randomAvatar(),
           active: true,
@@ -40,8 +70,10 @@ export class AddressBookController {
 
       const newContact = await this.addressBookService.create({
         ...body,
+        user_id: savedUser.id,
         createdBy: user,
       });
+
       return successful(newContact, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
