@@ -73,6 +73,16 @@ export class AddressBookService implements IAddressBookService {
         createdBy: `${this._filter.createdBy}`,
       });
 
+    this._filter.contactAddress &&
+      queryBuilder.andWhere('user.address = :contactAddress', {
+        contactAddress: `${this._filter.contactAddress}`,
+      });
+
+    this._filter.nickname &&
+      queryBuilder.andWhere('ab.nickname = :nickname', {
+        nickname: `${this._filter.nickname}`,
+      });
+
     this._filter.q &&
       queryBuilder.andWhere(
         new Brackets(qb =>

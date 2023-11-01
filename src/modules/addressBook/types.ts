@@ -23,6 +23,7 @@ export enum Sort {
 export interface ICreateAddressBookPayload {
   nickname: string;
   address: string;
+  user_id?: string;
   createdBy: User;
 }
 
@@ -34,6 +35,8 @@ export type IUpdateAddressBookPayload = Omit<
 export interface IFilterAddressBookParams {
   q?: string;
   createdBy?: string;
+  contactAddress?: string;
+  nickname?: string;
 }
 
 interface ICreateAddressBookRequestSchema extends ValidatedRequestSchema {
