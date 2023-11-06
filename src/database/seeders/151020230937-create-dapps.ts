@@ -1,9 +1,9 @@
-import { DApps } from '@src/models/DApps';
+import { DApp } from '@src/models';
 
 import { User } from '@models/index';
 
 export default async function () {
-  const dapps = await DApps.find();
+  const dapps = await DApp.find();
   if (dapps.length) {
     return;
   }
@@ -19,7 +19,7 @@ export default async function () {
     return;
   }
 
-  await DApps.create({
+  await DApp.create({
     sessionId: 'sessionId',
     name: 'name',
     url: 'url',

@@ -9,15 +9,28 @@ import { error } from '@utils/error';
 import { Responses, successful, bindMethods, Web3Utils } from '@utils/index';
 
 import { IUserService } from '../configs/user/types';
-import { IAuthService, ISignInRequest } from './types';
+import { IDAppsService } from '../dApps/types';
+import {
+  IActiveSession,
+  IAuthService,
+  IAuthorizeDappRequest,
+  IFindDappRequest,
+  ISignInRequest,
+} from './types';
 
 export class AuthController {
   private authService: IAuthService;
   private userService: IUserService;
+  private dappService: IDAppsService;
 
-  constructor(authService: IAuthService, userService: IUserService) {
+  constructor(
+    authService: IAuthService,
+    userService: IUserService,
+    dappService: IDAppsService,
+  ) {
     this.authService = authService;
     this.userService = userService;
+    this.dappService = dappService;
     bindMethods(this);
   }
 
@@ -72,5 +85,68 @@ export class AuthController {
     } catch (e) {
       return error(e.error[0], e.statusCode);
     }
+  }
+
+  async authorizedDapp(req: IFindDappRequest) {
+    try {
+      const { sessionID } = req.params;
+      const response = await this.dappService.findBySessionID(sessionID);
+      return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async authorizeDapp(req: IAuthorizeDappRequest) {
+    try {
+      const { address, ...rest } = req.body;
+      const users = [];
+
+      for await (const _user of address) {
+        const user = await this.userService.findByAddress(_user);
+        users.push(user);
+      }
+
+      const response = await this.dappService.create({
+        ...rest,
+        users,
+      });
+      return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async activeSession(req: IActiveSession) {
+    const { address, sessionId } = req.params;
+    const result = undefined;
+    const dApp = await this.dappService.findBySessionID(sessionId);
+
+    if (!dApp) {
+      return error(
+        {
+          type: 'NotFound',
+          title: 'DApp not found',
+          detail: `DApp with session id ${sessionId} not found`,
+        },
+        404,
+      );
+    }
+    for await (const user of dApp.users) {
+      const token = await this.authService.findToken({ userId: user.id });
+      if (token) {
+        console.log('dentro do if', token.token);
+        return successful(
+          {
+            address: user.address,
+            accessToken: token.token,
+            avatar: user.avatar,
+          },
+          Responses.Ok,
+        );
+      }
+    }
+    console.log(result);
+    return successful(result, Responses.NoContent);
   }
 }

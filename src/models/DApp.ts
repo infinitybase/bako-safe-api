@@ -4,14 +4,14 @@ import { Base } from './Base';
 import { User } from './User';
 
 @Entity('dapp')
-class DApps extends Base {
+class DApp extends Base {
   @Column({ name: 'session_id' })
   sessionId: string;
 
   @Column()
   url: string;
 
-  @Column()
+  @Column({ nullable: true })
   name: string;
 
   @JoinTable({
@@ -23,4 +23,4 @@ class DApps extends Base {
   users: User[];
 }
 
-export { DApps };
+export { DApp };

@@ -25,6 +25,7 @@ export class addColumnDapps1699272433660 implements MigrationInterface {
           {
             name: 'name',
             type: 'varchar',
+            isNullable: true,
           },
           {
             name: 'created_at',

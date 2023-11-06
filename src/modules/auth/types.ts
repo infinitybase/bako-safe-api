@@ -24,6 +24,13 @@ export interface ISignInPayload {
   user_id: string;
 }
 
+interface IActiveSessionRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Params]: {
+    sessionId: string;
+    address?: string;
+  };
+}
+
 interface IListRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Query]: {
     user: string;
@@ -39,6 +46,21 @@ interface ISignInRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Body]: ISignInPayload;
 }
 
+interface IFindDappRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Params]: {
+    sessionID: string;
+  };
+}
+
+interface IAuthorizeDappRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Body]: {
+    sessionId: string;
+    url: string;
+    name: string;
+    address: string[];
+  };
+}
+
 export interface IFindTokenParams {
   userId?: string;
   signature?: string;
@@ -49,8 +71,11 @@ export interface ISignInResponse {
   avatar: string;
 }
 
+export type IActiveSession = AuthValidatedRequest<IActiveSessionRequestSchema>;
 export type ISignInRequest = AuthValidatedRequest<ISignInRequestSchema>;
 export type IListRequest = AuthValidatedRequest<IListRequestSchema>;
+export type IFindDappRequest = AuthValidatedRequest<IFindDappRequestSchema>;
+export type IAuthorizeDappRequest = AuthValidatedRequest<IAuthorizeDappRequestSchema>;
 
 export interface IAuthService {
   signIn(payload: ICreateUserTokenPayload): Promise<ISignInResponse>;
