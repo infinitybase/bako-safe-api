@@ -25,6 +25,7 @@ export class createTablePredicates1694193586666 implements MigrationInterface {
           {
             name: 'description',
             type: 'varchar',
+            isNullable: true,
           },
           {
             name: 'minSigners',

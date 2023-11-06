@@ -16,4 +16,8 @@ export interface IWitnessService {
   update: (id: string, payload: IUpdateWitnessPayload) => Promise<Witness>;
   findById: (id: string) => Promise<Witness>;
   list: () => Promise<Witness[]>;
+  findByTransactionId: (
+    transactionId: string,
+    isSigned?: boolean,
+  ) => Promise<Witness[]>;
 }
