@@ -1,7 +1,15 @@
-import { predicate } from '@mocks/predicate';
+import { Transfer, Vault } from 'bsafe';
+import {
+  Provider,
+  TransactionRequest,
+  TransactionResponse,
+  hexlify,
+  transactionRequestify,
+} from 'fuels';
 
 import {
   Transaction,
+  TransactionProcessStatus,
   TransactionStatus,
   Witness,
   WitnessesStatus,
@@ -27,8 +35,7 @@ export class TransactionService implements ITransactionService {
   };
   private _pagination: PaginationParams;
   private _filter: ITransactionFilterParams;
-  private nativeAssetId =
-    '0x000000000000000000000000000000000000000000000000000000';
+
   filter(filter: ITransactionFilterParams) {
     this._filter = filter;
     return this;
@@ -45,7 +52,7 @@ export class TransactionService implements ITransactionService {
   }
 
   async create(payload: ICreateTransactionPayload): Promise<Transaction> {
-    return Transaction.create(payload)
+    return await Transaction.create(payload)
       .save()
       .then(transaction => transaction)
       .catch(e => {
@@ -61,8 +68,8 @@ export class TransactionService implements ITransactionService {
     id: string,
     payload?: IUpdateTransactionPayload,
   ): Promise<Transaction> {
-    return Transaction.update({ id }, payload)
-      .then(() => this.findById(id))
+    return await Transaction.update({ id }, payload)
+      .then(async () => await this.findById(id))
       .catch(e => {
         throw new Internal({
           type: ErrorTypes.Internal,
@@ -73,7 +80,7 @@ export class TransactionService implements ITransactionService {
   }
 
   async findById(id: string): Promise<Transaction> {
-    return Transaction.findOne({
+    return await Transaction.findOne({
       where: { id },
       relations: ['assets', 'witnesses', 'predicate'],
     })
@@ -89,8 +96,6 @@ export class TransactionService implements ITransactionService {
         return transaction;
       })
       .catch(e => {
-        if (e instanceof GeneralError) throw e;
-
         throw new Internal({
           type: ErrorTypes.Internal,
           title: 'Error on transaction findById',
@@ -103,11 +108,9 @@ export class TransactionService implements ITransactionService {
     const hasPagination = this._pagination?.page && this._pagination?.perPage;
     const queryBuilder = Transaction.createQueryBuilder('t').select();
 
-    this._filter.predicateId &&
-      this._filter.predicateId.length &&
-      queryBuilder.andWhere('t.predicateID IN (:...predicates)', {
-        predicates: this._filter.predicateId,
-      });
+    this._filter.predicateAddress &&
+      queryBuilder.where({ predicateAddress: this._filter.predicateAddress });
+
     this._filter.to &&
       queryBuilder
         .innerJoin('t.assets', 'asset')
@@ -116,6 +119,11 @@ export class TransactionService implements ITransactionService {
     this._filter.hash &&
       queryBuilder.andWhere('LOWER(t.hash) = LOWER(:hash)', {
         hash: this._filter.hash,
+      });
+
+    this._filter.predicateId &&
+      queryBuilder.andWhere('t.predicateID IN (:...predicateID)', {
+        predicateID: this._filter.predicateId,
       });
 
     this._filter.status &&
@@ -139,7 +147,7 @@ export class TransactionService implements ITransactionService {
       });
 
     this._filter.name &&
-      queryBuilder.where('LOWER(t.name) LIKE LOWER(:name)', {
+      queryBuilder.andWhere('LOWER(t.name) LIKE LOWER(:name)', {
         name: `%${this._filter.name}%`,
       });
 
@@ -175,7 +183,7 @@ export class TransactionService implements ITransactionService {
   }
 
   async delete(id: string): Promise<boolean> {
-    return Transaction.update({ id }, { deletedAt: new Date() })
+    return await Transaction.update({ id }, { deletedAt: new Date() })
       .then(() => true)
       .catch(e => {
         throw new Internal({
@@ -207,17 +215,17 @@ export class TransactionService implements ITransactionService {
           witness[WitnessesStatus.PENDING];
 
         if (witness[WitnessesStatus.DONE] >= transaction.predicate.minSigners) {
-          return TransactionStatus.PENDING;
+          return TransactionStatus.PENDING_SENDER;
         }
 
         if (
           totalSigners - witness[WitnessesStatus.REJECTED] <
           transaction.predicate.minSigners
         ) {
-          return TransactionStatus.REJECTED;
+          return TransactionStatus.FAILED;
         }
 
-        return TransactionStatus.AWAIT;
+        return TransactionStatus.AWAIT_REQUIREMENTS;
       })
       .catch(e => {
         throw new Internal({
@@ -226,5 +234,98 @@ export class TransactionService implements ITransactionService {
           detail: e,
         });
       });
+  }
+
+  async instanceTransactionScript(
+    api_transaction: Transaction,
+    vault: Vault,
+  ): Promise<Transfer> {
+    const script_t = new Transfer(vault);
+
+    const witness = api_transaction.witnesses
+      .filter(w => w.signature)
+      .map(w => {
+        return {
+          id: w.id,
+          account: w.account,
+          signature: w.signature,
+          status: w.status as string,
+          createdAt: w.createdAt.toISOString(),
+          updatedAt: w.updatedAt.toISOString(),
+        };
+      });
+
+    await script_t.instanceTransaction({
+      ...api_transaction,
+      witnesses: witness,
+      createdAt: api_transaction.createdAt.toISOString(),
+      updatedAt: api_transaction.updatedAt.toISOString(),
+    });
+
+    return script_t;
+  }
+
+  checkInvalidConditions(api_transaction: Transaction) {
+    const invalidConditions =
+      !api_transaction ||
+      api_transaction.status === TransactionStatus.AWAIT_REQUIREMENTS ||
+      api_transaction.status === TransactionStatus.SUCCESS ||
+      api_transaction.status === TransactionStatus.FAILED;
+
+    if (invalidConditions) {
+      throw new NotFound({
+        type: ErrorTypes.NotFound,
+        title: 'Error on transaction list',
+        detail: 'No transactions found with the provided params',
+      });
+    }
+  }
+
+  async sendToChain(bsafe_transaction: Transfer, provider: Provider) {
+    const _transaction: TransactionRequest = transactionRequestify(
+      bsafe_transaction.getScript(),
+    );
+    const tx_est = await provider.estimatePredicates(_transaction);
+
+    const encodedTransaction = hexlify(tx_est.toTransactionBytes());
+    const {
+      submit: { id: transactionId },
+    } = await provider.operations.submit({ encodedTransaction });
+
+    return transactionId;
+  }
+
+  async verifyOnChain(api_transaction: Transaction, provider: Provider) {
+    const idOnChain = `0x${api_transaction.hash}`;
+    const sender = new TransactionResponse(idOnChain, provider);
+
+    const result = await sender.fetch();
+
+    if (result.status.type === TransactionProcessStatus.SUBMITED) {
+      return api_transaction.resume;
+    } else if (
+      result.status.type === TransactionProcessStatus.SUCCESS ||
+      result.status.type === TransactionProcessStatus.FAILED
+    ) {
+      const resume = {
+        ...JSON.parse(api_transaction.resume),
+        status:
+          result.status.type === TransactionProcessStatus.SUCCESS
+            ? TransactionStatus.SUCCESS
+            : TransactionStatus.FAILED,
+      };
+      const _api_transaction: IUpdateTransactionPayload = {
+        status:
+          result.status.type === TransactionProcessStatus.SUCCESS
+            ? TransactionStatus.SUCCESS
+            : TransactionStatus.FAILED,
+        sendTime: new Date(),
+        gasUsed: result.gasPrice,
+        resume: JSON.stringify(resume),
+      };
+      await this.update(api_transaction.id, _api_transaction);
+      return resume;
+    }
+    return api_transaction.resume;
   }
 }

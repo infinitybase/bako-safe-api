@@ -145,11 +145,12 @@ export class UserService implements IUserService {
   }
 
   async randomAvatar() {
+    const url = UI_URL || 'https://app.bsafe.pro';
     const avatars_json = await axios
-      .get(`${UI_URL}/icons/icons.json`)
+      .get(`${url}/icons/icons.json`)
       .then(({ data }) => data);
     const avatars = avatars_json.values;
     const random = Math.floor(Math.random() * avatars.length);
-    return `${UI_URL}/${avatars[random]}`;
+    return `${url}/${avatars[random]}`;
   }
 }

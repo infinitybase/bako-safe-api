@@ -1,5 +1,8 @@
+import { IConfVault, IPayloadVault, Vault } from 'bsafe';
+import { Provider } from 'fuels';
 import { Brackets } from 'typeorm';
 
+import { defaultConfigurable } from '@src/utils/configurable';
 import { NotFound } from '@src/utils/error';
 import { IOrdination, setOrdination } from '@src/utils/ordination';
 import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination';
@@ -55,7 +58,7 @@ export class PredicateService implements IPredicateService {
   }
 
   async findById(id: string): Promise<Predicate> {
-    return Predicate.findOne({ where: { id } })
+    return await Predicate.findOne({ where: { id } })
       .then(predicate => {
         if (!predicate) {
           throw new NotFound({
@@ -64,7 +67,6 @@ export class PredicateService implements IPredicateService {
             detail: `Predicate with id ${id} not found`,
           });
         }
-
         return predicate;
       })
       .catch(e => {
@@ -91,6 +93,13 @@ export class PredicateService implements IPredicateService {
         detail: e,
       });
     };
+
+    // todo:
+    /**
+     * include inner join to transactions and assets
+     * return itens
+     * and filter just assets ID
+     */
 
     this._filter.address &&
       queryBuilder.where('p.predicateAddress =:predicateAddress', {
@@ -174,5 +183,26 @@ export class PredicateService implements IPredicateService {
           detail: `Predicate with id ${id} not found`,
         });
       });
+  }
+
+  async instancePredicate(predicateId: string): Promise<Vault> {
+    const predicate = await this.findById(predicateId);
+    const predicateConfig: IConfVault = JSON.parse(predicate.configurable);
+    //const fuelProvider = new Provider(predicate.provider); // -> todo move to sdk
+    //const chainId = await fuelProvider.getChainId();
+    const a: IPayloadVault = {
+      configurable: {
+        ...defaultConfigurable,
+        ...predicateConfig,
+      },
+      BSAFEVaultId: predicate.id,
+      abi: predicate.abi,
+      provider: await Provider.create(predicate.provider),
+      bytecode: predicate.bytes,
+    };
+
+    const aux = await Vault.create(a);
+
+    return aux;
   }
 }

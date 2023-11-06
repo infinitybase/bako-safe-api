@@ -21,6 +21,7 @@ class Bootstrap {
       DATABASE_PASSWORD,
       DATABASE_NAME,
       NODE_ENV,
+      DATABASE_PORT_TEST,
     } = process.env;
 
     console.log('[DATABASE CONST]: ', {
@@ -30,6 +31,7 @@ class Bootstrap {
       DATABASE_PASSWORD,
       DATABASE_NAME,
       NODE_ENV,
+      DATABASE_PORT_TEST,
     });
 
     this.startEnv();
@@ -57,6 +59,7 @@ class Bootstrap {
   }
 
   static async runSeeders() {
+    console.log('[RUN_SEEDERS]');
     await runSeeders();
   }
 }
