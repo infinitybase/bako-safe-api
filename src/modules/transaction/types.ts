@@ -1,11 +1,21 @@
+import { Transfer, Vault } from 'bsafe';
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
+import { Provider } from 'fuels';
 
-import { Asset, Transaction, TransactionStatus, User } from '@models/index';
+import {
+  Asset,
+  ITransactionResume,
+  Transaction,
+  TransactionStatus,
+  User,
+} from '@models/index';
 
 import { AuthValidatedRequest } from '@middlewares/auth/types';
 
 import { IOrdination } from '@utils/ordination';
 import { IPagination, PaginationParams } from '@utils/pagination';
+
+import { ICreateAssetPayload } from '../asset/types';
 
 export enum OrderBy {
   name = 'name',
@@ -20,14 +30,15 @@ export enum Sort {
 }
 
 export interface ICreateTransactionPayload {
-  predicateAdress: string;
-  predicateID?: string;
   name: string;
-  txData: string;
   hash: string;
+  predicateAddress: string;
   status: TransactionStatus;
-  assets: Asset[];
-  createdBy: User;
+  assets: ICreateAssetPayload[];
+  resume?: string;
+  sendTime?: Date;
+  gasUsed?: string;
+  predicateID?: string;
 }
 
 export interface IUpdateTransactionPayload {
@@ -36,6 +47,7 @@ export interface IUpdateTransactionPayload {
   resume?: string;
   sendTime?: Date;
   gasUsed?: string;
+  hash?: string;
 }
 
 export type ICloseTransactionPayload = {
@@ -46,15 +58,17 @@ export type ICloseTransactionPayload = {
 };
 
 export interface ITransactionFilterParams {
-  startDate?: string;
-  endDate?: string;
   predicateId?: string[];
-  createdBy?: string;
+  predicateAddress?: string;
   to?: string;
   hash?: string;
   status?: TransactionStatus[];
   name?: string;
   limit?: number;
+  allOfUser?: boolean;
+  startDate?: string;
+  endDate?: string;
+  createdBy?: string;
 }
 
 export type ICloseTransactionBody = {
@@ -74,7 +88,7 @@ interface ICreateTransactionRequestSchema extends ValidatedRequestSchema {
 }
 
 interface IUpdateTransactionRequestSchema extends ValidatedRequestSchema {
-  [ContainerTypes.Body]: IUpdateTransactionPayload;
+  [ContainerTypes.Body]: Omit<IUpdateTransactionPayload, 'hash'>;
   [ContainerTypes.Params]: { id: string };
 }
 
@@ -84,6 +98,9 @@ interface IDeleteTransactionRequestSchema extends ValidatedRequestSchema {
 
 interface ICloseTransactionRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Body]: ICloseTransactionBody;
+  [ContainerTypes.Params]: { id: string };
+}
+interface ISendTransactionRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Params]: { id: string };
 }
 
@@ -130,6 +147,7 @@ export type ICreateTransactionRequest = AuthValidatedRequest<ICreateTransactionR
 export type IUpdateTransactionRequest = AuthValidatedRequest<IUpdateTransactionRequestSchema>;
 export type IDeleteTransactionRequest = AuthValidatedRequest<IDeleteTransactionRequestSchema>;
 export type ICloseTransactionRequest = AuthValidatedRequest<ICloseTransactionRequestSchema>;
+export type ISendTransactionRequest = AuthValidatedRequest<ISendTransactionRequestSchema>;
 export type ISignByIdRequest = AuthValidatedRequest<ISignByIdRequestSchema>;
 export type IFindTransactionByIdRequest = AuthValidatedRequest<IFindTransactionByIdRequestSchema>;
 export type IFindTransactionByHashRequest = AuthValidatedRequest<IFindTransactionByHashRequestSchema>;
@@ -142,7 +160,17 @@ export interface ITransactionService {
   paginate(pagination?: PaginationParams): this;
   filter(filter: ITransactionFilterParams): this;
 
+  instanceTransactionScript: (
+    api_transaction: Transaction,
+    vault: Vault,
+  ) => Promise<Transfer>;
   validateStatus: (transactionId: string) => Promise<TransactionStatus>;
+  checkInvalidConditions: (api_transaction: Transaction) => void;
+  verifyOnChain: (
+    api_transaction: Transaction,
+    provider: Provider,
+  ) => Promise<ITransactionResume>;
+  sendToChain: (bsafe_transaction: Transfer, provider: Provider) => Promise<string>;
   create: (payload: ICreateTransactionPayload) => Promise<Transaction>;
   update: (id: string, payload: IUpdateTransactionPayload) => Promise<Transaction>;
   list: () => Promise<IPagination<Transaction> | Transaction[]>;

@@ -1,12 +1,4 @@
-import {
-  BeforeInsert,
-  BeforeUpdate,
-  AfterLoad,
-  Column,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-} from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 import { Base } from './Base';
 import { Transaction } from './Transaction';
@@ -14,13 +6,16 @@ import { Transaction } from './Transaction';
 @Entity('assets')
 class Asset extends Base {
   @Column()
-  assetID: string;
+  assetId: string;
 
   @Column()
   to: string;
 
   @Column()
   amount: string;
+
+  @Column()
+  utxo: string;
 
   @Column()
   transactionID: string;
