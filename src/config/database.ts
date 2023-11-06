@@ -14,16 +14,6 @@ const {
   NODE_ENV,
 } = process.env;
 
-console.log({
-  DATABASE_PASSWORD,
-  DATABASE_HOST,
-  DATABASE_URL,
-  DATABASE_USERNAME,
-  DATABASE_NAME,
-  DATABASE_PORT,
-  NODE_ENV,
-});
-
 const [host, port] = String(DATABASE_URL).split(':');
 const environment = NODE_ENV;
 const entitiesDir = path.resolve(__dirname, '..', 'models', '**', '*{.ts,.js}');

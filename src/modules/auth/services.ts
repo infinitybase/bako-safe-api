@@ -57,6 +57,8 @@ export class AuthService implements IAuthService {
     params.signature &&
       queryBuilder.where('ut.token = :signature', { signature: params.signature });
 
+    params.notExpired &&
+      queryBuilder.andWhere('ut.expired_at > :now', { now: new Date() });
     return queryBuilder
       .getOne()
       .then(userToken => userToken)

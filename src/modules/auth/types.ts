@@ -64,6 +64,7 @@ interface IAuthorizeDappRequestSchema extends ValidatedRequestSchema {
 export interface IFindTokenParams {
   userId?: string;
   signature?: string;
+  notExpired?: boolean;
 }
 
 export interface ISignInResponse {

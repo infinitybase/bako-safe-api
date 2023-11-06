@@ -70,7 +70,6 @@ export class AuthController {
         Responses.Ok,
       );
     } catch (e) {
-      console.log(e);
       if (e instanceof GeneralError) throw e;
 
       return error(e.error, e.statusCode);
@@ -118,35 +117,40 @@ export class AuthController {
   }
 
   async activeSession(req: IActiveSession) {
-    const { address, sessionId } = req.params;
-    const result = undefined;
-    const dApp = await this.dappService.findBySessionID(sessionId);
+    try {
+      const { sessionId } = req.params;
+      const result = undefined;
+      const dApp = await this.dappService.findBySessionID(sessionId);
 
-    if (!dApp) {
-      return error(
-        {
-          type: 'NotFound',
-          title: 'DApp not found',
-          detail: `DApp with session id ${sessionId} not found`,
-        },
-        404,
-      );
-    }
-    for await (const user of dApp.users) {
-      const token = await this.authService.findToken({ userId: user.id });
-      if (token) {
-        console.log('dentro do if', token.token);
-        return successful(
+      if (!dApp) {
+        return error(
           {
-            address: user.address,
-            accessToken: token.token,
-            avatar: user.avatar,
+            type: 'NotFound',
+            title: 'DApp not found',
+            detail: `DApp with session id ${sessionId} not found`,
           },
-          Responses.Ok,
+          404,
         );
       }
+      for await (const user of dApp.users) {
+        const token = await this.authService.findToken({
+          userId: user.id,
+          notExpired: true,
+        });
+        if (token) {
+          return successful(
+            {
+              address: user.address,
+              accessToken: token.token,
+              avatar: user.avatar,
+            },
+            Responses.Ok,
+          );
+        }
+      }
+      return successful(result, Responses.NoContent);
+    } catch (e) {
+      return error(e.error, e.statusCode);
     }
-    console.log(result);
-    return successful(result, Responses.NoContent);
   }
 }
