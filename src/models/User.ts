@@ -4,12 +4,15 @@ import {
   Column,
   Entity,
   JoinColumn,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
 } from 'typeorm';
 
 import { EncryptUtils } from '@utils/index';
 
 import { Base } from './Base';
+import { DApps } from './DApps';
 import Role from './Role';
 
 const { UI_URL } = process.env;
