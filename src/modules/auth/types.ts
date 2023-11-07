@@ -27,7 +27,7 @@ export interface ISignInPayload {
 interface IActiveSessionRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Params]: {
     sessionId: string;
-    address?: string;
+    address: string;
   };
 }
 
@@ -57,12 +57,13 @@ interface IAuthorizeDappRequestSchema extends ValidatedRequestSchema {
     sessionId: string;
     url: string;
     name: string;
-    address: string[];
+    address: string;
   };
 }
 
 export interface IFindTokenParams {
   userId?: string;
+  address?: string;
   signature?: string;
   notExpired?: boolean;
 }

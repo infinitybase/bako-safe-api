@@ -25,6 +25,6 @@ export const validateSignInDappPayload = validator.body(
     sessionId: Joi.string().required(),
     url: Joi.string().required(),
     name: Joi.string().optional(),
-    address: Joi.array().items(Joi.string()).required(),
+    address: Joi.string().required(),
   }),
 );

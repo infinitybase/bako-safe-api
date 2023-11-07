@@ -32,7 +32,7 @@ router.post(
 router.get('/dapps/:sessionID', handleResponse(authController.authorizedDapp));
 
 router.get(
-  '/dapps/active-session/:sessionId',
+  '/dapps/active-session/:sessionId/:address',
   handleResponse(authController.activeSession),
 );
 

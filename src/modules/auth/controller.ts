@@ -98,17 +98,19 @@ export class AuthController {
 
   async authorizeDapp(req: IAuthorizeDappRequest) {
     try {
-      const { address, ...rest } = req.body;
-      const users = [];
-
-      for await (const _user of address) {
-        const user = await this.userService.findByAddress(_user);
-        users.push(user);
-      }
-
+      const { address, sessionId, url, name } = req.body;
+      const users = await this.userService.findByAddress(address);
+      const existingDapp = await this.dappService.checkExist(
+        address,
+        sessionId,
+        url,
+      );
+      if (existingDapp) return successful(existingDapp, Responses.Created);
       const response = await this.dappService.create({
-        ...rest,
+        sessionId,
+        url,
         users,
+        name,
       });
       return successful(response, Responses.Ok);
     } catch (e) {
@@ -118,7 +120,7 @@ export class AuthController {
 
   async activeSession(req: IActiveSession) {
     try {
-      const { sessionId } = req.params;
+      const { sessionId, address } = req.params;
       const result = undefined;
       const dApp = await this.dappService.findBySessionID(sessionId);
 
@@ -137,7 +139,7 @@ export class AuthController {
           userId: user.id,
           notExpired: true,
         });
-        if (token) {
+        if (token && user.address === address) {
           return successful(
             {
               address: user.address,

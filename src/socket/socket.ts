@@ -1,21 +1,8 @@
 import { Server, ServerOptions } from 'socket.io';
 
-export interface ISocketUser {
-  userID: string;
-  username: string;
-}
+import { popAuth } from '@src/socket/popupAuth';
 
-export enum SocketChannels {
-  WALLET = '[WALLET]',
-  POPUP_AUTH = '[POPUP_AUTH]',
-  POPUP_TRANSFER = '[POPUP_TRANSFER]',
-}
-
-export interface ISocketEvent {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  content: any; // todo: typing all events, and useing or
-  to: string;
-}
+import { SocketChannels, ISocketEvent } from './types';
 
 class SocketIOServer extends Server {
   //todo: upgrade this type
@@ -88,12 +75,19 @@ class SocketIOServer extends Server {
         - complement this connection depends to event content
         - for exemple, complement payload to message to send to client
       */
-      socket.on('[POPUP_AUTH]', ({ content, to }: ISocketEvent) => {
-        console.log('[POPUP_AUTH]');
-        socket.to(to).emit('[POPUP_AUTH]', {
-          content,
-          from: socket.id,
-        });
+      socket.on(
+        SocketChannels.POPUP_AUTH,
+        async ({ content, to }: ISocketEvent) => {
+          const { type } = content;
+          popAuth[type](socket, { content, to });
+        },
+      );
+    });
+
+    this.io.on('disconnect', socket => {
+      socket.broadcast.emit('user disconnected', {
+        userID: socket.id,
+        username: socket.username,
       });
     });
   }

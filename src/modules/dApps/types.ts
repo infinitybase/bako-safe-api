@@ -4,7 +4,7 @@ export interface IDAPPCreatePayload {
   sessionId: string;
   name: string;
   url: string;
-  users: User[];
+  users: User;
 }
 
 export interface IDAPPUser {
@@ -16,4 +16,5 @@ export interface IDAPPUser {
 export interface IDAppsService {
   create: (payload: IDAPPCreatePayload) => Promise<DApp>;
   findBySessionID: (sessionID: string) => Promise<DApp>;
+  checkExist: (address: string, sessionId: string, url: string) => Promise<DApp>;
 }
