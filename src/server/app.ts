@@ -4,12 +4,15 @@ import cors from 'cors';
 import Express from 'express';
 import http from 'http';
 import morgan from 'morgan';
+import { Socket } from 'socket.io';
 
 import { router } from '@src/routes';
 
 import { handleErrors } from '@middlewares/index';
 
+
 import SocketIOServer from '../socket/socket';
+
 
 const { API_PORT, PORT } = process.env;
 
