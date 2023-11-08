@@ -2,19 +2,25 @@ import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import Express from 'express';
+import http from 'http';
 import morgan from 'morgan';
+import { Socket } from 'socket.io';
 
 import { router } from '@src/routes';
 
 import { handleErrors } from '@middlewares/index';
 
+import SocketIOServer from './socket';
+
 const { API_PORT, PORT } = process.env;
 
 class App {
   private readonly app: Express.Application;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  httpServer!: any;
   constructor() {
     this.app = Express();
-
     this.initMiddlewares();
     this.initRoutes();
     this.initErrorHandler();
@@ -24,9 +30,12 @@ class App {
     // App
     const port = API_PORT || PORT || 3333;
     console.log('[APP] Starting application.');
-    this.app.listen(port, () => {
+    this.httpServer = http.createServer(this.app);
+    this.httpServer.listen(port, () => {
       console.log(`[APP] Application running in http://localhost:${port}`);
     });
+
+    new SocketIOServer(this.httpServer);
   }
 
   private initMiddlewares() {
