@@ -1,13 +1,28 @@
-export interface ISocketUser {
-  userID: string;
-  username: string;
+export enum SocketEvents {
+  //auth
+  CONNECTION = 'connection',
+  DISCONNECT = 'disconnect',
+  USER_CONNECTED = '[USER_CONNECTED]',
+
+  //popup transfer
+  TRANSACTION_REQUESTED = '[TRANSACTION_REQUESTED]',
+  TRANSACTION_APPROVED = '[TRANSACTION_APPROVED]',
+
+  //popup auth
+  AUTH_CONFIRMED = '[AUTH_CONFIRMED]',
+  AUTH_REJECTED = '[AUTH_REJECTED]',
 }
 
-export enum IAuthEventType {
-  VAULT_SECTED = 'VAULT_SECTED',
+export enum UserTypes {
+  WALLET = '[WALLET]',
+  POPUP_AUTH = '[POPUP_AUTH]',
+  POPUP_TRANSFER = '[POPUP_TRANSFER]',
 }
-export enum IWalletEventType {
-  SET_CURRENT_VAULT = 'SET_CURRENT_VAULT',
+
+export interface ISocketUser {
+  type: UserTypes;
+  userID: string;
+  username: string;
 }
 
 export interface BaseSocketEvent {
@@ -16,24 +31,8 @@ export interface BaseSocketEvent {
   to: string;
 }
 
-export interface AuthSocketEvent extends BaseSocketEvent {
-  channel: SocketChannels.POPUP_AUTH;
-  type: IAuthEventType;
-}
-
-export interface WalletSocketEvent extends BaseSocketEvent {
-  channel: SocketChannels.WALLET;
-  type: IWalletEventType;
-}
-
-export enum SocketChannels {
-  WALLET = '[WALLET]',
-  POPUP_AUTH = '[POPUP_AUTH]',
-  POPUP_TRANSFER = '[POPUP_TRANSFER]',
-}
-
 export interface ISocketEvent {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  content: AuthSocketEvent | any; // todo: typing all events, and useing or
+  content: BaseSocketEvent;
   to: string;
 }
