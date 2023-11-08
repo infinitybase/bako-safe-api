@@ -122,6 +122,7 @@ export class TransactionService implements ITransactionService {
       });
 
     this._filter.predicateId &&
+      this._filter.predicateId.length &&
       queryBuilder.andWhere('t.predicateID IN (:...predicateID)', {
         predicateID: this._filter.predicateId,
       });
