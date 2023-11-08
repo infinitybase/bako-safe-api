@@ -46,18 +46,25 @@ export class AuthService implements IAuthService {
   }
 
   async findToken(params: IFindTokenParams): Promise<UserToken | undefined> {
-    const queryBuilder = UserToken.createQueryBuilder('ut').innerJoinAndSelect(
+    const queryBuilder = UserToken.createQueryBuilder('ut').leftJoinAndSelect(
       'ut.user',
       'user',
     );
-
     params.userId &&
       queryBuilder.where('ut.user = :userId', { userId: params.userId });
+
+    params.address &&
+      queryBuilder.where('user.address = :address', {
+        address: params.address,
+      });
 
     params.signature &&
       queryBuilder.where('ut.token = :signature', { signature: params.signature });
 
-    return queryBuilder
+    params.notExpired &&
+      queryBuilder.andWhere('ut.expired_at > :now', { now: new Date() });
+
+    return await queryBuilder
       .getOne()
       .then(userToken => userToken)
       .catch(e => {

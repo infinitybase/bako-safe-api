@@ -10,7 +10,9 @@ import { router } from '@src/routes';
 
 import { handleErrors } from '@middlewares/index';
 
-import SocketIOServer from './socket';
+
+import SocketIOServer from '../socket/socket';
+
 
 const { API_PORT, PORT } = process.env;
 
@@ -19,6 +21,7 @@ class App {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   httpServer!: any;
+
   constructor() {
     this.app = Express();
     this.initMiddlewares();
