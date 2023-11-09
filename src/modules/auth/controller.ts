@@ -38,7 +38,7 @@ export class AuthController {
     try {
       const { signature, ...payloadWithoutSignature } = req.body;
       const expiresIn = process.env.TOKEN_EXPIRATION_TIME ?? '15';
-
+      req.app.get('socketServer').to('test').emit('test', 'test');
       new Web3Utils({
         signature,
         message: JSON.stringify(payloadWithoutSignature),
@@ -98,21 +98,21 @@ export class AuthController {
 
   async authorizeDapp(req: IAuthorizeDappRequest) {
     try {
-      const { address, sessionId, url, name } = req.body;
-      const users = await this.userService.findByAddress(address);
-      const existingDapp = await this.dappService.checkExist(
-        address,
-        sessionId,
-        url,
-      );
-      if (existingDapp) return successful(existingDapp, Responses.Created);
-      const response = await this.dappService.create({
-        sessionId,
-        url,
-        users,
-        name,
-      });
-      return successful(response, Responses.Ok);
+      // const { address, sessionId, origin, name } = req.body;
+      // const users = await this.userService.findByAddress(address);
+      // const existingDapp = await this.dappService.checkExist(
+      //   address,
+      //   sessionId,
+      //   url: origin,
+      // );
+      // if (existingDapp) return successful(existingDapp, Responses.Created);
+      // const response = await this.dappService.create({
+      //   sessionId,
+      //   origin,
+      //   vaults,
+      //   name,
+      // });
+      return successful(true, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }
@@ -134,22 +134,22 @@ export class AuthController {
           404,
         );
       }
-      for await (const user of dApp.users) {
-        const token = await this.authService.findToken({
-          userId: user.id,
-          notExpired: true,
-        });
-        if (token && user.address === address) {
-          return successful(
-            {
-              address: user.address,
-              accessToken: token.token,
-              avatar: user.avatar,
-            },
-            Responses.Ok,
-          );
-        }
-      }
+      // for await (const user of dApp.vaults) {
+      //   const token = await this.authService.findToken({
+      //     userId: user.id,
+      //     notExpired: true,
+      //   });
+      //   if (token && user.address === address) {
+      //     return successful(
+      //       {
+      //         address: user.address,
+      //         accessToken: token.token,
+      //         avatar: user.avatar,
+      //       },
+      //       Responses.Ok,
+      //     );
+      //   }
+      // }
       return successful(result, Responses.NoContent);
     } catch (e) {
       return error(e.error, e.statusCode);

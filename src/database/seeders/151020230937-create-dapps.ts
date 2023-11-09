@@ -1,6 +1,4 @@
-import { DApp } from '@src/models';
-
-import { User } from '@models/index';
+import { DApp, Predicate } from '@src/models';
 
 export default async function () {
   const dapps = await DApp.find();
@@ -8,21 +6,21 @@ export default async function () {
     return;
   }
 
-  const users = await User.find({
+  const predicate = await Predicate.find({
     where: [
       {
-        email: process.env.APP_ADMIN_EMAIL,
+        id: '624DA56F-F5E8-4BC2-B3A5-B181FF2B5097',
       },
     ],
   });
-  if (!users.length) {
+  if (!predicate.length) {
     return;
   }
 
   await DApp.create({
     sessionId: 'sessionId',
     name: 'name',
-    url: 'url',
-    users: users,
+    origin: 'url',
+    vaults: predicate,
   }).save();
 }

@@ -1,12 +1,22 @@
-import { DApp } from '@src/models';
+import { DApp, Predicate } from '@src/models';
 import { ErrorTypes } from '@src/utils/error';
 import Internal from '@src/utils/error/Internal';
 
 import { IDAPPCreatePayload, IDAppsService } from './types';
 
 export class DAppsService implements IDAppsService {
-  async create({ sessionId, name, url, users }: IDAPPCreatePayload) {
-    return await DApp.create({ sessionId, name, url, users: [users] })
+  async create({
+    sessionId,
+    name,
+    origin,
+    vaults,
+  }: {
+    sessionId: string;
+    origin: string;
+    vaults: Predicate[];
+    name?: string;
+  }) {
+    return await DApp.create({ sessionId, name, origin, vaults })
       .save()
       .then(data => data)
       .catch(e => {
@@ -34,12 +44,12 @@ export class DAppsService implements IDAppsService {
       });
   }
 
-  async checkExist(address: string, sessionId, url: string) {
+  async checkExist(address: string, sessionId, origin: string) {
     return await DApp.createQueryBuilder('d')
       .innerJoin('d.users', 'users')
       .where('users.address = :address', { address })
       .andWhere('d.session_id = :sessionId', { sessionId })
-      .andWhere('d.url = :url', { url })
+      .andWhere('d.origin = :origin', { origin })
       .getOne()
       .then(data => data)
       .catch(e => {

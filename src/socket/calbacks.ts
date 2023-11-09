@@ -1,4 +1,6 @@
 import { AuthService } from '@src/modules/auth/services';
+import { DAppsService } from '@src/modules/dApps';
+import { PredicateService } from '@src/modules/predicate/services';
 
 import { ISocketEvent, SocketEvents } from './types';
 
@@ -12,22 +14,28 @@ export const popAuth: IEventsExecute = {
     socket: any,
     { content, to }: ISocketEvent,
   ) => {
-    const { address } = content;
-    const { token } = await new AuthService().findToken({
-      address,
-      notExpired: true,
+    const { origin, vaultId, sessionId } = content;
+    const predicate = await new PredicateService().findById(vaultId);
+    await new DAppsService().create({
+      origin,
+      sessionId,
+      vaults: [predicate],
     });
 
-    socket.to(to).emit(SocketEvents.AUTH_CONFIRMED, {
-      ...content,
-      BSAFEAuth: { token, address },
+    socket.to(`${origin}:${sessionId}`).emit('message', {
+      type: 'connection',
+      data: [true],
+    });
+    socket.to(`${origin}:${sessionId}`).emit('message', {
+      type: 'accounts',
+      data: [[predicate.predicateAddress]],
+    });
+    socket.to(`${origin}:${sessionId}`).emit('message', {
+      type: 'currentAccount',
+      data: [predicate.predicateAddress],
     });
 
     console.log('[CHEGOU]: ', content);
-    console.log('[SAIU]: ', {
-      ...content,
-      BSAFEAuth: { token, address },
-    });
   },
   [SocketEvents.TRANSACTION_APPROVED]: async (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -27,12 +27,15 @@ export interface ISocketUser {
 
 export interface BaseSocketEvent {
   sessionId: string;
-  address: string;
-  to: string;
+  origin: string;
+}
+
+export interface IAuthSocketEvent extends BaseSocketEvent {
+  vaultId: string;
 }
 
 export interface ISocketEvent {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  content: BaseSocketEvent;
+  content: IAuthSocketEvent;
   to: string;
 }

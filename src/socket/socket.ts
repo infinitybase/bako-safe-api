@@ -1,4 +1,4 @@
-import { Server, ServerOptions } from 'socket.io';
+import { Server, ServerOptions, Socket } from 'socket.io';
 
 import { popAuth } from '@src/socket/calbacks';
 
@@ -23,10 +23,7 @@ class SocketIOServer extends Server {
     //middleware de conexao
     this.io.use((socket, next) => {
       const username = socket.handshake.auth.username;
-      const hasValidEvent =
-        username.includes(UserTypes.WALLET) ||
-        username.includes(UserTypes.POPUP_AUTH) ||
-        username.includes(UserTypes.POPUP_TRANSFER);
+      const hasValidEvent = false;
       if (!username || !hasValidEvent) {
         return next(new Error('invalid username'));
       }
@@ -36,16 +33,18 @@ class SocketIOServer extends Server {
       next();
     });
 
-    this.io.on(SocketEvents.CONNECTION, socket => {
+    this.io.on(SocketEvents.CONNECTION, (socket: Socket) => {
+      const room = `${socket.handshake.query.sessionId}:${socket.handshake.headers.origin}`;
+      socket.join(room);
       //[to list all users]
       // const users: ISocketUser[] = [];
       // for (const [id, socket] of this.io.of('/').sockets) {
       //   users.push({ userID: id, username: socket.username });
       // }
-      socket.broadcast.emit(SocketEvents.USER_CONNECTED, {
-        userID: socket.id,
-        username: socket.username,
-      });
+      // socket.broadcast.emit(SocketEvents.USER_CONNECTED, {
+      //   userID: socket.id,
+      //   username: socket.username,
+      // });
       /* 
         [WALLET]
         - complement this connection depends to event content

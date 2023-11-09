@@ -1,6 +1,7 @@
 import { MigrationInterface, QueryRunner, Table } from 'typeorm';
 
-export class addColumnDappsFkToUsers1699273411843 implements MigrationInterface {
+export class addPivotTableToPredicatesAndAppConnected1699500451133
+  implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.createTable(
       new Table({
@@ -12,17 +13,17 @@ export class addColumnDappsFkToUsers1699273411843 implements MigrationInterface 
             isNullable: false,
           },
           {
-            name: 'user_id',
+            name: 'predicate_id',
             type: 'uuid',
             isNullable: false,
           },
         ],
         foreignKeys: [
           {
-            name: 'FK-user-apps_connected',
-            columnNames: ['user_id'],
+            name: 'FK-predicate-apps_connected',
+            columnNames: ['predicate_id'],
             referencedColumnNames: ['id'],
-            referencedTableName: 'users',
+            referencedTableName: 'predicates',
             onDelete: 'CASCADE',
           },
           {

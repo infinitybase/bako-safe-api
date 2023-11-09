@@ -1,7 +1,7 @@
 import { Column, Entity, JoinTable, ManyToMany } from 'typeorm';
 
 import { Base } from './Base';
-import { User } from './User';
+import { Predicate } from './Predicate';
 
 @Entity('dapp')
 class DApp extends Base {
@@ -9,7 +9,7 @@ class DApp extends Base {
   sessionId: string;
 
   @Column()
-  url: string;
+  origin: string;
 
   @Column({ nullable: true })
   name: string;
@@ -17,10 +17,10 @@ class DApp extends Base {
   @JoinTable({
     name: 'apps_connected',
     joinColumn: { name: 'dapp_id', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'user_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'predicate_id', referencedColumnName: 'id' },
   })
-  @ManyToMany(() => User)
-  users: User[];
+  @ManyToMany(() => Predicate)
+  vaults: Predicate[];
 }
 
 export { DApp };

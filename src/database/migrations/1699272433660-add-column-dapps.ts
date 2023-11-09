@@ -19,7 +19,7 @@ export class addColumnDapps1699272433660 implements MigrationInterface {
             type: 'varchar',
           },
           {
-            name: 'url',
+            name: 'origin',
             type: 'varchar',
           },
           {
