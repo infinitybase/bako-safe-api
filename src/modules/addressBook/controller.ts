@@ -80,9 +80,57 @@ export class AddressBookController {
     }
   }
 
-  async update({ body, params }: IUpdateAddressBookRequest) {
+  async update({ body, params, user }: IUpdateAddressBookRequest) {
     try {
-      const updatedContact = await this.addressBookService.update(params.id, body);
+      const duplicatedNickname = await this.addressBookService
+        .filter({
+          createdBy: user.id,
+          nickname: body.nickname,
+        })
+        .list();
+
+      const duplicatedAddress = await this.addressBookService
+        .filter({
+          createdBy: user.id,
+          contactAddress: body.address,
+        })
+        .list();
+
+      const hasDuplicate =
+        ((duplicatedNickname as AddressBook[]).length &&
+          duplicatedNickname[0].id !== params.id) ||
+        ((duplicatedAddress as AddressBook[]).length &&
+          duplicatedAddress[0].id !== params.id);
+
+      if (hasDuplicate) {
+        throw new Internal({
+          type: ErrorTypes.Internal,
+          title: 'Error on contact update',
+          detail: `Unavailable address or nickname`,
+        });
+      }
+
+      let savedUser = await this.userService.findByAddress(body.address);
+
+      console.log('🚀 ~ savedUser', savedUser);
+
+      if (!savedUser) {
+        const roles = await Role.find({ where: [{ name: 'Administrador' }] });
+        savedUser = await this.userService.create({
+          address: body.address,
+          provider: user.provider,
+          role: roles[0],
+          avatar: await this.userService.randomAvatar(),
+          active: true,
+        });
+      }
+
+      const { address, ...rest } = body;
+
+      const updatedContact = await this.addressBookService.update(params.id, {
+        ...rest,
+        user_id: savedUser.id,
+      });
       return successful(updatedContact, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);

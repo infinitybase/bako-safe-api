@@ -11,6 +11,7 @@ export const validateCreateAddressBookPayload = validator.body(
 
 export const validateUpdateAddressBookPayload = validator.body(
   Joi.object({
+    id: Joi.string().required(),
     nickname: Joi.string().required(),
     address: Joi.string().required(),
   }),

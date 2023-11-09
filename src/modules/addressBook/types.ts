@@ -29,8 +29,10 @@ export interface ICreateAddressBookPayload {
 
 export type IUpdateAddressBookPayload = Omit<
   ICreateAddressBookPayload,
-  'createdBy'
+  'createdBy' | 'address'
 >;
+
+export type IUpdateAddressBookBody = Omit<ICreateAddressBookPayload, 'createdBy'>;
 
 export interface IFilterAddressBookParams {
   q?: string;
@@ -44,7 +46,7 @@ interface ICreateAddressBookRequestSchema extends ValidatedRequestSchema {
 }
 
 interface IUpdateAddressBookRequestSchema extends ValidatedRequestSchema {
-  [ContainerTypes.Body]: IUpdateAddressBookPayload;
+  [ContainerTypes.Body]: IUpdateAddressBookBody;
   [ContainerTypes.Params]: { id: string };
 }
 
