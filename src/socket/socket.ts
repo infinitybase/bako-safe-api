@@ -18,7 +18,6 @@ class SocketIOServer extends Server {
         origin: '*',
         methods: ['GET', 'POST'],
       },
-      ...options,
     });
 
     //middleware de conexao
