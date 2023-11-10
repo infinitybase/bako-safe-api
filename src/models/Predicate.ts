@@ -66,6 +66,7 @@ class Predicate extends Base {
 
   @AfterLoad()
   async returnParsed() {
+    if (typeof this.addresses != 'string') return;
     this.addresses = JSON.parse(this.addresses);
     const _complete: ResumedUser[] = [];
     const userService = new UserService();

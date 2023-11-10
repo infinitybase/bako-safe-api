@@ -19,8 +19,12 @@ export class addColumnDapps1699272433660 implements MigrationInterface {
             type: 'varchar',
           },
           {
-            name: 'url',
+            name: 'origin',
             type: 'varchar',
+          },
+          {
+            name: 'current',
+            type: 'uuid',
           },
           {
             name: 'name',
@@ -40,6 +44,15 @@ export class addColumnDapps1699272433660 implements MigrationInterface {
             name: 'deleted_at',
             type: 'timestamp',
             isNullable: true,
+          },
+        ],
+        foreignKeys: [
+          {
+            name: 'FK-transaction-witnesses',
+            columnNames: ['current'],
+            referencedColumnNames: ['id'],
+            referencedTableName: 'predicates',
+            onDelete: 'CASCADE',
           },
         ],
       }),
