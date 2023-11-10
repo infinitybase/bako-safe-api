@@ -118,7 +118,6 @@ export class AddressBookService implements IAddressBookService {
   async findById(id: string): Promise<AddressBook> {
     return AddressBook.findOne({
       where: { id },
-      // relations: ['assets', 'witnesses', 'predicate'],
     })
       .then(contact => {
         if (!contact) {

@@ -112,8 +112,6 @@ export class AddressBookController {
 
       let savedUser = await this.userService.findByAddress(body.address);
 
-      console.log('🚀 ~ savedUser', savedUser);
-
       if (!savedUser) {
         const roles = await Role.find({ where: [{ name: 'Administrador' }] });
         savedUser = await this.userService.create({
