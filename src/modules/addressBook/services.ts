@@ -89,6 +89,12 @@ export class AddressBookService implements IAddressBookService {
         nickname: `${this._filter.nickname}`,
       });
 
+    this._filter.userIds &&
+      this._filter.userIds.length &&
+      queryBuilder.andWhere('ab.user_id IN (:...userIds)', {
+        userIds: this._filter.userIds,
+      });
+
     this._filter.q &&
       queryBuilder.andWhere(
         new Brackets(qb =>

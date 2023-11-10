@@ -1,9 +1,11 @@
+import AddressBook from '@src/models/AddressBook';
 import { Predicate } from '@src/models/Predicate';
 import Role from '@src/models/Role';
 
 import { error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
 
+import { IAddressBookService } from '../addressBook/types';
 import { IUserService } from '../configs/user/types';
 import {
   ICreatePredicateRequest,
@@ -17,10 +19,16 @@ import {
 export class PredicateController {
   private predicateService: IPredicateService;
   private userService: IUserService;
+  private addressBookService: IAddressBookService;
 
-  constructor(predicateService: IPredicateService, userService: IUserService) {
+  constructor(
+    predicateService: IPredicateService,
+    userService: IUserService,
+    addressBookService: IAddressBookService,
+  ) {
     this.predicateService = predicateService;
     this.userService = userService;
+    this.addressBookService = addressBookService;
     bindMethods(this);
   }
 
@@ -69,7 +77,21 @@ export class PredicateController {
 
   async findById({ params: { id }, user }: IFindByIdRequest) {
     try {
-      const response = await this.predicateService.findById(id, user.address);
+      const predicate = await this.predicateService.findById(id, user.address);
+      const membersIds = predicate.members.map(member => member.id);
+      const favorites = (await this.addressBookService
+        .filter({ createdBy: user.id, userIds: membersIds })
+        .list()) as AddressBook[];
+
+      const response = {
+        ...predicate,
+        members: predicate.members.map(member => ({
+          ...member,
+          nickname:
+            favorites?.find(({ user }) => user.id === member.id)?.nickname ??
+            undefined,
+        })),
+      };
 
       return successful(response, Responses.Ok);
     } catch (e) {

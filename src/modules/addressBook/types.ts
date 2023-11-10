@@ -39,6 +39,7 @@ export interface IFilterAddressBookParams {
   createdBy?: string;
   contactAddress?: string;
   nickname?: string;
+  userIds?: string[];
 }
 
 interface ICreateAddressBookRequestSchema extends ValidatedRequestSchema {

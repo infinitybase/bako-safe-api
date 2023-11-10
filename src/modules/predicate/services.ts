@@ -76,6 +76,7 @@ export class PredicateService implements IPredicateService {
       .select([
         ...this.predicateFieldsSelection,
         'p.configurable',
+        'members.id',
         'members.avatar',
         'members.address',
         'owner.id',
