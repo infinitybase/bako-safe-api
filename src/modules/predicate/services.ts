@@ -187,22 +187,12 @@ export class PredicateService implements IPredicateService {
 
   async instancePredicate(predicateId: string): Promise<Vault> {
     const predicate = await this.findById(predicateId);
-    const predicateConfig: IConfVault = JSON.parse(predicate.configurable);
-    //const fuelProvider = new Provider(predicate.provider); // -> todo move to sdk
-    //const chainId = await fuelProvider.getChainId();
-    const a: IPayloadVault = {
-      configurable: {
-        ...defaultConfigurable,
-        ...predicateConfig,
-      },
-      BSAFEVaultId: predicate.id,
-      abi: predicate.abi,
-      provider: await Provider.create(predicate.provider),
-      bytecode: predicate.bytes,
-    };
+    const configurable: IConfVault = JSON.parse(predicate.configurable);
+    const provider = await Provider.create(predicate.provider);
 
-    const aux = await Vault.create(a);
-
-    return aux;
+    return Vault.create({
+      configurable,
+      provider,
+    });
   }
 }
