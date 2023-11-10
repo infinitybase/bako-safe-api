@@ -28,7 +28,9 @@ export interface ISocketUser {
 export interface BaseSocketEvent {
   sessionId: string;
   address: string;
-  to: string;
+  vaultId: string;
+  origin: string;
+  name?: string;
 }
 
 export interface ISocketEvent {

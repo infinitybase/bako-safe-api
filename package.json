@@ -21,8 +21,8 @@
   "dependencies": {
     "axios": "1.5.1",
     "bcrypt": "5.1.0",
-    "bsafe": "../bsafe/",
     "body-parser": "1.20.2",
+    "bsafe": "../bsafe/",
     "class-validator": "0.14.0",
     "cookie-parser": "1.4.6",
     "cors": "2.8.5",
@@ -36,6 +36,7 @@
     "patch-package": "8.0.0",
     "pg": "8.5.1",
     "reflect-metadata": "0.1.13",
+    "socket.io": "4.7.2",
     "ts-node": "^10.9.1",
     "tsconfig-paths": "^3.9.0",
     "typeorm": "^0.2.29",

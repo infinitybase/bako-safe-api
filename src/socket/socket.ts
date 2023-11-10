@@ -1,4 +1,4 @@
-import { Server, ServerOptions } from 'socket.io';
+import { Socket, Server, ServerOptions } from 'socket.io';
 
 import { popAuth } from '@src/socket/calbacks';
 
@@ -35,6 +35,10 @@ class SocketIOServer extends Server {
       socket.username = username;
 
       next();
+    });
+    this.io.on('connection', (socket: Socket) => {
+      const room = `${socket.handshake.auth.sessionId}:${socket.handshake.headers.origin}`;
+      socket.join(room);
     });
 
     this.io.on(SocketEvents.CONNECTION, socket => {
