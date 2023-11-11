@@ -40,6 +40,7 @@ export interface IFilterAddressBookParams {
   contactAddress?: string;
   nickname?: string;
   userIds?: string[];
+  contactAddresses?: string[];
 }
 
 interface ICreateAddressBookRequestSchema extends ValidatedRequestSchema {
