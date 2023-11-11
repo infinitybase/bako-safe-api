@@ -1,10 +1,11 @@
-import { Transfer, Vault } from 'bsafe';
+import { ITransaction, Transfer, Vault } from 'bsafe';
 import {
   Provider,
   TransactionRequest,
   TransactionResponse,
   hexlify,
   transactionRequestify,
+  bn,
 } from 'fuels';
 
 import {
@@ -241,29 +242,25 @@ export class TransactionService implements ITransactionService {
     api_transaction: Transaction,
     vault: Vault,
   ): Promise<Transfer> {
-    const script_t = new Transfer(vault);
-
-    const witness = api_transaction.witnesses
-      .filter(w => w.signature)
-      .map(w => {
-        return {
-          id: w.id,
-          account: w.account,
-          signature: w.signature,
-          status: w.status as string,
-          createdAt: w.createdAt.toISOString(),
-          updatedAt: w.updatedAt.toISOString(),
-        };
-      });
-
-    await script_t.instanceTransaction({
-      ...api_transaction,
-      witnesses: witness,
-      createdAt: api_transaction.createdAt.toISOString(),
-      updatedAt: api_transaction.updatedAt.toISOString(),
+    const transfer = await Transfer.instance({
+      transfer: (api_transaction as unknown) as ITransaction,
+      vault,
     });
+    //
+    // const witness = api_transaction.witnesses
+    //   .filter(w => w.signature)
+    //   .map(w => {
+    //     return {
+    //       id: w.id,
+    //       account: w.account,
+    //       signature: w.signature,
+    //       status: w.status as string,
+    //       createdAt: w.createdAt.toISOString(),
+    //       updatedAt: w.updatedAt.toISOString(),
+    //     };
+    //   });
 
-    return script_t;
+    return transfer;
   }
 
   checkInvalidConditions(api_transaction: Transaction) {
@@ -283,8 +280,11 @@ export class TransactionService implements ITransactionService {
   }
 
   async sendToChain(bsafe_transaction: Transfer, provider: Provider) {
+    const scriptTransactionRequest = bsafe_transaction.getScript();
+    // scriptTransactionRequest.gasPrice = bn(100);
+    // scriptTransactionRequest.gasLimit = bn(10000);
     const _transaction: TransactionRequest = transactionRequestify(
-      bsafe_transaction.getScript(),
+      scriptTransactionRequest,
     );
     const tx_est = await provider.estimatePredicates(_transaction);
 
