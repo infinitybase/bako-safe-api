@@ -7,6 +7,7 @@ import { WitnessService } from '@modules/witness/services';
 
 import { handleResponse } from '@utils/index';
 
+import { AddressBookService } from '../addressBook/services';
 import { TransactionController } from './controller';
 import { TransactionService } from './services';
 import {
@@ -19,6 +20,7 @@ const router = Router();
 const transactionService = new TransactionService();
 const predicateService = new PredicateService();
 const witnessService = new WitnessService();
+const addressBookService = new AddressBookService();
 
 const {
   create,
@@ -27,7 +29,12 @@ const {
   findById,
   close,
   findByHash,
-} = new TransactionController(transactionService, predicateService, witnessService);
+} = new TransactionController(
+  transactionService,
+  predicateService,
+  witnessService,
+  addressBookService,
+);
 
 router.use(authMiddleware);
 
