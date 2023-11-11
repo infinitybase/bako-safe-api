@@ -36,50 +36,46 @@ class SocketIOServer extends Server {
 
       next();
     });
-    this.io.on('connection', (socket: Socket) => {
-      const room = `${socket.handshake.auth.sessionId}:${socket.handshake.headers.origin}`;
+    this.io.on(SocketEvents.CONNECTION, (socket: Socket) => {
+      const { origin, sessionId } = socket.handshake.auth;
+
+      const room = `${sessionId}:${origin}`;
       socket.join(room);
     });
 
     this.io.on(SocketEvents.CONNECTION, socket => {
-      //[to list all users]
-      // const users: ISocketUser[] = [];
-      // for (const [id, socket] of this.io.of('/').sockets) {
-      //   users.push({ userID: id, username: socket.username });
-      // }
-      socket.broadcast.emit(SocketEvents.USER_CONNECTED, {
-        userID: socket.id,
-        username: socket.username,
-      });
-      /* 
-        [WALLET]
-        - complement this connection depends to event content
-        - for exemple, complement payload to message to send to client
-      */
-      socket.on('[WALLET]', ({ content, to }: ISocketEvent) => {
-        console.log('[WALLET]');
-        socket.to(to).emit('[WALLET]', {
-          content,
-          from: socket.id,
-        });
+      const { origin, sessionId, username } = socket.handshake.auth;
+      const room = `${sessionId}:${origin}`;
+
+      socket.to(room).emit(SocketEvents.DEFAULT, {
+        type: `${username}_connected`,
+        data: [true],
       });
 
       /* 
-        [POPUP_TRANSFER]
-        - complement this connection depends to event content
-        - for exemple, complement payload to message to send to client
+        [AVISA PARA O DAPP QUE A TRASACAO FOI CRIADA NA BSAFE: POPUP_TRANSFER -> DAPP]
+        - envia o tx hash da transacao criada na BSAFEAPI
       */
       socket.on(
-        SocketEvents.TRANSACTION_APPROVED,
+        SocketEvents.TRANSACTION_CREATED,
         async ({ content, to }: ISocketEvent) => {
-          popAuth[SocketEvents.TRANSACTION_APPROVED](socket, { content, to });
+          popAuth[SocketEvents.TRANSACTION_CREATED](socket, { content, to });
+        },
+      );
+      /* 
+        [REPASSA TRANSACAO PARA A POPUP: DAPP -> POPUP_TRANSFER]
+      */
+      socket.on(
+        SocketEvents.TRANSACTION_SEND,
+        async ({ content, to }: ISocketEvent) => {
+          popAuth[SocketEvents.TRANSACTION_SEND](socket, { content, to });
         },
       );
 
       /* 
-        [POPUP_AUTH]
-        - complement this connection depends to event content
-        - for exemple, complement payload to message to send to client
+        [CONFIRMA QUE O USUÁRIO ESCOLHEU UM VAULT: POPUP_AUTH -> DAPP]
+        - verifica se existe uma conexão do vault com o dapp
+        - setta o vault escolhido para current vault
       */
       socket.on(
         SocketEvents.AUTH_CONFIRMED,

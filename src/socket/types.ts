@@ -5,12 +5,19 @@ export enum SocketEvents {
   USER_CONNECTED = '[USER_CONNECTED]',
 
   //popup transfer
-  TRANSACTION_REQUESTED = '[TRANSACTION_REQUESTED]',
-  TRANSACTION_APPROVED = '[TRANSACTION_APPROVED]',
+  TRANSACTION_CREATED = '[TRANSACTION_CREATED]',
+  TRANSACTION_SEND = '[TRANSACTION_SEND]',
 
   //popup auth
   AUTH_CONFIRMED = '[AUTH_CONFIRMED]',
   AUTH_REJECTED = '[AUTH_REJECTED]',
+
+  //default
+  DEFAULT = 'message',
+
+  //accounts
+  ACCOUNTS = 'accounts',
+  CURRENT_ACCOUNT = 'currentAccount',
 }
 
 export enum UserTypes {
@@ -31,6 +38,7 @@ export interface BaseSocketEvent {
   vaultId: string;
   origin: string;
   name?: string;
+  hash?: string;
 }
 
 export interface ISocketEvent {

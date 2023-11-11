@@ -38,16 +38,20 @@ export const popAuth: IEventsExecute = {
         await dapp.save();
       }
 
-      socket.to(room).emit('message', {
-        type: 'connection',
+      socket.to(room).emit(SocketEvents.DEFAULT, {
+        type: SocketEvents.CONNECTION,
         data: [true],
       });
-      socket.to(room).emit('message', {
-        type: 'accounts',
+      socket.to(room).emit(SocketEvents.DEFAULT, {
+        type: SocketEvents.CONNECTION,
+        data: [true],
+      });
+      socket.to(room).emit(SocketEvents.DEFAULT, {
+        type: SocketEvents.ACCOUNTS,
         data: [dapp?.vaults.map(v => v.predicateAddress)],
       });
-      socket.to(room).emit('message', {
-        type: 'currentAccount',
+      socket.to(room).emit(SocketEvents.DEFAULT, {
+        type: SocketEvents.CURRENT_ACCOUNT,
         data: [dapp?.currentVault.predicateAddress],
       });
       return;
@@ -56,11 +60,27 @@ export const popAuth: IEventsExecute = {
     }
   },
 
-  [SocketEvents.TRANSACTION_APPROVED]: async (
+  [SocketEvents.TRANSACTION_SEND]: async (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     socket: any,
     { content, to }: ISocketEvent,
   ) => {
-    console.log('[TRANSACTION_APPROVED]: ', content, to);
+    socket.to(to).emit(SocketEvents.DEFAULT, {
+      type: SocketEvents.TRANSACTION_SEND,
+      data: content,
+    });
+  },
+
+  //todo: typing all items
+  [SocketEvents.TRANSACTION_CREATED]: async (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    socket: any,
+    { content, to }: ISocketEvent,
+  ) => {
+    console.log(SocketEvents.TRANSACTION_CREATED, content, to);
+    socket.to(to).emit(SocketEvents.DEFAULT, {
+      type: SocketEvents.TRANSACTION_CREATED,
+      data: [content.hash],
+    });
   },
 };

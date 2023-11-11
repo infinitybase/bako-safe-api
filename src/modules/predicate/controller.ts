@@ -77,9 +77,8 @@ export class PredicateController {
           address,
         })
         .list()
-        .then((data: Predicate[]) => data[0]);
-
-      return successful(response, Responses.Ok);
+        .then((data: Predicate[]) => data);
+      return successful(response[0], Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }
