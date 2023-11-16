@@ -85,7 +85,6 @@ export class PredicateService implements IPredicateService {
     const queryBuilder = Predicate.createQueryBuilder('p').select();
 
     const handleInternalError = e => {
-      console.log(e);
       if (e instanceof GeneralError) throw e;
 
       throw new Internal({

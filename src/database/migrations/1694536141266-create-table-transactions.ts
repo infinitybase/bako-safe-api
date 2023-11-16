@@ -32,6 +32,10 @@ export class createTableTransactions1694536141266 implements MigrationInterface 
             type: 'varchar',
           },
           {
+            name: 'tx_data',
+            type: 'jsonb',
+          },
+          {
             name: 'status',
             type: 'varchar',
           },

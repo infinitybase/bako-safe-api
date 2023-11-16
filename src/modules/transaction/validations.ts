@@ -11,6 +11,7 @@ export const validateAddTransactionPayload = validator.body(
     predicateAddress: Joi.string().required(),
     name: Joi.string().required(),
     hash: Joi.string().required(),
+    txData: Joi.object().required(),
     status: Joi.string()
       .required()
       .valid(...allowedStatus),

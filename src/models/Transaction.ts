@@ -1,3 +1,4 @@
+import { TransactionRequest } from 'fuels';
 import {
   BeforeUpdate,
   Column,
@@ -53,6 +54,12 @@ class Transaction extends Base {
 
   @Column()
   hash: string;
+
+  @Column({
+    type: 'jsonb',
+    name: 'tx_data',
+  })
+  txData: TransactionRequest;
 
   @Column({ enum: TransactionStatus })
   status: TransactionStatus;

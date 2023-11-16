@@ -1,6 +1,6 @@
 import { Transfer, Vault } from 'bsafe';
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
-import { Provider } from 'fuels';
+import { Provider, TransactionRequest } from 'fuels';
 
 import {
   Asset,
@@ -34,6 +34,7 @@ export interface ICreateTransactionPayload {
   hash: string;
   predicateAddress: string;
   status: TransactionStatus;
+  txData: TransactionRequest;
   assets: ICreateAssetPayload[];
   resume?: string;
   sendTime?: Date;
@@ -161,8 +162,9 @@ export interface ITransactionService {
   filter(filter: ITransactionFilterParams): this;
 
   instanceTransactionScript: (
-    api_transaction: Transaction,
+    api_transaction: TransactionRequest,
     vault: Vault,
+    witnesses: string[],
   ) => Promise<Transfer>;
   validateStatus: (transactionId: string) => Promise<TransactionStatus>;
   checkInvalidConditions: (api_transaction: Transaction) => void;
@@ -170,7 +172,10 @@ export interface ITransactionService {
     api_transaction: Transaction,
     provider: Provider,
   ) => Promise<ITransactionResume>;
-  sendToChain: (bsafe_transaction: Transfer, provider: Provider) => Promise<string>;
+  sendToChain: (
+    bsafe_transaction: TransactionRequest,
+    provider: Provider,
+  ) => Promise<string>;
   create: (payload: ICreateTransactionPayload) => Promise<Transaction>;
   update: (id: string, payload: IUpdateTransactionPayload) => Promise<Transaction>;
   list: () => Promise<IPagination<Transaction> | Transaction[]>;

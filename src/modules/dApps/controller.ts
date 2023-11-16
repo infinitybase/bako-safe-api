@@ -39,7 +39,6 @@ export class DappController {
   }
 
   async state({ params, headers }: IDappRequest) {
-    console.log('[STATE_REQUEST]');
     try {
       return successful(
         await this._dappService
