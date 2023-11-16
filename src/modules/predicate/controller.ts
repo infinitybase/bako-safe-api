@@ -76,6 +76,10 @@ export class PredicateController {
         .filter({
           address,
         })
+        .paginate({
+          page: '',
+          perPage: '',
+        })
         .list()
         .then((data: Predicate[]) => data);
       return successful(response[0], Responses.Ok);
