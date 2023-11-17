@@ -2,11 +2,17 @@ import AddressBook from '@src/models/AddressBook';
 import { Predicate } from '@src/models/Predicate';
 import Role from '@src/models/Role';
 
+import { Asset, Transaction, TransactionStatus } from '@models/index';
+
 import { error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
 
+
 import { IAddressBookService } from '../addressBook/types';
+
 import { IUserService } from '../configs/user/types';
+
+import { ITransactionService } from '../transaction/types';
 import {
   ICreatePredicateRequest,
   IDeletePredicateRequest,
@@ -19,6 +25,7 @@ import {
 export class PredicateController {
   private predicateService: IPredicateService;
   private userService: IUserService;
+
   private addressBookService: IAddressBookService;
 
   constructor(
@@ -102,9 +109,46 @@ export class PredicateController {
   async findByAddress({ params: { address } }: IFindByHashRequest) {
     try {
       const response = await this.predicateService
-        .filter({ address })
+        .filter({
+          address,
+        })
+        .paginate({
+          page: '',
+          perPage: '',
+        })
         .list()
-        .then((data: Predicate[]) => data[0]);
+        .then((data: Predicate[]) => data);
+      return successful(response[0], Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async hasReservedCoins({ params: { address } }: IFindByHashRequest) {
+    try {
+      const response = await this.transactionService
+        .filter({
+          predicateAddress: address,
+        })
+        .list()
+        .then((data: Transaction[]) => {
+          const a: string[] = [];
+          data
+            .filter(
+              (transaction: Transaction) =>
+                transaction.status == TransactionStatus.AWAIT_REQUIREMENTS ||
+                transaction.status == TransactionStatus.PENDING_SENDER,
+            )
+            .map((_filteredTransactions: Transaction) => {
+              _filteredTransactions.assets.map((_assets: Asset) =>
+                a.push(_assets.utxo),
+              );
+            });
+          return a;
+        })
+        .catch(() => {
+          return [];
+        });
 
       return successful(response, Responses.Ok);
     } catch (e) {

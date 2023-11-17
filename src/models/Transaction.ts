@@ -1,3 +1,4 @@
+import { TransactionRequest } from 'fuels';
 import {
   AfterLoad,
   BeforeUpdate,
@@ -17,18 +18,34 @@ import { Base } from './Base';
 import { Predicate } from './Predicate';
 import { Witness } from './Witness';
 
+//todo -> import to sdk package
 export enum TransactionStatus {
-  AWAIT = 'AWAIT',
-  DONE = 'DONE',
-  PENDING = 'PENDING',
-  REJECTED = 'REJECTED',
-  ERROR = 'ERROR',
+  AWAIT_REQUIREMENTS = 'await_requirements', // -> AWAIT SIGNATURES
+  PENDING_SENDER = 'pending_sender', // -> AWAIT SENDER, BEFORE AWAIT STATUS
+  PROCESS_ON_CHAIN = 'process_on_chain', // -> AWAIT DONE ON CHAIN
+  SUCCESS = 'success', // -> SENDED
+  FAILED = 'failed', // -> FAILED
+}
+
+export enum TransactionProcessStatus {
+  SUCCESS = 'SuccessStatus',
+  SQUIZED = 'SqueezedOutStatus',
+  SUBMITED = 'SubmittedStatus',
+  FAILED = 'FailureStatus',
+}
+
+export interface ITransactionResume {
+  status: TransactionProcessStatus;
+  hash?: string;
+  gasUsed?: string;
+  sendTime?: Date;
+  witnesses?: string[];
 }
 
 @Entity('transactions')
 class Transaction extends Base {
-  @Column()
-  predicateAdress: string;
+  @Column({ name: 'predicate_address' })
+  predicateAddress: string;
 
   @Column()
   predicateID: string;
@@ -37,19 +54,22 @@ class Transaction extends Base {
   name: string;
 
   @Column()
-  txData: string;
-
-  @Column()
   hash: string;
+
+  @Column({
+    type: 'jsonb',
+    name: 'tx_data',
+  })
+  txData: TransactionRequest;
 
   @Column({ enum: TransactionStatus })
   status: TransactionStatus;
 
   @Column()
-  sendTime: Date;
+  sendTime?: Date;
 
   @Column()
-  gasUsed: string;
+  gasUsed?: string;
 
   @Column()
   resume: string;

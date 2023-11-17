@@ -21,16 +21,18 @@ class Bootstrap {
       DATABASE_PASSWORD,
       DATABASE_NAME,
       NODE_ENV,
+      DATABASE_PORT_TEST,
     } = process.env;
 
-    // console.log('[DATABASE CONST]: ', {
-    //   DATABASE_HOST,
-    //   DATABASE_PORT,
-    //   DATABASE_USERNAME,
-    //   DATABASE_PASSWORD,
-    //   DATABASE_NAME,
-    //   NODE_ENV,
-    // });
+    console.log('[DATABASE CONST]: ', {
+      DATABASE_HOST,
+      DATABASE_PORT,
+      DATABASE_USERNAME,
+      DATABASE_PASSWORD,
+      DATABASE_NAME,
+      NODE_ENV,
+      DATABASE_PORT_TEST,
+    });
 
     this.startEnv();
     await this.connectDatabase();
@@ -57,6 +59,7 @@ class Bootstrap {
   }
 
   static async runSeeders() {
+    console.log('[RUN_SEEDERS]');
     await runSeeders();
   }
 }

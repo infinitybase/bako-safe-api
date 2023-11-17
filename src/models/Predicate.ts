@@ -25,8 +25,8 @@ class Predicate extends Base {
   @Column()
   predicateAddress: string;
 
-  @Column()
-  description: string;
+  @Column({ nullable: true })
+  description?: string;
 
   @Column()
   minSigners: number;

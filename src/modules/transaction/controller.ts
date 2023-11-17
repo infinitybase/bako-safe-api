@@ -1,10 +1,12 @@
+
 import { ok } from 'assert';
 
 import AddressBook from '@src/models/AddressBook';
 import { IPagination } from '@src/utils/pagination';
+import { Provider } from 'fuels';
+
 
 import {
-  Asset,
   Predicate,
   Transaction,
   TransactionStatus,
@@ -18,15 +20,20 @@ import { IWitnessService } from '@modules/witness/types';
 import { error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
 
+
 import { IAddressBookService } from '../addressBook/types';
+
+import { IAssetService } from '../asset/types';
 import {
   ICloseTransactionRequest,
   ICreateTransactionRequest,
   IFindTransactionByHashRequest,
   IFindTransactionByIdRequest,
   IListRequest,
+  ISendTransactionRequest,
   ISignByIdRequest,
   ITransactionService,
+  IUpdateTransactionPayload,
 } from './types';
 
 export class TransactionController {
@@ -34,18 +41,21 @@ export class TransactionController {
   private predicateService: IPredicateService;
   private witnessService: IWitnessService;
   private addressBookService: IAddressBookService;
+  private assetService: IAssetService;
 
   constructor(
     transactionService: ITransactionService,
     predicateService: IPredicateService,
     witnessService: IWitnessService,
     addressBookService: IAddressBookService,
+    assetService: IAssetService,
   ) {
     Object.assign(this, {
       transactionService,
       predicateService,
       witnessService,
       addressBookService,
+      assetService,
     });
     bindMethods(this);
   }
@@ -54,25 +64,28 @@ export class TransactionController {
     try {
       const predicate = await this.predicateService
         .filter({
-          address: transaction.predicateAdress,
+          address: transaction.predicateAddress,
         })
-        .list();
+        .paginate(undefined)
+        .list()
+        .then((result: Predicate[]) => result[0]);
 
       const newTransaction = await this.transactionService.create({
         ...transaction,
-        assets: transaction.assets.map(asset => Asset.create(asset)),
-        status: TransactionStatus.AWAIT,
-        predicateID: predicate[0].id,
-        createdBy: user,
+        status: TransactionStatus.AWAIT_REQUIREMENTS,
+        predicateID: predicate.id,
+        resume: JSON.stringify({
+          witnesses: [],
+          outputs: transaction.assets,
+        }),
       });
 
-      const witnesses = predicate[0].members.map((member: User) => ({
-        account: member.address,
-        transactionID: newTransaction.id,
-      }));
 
-      for await (const witness of witnesses) {
-        await this.witnessService.create(witness);
+      for await (const asset of transaction.assets) {
+        await this.assetService.create({
+          ...asset,
+          transactionID: newTransaction.id,
+        });
       }
 
       return successful(newTransaction, Responses.Ok);
@@ -86,14 +99,20 @@ export class TransactionController {
       const response = await this.transactionService.findById(id);
       return successful(response, Responses.Ok);
     } catch (e) {
-      return error(e.error[0], e.statusCode);
+      return error(e.error, e.statusCode);
     }
   }
 
   async findByHash({ params: { hash } }: IFindTransactionByHashRequest) {
     try {
-      const response = await this.transactionService.filter({ hash }).list();
-      return successful(response[0], Responses.Ok);
+      const response = await this.transactionService
+        .filter({ hash })
+        .paginate(undefined)
+        .list()
+        .then((result: Transaction[]) => {
+          result[0];
+        });
+      return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }
@@ -106,22 +125,42 @@ export class TransactionController {
     try {
       const transaction = await this.transactionService.findById(id);
 
-      const witness = transaction.witnesses.find(w => w.account === account);
+      const { predicate, witnesses, resume } = transaction;
+      const _resume = JSON.parse(resume);
 
-      if (transaction && witness) {
+      const witness = witnesses.find(w => w.account === account);
+
+
+      if (witness) {
         await this.witnessService.update(witness.id, {
           signature: signer,
           status: confirm ? WitnessesStatus.DONE : WitnessesStatus.REJECTED,
         });
 
-        await this.transactionService.update(id, {
-          status: await this.transactionService.validateStatus(id),
-        });
+        _resume.witnesses.push(signer);
 
-        return successful(true, Responses.Ok);
+        const signatures = await this.witnessService.findByTransactionId(
+          transaction.id,
+          true,
+        );
+
+        const statusField =
+          Number(predicate.minSigners) <= signatures.length
+            ? TransactionStatus.PENDING_SENDER
+            : TransactionStatus.AWAIT_REQUIREMENTS;
+
+        await this.transactionService.update(id, {
+          status: statusField,
+          resume: JSON.stringify({
+            ..._resume,
+            status: statusField,
+          }),
+        });
       }
+
+      return successful(!!witness, Responses.Ok);
     } catch (e) {
-      return error(e.error[0], e.statusCode);
+      return error(e.error, e.statusCode);
     }
   }
 
@@ -142,6 +181,7 @@ export class TransactionController {
       allOfUser,
     } = req.query;
     const { user } = req;
+
     const _predicateId =
       typeof predicateId == 'string' ? [predicateId] : predicateId;
     const hasPagination = !!page && !!perPage;
@@ -150,6 +190,7 @@ export class TransactionController {
       const predicateIds: string[] = allOfUser
         ? await this.predicateService
             .filter({ signer: user.address })
+            .paginate(undefined)
             .list()
             .then((data: Predicate[]) => {
               return data.map(predicate => predicate.id);
@@ -212,14 +253,69 @@ export class TransactionController {
   }: ICloseTransactionRequest) {
     try {
       const response = await this.transactionService.update(id, {
-        status: hasError ? TransactionStatus.ERROR : TransactionStatus.DONE,
+        status: TransactionStatus.SUCCESS,
         sendTime: new Date(),
         gasUsed,
         resume: transactionResult,
       });
       return successful(response, Responses.Ok);
     } catch (e) {
-      return error(e.error[0], e.statusCode);
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async send({ params: { id } }: ISendTransactionRequest) {
+    try {
+      const api_transaction = await this.transactionService.findById(id);
+      const { predicate, txData, witnesses } = api_transaction;
+      const _witnesses = witnesses
+        .filter(w => !!w)
+        .map(witness => witness.signature);
+      txData.witnesses = witnesses
+        .filter(w => !!w)
+        .map(witness => witness.signature);
+
+      this.transactionService.checkInvalidConditions(api_transaction);
+
+      const tx_id = await this.transactionService.sendToChain(
+        txData,
+        await Provider.create(predicate.provider),
+      );
+
+      const resume = {
+        ...JSON.parse(api_transaction.resume),
+        witnesses: _witnesses,
+        bsafeID: api_transaction.id,
+      };
+      const _api_transaction: IUpdateTransactionPayload = {
+        status: TransactionStatus.PROCESS_ON_CHAIN,
+        sendTime: new Date(),
+        resume: JSON.stringify(resume),
+        hash: tx_id.substring(2),
+      };
+
+      await this.transactionService.update(api_transaction.id, _api_transaction);
+      return successful(resume, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async verifyOnChain({ params: { id } }: ISendTransactionRequest) {
+    try {
+      const api_transaction = await this.transactionService.findById(id);
+      const { predicate } = api_transaction;
+      const provider = await Provider.create(predicate.provider);
+
+      this.transactionService.checkInvalidConditions(api_transaction);
+
+      const result = this.transactionService.verifyOnChain(
+        api_transaction,
+        provider,
+      );
+      return successful(result, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
     }
   }
 }

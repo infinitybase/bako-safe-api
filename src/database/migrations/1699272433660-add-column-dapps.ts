@@ -1,11 +1,10 @@
 import { MigrationInterface, QueryRunner, Table } from 'typeorm';
 
-export class createTableAssets1694545394302 implements MigrationInterface {
+export class addColumnDapps1699272433660 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
     await queryRunner.createTable(
       new Table({
-        name: 'assets',
+        name: 'dapp',
         columns: [
           {
             name: 'id',
@@ -16,24 +15,21 @@ export class createTableAssets1694545394302 implements MigrationInterface {
             default: `uuid_generate_v4()`,
           },
           {
-            name: 'assetId',
+            name: 'session_id',
             type: 'varchar',
           },
           {
-            name: 'transactionID',
+            name: 'origin',
+            type: 'varchar',
+          },
+          {
+            name: 'current',
             type: 'uuid',
           },
           {
-            name: 'to',
+            name: 'name',
             type: 'varchar',
-          },
-          {
-            name: 'amount',
-            type: 'varchar',
-          },
-          {
-            name: 'utxo',
-            type: 'varchar',
+            isNullable: true,
           },
           {
             name: 'created_at',
@@ -52,10 +48,10 @@ export class createTableAssets1694545394302 implements MigrationInterface {
         ],
         foreignKeys: [
           {
-            name: 'FK-transaction-assets',
-            columnNames: ['transactionID'],
+            name: 'FK-transaction-witnesses',
+            columnNames: ['current'],
             referencedColumnNames: ['id'],
-            referencedTableName: 'transactions',
+            referencedTableName: 'predicates',
             onDelete: 'CASCADE',
           },
         ],
@@ -64,6 +60,6 @@ export class createTableAssets1694545394302 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.dropTable('assets');
+    await queryRunner.dropTable('dapps');
   }
 }

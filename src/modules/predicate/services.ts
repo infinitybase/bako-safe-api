@@ -1,5 +1,8 @@
+import { IConfVault, IPayloadVault, Vault } from 'bsafe';
+import { Provider } from 'fuels';
 import { Brackets } from 'typeorm';
 
+import { defaultConfigurable } from '@src/utils/configurable';
 import { NotFound } from '@src/utils/error';
 import {
   Unauthorized,
@@ -68,6 +71,7 @@ export class PredicateService implements IPredicateService {
       });
   }
 
+
   async findById(id: string, signer?: string): Promise<Predicate> {
     return Predicate.createQueryBuilder('p')
       .where({ id })
@@ -83,6 +87,7 @@ export class PredicateService implements IPredicateService {
         'owner.address',
       ])
       .getOne()
+
       .then(predicate => {
         const isNotMember = !predicate.members.map(m => m.address).includes(signer);
 
@@ -101,7 +106,6 @@ export class PredicateService implements IPredicateService {
             detail: `Predicate with id ${id} not found`,
           });
         }
-
         return predicate;
       })
       .catch(e => {
@@ -138,6 +142,13 @@ export class PredicateService implements IPredicateService {
         detail: e,
       });
     };
+
+    // todo:
+    /**
+     * include inner join to transactions and assets
+     * return itens
+     * and filter just assets ID
+     */
 
     this._filter.address &&
       queryBuilder.andWhere('p.predicateAddress =:predicateAddress', {
@@ -233,5 +244,16 @@ export class PredicateService implements IPredicateService {
           detail: `Predicate with id ${id} not found`,
         });
       });
+  }
+
+  async instancePredicate(predicateId: string): Promise<Vault> {
+    const predicate = await this.findById(predicateId);
+    const configurable: IConfVault = JSON.parse(predicate.configurable);
+    const provider = await Provider.create(predicate.provider);
+
+    return Vault.create({
+      configurable,
+      provider,
+    });
   }
 }
