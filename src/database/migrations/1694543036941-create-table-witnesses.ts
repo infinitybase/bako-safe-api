@@ -25,7 +25,7 @@ export class createTableWitnesses1694543036941 implements MigrationInterface {
             type: 'varchar',
           },
           {
-            name: 'transactionID',
+            name: 'transaction_id',
             type: 'uuid',
           },
           {
@@ -46,7 +46,7 @@ export class createTableWitnesses1694543036941 implements MigrationInterface {
         foreignKeys: [
           {
             name: 'FK-transaction-witnesses',
-            columnNames: ['transactionID'],
+            columnNames: ['transaction_id'],
             referencedColumnNames: ['id'],
             referencedTableName: 'transactions',
             onDelete: 'CASCADE',

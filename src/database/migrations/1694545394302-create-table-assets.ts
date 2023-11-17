@@ -20,7 +20,7 @@ export class createTableAssets1694545394302 implements MigrationInterface {
             type: 'varchar',
           },
           {
-            name: 'transactionID',
+            name: 'transaction_id',
             type: 'uuid',
           },
           {
@@ -53,7 +53,7 @@ export class createTableAssets1694545394302 implements MigrationInterface {
         foreignKeys: [
           {
             name: 'FK-transaction-assets',
-            columnNames: ['transactionID'],
+            columnNames: ['transaction_id'],
             referencedColumnNames: ['id'],
             referencedTableName: 'transactions',
             onDelete: 'CASCADE',

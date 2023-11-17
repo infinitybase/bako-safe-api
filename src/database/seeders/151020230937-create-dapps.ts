@@ -1,26 +1,12 @@
-import { DApp, Predicate } from '@src/models';
+import { generateInitialDapp } from '@mocks/initialSeeds';
 
-import { User } from '@models/index';
+import { DApp } from '@src/models';
 
 export default async function () {
-  const dapps = await DApp.find();
-  if (dapps.length) {
+  const existing = (await DApp.find()).length > 0;
+
+  if (existing) {
     return;
   }
-
-  const vault = await Predicate.find();
-  if (!vault.length) {
-    return;
-  }
-
-  const a = await DApp.create({
-    sessionId: 'sessionId',
-    name: 'name',
-    origin: 'url',
-    vaults: [vault[0]],
-    currentVault: vault[0],
-  }).save();
-
-  a.vaults = [...a.vaults, vault[1]];
-  await a.save();
+  await DApp.create(await generateInitialDapp()).save();
 }
