@@ -5,6 +5,8 @@ import { authMiddleware } from '@src/middlewares';
 import { handleResponse } from '@utils/index';
 
 
+import { AddressBookService } from '../addressBook/services';
+
 import { UserService } from '../configs/user/service';
 
 import { TransactionService } from '../transaction/services';
@@ -16,6 +18,8 @@ import { validateAddPredicatePayload } from './validations';
 const router = Router();
 const predicateService = new PredicateService();
 
+const addressBookService = new AddressBookService();
+
 const userService = new UserService();
 
 const transactionService = new TransactionService();
@@ -26,7 +30,8 @@ const {
   list,
   findByAddress,
   delete: deleteService,
-} = new PredicateController(predicateService, transactionService, userService);
+} = new PredicateController(predicateService, userService, addressBookService, transactionService);
+
 
 router.use(authMiddleware);
 

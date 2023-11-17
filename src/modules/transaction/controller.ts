@@ -1,4 +1,10 @@
+
+import { ok } from 'assert';
+
+import AddressBook from '@src/models/AddressBook';
+import { IPagination } from '@src/utils/pagination';
 import { Provider } from 'fuels';
+
 
 import {
   Predicate,
@@ -13,6 +19,9 @@ import { IWitnessService } from '@modules/witness/types';
 
 import { error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
+
+
+import { IAddressBookService } from '../addressBook/types';
 
 import { IAssetService } from '../asset/types';
 import {
@@ -31,18 +40,21 @@ export class TransactionController {
   private transactionService: ITransactionService;
   private predicateService: IPredicateService;
   private witnessService: IWitnessService;
+  private addressBookService: IAddressBookService;
   private assetService: IAssetService;
 
   constructor(
     transactionService: ITransactionService,
     predicateService: IPredicateService,
     witnessService: IWitnessService,
+    addressBookService: IAddressBookService,
     assetService: IAssetService,
   ) {
     Object.assign(this, {
       transactionService,
       predicateService,
       witnessService,
+      addressBookService,
       assetService,
     });
     bindMethods(this);
@@ -172,6 +184,8 @@ export class TransactionController {
 
     const _predicateId =
       typeof predicateId == 'string' ? [predicateId] : predicateId;
+    const hasPagination = !!page && !!perPage;
+
     try {
       const predicateIds: string[] = allOfUser
         ? await this.predicateService
@@ -188,7 +202,7 @@ export class TransactionController {
       if (predicateIds && predicateIds.length === 0)
         return successful([], Responses.Ok);
 
-      const response = await this.transactionService
+      let response = await this.transactionService
         .filter({
           predicateId: predicateIds,
           to,
@@ -202,6 +216,30 @@ export class TransactionController {
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })
         .list();
+
+      let data = hasPagination
+        ? (response as IPagination<Transaction>).data
+        : (response as Transaction[]);
+
+      const assets = data.map(i => i.assets);
+      const recipientAddresses = assets.flat().map(i => i.to);
+      const favorites = (await this.addressBookService
+        .filter({ createdBy: user.id, contactAddresses: recipientAddresses })
+        .list()) as AddressBook[];
+
+      if (favorites.length > 0) {
+        data = (data.map(transaction => ({
+          ...transaction,
+          assets: transaction.assets.map(asset => ({
+            ...asset,
+            recipientNickname:
+              favorites?.find(favorite => favorite.user.address === asset.to)
+                ?.nickname ?? undefined,
+          })),
+        })) as unknown) as Transaction[];
+      }
+
+      response = hasPagination ? { ...response, data } : data;
 
       return successful(response, Responses.Ok);
     } catch (e) {
