@@ -10,9 +10,7 @@ import { router } from '@src/routes';
 
 import { handleErrors } from '@middlewares/index';
 
-
 import SocketIOServer from '../socket/socket';
-
 
 const { API_PORT, PORT } = process.env;
 
