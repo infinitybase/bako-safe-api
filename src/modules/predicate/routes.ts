@@ -4,11 +4,8 @@ import { authMiddleware } from '@src/middlewares';
 
 import { handleResponse } from '@utils/index';
 
-
 import { AddressBookService } from '../addressBook/services';
-
 import { UserService } from '../configs/user/service';
-
 import { TransactionService } from '../transaction/services';
 import { VaultTemplateService } from '../vaultTemplate/services';
 import { PredicateController } from './controller';
@@ -30,15 +27,19 @@ const {
   list,
   findByAddress,
   delete: deleteService,
-} = new PredicateController(predicateService, userService, addressBookService, transactionService);
-
+} = new PredicateController(
+  userService,
+  predicateService,
+  addressBookService,
+  transactionService,
+);
 
 router.use(authMiddleware);
 
 router.post('/', validateAddPredicatePayload, handleResponse(create));
 router.get('/', handleResponse(list));
 router.get('/:id', handleResponse(findById));
-router.get('/reserved-coins/:address', handleResponse(hasReservedCoins));
+//router.get('/reserved-coins/:address', handleResponse(hasReservedCoins));
 router.get('/by-address/:address', handleResponse(findByAddress));
 router.delete('/:id', handleResponse(deleteService));
 

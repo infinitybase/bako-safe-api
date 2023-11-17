@@ -7,15 +7,13 @@ import {
   ITransactionResume,
   Transaction,
   TransactionStatus,
-  User,
+  Witness,
 } from '@models/index';
 
 import { AuthValidatedRequest } from '@middlewares/auth/types';
 
 import { IOrdination } from '@utils/ordination';
 import { IPagination, PaginationParams } from '@utils/pagination';
-
-import { ICreateAssetPayload } from '../asset/types';
 
 export enum OrderBy {
   name = 'name',
@@ -35,7 +33,8 @@ export interface ICreateTransactionPayload {
   predicateAddress: string;
   status: TransactionStatus;
   txData: TransactionRequest;
-  assets: ICreateAssetPayload[];
+  assets: Partial<Asset>[];
+  witnesses: Partial<Witness>[];
   resume?: string;
   sendTime?: Date;
   gasUsed?: string;

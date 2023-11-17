@@ -34,7 +34,7 @@ interface IListRequestSchema extends ValidatedRequestSchema {
     page: string;
     perPage: string;
     sort: 'ASC' | 'DESC';
-    orderBy: 'name' | 'createdAt' | 'role';
+    orderBy: 'name' | 'createdAt';
   };
 }
 

@@ -1,16 +1,12 @@
-
-import { ok } from 'assert';
+import { Provider } from 'fuels';
 
 import AddressBook from '@src/models/AddressBook';
 import { IPagination } from '@src/utils/pagination';
-import { Provider } from 'fuels';
-
 
 import {
   Predicate,
   Transaction,
   TransactionStatus,
-  User,
   WitnessesStatus,
 } from '@models/index';
 
@@ -20,9 +16,7 @@ import { IWitnessService } from '@modules/witness/types';
 import { error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
 
-
 import { IAddressBookService } from '../addressBook/types';
-
 import { IAssetService } from '../asset/types';
 import {
   ICloseTransactionRequest,
@@ -41,7 +35,6 @@ export class TransactionController {
   private predicateService: IPredicateService;
   private witnessService: IWitnessService;
   private addressBookService: IAddressBookService;
-  private assetService: IAssetService;
 
   constructor(
     transactionService: ITransactionService,
@@ -70,23 +63,22 @@ export class TransactionController {
         .list()
         .then((result: Predicate[]) => result[0]);
 
+      const witnesses = predicate.members.map(member => ({
+        account: member.address,
+        status: WitnessesStatus.PENDING,
+        signature: null,
+      }));
+
       const newTransaction = await this.transactionService.create({
         ...transaction,
         status: TransactionStatus.AWAIT_REQUIREMENTS,
         predicateID: predicate.id,
         resume: JSON.stringify({
-          witnesses: [],
+          witnesses,
           outputs: transaction.assets,
         }),
+        witnesses,
       });
-
-
-      for await (const asset of transaction.assets) {
-        await this.assetService.create({
-          ...asset,
-          transactionID: newTransaction.id,
-        });
-      }
 
       return successful(newTransaction, Responses.Ok);
     } catch (e) {
@@ -129,7 +121,6 @@ export class TransactionController {
       const _resume = JSON.parse(resume);
 
       const witness = witnesses.find(w => w.account === account);
-
 
       if (witness) {
         await this.witnessService.update(witness.id, {

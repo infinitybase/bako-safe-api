@@ -7,11 +7,8 @@ import { Asset, Transaction, TransactionStatus } from '@models/index';
 import { error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
 
-
 import { IAddressBookService } from '../addressBook/types';
-
 import { IUserService } from '../configs/user/types';
-
 import { ITransactionService } from '../transaction/types';
 import {
   ICreatePredicateRequest,
@@ -23,19 +20,21 @@ import {
 } from './types';
 
 export class PredicateController {
-  private predicateService: IPredicateService;
   private userService: IUserService;
-
+  private predicateService: IPredicateService;
   private addressBookService: IAddressBookService;
+  private transactionService: ITransactionService;
 
   constructor(
-    predicateService: IPredicateService,
     userService: IUserService,
+    predicateService: IPredicateService,
     addressBookService: IAddressBookService,
+    transactionService: ITransactionService,
   ) {
-    this.predicateService = predicateService;
     this.userService = userService;
+    this.predicateService = predicateService;
     this.addressBookService = addressBookService;
+    this.transactionService = transactionService;
     bindMethods(this);
   }
 

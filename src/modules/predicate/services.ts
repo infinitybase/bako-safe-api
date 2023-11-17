@@ -71,7 +71,6 @@ export class PredicateService implements IPredicateService {
       });
   }
 
-
   async findById(id: string, signer?: string): Promise<Predicate> {
     return Predicate.createQueryBuilder('p')
       .where({ id })
