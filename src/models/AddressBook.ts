@@ -9,14 +9,14 @@ class AddressBook extends Base {
   nickname: string;
 
   @Column()
-  user_id: string;
-
-  @Column()
   created_by: string;
 
   @JoinColumn({ name: 'created_by' })
   @ManyToOne(() => User)
   createdBy: User;
+
+  @Column()
+  user_id: string;
 
   @JoinColumn({ name: 'user_id' })
   @OneToOne(() => User)

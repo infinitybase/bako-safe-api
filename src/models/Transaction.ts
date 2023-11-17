@@ -44,12 +44,6 @@ export interface ITransactionResume {
 
 @Entity('transactions')
 class Transaction extends Base {
-  @Column({ name: 'predicate_address' })
-  predicateAddress: string;
-
-  @Column()
-  predicateID: string;
-
   @Column()
   name: string;
 
@@ -81,10 +75,13 @@ class Transaction extends Base {
   @OneToMany(() => Asset, asset => asset.transaction, { cascade: ['insert'] })
   assets: Asset[];
 
-  @OneToMany(() => Witness, witness => witness.transaction)
+  @OneToMany(() => Witness, witness => witness.transaction, { cascade: ['insert'] })
   witnesses: Witness[];
 
-  @JoinColumn({ name: 'predicateID' })
+  @Column({ name: 'predicate_id' })
+  predicateId: string;
+
+  @JoinColumn({ name: 'predicate_id' })
   @ManyToOne(() => Predicate)
   predicate: Predicate;
 }

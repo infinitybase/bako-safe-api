@@ -93,7 +93,6 @@ export class UserService implements IUserService {
   async findOne(id: string): Promise<User> {
     const user = await User.findOne({
       where: { id },
-      relations: ['role'],
     });
 
     if (!user) {

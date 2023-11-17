@@ -17,10 +17,10 @@ class Asset extends Base {
   @Column()
   utxo: string;
 
-  @Column()
-  transactionID: string;
+  @Column({ name: 'transaction_id' })
+  transactionId: string;
 
-  @JoinColumn({ name: 'transactionID' })
+  @JoinColumn({ name: 'transaction_id' })
   @ManyToOne(() => Transaction)
   transaction: Transaction;
 }

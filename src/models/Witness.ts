@@ -22,10 +22,10 @@ class Witness extends Base {
   @Column({ nullable: false })
   status: WitnessesStatus;
 
-  @Column()
-  transactionID: string;
+  @Column({ name: 'transaction_id' })
+  transactionId: string;
 
-  @JoinColumn({ name: 'transactionID' })
+  @JoinColumn({ name: 'transaction_id' })
   @ManyToOne(() => Transaction)
   transaction: Transaction;
 }

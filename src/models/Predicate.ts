@@ -32,9 +32,6 @@ class Predicate extends Base {
   minSigners: number;
 
   @Column()
-  owner_id: string;
-
-  @Column()
   bytes: string;
 
   @Column()

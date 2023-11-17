@@ -4,19 +4,13 @@ import {
   Column,
   Entity,
   JoinColumn,
-  JoinTable,
-  ManyToMany,
   ManyToOne,
-  OneToOne,
 } from 'typeorm';
 
 import { EncryptUtils } from '@utils/index';
 
 import { Base } from './Base';
 import Role from './Role';
-import UserToken from './UserToken';
-
-const { UI_URL } = process.env;
 
 export enum Languages {
   ENGLISH = 'English',
@@ -45,10 +39,6 @@ class User extends Base {
 
   @Column({ enum: Languages })
   language?: Languages;
-
-  @JoinColumn({ name: 'role_id' })
-  @ManyToOne(() => Role)
-  role: Role;
 
   @Column()
   avatar: string;

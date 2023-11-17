@@ -32,16 +32,7 @@ class VaultTemplate extends Base {
     joinColumn: { name: 'template_id', referencedColumnName: 'id' },
     inverseJoinColumn: { name: 'user_id', referencedColumnName: 'id' },
   })
-  addresses: User[] | string[];
-
-  @AfterLoad()
-  returnArrayOfAddresses() {
-    if (Array.isArray(this.addresses)) {
-      this.addresses = (this.addresses as User[]).map(a =>
-        typeof a === 'string' ? a : a.address,
-      );
-    }
-  }
+  addresses: User[];
 }
 
 export default VaultTemplate;
