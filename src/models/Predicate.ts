@@ -1,17 +1,21 @@
 import {
-  AfterInsert,
-  AfterLoad,
-  BeforeInsert,
   Column,
   Entity,
+  JoinColumn,
+  JoinTable,
+  ManyToMany,
   OneToMany,
+  OneToOne,
 } from 'typeorm';
-
-import { UserService } from '@src/modules/configs/user/service';
 
 import { Base } from './Base';
 import { Transaction } from './Transaction';
-import { ResumedUser } from './User';
+import { User } from './User';
+
+export interface PredicateMember {
+  avatar: string;
+  address: string;
+}
 
 @Entity('predicates')
 class Predicate extends Base {
@@ -21,18 +25,14 @@ class Predicate extends Base {
   @Column()
   predicateAddress: string;
 
-  @Column()
-  description: string;
+  @Column({ nullable: true })
+  description?: string;
 
   @Column()
   minSigners: number;
 
   @Column()
-  addresses: string;
-  completeAddress: ResumedUser[];
-
-  @Column()
-  owner: string;
+  owner_id: string;
 
   @Column()
   bytes: string;
@@ -52,40 +52,17 @@ class Predicate extends Base {
   @OneToMany(() => Transaction, transaction => transaction.predicate)
   transactions: Transaction[];
 
-  @BeforeInsert()
-  saveAsJson() {
-    if (typeof this.addresses !== 'string') {
-      this.addresses = JSON.stringify(this.addresses);
-    }
-  }
+  @JoinColumn({ name: 'owner_id' })
+  @OneToOne(() => User)
+  owner: User;
 
-  @AfterInsert()
-  returnParsedOnSave() {
-    this.addresses = JSON.parse(this.addresses);
-  }
-
-  @AfterLoad()
-  async returnParsed() {
-    this.addresses = JSON.parse(this.addresses);
-    const _complete: ResumedUser[] = [];
-    const userService = new UserService();
-    for await (const user of this.addresses) {
-      await userService.findByAddress(user).then(async _user =>
-        _user
-          ? _complete.push({
-              address: _user.address,
-              name: _user.name,
-              avatar: _user.avatar,
-            })
-          : _complete.push({
-              address: user,
-              name: 'Unknown',
-              avatar: await userService.randomAvatar(),
-            }),
-      );
-    }
-    this.completeAddress = _complete;
-  }
+  @ManyToMany(() => User)
+  @JoinTable({
+    name: 'predicate_members',
+    joinColumn: { name: 'predicate_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'user_id', referencedColumnName: 'id' },
+  })
+  members: User[];
 }
 
 export { Predicate };

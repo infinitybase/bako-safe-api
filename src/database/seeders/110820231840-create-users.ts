@@ -18,6 +18,7 @@ export default async function () {
 
   const users: Partial<User>[] = [
     {
+      id: 'B8D94EFE-821B-4873-8D4B-A78A57F95BB5',
       name: `[${netoworks['local']}] ${accounts['STORE'].account}`,
       active: true,
       email: process.env.APP_ADMIN_EMAIL,

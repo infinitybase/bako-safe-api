@@ -4,25 +4,23 @@ import {
   Column,
   Entity,
   JoinColumn,
+  JoinTable,
+  ManyToMany,
   ManyToOne,
+  OneToOne,
 } from 'typeorm';
 
 import { EncryptUtils } from '@utils/index';
 
 import { Base } from './Base';
 import Role from './Role';
+import UserToken from './UserToken';
 
 const { UI_URL } = process.env;
 
 export enum Languages {
   ENGLISH = 'English',
   PORTUGUESE = 'Portuguese',
-}
-
-export interface ResumedUser {
-  name?: string;
-  avatar: string;
-  address: string;
 }
 
 @Entity('users')
@@ -53,7 +51,7 @@ class User extends Base {
   role: Role;
 
   @Column()
-  avatar?: string;
+  avatar: string;
 
   @BeforeInsert()
   @BeforeUpdate()

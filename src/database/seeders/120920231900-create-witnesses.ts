@@ -1,4 +1,4 @@
-import { Witness } from '@models/index';
+import { Transaction, Witness } from '@models/index';
 
 export default async function () {
   const witnesses: Partial<Witness>[] = [
@@ -16,9 +16,15 @@ export default async function () {
     ],
   });
 
+  const transaction = await Transaction.find();
+  const transaction_id = await transaction[0].id;
+
   if (existingAssets.length) return;
 
   for await (const witness of witnesses) {
-    await Witness.create(witness).save();
+    await Witness.create({
+      ...witness,
+      transactionID: transaction_id,
+    }).save();
   }
 }

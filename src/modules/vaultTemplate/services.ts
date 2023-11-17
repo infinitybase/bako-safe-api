@@ -1,6 +1,3 @@
-import { predicate } from '@mocks/predicate';
-import { Brackets, In } from 'typeorm';
-
 import VaultTemplate from '@src/models/VaultTemplate';
 
 import { NotFound } from '@utils/error';
@@ -66,9 +63,10 @@ export class VaultTemplateService implements IVaultTemplateService {
   async findById(id: string): Promise<VaultTemplate> {
     return await VaultTemplate.findOne({
       where: { id },
+      relations: ['addresses'],
     })
-      .then(transaction => {
-        if (!transaction) {
+      .then(template => {
+        if (!template) {
           throw new NotFound({
             type: ErrorTypes.NotFound,
             title: 'Vault not found',
@@ -76,7 +74,7 @@ export class VaultTemplateService implements IVaultTemplateService {
           });
         }
 
-        return transaction;
+        return template;
       })
       .catch(e => {
         if (e instanceof GeneralError) throw e;
@@ -98,7 +96,6 @@ export class VaultTemplateService implements IVaultTemplateService {
         name: `%${this._filter.q}%`,
       });
 
-    console.log(this._filter.user);
     this._filter.user &&
       queryBuilder.andWhere('t.created_by = :createdBy', {
         createdBy: this._filter.user.id,

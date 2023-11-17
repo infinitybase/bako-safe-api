@@ -108,13 +108,15 @@ export class UserService implements IUserService {
   }
 
   async findByAddress(address: string): Promise<User | undefined> {
-    const user = await User.findOne({
-      where: { address },
-    }).then(data => {
-      return data;
-    });
-
-    return user;
+    return await User.findOne({ where: { address } })
+      .then(user => user)
+      .catch(() => {
+        throw new NotFound({
+          type: ErrorTypes.NotFound,
+          title: 'User not found',
+          detail: `User with address ${address} was not found`,
+        });
+      });
   }
 
   async update(id: string, payload: IUserPayload) {
@@ -145,11 +147,12 @@ export class UserService implements IUserService {
   }
 
   async randomAvatar() {
+    const url = UI_URL || 'https://app.bsafe.pro';
     const avatars_json = await axios
-      .get(`${UI_URL}/icons/icons.json`)
+      .get(`${url}/icons/icons.json`)
       .then(({ data }) => data);
     const avatars = avatars_json.values;
     const random = Math.floor(Math.random() * avatars.length);
-    return `${UI_URL}/${avatars[random]}`;
+    return `${url}/${avatars[random]}`;
   }
 }

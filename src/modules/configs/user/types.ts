@@ -7,11 +7,11 @@ import { IOrdination } from '@src/utils/ordination';
 import { IPagination, PaginationParams } from '@src/utils/pagination';
 
 export interface IUserPayload {
-  name: string;
-  email: string;
+  name?: string;
+  email?: string;
   password?: string;
   active?: boolean;
-  language: Languages;
+  language?: Languages;
   role: Role;
   address: string;
   provider: string;
