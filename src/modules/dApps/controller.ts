@@ -25,6 +25,15 @@ export class DappController {
     }
   }
 
+  async current({ params }: IDappRequest) {
+    try {
+      const currentVaultId = await this._dappService.findCurrent(params.sessionId);
+      return successful(currentVaultId, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
   async accounts({ params, headers }: IDappRequest) {
     try {
       return successful(
