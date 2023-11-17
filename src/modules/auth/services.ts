@@ -50,7 +50,6 @@ export class AuthService implements IAuthService {
       'ut',
     ).innerJoinAndSelect('ut.user', 'user');
 
-
     params.userId &&
       queryBuilder.where('ut.user = :userId', { userId: params.userId });
 
