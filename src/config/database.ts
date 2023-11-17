@@ -12,20 +12,11 @@ const {
   DATABASE_NAME,
   DATABASE_PORT,
   NODE_ENV,
+  DATABASE_PORT_TEST,
 } = process.env;
 
-// console.log({
-//   DATABASE_PASSWORD,
-//   DATABASE_HOST,
-//   DATABASE_URL,
-//   DATABASE_USERNAME,
-//   DATABASE_NAME,
-//   DATABASE_PORT,
-//   NODE_ENV,
-// });
-
 const [host, port] = String(DATABASE_URL).split(':');
-const environment = NODE_ENV;
+const environment: string = NODE_ENV;
 const entitiesDir = path.resolve(__dirname, '..', 'models', '**', '*{.ts,.js}');
 export const migrationsDir = path.resolve(
   __dirname,
@@ -59,13 +50,13 @@ const development: ConnectionOptions = {
     migrationsDir: './src/database/migrations/',
   },
   synchronize: false,
-  migrationsRun: false,
+  migrationsRun: true,
 };
 
 const test: ConnectionOptions = {
   type: 'postgres',
   host: DATABASE_HOST,
-  port: Number(port),
+  port: Number(process.env.DATABASE_PORT_TEST),
   username: DATABASE_USERNAME,
   password: DATABASE_PASSWORD,
   database: DATABASE_NAME,

@@ -16,7 +16,7 @@ export class createTableTransactions1694536141266 implements MigrationInterface 
             default: `uuid_generate_v4()`,
           },
           {
-            name: 'predicateAdress',
+            name: 'predicate_address',
             type: 'varchar',
           },
           {
@@ -28,12 +28,12 @@ export class createTableTransactions1694536141266 implements MigrationInterface 
             type: 'varchar',
           },
           {
-            name: 'txData',
+            name: 'hash',
             type: 'varchar',
           },
           {
-            name: 'hash',
-            type: 'varchar',
+            name: 'tx_data',
+            type: 'jsonb',
           },
           {
             name: 'status',

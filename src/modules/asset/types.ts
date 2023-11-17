@@ -4,6 +4,7 @@ export interface ICreateAssetPayload {
   assetId: string;
   to: string;
   amount: string;
+  onPredicate: string;
   transactionID: string;
 }
 
