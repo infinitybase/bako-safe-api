@@ -5,7 +5,6 @@ import {
   TransactionResponse,
   hexlify,
   transactionRequestify,
-  bn,
 } from 'fuels';
 
 import {
@@ -239,28 +238,14 @@ export class TransactionService implements ITransactionService {
   }
 
   async instanceTransactionScript(
-    api_transaction: Transaction,
+    tx_data: TransactionRequest,
     vault: Vault,
+    witnesses: string[],
   ): Promise<Transfer> {
-    const transfer = await Transfer.instance({
-      transfer: (api_transaction as unknown) as ITransaction,
-      vault,
+    return await vault.BSAFEIncludeTransaction({
+      ...tx_data,
+      witnesses,
     });
-    //
-    // const witness = api_transaction.witnesses
-    //   .filter(w => w.signature)
-    //   .map(w => {
-    //     return {
-    //       id: w.id,
-    //       account: w.account,
-    //       signature: w.signature,
-    //       status: w.status as string,
-    //       createdAt: w.createdAt.toISOString(),
-    //       updatedAt: w.updatedAt.toISOString(),
-    //     };
-    //   });
-
-    return transfer;
   }
 
   checkInvalidConditions(api_transaction: Transaction) {
@@ -279,14 +264,9 @@ export class TransactionService implements ITransactionService {
     }
   }
 
-  async sendToChain(bsafe_transaction: Transfer, provider: Provider) {
-    const scriptTransactionRequest = bsafe_transaction.getScript();
-    // scriptTransactionRequest.gasPrice = bn(100);
-    // scriptTransactionRequest.gasLimit = bn(10000);
-    const _transaction: TransactionRequest = transactionRequestify(
-      scriptTransactionRequest,
-    );
-    const tx_est = await provider.estimatePredicates(_transaction);
+  async sendToChain(bsafe_transaction: TransactionRequest, provider: Provider) {
+    const tx = transactionRequestify(bsafe_transaction);
+    const tx_est = await provider.estimatePredicates(tx);
 
     const encodedTransaction = hexlify(tx_est.toTransactionBytes());
     const {
@@ -301,7 +281,6 @@ export class TransactionService implements ITransactionService {
     const sender = new TransactionResponse(idOnChain, provider);
 
     const result = await sender.fetch();
-
     if (result.status.type === TransactionProcessStatus.SUBMITED) {
       return api_transaction.resume;
     } else if (

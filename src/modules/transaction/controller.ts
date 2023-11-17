@@ -53,6 +53,7 @@ export class TransactionController {
         .filter({
           address: transaction.predicateAddress,
         })
+        .paginate(undefined)
         .list()
         .then((result: Predicate[]) => result[0]);
 
@@ -99,6 +100,7 @@ export class TransactionController {
     try {
       const response = await this.transactionService
         .filter({ hash })
+        .paginate(undefined)
         .list()
         .then((result: Transaction[]) => {
           result[0];
@@ -177,6 +179,7 @@ export class TransactionController {
       const predicateIds: string[] = allOfUser
         ? await this.predicateService
             .filter({ signer: user.address })
+            .paginate(undefined)
             .list()
             .then((data: Predicate[]) => {
               return data.map(predicate => predicate.id);
@@ -226,36 +229,33 @@ export class TransactionController {
   async send({ params: { id } }: ISendTransactionRequest) {
     try {
       const api_transaction = await this.transactionService.findById(id);
-      const { predicate } = api_transaction;
-      const sdk_predicate = await this.predicateService.instancePredicate(
-        api_transaction.predicateID,
-      );
-
-      const provider = await Provider.create(predicate.provider);
-
-      const bsafe_transaction = await this.transactionService.instanceTransactionScript(
-        api_transaction,
-        sdk_predicate,
-      );
+      const { predicate, txData, witnesses } = api_transaction;
+      const _witnesses = witnesses
+        .filter(w => !!w)
+        .map(witness => witness.signature);
+      txData.witnesses = witnesses
+        .filter(w => !!w)
+        .map(witness => witness.signature);
 
       this.transactionService.checkInvalidConditions(api_transaction);
 
-      const transactionId = await this.transactionService.sendToChain(
-        bsafe_transaction,
-        provider,
+      const tx_id = await this.transactionService.sendToChain(
+        txData,
+        await Provider.create(predicate.provider),
       );
 
       const resume = {
         ...JSON.parse(api_transaction.resume),
-        witnesses: bsafe_transaction.BSAFEScript.witnesses.map(witness => witness),
+        witnesses: _witnesses,
         bsafeID: api_transaction.id,
       };
       const _api_transaction: IUpdateTransactionPayload = {
         status: TransactionStatus.PROCESS_ON_CHAIN,
         sendTime: new Date(),
         resume: JSON.stringify(resume),
-        hash: transactionId.substring(2),
+        hash: tx_id.substring(2),
       };
+
       await this.transactionService.update(api_transaction.id, _api_transaction);
       return successful(resume, Responses.Ok);
     } catch (e) {
