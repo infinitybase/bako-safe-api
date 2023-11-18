@@ -66,7 +66,7 @@ export interface IUserService {
   paginate(pagination: PaginationParams): this;
   ordination(ordination: IOrdination<User>): this;
   find(): Promise<IPagination<User> | User[]>;
-  create(payload: IUserPayload): Promise<User>;
+  create(payload: Partial<User>): Promise<User>;
   findOne(id: string): Promise<User>;
   findByAddress(address: string): Promise<User | undefined>;
   randomAvatar(): Promise<string>;

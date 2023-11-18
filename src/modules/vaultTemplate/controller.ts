@@ -44,11 +44,14 @@ export class VaultTemplateController {
       });
 
       const members = await Promise.all(addMembers);
-      const newTemplate = await this.vaultTemplateService.create({
-        ...body,
-        createdBy: user,
-        addresses: members,
-      });
+      const newTemplate = await this.vaultTemplateService
+        .create
+        //   {
+        //   ...body,
+        //   createdBy: user,
+        //   addresses: members,
+        // }
+        ();
       return successful(newTemplate, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);

@@ -20,7 +20,6 @@ const addressBookService = new AddressBookService();
 const userService = new UserService();
 
 const transactionService = new TransactionService();
-const vaultTemplateService = new VaultTemplateService();
 const {
   create,
   findById,

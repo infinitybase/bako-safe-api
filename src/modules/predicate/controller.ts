@@ -40,7 +40,8 @@ export class PredicateController {
 
   async create({ body: payload, user }: ICreatePredicateRequest) {
     try {
-      const roles = await Role.find({ where: [{ name: 'Administrador' }] });
+      console.log('[create]');
+      //const roles = await Role.find({ where: [{ name: 'Administrador' }] });
 
       const addMembers = payload.addresses.map(async address => {
         let user = await this.userService.findByAddress(address);
@@ -49,7 +50,7 @@ export class PredicateController {
           user = await this.userService.create({
             address,
             provider: payload.provider,
-            role: roles[0],
+            //role: roles[0],
             avatar: await this.userService.randomAvatar(),
           });
         }
@@ -61,12 +62,13 @@ export class PredicateController {
 
       const newPredicate = await this.predicateService.create({
         ...payload,
-        owner_id: user.id,
+        owner: user,
         members,
       });
 
       return successful(newPredicate, Responses.Ok);
     } catch (e) {
+      console.log('[ERRO]', e);
       return error(e.error, e.statusCode);
     }
   }

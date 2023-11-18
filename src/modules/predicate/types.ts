@@ -24,14 +24,14 @@ export interface IPredicatePayload {
   predicateAddress: string;
   minSigners: number;
   addresses?: string[];
-  owner_id: string;
+  //owner_id: string;
   bytes: string;
   abi: string;
   configurable: string;
   provider: string;
   chainId?: number;
   user: User;
-  members?: User[];
+  //members?: User[];
 }
 
 export interface IPredicateMemberPayload {
@@ -92,7 +92,7 @@ export interface IPredicateService {
   paginate(pagination?: PaginationParams): this;
   filter(filter: IPredicateFilterParams): this;
 
-  create: (payload: IPredicatePayload) => Promise<Predicate>;
+  create: (payload: Partial<Predicate>) => Promise<Predicate>;
   update: (id: string, payload: IPredicatePayload) => Promise<Predicate>;
   delete: (id: string) => Promise<boolean>;
   findById: (id: string, signer: string) => Promise<Predicate>;

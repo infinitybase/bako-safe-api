@@ -1,30 +1,32 @@
+import axios, { AxiosInstance } from 'axios';
 import { IDefaultAccount } from 'bsafe/dist/cjs/mocks/accounts';
 import { createHash } from 'crypto';
 import { Provider, Wallet } from 'fuels';
-import supertest from 'supertest';
 
 import { User, Encoder } from '@src/models';
 
 export class AuthValidations {
   public user: User;
   public authToken: string;
+  public axios: AxiosInstance;
 
   constructor(
-    private readonly request: supertest.SuperTest<supertest.Test>,
     private readonly provider: string,
     private readonly account: IDefaultAccount,
-  ) {}
+  ) {
+    this.axios = axios.create({
+      baseURL: 'http://localhost:3333',
+    });
+  }
   async create() {
-    const result = await this.request
-      .post('/user')
-      .send({
-        address: this.account.address,
-        provider: this.provider,
-      })
-      .expect(201);
+    const { data } = await this.axios.post('/user', {
+      address: this.account.address,
+      provider: this.provider,
+    });
 
-    this.user = result.body;
-    return result;
+    this.user = data;
+
+    return data;
   }
 
   async createSession() {
@@ -40,16 +42,15 @@ export class AuthValidations {
 
     const tx = await this.signer(JSON.stringify(message));
 
-    const result = await this.request
-      .post('/auth/sign-in')
-      .send({
-        ...message,
-        signature: tx,
-      })
-      .expect(200);
+    const { data } = await this.axios.post('/auth/sign-in', {
+      ...message,
+      signature: tx,
+    });
 
-    this.authToken = result.body.accessToken;
-    return result;
+    this.axios.defaults.headers.common['Authorization'] = data.accessToken;
+    this.axios.defaults.headers.common['Signeraddress'] = this.account.address;
+
+    return data;
   }
 
   async signer(message: string) {

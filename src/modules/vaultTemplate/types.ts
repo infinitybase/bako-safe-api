@@ -75,7 +75,7 @@ export interface IVaultTemplateService {
   paginate(pagination?: PaginationParams): this;
   filter(filter: IFilterParams): this;
 
-  create: (payload: ICreatePayload) => Promise<VaultTemplate>;
+  create: () => Promise<VaultTemplate>;
   update: (id: string, payload: IUpdatePayload) => Promise<VaultTemplate>;
   list: () => Promise<IPagination<VaultTemplate> | VaultTemplate[]>;
   findById: (id: string) => Promise<VaultTemplate>;
