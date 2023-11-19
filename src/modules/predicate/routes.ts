@@ -40,6 +40,6 @@ router.get('/', handleResponse(list));
 router.get('/:id', handleResponse(findById));
 //router.get('/reserved-coins/:address', handleResponse(hasReservedCoins));
 router.get('/by-address/:address', handleResponse(findByAddress));
-router.delete('/:id', handleResponse(deleteService));
+//router.delete('/:id', handleResponse(deleteService));
 
 export default router;

@@ -2,7 +2,7 @@ import AddressBook from '@src/models/AddressBook';
 import { Predicate } from '@src/models/Predicate';
 import Role from '@src/models/Role';
 
-import { Asset, Transaction, TransactionStatus } from '@models/index';
+import { Asset, Transaction, TransactionStatus, User } from '@models/index';
 
 import { error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
@@ -40,25 +40,20 @@ export class PredicateController {
 
   async create({ body: payload, user }: ICreatePredicateRequest) {
     try {
-      console.log('[create]');
-      //const roles = await Role.find({ where: [{ name: 'Administrador' }] });
-
-      const addMembers = payload.addresses.map(async address => {
-        let user = await this.userService.findByAddress(address);
+      const members: User[] = [];
+      for await (const member of payload.addresses) {
+        let user = await this.userService.findByAddress(member);
 
         if (!user) {
           user = await this.userService.create({
-            address,
+            address: member,
             provider: payload.provider,
-            //role: roles[0],
             avatar: await this.userService.randomAvatar(),
           });
         }
 
-        return user;
-      });
-
-      const members = await Promise.all(addMembers);
+        members.push(user);
+      }
 
       const newPredicate = await this.predicateService.create({
         ...payload,
