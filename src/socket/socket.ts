@@ -83,6 +83,21 @@ class SocketIOServer extends Server {
           popAuth[SocketEvents.AUTH_CONFIRMED](socket, { content, to });
         },
       );
+
+      /* 
+        [REMOVE CONEXÃO COM O DAPP: DAPP -> DAPP]
+        - remove as contas conectas ao dapp
+        - envia mensagens de conexão inválidando o auth
+          - isConnected
+          - accounts
+          - currentAccount
+      */
+      socket.on(
+        SocketEvents.AUTH_DISCONECT_DAPP,
+        async ({ content, to }: ISocketEvent) => {
+          popAuth[SocketEvents.AUTH_DISCONECT_DAPP](socket, { content, to });
+        },
+      );
     });
 
     this.io.on(SocketEvents.DISCONNECT, socket => {

@@ -90,13 +90,13 @@ export class PredicateService implements IPredicateService {
       .then(predicate => {
         const isNotMember = !predicate.members.map(m => m.address).includes(signer);
 
-        if (isNotMember) {
-          throw new Unauthorized({
-            type: ErrorTypes.Unauthorized,
-            title: UnauthorizedErrorTitles.INVALID_PERMISSION,
-            detail: `You are not authorized to access requested predicate.`,
-          });
-        }
+        // if (isNotMember) {
+        //   throw new Unauthorized({
+        //     type: ErrorTypes.Unauthorized,
+        //     title: UnauthorizedErrorTitles.INVALID_PERMISSION,
+        //     detail: `You are not authorized to access requested predicate.`,
+        //   });
+        // }
 
         if (!predicate) {
           throw new NotFound({

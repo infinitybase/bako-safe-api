@@ -45,7 +45,6 @@ class SocketIOServer extends Server {
         return next(new Error('invalid username'));
       }
 
-      console.log('[user_connectted]:', username);
       socket.username = username;
       next();
     });
@@ -63,7 +62,6 @@ class SocketIOServer extends Server {
         - for exemple, complement payload to message to send to client
       */
       socket.on('[WALLET]', ({ content, to }: ISocketEvent) => {
-        console.log('[WALLET]');
         socket.to(to).emit('[WALLET]', {
           content,
           from: socket.id,
@@ -76,7 +74,6 @@ class SocketIOServer extends Server {
         - for exemple, complement payload to message to send to client
       */
       socket.on('[POPUP_TRANSFER]', ({ content, to }: ISocketEvent) => {
-        console.log('[POPUP_TRANSFER]');
         socket.to(to).emit('[POPUP_TRANSFER]', {
           content,
           from: socket.id,
@@ -89,7 +86,6 @@ class SocketIOServer extends Server {
         - for exemple, complement payload to message to send to client
       */
       socket.on('[POPUP_AUTH]', ({ content, to }: ISocketEvent) => {
-        console.log('[POPUP_AUTH]');
         socket.to(to).emit('[POPUP_AUTH]', {
           content,
           from: socket.id,

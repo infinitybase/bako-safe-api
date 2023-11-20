@@ -63,7 +63,6 @@ export class PredicateController {
 
       return successful(newPredicate, Responses.Ok);
     } catch (e) {
-      console.log('[ERRO]', e);
       return error(e.error, e.statusCode);
     }
   }

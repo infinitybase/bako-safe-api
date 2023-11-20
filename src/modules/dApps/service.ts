@@ -49,6 +49,9 @@ export class DAppsService implements IDAppsService {
       });
   }
 
+  async delete(sessionId: string, origin: string) {
+    return await DApp.delete({ sessionId, origin });
+  }
   // async checkExist(address: string, sessionId, url: string) {
   //   return await DApp.createQueryBuilder('d')
   //     .innerJoin('d.users', 'users')
