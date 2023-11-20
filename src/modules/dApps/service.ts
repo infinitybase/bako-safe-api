@@ -49,6 +49,23 @@ export class DAppsService implements IDAppsService {
       });
   }
 
+  async findCurrent(sessionID: string) {
+    return await DApp.createQueryBuilder('d')
+      .select()
+      .innerJoin('d.currentVault', 'currentVault')
+      .addSelect(['currentVault.predicateAddress', 'currentVault.id'])
+      .where('d.session_id = :sessionID', { sessionID })
+      .getOne()
+      .then(data => data?.currentVault.id ?? undefined)
+      .catch(e => {
+        throw new Internal({
+          type: ErrorTypes.Internal,
+          title: 'Error on find current to dapp',
+          detail: e,
+        });
+      });
+  }
+
   // async checkExist(address: string, sessionId, url: string) {
   //   return await DApp.createQueryBuilder('d')
   //     .innerJoin('d.users', 'users')

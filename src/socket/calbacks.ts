@@ -32,10 +32,10 @@ export const popAuth: IEventsExecute = {
       const isIncludedVault = dapp.vaults.find(v => v.id === vaultId);
       if (!isIncludedVault) {
         dapp.vaults = [...dapp.vaults, predicate];
-        dapp.currentVault = predicate;
-
-        await dapp.save();
       }
+
+      dapp.currentVault = predicate;
+      await dapp.save();
 
       socket.to(room).emit(SocketEvents.DEFAULT, {
         type: SocketEvents.CONNECTION,
