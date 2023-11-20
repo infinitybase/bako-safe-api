@@ -1,4 +1,3 @@
-import { AuthService } from '@src/modules/auth/services';
 import { DAppsService } from '@src/modules/dApps';
 import { PredicateService } from '@src/modules/predicate/services';
 

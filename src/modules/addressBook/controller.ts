@@ -32,6 +32,7 @@ export class AddressBookController {
           createdBy: user.id,
           nickname,
         })
+        .paginate(undefined)
         .list();
 
       const duplicatedAddress = await this.addressBookService
@@ -39,8 +40,8 @@ export class AddressBookController {
           createdBy: user.id,
           contactAddress: address,
         })
+        .paginate(undefined)
         .list();
-
       const hasDuplicate =
         (duplicatedNickname as AddressBook[]).length ||
         (duplicatedAddress as AddressBook[]).length;
@@ -58,11 +59,9 @@ export class AddressBookController {
       let savedUser = await this.userService.findByAddress(address);
 
       if (!savedUser) {
-        const roles = await Role.find({ where: [{ name: 'Administrador' }] });
         savedUser = await this.userService.create({
           address,
           provider: user.provider,
-          role: roles[0],
           avatar: await this.userService.randomAvatar(),
           active: true,
         });
@@ -117,7 +116,6 @@ export class AddressBookController {
         savedUser = await this.userService.create({
           address: body.address,
           provider: user.provider,
-          role: roles[0],
           avatar: await this.userService.randomAvatar(),
           active: true,
         });

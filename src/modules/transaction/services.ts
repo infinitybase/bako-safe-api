@@ -113,8 +113,7 @@ export class TransactionService implements ITransactionService {
       't.createdAt',
       't.id',
       't.name',
-      't.predicateAdress',
-      't.predicateID',
+      't.predicateId',
       't.resume',
       't.sendTime',
       't.status',
@@ -122,7 +121,10 @@ export class TransactionService implements ITransactionService {
     ]);
 
     this._filter.predicateAddress &&
-      queryBuilder.where({ predicateAddress: this._filter.predicateAddress });
+      this._filter.predicateAddress.length > 0 &&
+      queryBuilder.andWhere('t.predicate.predicateAddress IN (:...address)', {
+        address: this._filter.predicateAddress,
+      });
 
     this._filter.to &&
       queryBuilder
@@ -136,7 +138,7 @@ export class TransactionService implements ITransactionService {
 
     this._filter.predicateId &&
       this._filter.predicateId.length > 0 &&
-      queryBuilder.andWhere('t.predicateID IN (:...predicateID)', {
+      queryBuilder.andWhere('t.predicate_id IN (:...predicateID)', {
         predicateID: this._filter.predicateId,
       });
 
@@ -171,7 +173,12 @@ export class TransactionService implements ITransactionService {
       .leftJoinAndSelect('t.assets', 'assets')
       .leftJoinAndSelect('t.witnesses', 'witnesses')
       .innerJoin('t.predicate', 'predicate')
-      .addSelect(['predicate.name', 'predicate.id', 'predicate.minSigners'])
+      .addSelect([
+        'predicate.name',
+        'predicate.id',
+        'predicate.minSigners',
+        'predicate.predicateAddress',
+      ])
       .innerJoin('predicate.members', 'members')
       .addSelect(['members.id', 'members.avatar', 'members.address'])
       .orderBy(`t.${this._ordination.orderBy}`, this._ordination.sort);

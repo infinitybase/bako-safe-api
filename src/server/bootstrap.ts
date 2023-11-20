@@ -24,16 +24,6 @@ class Bootstrap {
       DATABASE_PORT_TEST,
     } = process.env;
 
-    console.log('[DATABASE CONST]: ', {
-      DATABASE_HOST,
-      DATABASE_PORT,
-      DATABASE_USERNAME,
-      DATABASE_PASSWORD,
-      DATABASE_NAME,
-      NODE_ENV,
-      DATABASE_PORT_TEST,
-    });
-
     this.startEnv();
     await this.connectDatabase();
     const isTest = NODE_ENV === 'test';

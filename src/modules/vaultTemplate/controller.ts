@@ -26,8 +26,6 @@ export class VaultTemplateController {
 
   async create({ body, user }: ICreateVaultTemplateRequest) {
     try {
-      const roles = await Role.find({ where: [{ name: 'Administrador' }] });
-
       const addMembers = body.addresses.map(async address => {
         let user = await this.userService.findByAddress(address);
 
@@ -35,7 +33,6 @@ export class VaultTemplateController {
           user = await this.userService.create({
             address,
             provider: user.provider,
-            role: roles[0],
             avatar: await this.userService.randomAvatar(),
           });
         }
