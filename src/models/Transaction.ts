@@ -24,6 +24,12 @@ export enum TransactionStatus {
   ERROR = 'ERROR',
 }
 
+export interface TransactionSummary {
+  origin: string;
+  name: string;
+  image?: string;
+}
+
 @Entity('transactions')
 class Transaction extends Base {
   @Column()
@@ -40,6 +46,12 @@ class Transaction extends Base {
 
   @Column()
   hash: string;
+
+  @Column({
+    type: 'jsonb',
+    name: 'summary',
+  })
+  summary?: TransactionSummary;
 
   @Column({ enum: TransactionStatus })
   status: TransactionStatus;
