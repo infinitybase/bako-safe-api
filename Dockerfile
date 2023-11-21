@@ -1,4 +1,4 @@
-FROM node:16.19.0
+FROM node:18.14.0
 
 # Create app directory
 WORKDIR api
