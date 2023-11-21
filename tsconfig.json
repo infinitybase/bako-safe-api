@@ -8,6 +8,7 @@
     "experimentalDecorators": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
+    "skipLibCheck": true,
     "paths": {
       "@src/*": ["./*"],
       "@config/*": ["./config/*"],

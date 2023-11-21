@@ -58,7 +58,6 @@ export class UserController {
         password,
         active,
         language,
-        role,
         address,
         provider,
         avatar: await this.userService.randomAvatar(),
