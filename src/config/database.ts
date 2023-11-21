@@ -39,7 +39,7 @@ export const seedersDir = path.resolve(
 const development: ConnectionOptions = {
   type: 'postgres',
   host: DATABASE_HOST,
-  port: Number(port),
+  port: Number(DATABASE_PORT),
   username: DATABASE_USERNAME,
   password: DATABASE_PASSWORD,
   database: DATABASE_NAME,
@@ -90,7 +90,7 @@ const production: ConnectionOptions = {
 const staging: ConnectionOptions = {
   type: 'postgres',
   host,
-  port: Number(port),
+  port: Number(DATABASE_PORT),
   username: DATABASE_USERNAME,
   password: DATABASE_PASSWORD,
   database: DATABASE_NAME,
