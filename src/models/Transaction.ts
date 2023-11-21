@@ -27,13 +27,18 @@ export enum TransactionStatus {
   FAILED = 'failed', // -> FAILED
 }
 
+export interface TransactionSummary {
+  origin: string;
+  name: string;
+  image?: string;
+}
+
 export enum TransactionProcessStatus {
   SUCCESS = 'SuccessStatus',
   SQUIZED = 'SqueezedOutStatus',
   SUBMITED = 'SubmittedStatus',
   FAILED = 'FailureStatus',
 }
-
 export interface ITransactionResume {
   status: TransactionProcessStatus;
   hash?: string;
@@ -55,6 +60,12 @@ class Transaction extends Base {
     name: 'tx_data',
   })
   txData: TransactionRequest;
+
+  @Column({
+    type: 'jsonb',
+    name: 'summary',
+  })
+  summary: TransactionSummary;
 
   @Column({ enum: TransactionStatus })
   status: TransactionStatus;

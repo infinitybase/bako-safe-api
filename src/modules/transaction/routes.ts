@@ -7,11 +7,8 @@ import { WitnessService } from '@modules/witness/services';
 
 import { handleResponse } from '@utils/index';
 
-
 import { AddressBookService } from '../addressBook/services';
-
 import { AssetService } from '../asset/services';
-
 import { TransactionController } from './controller';
 import { TransactionService } from './services';
 import {
@@ -26,7 +23,6 @@ const predicateService = new PredicateService();
 const witnessService = new WitnessService();
 const addressBookService = new AddressBookService();
 const assetService = new AssetService();
-
 
 const {
   create,
