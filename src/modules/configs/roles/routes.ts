@@ -1,8 +1,6 @@
 import { Router } from 'express';
 
-import { Modules } from '@src/middlewares/permissions/types';
-
-import { authMiddleware, PermissionsMiddleware } from '@middlewares/index';
+import { authMiddleware } from '@middlewares/index';
 
 import { handleResponse } from '@utils/index';
 
@@ -15,7 +13,6 @@ const roleService = new RoleService();
 const roleController = new RoleController(roleService);
 
 router.use(authMiddleware);
-router.use(PermissionsMiddleware(Modules.ROLES));
 
 router.get('/modules', handleResponse(roleController.findModules));
 router.get('/', handleResponse(roleController.find));

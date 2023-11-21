@@ -16,11 +16,7 @@ export class createTableTransactions1694536141266 implements MigrationInterface 
             default: `uuid_generate_v4()`,
           },
           {
-            name: 'predicateAdress',
-            type: 'varchar',
-          },
-          {
-            name: 'predicateID',
+            name: 'predicate_id',
             type: 'uuid',
           },
           {
@@ -28,12 +24,12 @@ export class createTableTransactions1694536141266 implements MigrationInterface 
             type: 'varchar',
           },
           {
-            name: 'txData',
+            name: 'hash',
             type: 'varchar',
           },
           {
-            name: 'hash',
-            type: 'varchar',
+            name: 'tx_data',
+            type: 'jsonb',
           },
           {
             name: 'status',
@@ -72,7 +68,7 @@ export class createTableTransactions1694536141266 implements MigrationInterface 
         foreignKeys: [
           {
             name: 'FK-predicate-transactions',
-            columnNames: ['predicateID'],
+            columnNames: ['predicate_id'],
             referencedColumnNames: ['id'],
             referencedTableName: 'predicates',
             onDelete: 'CASCADE',

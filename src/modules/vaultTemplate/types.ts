@@ -24,7 +24,7 @@ export interface ICreatePayload {
   name: string;
   description: string;
   minSigners: number;
-  signers: string;
+  addresses: User[] | string[];
   createdBy: User;
 }
 
@@ -41,7 +41,7 @@ export interface IFilterParams {
 }
 
 interface ICreateVaultTemplate extends ValidatedRequestSchema {
-  [ContainerTypes.Body]: Omit<ICreatePayload, 'user'>;
+  [ContainerTypes.Body]: ICreatePayload;
 }
 
 interface IUpdateVaultTemplate extends ValidatedRequestSchema {
@@ -75,7 +75,7 @@ export interface IVaultTemplateService {
   paginate(pagination?: PaginationParams): this;
   filter(filter: IFilterParams): this;
 
-  create: (payload: ICreatePayload) => Promise<VaultTemplate>;
+  create: () => Promise<VaultTemplate>;
   update: (id: string, payload: IUpdatePayload) => Promise<VaultTemplate>;
   list: () => Promise<IPagination<VaultTemplate> | VaultTemplate[]>;
   findById: (id: string) => Promise<VaultTemplate>;

@@ -1,12 +1,4 @@
-import {
-  BeforeInsert,
-  BeforeUpdate,
-  AfterLoad,
-  Column,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-} from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 import { Base } from './Base';
 import { Transaction } from './Transaction';
@@ -14,7 +6,7 @@ import { Transaction } from './Transaction';
 @Entity('assets')
 class Asset extends Base {
   @Column()
-  assetID: string;
+  assetId: string;
 
   @Column()
   to: string;
@@ -23,9 +15,12 @@ class Asset extends Base {
   amount: string;
 
   @Column()
-  transactionID: string;
+  utxo: string;
 
-  @JoinColumn({ name: 'transactionID' })
+  @Column({ name: 'transaction_id' })
+  transactionId: string;
+
+  @JoinColumn({ name: 'transaction_id' })
   @ManyToOne(() => Transaction)
   transaction: Transaction;
 }

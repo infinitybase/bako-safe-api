@@ -1,13 +1,22 @@
-import supertest from 'supertest';
+import { Request } from 'supertest';
 
-import App from '@src/server/app';
-import Bootstrap from '@src/server/bootstrap';
+import { accounts } from '@src/mocks/accounts';
+import { networks } from '@src/mocks/networks';
+import { AuthValidations } from '@src/utils/testUtils/Auth';
 
-const app = new App();
-const request = supertest(app.serverApp);
+describe('[AUTH]', () => {
+  test(
+    'Sign in',
+    async () => {
+      const auth = new AuthValidations(networks['local'], accounts['USER_1']);
 
-describe('[PREDICATE]', () => {
-  beforeAll(async () => {
-    await Bootstrap.start();
-  });
+      await auth.create();
+
+      await auth.createSession();
+
+      expect(auth.user.address).toBe(accounts['USER_1'].address);
+      expect(auth.authToken);
+    },
+    40 * 1000,
+  );
 });

@@ -1,4 +1,6 @@
+import { TransactionRequest } from 'fuels';
 import {
+  AfterLoad,
   BeforeUpdate,
   Column,
   Entity,
@@ -16,12 +18,13 @@ import { Base } from './Base';
 import { Predicate } from './Predicate';
 import { Witness } from './Witness';
 
+//todo -> import to sdk package
 export enum TransactionStatus {
-  AWAIT = 'AWAIT',
-  DONE = 'DONE',
-  PENDING = 'PENDING',
-  REJECTED = 'REJECTED',
-  ERROR = 'ERROR',
+  AWAIT_REQUIREMENTS = 'await_requirements', // -> AWAIT SIGNATURES
+  PENDING_SENDER = 'pending_sender', // -> AWAIT SENDER, BEFORE AWAIT STATUS
+  PROCESS_ON_CHAIN = 'process_on_chain', // -> AWAIT DONE ON CHAIN
+  SUCCESS = 'success', // -> SENDED
+  FAILED = 'failed', // -> FAILED
 }
 
 export interface TransactionSummary {
@@ -30,37 +33,48 @@ export interface TransactionSummary {
   image?: string;
 }
 
+export enum TransactionProcessStatus {
+  SUCCESS = 'SuccessStatus',
+  SQUIZED = 'SqueezedOutStatus',
+  SUBMITED = 'SubmittedStatus',
+  FAILED = 'FailureStatus',
+}
+export interface ITransactionResume {
+  status: TransactionProcessStatus;
+  hash?: string;
+  gasUsed?: string;
+  sendTime?: Date;
+  witnesses?: string[];
+}
+
 @Entity('transactions')
 class Transaction extends Base {
   @Column()
-  predicateAdress: string;
-
-  @Column()
-  predicateID: string;
-
-  @Column()
   name: string;
-
-  @Column()
-  txData: string;
 
   @Column()
   hash: string;
 
   @Column({
     type: 'jsonb',
+    name: 'tx_data',
+  })
+  txData: TransactionRequest;
+
+  @Column({
+    type: 'jsonb',
     name: 'summary',
   })
-  summary?: TransactionSummary;
+  summary: TransactionSummary;
 
   @Column({ enum: TransactionStatus })
   status: TransactionStatus;
 
   @Column()
-  sendTime: Date;
+  sendTime?: Date;
 
   @Column()
-  gasUsed: string;
+  gasUsed?: string;
 
   @Column()
   resume: string;
@@ -72,10 +86,13 @@ class Transaction extends Base {
   @OneToMany(() => Asset, asset => asset.transaction, { cascade: ['insert'] })
   assets: Asset[];
 
-  @OneToMany(() => Witness, witness => witness.transaction)
+  @OneToMany(() => Witness, witness => witness.transaction, { cascade: ['insert'] })
   witnesses: Witness[];
 
-  @JoinColumn({ name: 'predicateID' })
+  @Column({ name: 'predicate_id' })
+  predicateId: string;
+
+  @JoinColumn({ name: 'predicate_id' })
   @ManyToOne(() => Predicate)
   predicate: Predicate;
 }

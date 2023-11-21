@@ -2,17 +2,18 @@ import { MigrationInterface, QueryRunner, Table } from 'typeorm';
 
 export class createTableWitnesses1694543036941 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
     await queryRunner.createTable(
       new Table({
         name: 'witnesses',
         columns: [
           {
             name: 'id',
-            type: 'integer',
-            unsigned: true,
+            type: 'uuid',
             isPrimary: true,
-            isGenerated: true,
-            generationStrategy: 'increment',
+            isUnique: true,
+            generationStrategy: 'uuid',
+            default: `uuid_generate_v4()`,
           },
           {
             name: 'signature',
@@ -24,7 +25,7 @@ export class createTableWitnesses1694543036941 implements MigrationInterface {
             type: 'varchar',
           },
           {
-            name: 'transactionID',
+            name: 'transaction_id',
             type: 'uuid',
           },
           {
@@ -45,7 +46,7 @@ export class createTableWitnesses1694543036941 implements MigrationInterface {
         foreignKeys: [
           {
             name: 'FK-transaction-witnesses',
-            columnNames: ['transactionID'],
+            columnNames: ['transaction_id'],
             referencedColumnNames: ['id'],
             referencedTableName: 'transactions',
             onDelete: 'CASCADE',

@@ -7,11 +7,11 @@ import { IOrdination } from '@src/utils/ordination';
 import { IPagination, PaginationParams } from '@src/utils/pagination';
 
 export interface IUserPayload {
-  name: string;
-  email: string;
+  name?: string;
+  email?: string;
   password?: string;
   active?: boolean;
-  language: Languages;
+  language?: Languages;
   role: Role;
   address: string;
   provider: string;
@@ -34,7 +34,7 @@ interface IListRequestSchema extends ValidatedRequestSchema {
     page: string;
     perPage: string;
     sort: 'ASC' | 'DESC';
-    orderBy: 'name' | 'createdAt' | 'role';
+    orderBy: 'name' | 'createdAt';
   };
 }
 
@@ -66,7 +66,7 @@ export interface IUserService {
   paginate(pagination: PaginationParams): this;
   ordination(ordination: IOrdination<User>): this;
   find(): Promise<IPagination<User> | User[]>;
-  create(payload: IUserPayload): Promise<User>;
+  create(payload: Partial<User>): Promise<User>;
   findOne(id: string): Promise<User>;
   findByAddress(address: string): Promise<User | undefined>;
   randomAvatar(): Promise<string>;

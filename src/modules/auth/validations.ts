@@ -19,3 +19,12 @@ export const validateSignInPayload = validator.body(
       .valid(...allowedEncoders),
   }),
 );
+
+export const validateSignInDappPayload = validator.body(
+  Joi.object({
+    sessionId: Joi.string().required(),
+    url: Joi.string().required(),
+    name: Joi.string().optional(),
+    address: Joi.string().required(),
+  }),
+);
