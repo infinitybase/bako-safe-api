@@ -1,14 +1,10 @@
+import { TransactionStatus } from 'bsafe';
 import { Provider } from 'fuels';
 
 import AddressBook from '@src/models/AddressBook';
 import { IPagination } from '@src/utils/pagination';
 
-import {
-  Predicate,
-  Transaction,
-  TransactionStatus,
-  WitnessesStatus,
-} from '@models/index';
+import { Predicate, Transaction, WitnessesStatus } from '@models/index';
 
 import { IPredicateService } from '@modules/predicate/types';
 import { IWitnessService } from '@modules/witness/types';
@@ -72,16 +68,18 @@ export class TransactionController {
       const newTransaction = await this.transactionService.create({
         ...transaction,
         status: TransactionStatus.AWAIT_REQUIREMENTS,
-        predicateID: predicate.id,
-        resume: JSON.stringify({
-          witnesses,
-          outputs: transaction.assets,
-        }),
+        resume: {
+          status: TransactionStatus.AWAIT_REQUIREMENTS,
+          witnesses: witnesses.filter(w => !!w.signature).map(w => w.signature),
+        },
         witnesses,
+        predicate,
+        createdBy: user,
       });
 
       return successful(newTransaction, Responses.Ok);
     } catch (e) {
+      console.log('[ERROR_TRANSACTION_CREATE]: ', e);
       return error(e.error, e.statusCode);
     }
   }
@@ -118,22 +116,19 @@ export class TransactionController {
       const transaction = await this.transactionService.findById(id);
 
       const { predicate, witnesses, resume } = transaction;
-      const _resume = JSON.parse(resume);
+      const _resume = resume;
 
       const witness = witnesses.find(w => w.account === account);
 
       if (witness) {
-        await this.witnessService.update(witness.id, {
-          signature: signer,
-          status: confirm ? WitnessesStatus.DONE : WitnessesStatus.REJECTED,
-        });
-
+        const signatures = [
+          ...witnesses.filter(w => w.account != account).filter(w => !!w.signature),
+          await this.witnessService.update(witness.id, {
+            signature: signer,
+            status: confirm ? WitnessesStatus.DONE : WitnessesStatus.REJECTED,
+          }),
+        ];
         _resume.witnesses.push(signer);
-
-        const signatures = await this.witnessService.findByTransactionId(
-          transaction.id,
-          true,
-        );
 
         const statusField =
           Number(predicate.minSigners) <= signatures.length
@@ -142,15 +137,16 @@ export class TransactionController {
 
         await this.transactionService.update(id, {
           status: statusField,
-          resume: JSON.stringify({
+          resume: {
             ..._resume,
             status: statusField,
-          }),
+          },
         });
       }
 
       return successful(!!witness, Responses.Ok);
     } catch (e) {
+      console.log('[ERROR_TRANSACTION_SIGN]: ', e);
       return error(e.error, e.statusCode);
     }
   }
@@ -234,6 +230,7 @@ export class TransactionController {
 
       return successful(response, Responses.Ok);
     } catch (e) {
+      console.log('[ERROR]', e);
       return error(e.error, e.statusCode);
     }
   }
@@ -272,22 +269,23 @@ export class TransactionController {
         txData,
         await Provider.create(predicate.provider),
       );
-
+      console.log(tx_id);
       const resume = {
-        ...JSON.parse(api_transaction.resume),
+        ...api_transaction.resume,
         witnesses: _witnesses,
         bsafeID: api_transaction.id,
       };
       const _api_transaction: IUpdateTransactionPayload = {
         status: TransactionStatus.PROCESS_ON_CHAIN,
         sendTime: new Date(),
-        resume: JSON.stringify(resume),
+        resume: resume,
         hash: tx_id.substring(2),
       };
 
       await this.transactionService.update(api_transaction.id, _api_transaction);
       return successful(resume, Responses.Ok);
     } catch (e) {
+      console.log(e);
       return error(e.error, e.statusCode);
     }
   }

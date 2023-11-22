@@ -1,8 +1,9 @@
+import { TransactionStatus } from 'bsafe';
+
 import AddressBook from '@src/models/AddressBook';
 import { Predicate } from '@src/models/Predicate';
-import Role from '@src/models/Role';
 
-import { Asset, Transaction, TransactionStatus, User } from '@models/index';
+import { Asset, Transaction, User } from '@models/index';
 
 import { error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
@@ -84,7 +85,6 @@ export class PredicateController {
       const favorites = (await this.addressBookService
         .filter({ createdBy: user.id, userIds: membersIds })
         .list()) as AddressBook[];
-
       const response = {
         ...predicate,
         members: predicate.members.map(member => ({
@@ -107,13 +107,10 @@ export class PredicateController {
         .filter({
           address,
         })
-        .paginate({
-          page: '',
-          perPage: '',
-        })
+        .paginate(undefined)
         .list()
-        .then((data: Predicate[]) => data);
-      return successful(response[0], Responses.Ok);
+        .then((data: Predicate[]) => data[0]);
+      return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }

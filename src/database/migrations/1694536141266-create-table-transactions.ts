@@ -47,8 +47,7 @@ export class createTableTransactions1694536141266 implements MigrationInterface 
           },
           {
             name: 'resume',
-            type: 'text',
-            isNullable: true,
+            type: 'jsonb',
           },
           {
             name: 'created_at',

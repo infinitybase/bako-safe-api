@@ -1,6 +1,5 @@
+import { TransactionStatus } from 'bsafe';
 import Joi from 'joi';
-
-import { TransactionStatus } from '@models/index';
 
 import { validator } from '@utils/index';
 

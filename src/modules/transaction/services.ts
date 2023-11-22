@@ -1,4 +1,9 @@
-import { ITransaction, Transfer, Vault } from 'bsafe';
+import {
+  Transfer,
+  Vault,
+  TransactionProcessStatus,
+  TransactionStatus,
+} from 'bsafe';
 import {
   Provider,
   TransactionRequest,
@@ -7,13 +12,7 @@ import {
   transactionRequestify,
 } from 'fuels';
 
-import {
-  Transaction,
-  TransactionProcessStatus,
-  TransactionStatus,
-  Witness,
-  WitnessesStatus,
-} from '@models/index';
+import { Transaction, Witness, WitnessesStatus } from '@models/index';
 
 import { NotFound } from '@utils/error';
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
@@ -287,9 +286,17 @@ export class TransactionService implements ITransactionService {
   }
 
   async sendToChain(bsafe_transaction: TransactionRequest, provider: Provider) {
+    //console.log('[SEND_TO_CHAIN]: ', bsafe_transaction);
     const tx = transactionRequestify(bsafe_transaction);
-    const tx_est = await provider.estimatePredicates(tx);
-
+    //console.log('[SEND_TO_CHAIN_TX]:', tx);
+    const tx_est = await provider
+      .estimatePredicates(tx)
+      .then(DATA => {
+        console.log(DATA);
+        return DATA;
+      })
+      .catch(e => console.log(e));
+    console.log('[SEND_TO_CHAIN_TX_EST]:', tx_est);
     const encodedTransaction = hexlify(tx_est.toTransactionBytes());
     const {
       submit: { id: transactionId },
@@ -310,7 +317,7 @@ export class TransactionService implements ITransactionService {
       result.status.type === TransactionProcessStatus.FAILED
     ) {
       const resume = {
-        ...JSON.parse(api_transaction.resume),
+        ...api_transaction.resume,
         status:
           result.status.type === TransactionProcessStatus.SUCCESS
             ? TransactionStatus.SUCCESS
@@ -323,7 +330,6 @@ export class TransactionService implements ITransactionService {
             : TransactionStatus.FAILED,
         sendTime: new Date(),
         gasUsed: result.gasPrice,
-        resume: JSON.stringify(resume),
       };
       await this.update(api_transaction.id, _api_transaction);
       return resume;

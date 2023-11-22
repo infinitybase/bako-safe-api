@@ -1,11 +1,6 @@
-import {
-  Predicate,
-  Transaction,
-  TransactionStatus,
-  User,
-  Asset,
-  Witness,
-} from '@src/models';
+import { TransactionStatus } from 'bsafe';
+
+import { Predicate, Transaction, User, Asset, Witness } from '@src/models';
 
 import { accounts } from '../accounts';
 import { txData } from '../txdata';
@@ -34,10 +29,12 @@ export const generateInitialTransaction = async (): Promise<TTI> => {
     name: 'fake_name',
     hash: 'fake_hash',
     txData: JSON.parse(txData),
-    status: TransactionStatus.SUCCESS,
+    status: TransactionStatus.AWAIT_REQUIREMENTS,
     sendTime: new Date(),
     gasUsed: 'fake_gasUsed',
-    resume: 'fake_resume', //make an type to this
+    resume: {
+      status: TransactionStatus.AWAIT_REQUIREMENTS,
+    },
     createdBy: user,
     predicate,
     assets,

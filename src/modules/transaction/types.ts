@@ -1,14 +1,8 @@
-import { Transfer, Vault } from 'bsafe';
+import { ITransactionResume, TransactionStatus, Transfer, Vault } from 'bsafe';
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 import { Provider, TransactionRequest } from 'fuels';
 
-import {
-  Asset,
-  ITransactionResume,
-  Transaction,
-  TransactionStatus,
-  Witness,
-} from '@models/index';
+import { Asset, Transaction, Witness } from '@models/index';
 
 import { AuthValidatedRequest } from '@middlewares/auth/types';
 
@@ -35,7 +29,7 @@ export interface ICreateTransactionPayload {
   txData: TransactionRequest;
   assets: Partial<Asset>[];
   witnesses: Partial<Witness>[];
-  resume?: string;
+  resume?: ITransactionResume;
   sendTime?: Date;
   gasUsed?: string;
   predicateID?: string;
@@ -44,7 +38,7 @@ export interface ICreateTransactionPayload {
 export interface IUpdateTransactionPayload {
   name?: string;
   status?: TransactionStatus;
-  resume?: string;
+  resume?: ITransactionResume;
   sendTime?: Date;
   gasUsed?: string;
   hash?: string;
@@ -54,7 +48,7 @@ export type ICloseTransactionPayload = {
   gasUsed: string;
   status: TransactionStatus;
   sendTime: Date;
-  resume: string;
+  resume: ITransactionResume;
 };
 
 export interface ITransactionFilterParams {
@@ -73,7 +67,7 @@ export interface ITransactionFilterParams {
 
 export type ICloseTransactionBody = {
   gasUsed: string;
-  transactionResult: string;
+  transactionResult: ITransactionResume;
   hasError: boolean;
 };
 
@@ -142,6 +136,11 @@ interface IListRequestSchema extends ValidatedRequestSchema {
     limit: number;
   };
 }
+export interface ITCreateService
+  extends Partial<Omit<Transaction, 'assets' | 'witnesses'>> {
+  assets: Partial<Asset>[];
+  witnesses: Partial<Witness>[];
+}
 
 export type ICreateTransactionRequest = AuthValidatedRequest<ICreateTransactionRequestSchema>;
 export type IUpdateTransactionRequest = AuthValidatedRequest<IUpdateTransactionRequestSchema>;
@@ -175,7 +174,7 @@ export interface ITransactionService {
     bsafe_transaction: TransactionRequest,
     provider: Provider,
   ) => Promise<string>;
-  create: (payload: ICreateTransactionPayload) => Promise<Transaction>;
+  create: (payload: ITCreateService) => Promise<Transaction>;
   update: (id: string, payload: IUpdateTransactionPayload) => Promise<Transaction>;
   list: () => Promise<IPagination<Transaction> | Transaction[]>;
   findById: (id: string) => Promise<Transaction>;
