@@ -9,6 +9,11 @@ import { Base } from './Base';
 import { Predicate } from './Predicate';
 import { Witness } from './Witness';
 
+export interface TransactionSummary {
+  origin: string;
+  name: string;
+  image?: string;
+}
 @Entity('transactions')
 class Transaction extends Base {
   @Column()
@@ -29,6 +34,11 @@ class Transaction extends Base {
     default: TransactionStatus.AWAIT_REQUIREMENTS,
   })
   status: TransactionStatus;
+  @Column({
+    type: 'jsonb',
+    name: 'summary',
+  })
+  summary: TransactionSummary;
 
   @Column()
   sendTime?: Date;
