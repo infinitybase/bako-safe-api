@@ -27,7 +27,11 @@ export interface ICreateTransactionPayload {
   predicateAddress: string;
   status: TransactionStatus;
   txData: TransactionRequest;
-  assets: Partial<Asset>[];
+  assets: {
+    assetId: string;
+    amount: string;
+    to: string;
+  }[];
   witnesses: Partial<Witness>[];
   resume?: ITransactionResume;
   sendTime?: Date;

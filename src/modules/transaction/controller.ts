@@ -71,6 +71,14 @@ export class TransactionController {
         resume: {
           status: TransactionStatus.AWAIT_REQUIREMENTS,
           witnesses: witnesses.filter(w => !!w.signature).map(w => w.signature),
+          outputs: transaction.assets.map(({ amount, to, assetId }) => ({
+            amount,
+            to,
+            assetId,
+          })),
+          requiredSigners: predicate.minSigners,
+          totalSigners: predicate.members.length,
+          predicate: predicate.predicateAddress,
         },
         witnesses,
         predicate,
