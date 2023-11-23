@@ -79,7 +79,6 @@ export class TransactionController {
 
       return successful(newTransaction, Responses.Ok);
     } catch (e) {
-      console.log('[ERROR_TRANSACTION_CREATE]: ', e);
       return error(e.error, e.statusCode);
     }
   }
@@ -146,7 +145,6 @@ export class TransactionController {
 
       return successful(!!witness, Responses.Ok);
     } catch (e) {
-      console.log('[ERROR_TRANSACTION_SIGN]: ', e);
       return error(e.error, e.statusCode);
     }
   }
@@ -230,7 +228,6 @@ export class TransactionController {
 
       return successful(response, Responses.Ok);
     } catch (e) {
-      console.log('[ERROR]', e);
       return error(e.error, e.statusCode);
     }
   }
@@ -260,7 +257,7 @@ export class TransactionController {
         .filter(w => !!w)
         .map(witness => witness.signature);
       txData.witnesses = witnesses
-        .filter(w => !!w)
+        .filter(w => w.status === WitnessesStatus.DONE)
         .map(witness => witness.signature);
 
       this.transactionService.checkInvalidConditions(api_transaction);
@@ -269,7 +266,6 @@ export class TransactionController {
         txData,
         await Provider.create(predicate.provider),
       );
-      console.log(tx_id);
       const resume = {
         ...api_transaction.resume,
         witnesses: _witnesses,
@@ -285,7 +281,6 @@ export class TransactionController {
       await this.transactionService.update(api_transaction.id, _api_transaction);
       return successful(resume, Responses.Ok);
     } catch (e) {
-      console.log(e);
       return error(e.error, e.statusCode);
     }
   }

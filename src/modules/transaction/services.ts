@@ -286,17 +286,9 @@ export class TransactionService implements ITransactionService {
   }
 
   async sendToChain(bsafe_transaction: TransactionRequest, provider: Provider) {
-    //console.log('[SEND_TO_CHAIN]: ', bsafe_transaction);
     const tx = transactionRequestify(bsafe_transaction);
-    //console.log('[SEND_TO_CHAIN_TX]:', tx);
-    const tx_est = await provider
-      .estimatePredicates(tx)
-      .then(DATA => {
-        console.log(DATA);
-        return DATA;
-      })
-      .catch(e => console.log(e));
-    console.log('[SEND_TO_CHAIN_TX_EST]:', tx_est);
+
+    const tx_est = await provider.estimatePredicates(tx);
     const encodedTransaction = hexlify(tx_est.toTransactionBytes());
     const {
       submit: { id: transactionId },
