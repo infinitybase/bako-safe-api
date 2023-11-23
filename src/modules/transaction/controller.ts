@@ -50,10 +50,12 @@ export class TransactionController {
   }
 
   async create({ body: transaction, user }: ICreateTransactionRequest) {
+    const { predicateAddress, summary } = transaction;
+
     try {
       const predicate = await this.predicateService
         .filter({
-          address: transaction.predicateAddress,
+          address: predicateAddress,
         })
         .paginate(undefined)
         .list()
@@ -75,6 +77,7 @@ export class TransactionController {
         witnesses,
         predicate,
         createdBy: user,
+        summary,
       });
 
       return successful(newTransaction, Responses.Ok);
