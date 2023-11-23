@@ -1,4 +1,4 @@
-import { TransactionStatus, Witness, WitnessesStatus } from '@models/index';
+import { Witness } from '@models/index';
 
 import { NotFound } from '@utils/error';
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
