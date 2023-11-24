@@ -15,4 +15,4 @@ RUN yarn build
 # Run!
 EXPOSE 3333
 
-ENTRYPOINT ["yarn", "dev"]
+ENTRYPOINT ["yarn", "start"]
