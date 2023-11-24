@@ -69,6 +69,7 @@ export class TransactionController {
         ...transaction,
         status: TransactionStatus.AWAIT_REQUIREMENTS,
         resume: {
+          hash: transaction.hash,
           status: TransactionStatus.AWAIT_REQUIREMENTS,
           witnesses: witnesses.filter(w => !!w.signature).map(w => w.signature),
           outputs: transaction.assets.map(({ amount, to, assetId }) => ({
@@ -78,7 +79,10 @@ export class TransactionController {
           })),
           requiredSigners: predicate.minSigners,
           totalSigners: predicate.members.length,
-          predicate: predicate.predicateAddress,
+          predicate: {
+            id: predicate.id,
+            address: predicate.predicateAddress,
+          },
         },
         witnesses,
         predicate,
@@ -107,7 +111,7 @@ export class TransactionController {
         .paginate(undefined)
         .list()
         .then((result: Transaction[]) => {
-          result[0];
+          return result[0];
         });
       return successful(response, Responses.Ok);
     } catch (e) {
@@ -137,10 +141,7 @@ export class TransactionController {
         ];
         _resume.witnesses.push(signer);
 
-        const statusField =
-          Number(predicate.minSigners) <= signatures.length
-            ? TransactionStatus.PENDING_SENDER
-            : TransactionStatus.AWAIT_REQUIREMENTS;
+        const statusField = await this.transactionService.validateStatus(id);
 
         await this.transactionService.update(id, {
           status: statusField,
