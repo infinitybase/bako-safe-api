@@ -22,7 +22,7 @@
     "axios": "1.5.1",
     "bcrypt": "5.1.0",
     "body-parser": "1.20.2",
-    "bsafe": "0.0.14",
+    "bsafe": "0.0.15",
     "class-validator": "0.14.0",
     "cookie-parser": "1.4.6",
     "cors": "2.8.5",
