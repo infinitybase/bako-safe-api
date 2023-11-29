@@ -1,10 +1,15 @@
-import { TransactionStatus } from 'bsafe';
+import { ITransactionResume, TransactionStatus } from 'bsafe';
 import { Provider } from 'fuels';
 
 import AddressBook from '@src/models/AddressBook';
 import { IPagination } from '@src/utils/pagination';
 
-import { Predicate, Transaction, WitnessesStatus } from '@models/index';
+import {
+  NotificationTitle,
+  Predicate,
+  Transaction,
+  WitnessesStatus,
+} from '@models/index';
 
 import { IPredicateService } from '@modules/predicate/types';
 import { IWitnessService } from '@modules/witness/types';
@@ -14,6 +19,7 @@ import { Responses, bindMethods, successful } from '@utils/index';
 
 import { IAddressBookService } from '../addressBook/types';
 import { IAssetService } from '../asset/types';
+import { INotificationService } from '../notification/types';
 import {
   ICloseTransactionRequest,
   ICreateTransactionRequest,
@@ -31,6 +37,7 @@ export class TransactionController {
   private predicateService: IPredicateService;
   private witnessService: IWitnessService;
   private addressBookService: IAddressBookService;
+  private notificationService: INotificationService;
 
   constructor(
     transactionService: ITransactionService,
@@ -38,6 +45,7 @@ export class TransactionController {
     witnessService: IWitnessService,
     addressBookService: IAddressBookService,
     assetService: IAssetService,
+    notificationService: INotificationService,
   ) {
     Object.assign(this, {
       transactionService,
@@ -45,6 +53,7 @@ export class TransactionController {
       witnessService,
       addressBookService,
       assetService,
+      notificationService,
     });
     bindMethods(this);
   }
@@ -85,6 +94,19 @@ export class TransactionController {
         createdBy: user,
       });
 
+      const membersWithoutLoggedUser = newTransaction.predicate.members.filter(
+        member => member.id !== user.id,
+      );
+
+      for await (const member of membersWithoutLoggedUser) {
+        await this.notificationService.create({
+          title: NotificationTitle.TRANSACTION_CREATED,
+          description: `The transaction '${newTransaction.name}' has been created on the '${predicate.name}' vault.`,
+          redirect: `vault/${newTransaction.predicate.id}/transactions`,
+          user_id: member.id,
+        });
+      }
+
       return successful(newTransaction, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
@@ -118,12 +140,13 @@ export class TransactionController {
   async signByID({
     body: { account, signer, confirm },
     params: { id },
+    user,
   }: ISignByIdRequest) {
     try {
       const transaction = await this.transactionService.findById(id);
 
       const { predicate, witnesses, resume } = transaction;
-      const _resume = resume;
+      const _resume: ITransactionResume = JSON.parse((resume as unknown) as string);
 
       const witness = witnesses.find(w => w.account === account);
 
@@ -135,6 +158,7 @@ export class TransactionController {
             status: confirm ? WitnessesStatus.DONE : WitnessesStatus.REJECTED,
           }),
         ];
+
         _resume.witnesses.push(signer);
 
         const statusField =
@@ -149,6 +173,19 @@ export class TransactionController {
             status: statusField,
           },
         });
+
+        const membersWithoutLoggedUser = predicate.members.filter(
+          member => member.id !== user.id,
+        );
+
+        for await (const member of membersWithoutLoggedUser) {
+          await this.notificationService.create({
+            title: NotificationTitle.TRANSACTION_SIGNED,
+            description: `The transaction '${transaction.name}' has been signed in the '${predicate.name}' vault.`,
+            redirect: `vault/${predicate.id}/transactions`,
+            user_id: member.id,
+          });
+        }
       }
 
       return successful(!!witness, Responses.Ok);
@@ -301,10 +338,22 @@ export class TransactionController {
 
       this.transactionService.checkInvalidConditions(api_transaction);
 
-      const result = this.transactionService.verifyOnChain(
+      const result = await this.transactionService.verifyOnChain(
         api_transaction,
         provider,
       );
+
+      if (result.status === TransactionStatus.SUCCESS) {
+        for await (const member of api_transaction.predicate.members) {
+          await this.notificationService.create({
+            title: NotificationTitle.TRANSACTION_COMPLETED,
+            description: `The transaction ${api_transaction.name} has been completed in the ${api_transaction.predicate.name} vault.`,
+            redirect: `vault/${api_transaction.predicate.id}/transactions`,
+            user_id: member.id,
+          });
+        }
+      }
+
       return successful(result, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);

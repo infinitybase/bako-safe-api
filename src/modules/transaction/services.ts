@@ -81,7 +81,7 @@ export class TransactionService implements ITransactionService {
   async findById(id: string): Promise<Transaction> {
     return await Transaction.findOne({
       where: { id },
-      relations: ['assets', 'witnesses', 'predicate'],
+      relations: ['assets', 'witnesses', 'predicate', 'predicate.members'],
     })
       .then(transaction => {
         if (!transaction) {
@@ -323,6 +323,7 @@ export class TransactionService implements ITransactionService {
         sendTime: new Date(),
         gasUsed: result.gasPrice,
       };
+
       await this.update(api_transaction.id, _api_transaction);
       return resume;
     }
