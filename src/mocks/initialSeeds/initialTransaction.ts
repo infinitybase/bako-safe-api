@@ -34,6 +34,14 @@ export const generateInitialTransaction = async (): Promise<TTI> => {
     gasUsed: 'fake_gasUsed',
     resume: {
       status: TransactionStatus.AWAIT_REQUIREMENTS,
+      predicate: {
+        id: predicate.id,
+        address: predicate.predicateAddress,
+      },
+      totalSigners: 0,
+      requiredSigners: 0,
+      outputs: [],
+      hash: 'fake_hash',
     },
     createdBy: user,
     predicate,

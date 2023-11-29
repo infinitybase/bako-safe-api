@@ -156,7 +156,7 @@ export class PredicateService implements IPredicateService {
       });
 
     this._filter.owner &&
-      queryBuilder.andWhere('LOWER(p.owner) = LOWER(:owner)', {
+      queryBuilder.andWhere('LOWER(p.owner.address) = LOWER(:owner)', {
         owner: `${this._filter.owner}`,
       });
 

@@ -78,6 +78,7 @@ export class TransactionController {
         ...transaction,
         status: TransactionStatus.AWAIT_REQUIREMENTS,
         resume: {
+          hash: transaction.hash,
           status: TransactionStatus.AWAIT_REQUIREMENTS,
           witnesses: witnesses.filter(w => !!w.signature).map(w => w.signature),
           outputs: transaction.assets.map(({ amount, to, assetId }) => ({
@@ -87,7 +88,10 @@ export class TransactionController {
           })),
           requiredSigners: predicate.minSigners,
           totalSigners: predicate.members.length,
-          predicate: predicate.predicateAddress,
+          predicate: {
+            id: predicate.id,
+            address: predicate.predicateAddress,
+          },
         },
         witnesses,
         predicate,
@@ -129,7 +133,7 @@ export class TransactionController {
         .paginate(undefined)
         .list()
         .then((result: Transaction[]) => {
-          result[0];
+          return result[0];
         });
       return successful(response, Responses.Ok);
     } catch (e) {
@@ -145,26 +149,21 @@ export class TransactionController {
     try {
       const transaction = await this.transactionService.findById(id);
 
-      const { predicate, witnesses, resume } = transaction;
-      const _resume: ITransactionResume = JSON.parse((resume as unknown) as string);
+      // const { predicate, witnesses, resume } = transaction;
+      // const _resume: ITransactionResume = JSON.parse((resume as unknown) as string);
+      const { witnesses, resume, predicate } = transaction;
+      const _resume = resume;
 
       const witness = witnesses.find(w => w.account === account);
 
       if (witness) {
-        const signatures = [
-          ...witnesses.filter(w => w.account != account).filter(w => !!w.signature),
-          await this.witnessService.update(witness.id, {
-            signature: signer,
-            status: confirm ? WitnessesStatus.DONE : WitnessesStatus.REJECTED,
-          }),
-        ];
+        await this.witnessService.update(witness.id, {
+          signature: signer,
+          status: confirm ? WitnessesStatus.DONE : WitnessesStatus.REJECTED,
+        }),
+          _resume.witnesses.push(signer);
 
-        _resume.witnesses.push(signer);
-
-        const statusField =
-          Number(predicate.minSigners) <= signatures.length
-            ? TransactionStatus.PENDING_SENDER
-            : TransactionStatus.AWAIT_REQUIREMENTS;
+        const statusField = await this.transactionService.validateStatus(id);
 
         await this.transactionService.update(id, {
           status: statusField,
@@ -174,17 +173,20 @@ export class TransactionController {
           },
         });
 
-        const membersWithoutLoggedUser = predicate.members.filter(
-          member => member.id !== user.id,
-        );
+        // NOTIFY MEMBERS
+        if (confirm) {
+          const membersWithoutLoggedUser = predicate.members.filter(
+            member => member.id !== user.id,
+          );
 
-        for await (const member of membersWithoutLoggedUser) {
-          await this.notificationService.create({
-            title: NotificationTitle.TRANSACTION_SIGNED,
-            description: `The transaction '${transaction.name}' has been signed in the '${predicate.name}' vault.`,
-            redirect: `vault/${predicate.id}/transactions`,
-            user_id: member.id,
-          });
+          for await (const member of membersWithoutLoggedUser) {
+            await this.notificationService.create({
+              title: NotificationTitle.TRANSACTION_SIGNED,
+              description: `The transaction '${transaction.name}' has been signed in the '${predicate.name}' vault.`,
+              redirect: `vault/${predicate.id}/transactions`,
+              user_id: member.id,
+            });
+          }
         }
       }
 
