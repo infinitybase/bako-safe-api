@@ -165,6 +165,10 @@ export class TransactionService implements ITransactionService {
       queryBuilder.andWhere('LOWER(t.name) LIKE LOWER(:name)', {
         name: `%${this._filter.name}%`,
       });
+    this._filter.id &&
+      queryBuilder.andWhere('LOWER(t.id) LIKE LOWER(:id)', {
+        id: `%${this._filter.id}%`,
+      });
 
     this._filter.limit && !hasPagination && queryBuilder.limit(this._filter.limit);
 

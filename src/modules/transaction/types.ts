@@ -67,6 +67,7 @@ export interface ITransactionFilterParams {
   startDate?: string;
   endDate?: string;
   createdBy?: string;
+  id?: string;
 }
 
 export type ICloseTransactionBody = {
@@ -138,6 +139,7 @@ interface IListRequestSchema extends ValidatedRequestSchema {
     page: string;
     perPage: string;
     limit: number;
+    id: string;
   };
 }
 export interface ITCreateService

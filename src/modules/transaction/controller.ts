@@ -29,7 +29,6 @@ import {
 export class TransactionController {
   private transactionService: ITransactionService;
   private predicateService: IPredicateService;
-  private witnessService: IWitnessService;
   private addressBookService: IAddressBookService;
 
   constructor(
@@ -126,19 +125,12 @@ export class TransactionController {
     try {
       const transaction = await this.transactionService.findById(id);
 
-      const { predicate, witnesses, resume } = transaction;
+      const { witnesses, resume } = transaction;
       const _resume = resume;
 
       const witness = witnesses.find(w => w.account === account);
 
       if (witness) {
-        const signatures = [
-          ...witnesses.filter(w => w.account != account).filter(w => !!w.signature),
-          await this.witnessService.update(witness.id, {
-            signature: signer,
-            status: confirm ? WitnessesStatus.DONE : WitnessesStatus.REJECTED,
-          }),
-        ];
         _resume.witnesses.push(signer);
 
         const statusField = await this.transactionService.validateStatus(id);
@@ -173,6 +165,7 @@ export class TransactionController {
       createdBy,
       name,
       allOfUser,
+      id,
     } = req.query;
     const { user } = req;
 
@@ -206,6 +199,7 @@ export class TransactionController {
           createdBy,
           name,
           limit,
+          id,
         })
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })
