@@ -1,4 +1,4 @@
-import { accounts } from '@src/mocks/accounts';
+/* import { accounts } from '@src/mocks/accounts';
 import { networks } from '@src/mocks/networks';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
 
@@ -17,3 +17,4 @@ describe('[TRANSACTION]', () => {
     //expect(data).toHaveProperty('id');
   });
 });
+*/

@@ -69,6 +69,6 @@
     "tscpaths": "0.0.9"
   },
   "resolutions": {
-    "string-width": "4.1.0"
+    "string-width": "^4.1.0"
   }
 }

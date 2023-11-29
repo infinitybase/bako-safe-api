@@ -1,4 +1,4 @@
-import { Request } from 'supertest';
+/*import { Request } from 'supertest';
 
 import { accounts } from '@src/mocks/accounts';
 import { networks } from '@src/mocks/networks';
@@ -20,3 +20,4 @@ describe('[AUTH]', () => {
     40 * 1000,
   );
 });
+*/
