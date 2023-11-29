@@ -353,7 +353,6 @@ describe('[PREDICATE]', () => {
       // Corrigido aqui
       expect(element.minSigners).toBeGreaterThan(0);
       expect(element.name.length).toBeGreaterThan(0);
-      expect(element.name.length).toBeGreaterThan(0);
       expect(element.id).toBeDefined();
       expect(element.chainId).toBeDefined();
       expect(element.configurable).toBeDefined();
