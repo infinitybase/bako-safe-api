@@ -29,6 +29,7 @@ import {
 export class TransactionController {
   private transactionService: ITransactionService;
   private predicateService: IPredicateService;
+  private witnessService: IWitnessService;
   private addressBookService: IAddressBookService;
 
   constructor(
@@ -131,7 +132,11 @@ export class TransactionController {
       const witness = witnesses.find(w => w.account === account);
 
       if (witness) {
-        _resume.witnesses.push(signer);
+        await this.witnessService.update(witness.id, {
+          signature: signer,
+          status: confirm ? WitnessesStatus.DONE : WitnessesStatus.REJECTED,
+        }),
+          _resume.witnesses.push(signer);
 
         const statusField = await this.transactionService.validateStatus(id);
 
@@ -165,7 +170,6 @@ export class TransactionController {
       createdBy,
       name,
       allOfUser,
-      id,
     } = req.query;
     const { user } = req;
 
@@ -199,7 +203,6 @@ export class TransactionController {
           createdBy,
           name,
           limit,
-          id,
         })
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })
