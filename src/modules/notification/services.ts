@@ -1,7 +1,6 @@
 import { userInfo } from 'os';
 
 import { Notification } from '@src/models';
-import { handleInternalError } from '@src/utils/error/handleInternalError';
 
 import { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
@@ -74,11 +73,11 @@ export class NotificationService implements INotificationService {
       ? Pagination.create(queryBuilder)
           .paginate(this._pagination)
           .then(result => result)
-          .catch(e => handleInternalError(e, 'Error on notification list'))
+          .catch(e => Internal.handler(e, 'Error on notification list'))
       : queryBuilder
           .getMany()
           .then(notifications => notifications)
-          .catch(e => handleInternalError(e, 'Error on notification list'));
+          .catch(e => Internal.handler(e, 'Error on notification list'));
   }
 
   async update(
