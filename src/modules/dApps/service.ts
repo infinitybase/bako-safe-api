@@ -35,7 +35,11 @@ export class DAppsService implements IDAppsService {
       .innerJoin('d.vaults', 'vaults')
       .addSelect(['vaults.predicateAddress', 'vaults.id'])
       .innerJoin('d.currentVault', 'currentVault')
-      .addSelect(['currentVault.predicateAddress', 'currentVault.id'])
+      .addSelect([
+        'currentVault.predicateAddress',
+        'currentVault.id',
+        'currentVault.provider',
+      ])
       .where('d.session_id = :sessionID', { sessionID })
       .andWhere('d.origin = :origin', { origin })
       .getOne()

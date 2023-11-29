@@ -35,7 +35,10 @@ export const popAuth: IEventsExecute = {
 
     dapp.currentVault = predicate;
     await dapp.save();
-
+    socket.to(room).emit(SocketEvents.DEFAULT, {
+      type: SocketEvents.CURRENT_ACCOUNT,
+      data: [predicate.predicateAddress],
+    });
     socket.to(room).emit(SocketEvents.DEFAULT, {
       type: SocketEvents.CONNECTED_NETWORK,
       data: [predicate.provider],
@@ -47,10 +50,6 @@ export const popAuth: IEventsExecute = {
     socket.to(room).emit(SocketEvents.DEFAULT, {
       type: SocketEvents.ACCOUNTS,
       data: [dapp?.vaults.map(v => v.predicateAddress)],
-    });
-    socket.to(room).emit(SocketEvents.DEFAULT, {
-      type: SocketEvents.CURRENT_ACCOUNT,
-      data: [dapp?.currentVault.predicateAddress],
     });
     return;
   },
