@@ -23,12 +23,8 @@ export class addNotificationsTable1700852697110 implements MigrationInterface {
             type: 'varchar',
           },
           {
-            name: 'description',
-            type: 'varchar',
-          },
-          {
-            name: 'redirect',
-            type: 'varchar',
+            name: 'summary',
+            type: 'jsonb',
           },
           {
             name: 'read',

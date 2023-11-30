@@ -66,16 +66,16 @@ export class PredicateController {
         members,
       });
 
-      const membersWithoutLoggedUser = newPredicate.members.filter(
+      const { id, name, members: predicateMembers } = newPredicate;
+      const membersWithoutLoggedUser = predicateMembers.filter(
         member => member.id !== user.id,
       );
 
       for await (const member of membersWithoutLoggedUser) {
         await this.notificationService.create({
           title: NotificationTitle.NEW_VAULT_CREATED,
-          description: `The '${newPredicate.name}' has been created, and you are a signer!`,
-          redirect: `vault/${newPredicate.id}`,
           user_id: member.id,
+          summary: { vaultId: id, vaultName: name },
         });
       }
 

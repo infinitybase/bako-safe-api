@@ -1,7 +1,11 @@
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 
 import { AuthValidatedRequest } from '@src/middlewares/auth/types';
-import { Notification, NotificationTitle } from '@src/models/index';
+import {
+  Notification,
+  NotificationSummary,
+  NotificationTitle,
+} from '@src/models/index';
 
 import { IOrdination } from '@utils/ordination';
 import { IPagination, PaginationParams } from '@utils/pagination';
@@ -19,9 +23,8 @@ export enum Sort {
 export interface ICreateNotificationPayload {
   user_id?: string;
   title: NotificationTitle;
-  description: string;
   read?: boolean;
-  redirect: string;
+  summary: NotificationSummary;
 }
 
 export type IUpdateNotificationPayload = Partial<ICreateNotificationPayload>;

@@ -11,6 +11,13 @@ export enum NotificationTitle {
   NEW_VAULT_CREATED = 'New Vault Created',
 }
 
+export interface NotificationSummary {
+  vaultId: string;
+  vaultName: string;
+  transactionId?: string;
+  transactionName?: string;
+}
+
 @Entity('notifications')
 class Notification extends Base {
   @Column()
@@ -22,11 +29,11 @@ class Notification extends Base {
   })
   title: NotificationTitle;
 
-  @Column()
-  description: string;
-
-  @Column()
-  redirect: string;
+  @Column({
+    type: 'jsonb',
+    name: 'summary',
+  })
+  summary: NotificationSummary;
 
   @Column()
   read: boolean;
