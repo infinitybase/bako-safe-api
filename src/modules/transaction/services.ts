@@ -116,6 +116,7 @@ export class TransactionService implements ITransactionService {
       't.resume',
       't.sendTime',
       't.status',
+      't.summary',
       't.updatedAt',
     ]);
 

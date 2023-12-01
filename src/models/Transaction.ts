@@ -38,7 +38,7 @@ class Transaction extends Base {
     type: 'jsonb',
     name: 'summary',
   })
-  summary: TransactionSummary;
+  summary?: TransactionSummary;
 
   @Column()
   sendTime?: Date;
