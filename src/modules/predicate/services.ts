@@ -1,13 +1,8 @@
-import { IConfVault, IPayloadVault, Vault } from 'bsafe';
+import { IConfVault, Vault } from 'bsafe';
 import { Provider } from 'fuels';
 import { Brackets } from 'typeorm';
 
-import { defaultConfigurable } from '@src/utils/configurable';
 import { NotFound } from '@src/utils/error';
-import {
-  Unauthorized,
-  UnauthorizedErrorTitles,
-} from '@src/utils/error/Unauthorized';
 import { IOrdination, setOrdination } from '@src/utils/ordination';
 import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination';
 
