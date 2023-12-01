@@ -84,7 +84,7 @@ export const popAuth: IEventsExecute = {
         data.summary = {
           origin: session.origin,
           name: session.name,
-          image: session.image,
+          image: '',
         };
         await data.save();
       }
