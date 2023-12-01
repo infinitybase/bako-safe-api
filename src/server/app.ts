@@ -3,6 +3,8 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import Express from 'express';
 import morgan from 'morgan';
+import pm2 from 'pm2';
+import process from 'process';
 
 import { router } from '@src/routes';
 
@@ -19,6 +21,22 @@ class App {
     this.initMiddlewares();
     this.initRoutes();
     this.initErrorHandler();
+  }
+
+  static startPm2Handle(onError: (error: any) => void) {
+    pm2.launchBus((err, bus) => {
+      if (err) {
+        console.error('[APP] Error on start PM2 bus.');
+        return;
+      }
+
+      console.error('[APP] PM2 bus started.');
+
+      bus.on('process:exception', async packet => {
+        await onError(packet);
+        process.exit(1);
+      });
+    });
   }
 
   async init() {
