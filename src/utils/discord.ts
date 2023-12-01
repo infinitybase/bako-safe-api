@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { format } from 'date-fns';
 
 interface Error {
   name: string;
@@ -6,14 +7,29 @@ interface Error {
   message: string;
 }
 
+export interface DiscordMessage {
+  content?: string;
+  avatar_url?: string;
+  embeds: DiscordEmbed[];
+}
+
+export interface DiscordEmbed {
+  title: string;
+  color: number;
+  description: string;
+  fields?: DiscordEmbedField[];
+}
+
+export interface DiscordEmbedField {
+  name: string;
+  value: string;
+}
+
 class DiscordUtils {
   private static url = process.env.DISCORD_WEBHOOK;
 
   static async sendErrorMessage(error: Error) {
-    return axios.post(this.url, {
-      content: 'ℹ️ **API DOWN**',
-      avatar_url:
-        'https://pbs.twimg.com/profile_images/1701356759812554752/Ya-XMqEe_400x400.jpg',
+    await this.sendMessage({
       embeds: [
         {
           title: 'Detalhes do Erro',
@@ -32,6 +48,28 @@ class DiscordUtils {
         },
       ],
     });
+  }
+
+  static async sendStartMessage() {
+    await this.sendMessage({
+      embeds: [
+        {
+          title: 'Servidor iniciou com sucesso',
+          color: 0x00ff00,
+          description: format(new Date(), 'dd/MM/yyyy HH:mm'),
+        },
+      ],
+    });
+  }
+
+  static async sendMessage(message: DiscordMessage) {
+    if (this.url) {
+      return axios.post(this.url, {
+        ...message,
+        avatar_url:
+          'https://pbs.twimg.com/profile_images/1701356759812554752/Ya-XMqEe_400x400.jpg',
+      });
+    }
   }
 }
 

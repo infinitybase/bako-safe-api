@@ -9,13 +9,18 @@ const start = async () => {
   app.init();
 };
 
-App.startPm2Handle(error =>
-  DiscordUtils.sendErrorMessage({
-    name: error.data?.name,
-    stack: error.data?.stack,
-    message: error.data?.message,
-  }),
-);
+if (process.env.NODE_ENV === 'production') {
+  App.pm2HandleServerStop();
+  App.serverHooks({
+    onServerStart: () => DiscordUtils.sendStartMessage(),
+    onServerStop: error =>
+      DiscordUtils.sendErrorMessage({
+        name: error.data?.name,
+        stack: error.data?.stack,
+        message: error.data?.message,
+      }),
+  });
+}
 
 try {
   start();

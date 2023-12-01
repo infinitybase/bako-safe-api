@@ -7,12 +7,19 @@ import pm2 from 'pm2';
 import process from 'process';
 
 import { router } from '@src/routes';
+import { Callback } from '@src/utils';
 
 import { handleErrors } from '@middlewares/index';
 
 const { API_PORT, PORT } = process.env;
 
+type ServerHooks = {
+  onServerStart?: Callback;
+  onServerStop?: Callback<any>;
+};
+
 class App {
+  static handles: ServerHooks = {};
   private readonly app: Express.Application;
 
   constructor() {
@@ -23,7 +30,11 @@ class App {
     this.initErrorHandler();
   }
 
-  static startPm2Handle(onError: (error: any) => void) {
+  static serverHooks(handles: ServerHooks) {
+    this.handles = handles;
+  }
+
+  static pm2HandleServerStop() {
     pm2.launchBus((err, bus) => {
       if (err) {
         console.error('[APP] Error on start PM2 bus.');
@@ -33,7 +44,7 @@ class App {
       console.error('[APP] PM2 bus started.');
 
       bus.on('process:exception', async packet => {
-        await onError(packet);
+        await App.handles.onServerStop?.(packet);
         process.exit(1);
       });
     });
@@ -45,6 +56,7 @@ class App {
     console.log('[APP] Starting application.');
     this.app.listen(port, () => {
       console.log(`[APP] Application running in http://localhost:${port}`);
+      App.handles.onServerStart?.();
     });
   }
 
