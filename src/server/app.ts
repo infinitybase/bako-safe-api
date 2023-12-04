@@ -19,7 +19,7 @@ type ServerHooks = {
 };
 
 class App {
-  static handles: ServerHooks = {};
+  static hooks: ServerHooks = {};
   private readonly app: Express.Application;
 
   constructor() {
@@ -31,7 +31,7 @@ class App {
   }
 
   static serverHooks(handles: ServerHooks) {
-    this.handles = handles;
+    this.hooks = handles;
   }
 
   static pm2HandleServerStop() {
@@ -44,7 +44,7 @@ class App {
       console.error('[APP] PM2 bus started.');
 
       bus.on('process:exception', async packet => {
-        await App.handles.onServerStop?.(packet);
+        await App.hooks.onServerStop?.(packet);
         process.exit(1);
       });
     });
@@ -56,7 +56,7 @@ class App {
     console.log('[APP] Starting application.');
     this.app.listen(port, () => {
       console.log(`[APP] Application running in http://localhost:${port}`);
-      App.handles.onServerStart?.();
+      App.hooks.onServerStart?.();
     });
   }
 
