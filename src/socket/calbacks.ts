@@ -16,44 +16,50 @@ export const popAuth: IEventsExecute = {
     socket: any,
     { content }: ISocketEvent,
   ) => {
-    const { vaultId, sessionId, name, origin } = content;
-    const predicate = await new PredicateService().findById(vaultId);
-    //const origin = socket.handshake.headers.origin;
-    let dapp = await new DAppsService().findBySessionID(sessionId, origin);
-    const room = `${sessionId}:${origin}`;
+    try {
+      const { vaultId, sessionId, name, origin } = content;
+      const predicate = await new PredicateService().findById(vaultId);
+      //const origin = socket.handshake.headers.origin;
+      let dapp = await new DAppsService().findBySessionID(sessionId, origin);
+      const room = `${sessionId}:${origin}`;
 
-    if (!dapp) {
-      dapp = await new DAppsService().create({
-        sessionId,
-        name: name ?? ``,
-        origin,
-        vaults: [predicate],
-        currentVault: predicate,
+      if (!dapp) {
+        dapp = await new DAppsService().create({
+          sessionId,
+          name: name ?? ``,
+          origin,
+          vaults: [predicate],
+          currentVault: predicate,
+        });
+      }
+      const isIncludedVault = dapp.vaults.find(v => v.id === vaultId);
+      if (!isIncludedVault) {
+        dapp.vaults = [...dapp.vaults, predicate];
+      }
+
+      dapp.currentVault = predicate;
+      await dapp.save();
+
+      socket.to(room).emit(BSAFEConnectorEvents.DEFAULT, {
+        type: BSAFEConnectorEvents.CONNECTION,
+        data: [true],
       });
-    }
-    const isIncludedVault = dapp.vaults.find(v => v.id === vaultId);
-    if (!isIncludedVault) {
-      dapp.vaults = [...dapp.vaults, predicate];
+      socket.to(room).emit(BSAFEConnectorEvents.DEFAULT, {
+        type: BSAFEConnectorEvents.CURRENT_ACCOUNT,
+        data: [predicate.predicateAddress],
+      });
+      socket.to(room).emit(BSAFEConnectorEvents.DEFAULT, {
+        type: BSAFEConnectorEvents.CONNECTED_NETWORK,
+        data: [predicate.provider],
+      });
+      socket.to(room).emit(BSAFEConnectorEvents.DEFAULT, {
+        type: BSAFEConnectorEvents.ACCOUNTS,
+        data: [dapp?.vaults.map(v => v.predicateAddress)],
+      });
+    } catch (e) {
+      console.log('[AUTH_CONFIRMED]: ERRO', e);
     }
 
-    dapp.currentVault = predicate;
-    await dapp.save();
-    socket.to(room).emit(BSAFEConnectorEvents.DEFAULT, {
-      type: BSAFEConnectorEvents.CONNECTION,
-      data: [true],
-    });
-    socket.to(room).emit(BSAFEConnectorEvents.DEFAULT, {
-      type: BSAFEConnectorEvents.CURRENT_ACCOUNT,
-      data: [predicate.predicateAddress],
-    });
-    socket.to(room).emit(BSAFEConnectorEvents.DEFAULT, {
-      type: BSAFEConnectorEvents.CONNECTED_NETWORK,
-      data: [predicate.provider],
-    });
-    socket.to(room).emit(BSAFEConnectorEvents.DEFAULT, {
-      type: BSAFEConnectorEvents.ACCOUNTS,
-      data: [dapp?.vaults.map(v => v.predicateAddress)],
-    });
     return;
   },
 

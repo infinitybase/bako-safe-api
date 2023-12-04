@@ -49,6 +49,7 @@ class SocketIOServer extends Server {
       const { origin, sessionId, username } = socket.handshake.auth;
       const room = `${sessionId}:${origin}`;
 
+      console.log(BSAFEConnectorEvents.CONNECTION, room, `${username}_connected`);
       socket.to(room).emit(BSAFEConnectorEvents.DEFAULT, {
         type: `${username}_connected`,
         data: [true],
@@ -61,6 +62,7 @@ class SocketIOServer extends Server {
       socket.on(
         BSAFEConnectorEvents.TRANSACTION_CREATED,
         async ({ content, to }: ISocketEvent) => {
+          console.log(BSAFEConnectorEvents.TRANSACTION_CREATED, content, to);
           popAuth[BSAFEConnectorEvents.TRANSACTION_CREATED](socket, {
             content,
             to,
@@ -73,6 +75,7 @@ class SocketIOServer extends Server {
       socket.on(
         BSAFEConnectorEvents.TRANSACTION_SEND,
         async ({ content, to }: ISocketEvent) => {
+          console.log(BSAFEConnectorEvents.TRANSACTION_SEND, content, to);
           popAuth[BSAFEConnectorEvents.TRANSACTION_SEND](socket, { content, to });
         },
       );
@@ -85,6 +88,7 @@ class SocketIOServer extends Server {
       socket.on(
         BSAFEConnectorEvents.AUTH_CONFIRMED,
         async ({ content, to }: ISocketEvent) => {
+          console.log(BSAFEConnectorEvents.AUTH_CONFIRMED, content, to);
           popAuth[BSAFEConnectorEvents.AUTH_CONFIRMED](socket, { content, to });
         },
       );
@@ -100,6 +104,7 @@ class SocketIOServer extends Server {
       socket.on(
         BSAFEConnectorEvents.AUTH_DISCONECT_DAPP,
         async ({ content, to }: ISocketEvent) => {
+          console.log(BSAFEConnectorEvents.AUTH_DISCONECT_DAPP, content, to);
           popAuth[BSAFEConnectorEvents.AUTH_DISCONECT_DAPP](socket, {
             content,
             to,
