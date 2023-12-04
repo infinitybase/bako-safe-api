@@ -41,6 +41,7 @@ class SocketIOServer extends Server {
       const { origin, sessionId } = socket.handshake.auth;
 
       const room = `${sessionId}:${origin}`;
+      console.log('[USER_CONNECTED]: ', room);
       socket.join(room);
     });
 
