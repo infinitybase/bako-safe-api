@@ -3,14 +3,23 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import Express from 'express';
 import morgan from 'morgan';
+import pm2 from 'pm2';
+import process from 'process';
 
 import { router } from '@src/routes';
+import { Callback } from '@src/utils';
 
 import { handleErrors } from '@middlewares/index';
 
 const { API_PORT, PORT } = process.env;
 
+type ServerHooks = {
+  onServerStart?: Callback;
+  onServerStop?: Callback<any>;
+};
+
 class App {
+  static hooks: ServerHooks = {};
   private readonly app: Express.Application;
 
   constructor() {
@@ -21,12 +30,33 @@ class App {
     this.initErrorHandler();
   }
 
+  static serverHooks(handles: ServerHooks) {
+    this.hooks = handles;
+  }
+
+  static pm2HandleServerStop() {
+    pm2.launchBus((err, bus) => {
+      if (err) {
+        console.error('[APP] Error on start PM2 bus.');
+        return;
+      }
+
+      console.error('[APP] PM2 bus started.');
+
+      bus.on('process:exception', async packet => {
+        await App.hooks.onServerStop?.(packet);
+        process.exit(1);
+      });
+    });
+  }
+
   async init() {
     // App
     const port = API_PORT || PORT || 80;
     console.log('[APP] Starting application.');
     this.app.listen(port, () => {
       console.log(`[APP] Application running in http://localhost:${port}`);
+      App.hooks.onServerStart?.();
     });
   }
 

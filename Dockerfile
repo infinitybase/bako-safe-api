@@ -7,6 +7,9 @@ ADD . /api
 # Install app dependencies
 RUN yarn install
 
+# Install pm2
+RUN yarn global add pm2
+
 # Build
 RUN yarn build
 
