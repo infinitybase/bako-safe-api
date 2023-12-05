@@ -63,12 +63,16 @@ class DiscordUtils {
   }
 
   static async sendMessage(message: DiscordMessage) {
-    if (this.url) {
-      return axios.post(this.url, {
-        ...message,
-        avatar_url:
-          'https://pbs.twimg.com/profile_images/1701356759812554752/Ya-XMqEe_400x400.jpg',
-      });
+    try {
+      if (this.url) {
+        return axios.post(this.url, {
+          ...message,
+          avatar_url:
+            'https://pbs.twimg.com/profile_images/1701356759812554752/Ya-XMqEe_400x400.jpg',
+        });
+      }
+    } catch (e) {
+      console.log(`[DISCORD] Error on send message: `, e);
     }
   }
 }
