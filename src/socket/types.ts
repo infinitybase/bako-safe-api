@@ -1,3 +1,5 @@
+import { Operation } from '@fuel-ts/providers';
+
 export enum SocketEvents {
   //auth
   CONNECTION = 'connection',
@@ -42,6 +44,7 @@ export interface BaseSocketEvent {
   origin: string;
   name?: string;
   hash?: string;
+  operations?: Operation[];
 }
 
 export interface ISocketEvent {
