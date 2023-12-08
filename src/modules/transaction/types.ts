@@ -1,8 +1,14 @@
-import { ITransactionResume, TransactionStatus, Transfer, Vault } from 'bsafe';
+import {
+  ITransactionResume,
+  TransactionStatus,
+  Transfer,
+  Vault,
+  ITransactionSummary,
+} from 'bsafe';
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 import { Provider, TransactionRequest } from 'fuels';
 
-import { Asset, Transaction, TransactionSummary, Witness } from '@models/index';
+import { Asset, Transaction, Witness } from '@models/index';
 
 import { AuthValidatedRequest } from '@middlewares/auth/types';
 
@@ -37,7 +43,7 @@ export interface ICreateTransactionPayload {
   sendTime?: Date;
   gasUsed?: string;
   predicateID?: string;
-  summary?: TransactionSummary;
+  summary?: ITransactionSummary;
 }
 
 export interface IUpdateTransactionPayload {

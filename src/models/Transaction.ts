@@ -1,5 +1,4 @@
-import { Operation } from '@fuel-ts/providers';
-import { TransactionStatus, ITransactionResume } from 'bsafe';
+import { TransactionStatus, ITransactionResume, ITransactionSummary } from 'bsafe';
 import { TransactionRequest } from 'fuels';
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 
@@ -10,12 +9,6 @@ import { Base } from './Base';
 import { Predicate } from './Predicate';
 import { Witness } from './Witness';
 
-export interface TransactionSummary {
-  origin: string;
-  name: string;
-  image?: string;
-  operations?: Operation[];
-}
 @Entity('transactions')
 class Transaction extends Base {
   @Column()
@@ -40,7 +33,7 @@ class Transaction extends Base {
     type: 'jsonb',
     name: 'summary',
   })
-  summary?: TransactionSummary;
+  summary?: ITransactionSummary;
 
   @Column()
   sendTime?: Date;
