@@ -7,7 +7,7 @@ import { accounts } from '../accounts';
 import { networks } from '../networks';
 
 export const generateInitialPredicate = async (): Promise<Partial<Predicate>> => {
-  const pr = await Provider.create(networks['local']);
+  const pr = await Provider.create(networks['beta4']);
   const owner = await User.findOne({
     where: { address: accounts['USER_1'].address },
   });

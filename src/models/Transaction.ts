@@ -1,15 +1,6 @@
+import { TransactionStatus, ITransactionResume } from 'bsafe';
 import { TransactionRequest } from 'fuels';
-import {
-  AfterLoad,
-  BeforeUpdate,
-  Column,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  OneToMany,
-} from 'typeorm';
-
-import { TransactionService } from '@src/modules/transaction/services';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 
 import { User } from '@models/User';
 
@@ -18,35 +9,11 @@ import { Base } from './Base';
 import { Predicate } from './Predicate';
 import { Witness } from './Witness';
 
-//todo -> import to sdk package
-export enum TransactionStatus {
-  AWAIT_REQUIREMENTS = 'await_requirements', // -> AWAIT SIGNATURES
-  PENDING_SENDER = 'pending_sender', // -> AWAIT SENDER, BEFORE AWAIT STATUS
-  PROCESS_ON_CHAIN = 'process_on_chain', // -> AWAIT DONE ON CHAIN
-  SUCCESS = 'success', // -> SENDED
-  FAILED = 'failed', // -> FAILED
-}
-
 export interface TransactionSummary {
   origin: string;
   name: string;
   image?: string;
 }
-
-export enum TransactionProcessStatus {
-  SUCCESS = 'SuccessStatus',
-  SQUIZED = 'SqueezedOutStatus',
-  SUBMITED = 'SubmittedStatus',
-  FAILED = 'FailureStatus',
-}
-export interface ITransactionResume {
-  status: TransactionProcessStatus;
-  hash?: string;
-  gasUsed?: string;
-  sendTime?: Date;
-  witnesses?: string[];
-}
-
 @Entity('transactions')
 class Transaction extends Base {
   @Column()
@@ -62,13 +29,16 @@ class Transaction extends Base {
   txData: TransactionRequest;
 
   @Column({
+    type: 'enum',
+    enum: TransactionStatus,
+    default: TransactionStatus.AWAIT_REQUIREMENTS,
+  })
+  status: TransactionStatus;
+  @Column({
     type: 'jsonb',
     name: 'summary',
   })
   summary: TransactionSummary;
-
-  @Column({ enum: TransactionStatus })
-  status: TransactionStatus;
 
   @Column()
   sendTime?: Date;
@@ -76,8 +46,11 @@ class Transaction extends Base {
   @Column()
   gasUsed?: string;
 
-  @Column()
-  resume: string;
+  @Column({
+    type: 'jsonb',
+    name: 'resume',
+  })
+  resume: ITransactionResume;
 
   @JoinColumn({ name: 'created_by' })
   @ManyToOne(() => User)

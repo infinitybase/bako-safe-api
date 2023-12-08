@@ -1,4 +1,9 @@
-import { ITransaction, Transfer, Vault } from 'bsafe';
+import {
+  Transfer,
+  Vault,
+  TransactionProcessStatus,
+  TransactionStatus,
+} from 'bsafe';
 import {
   Provider,
   TransactionRequest,
@@ -7,13 +12,7 @@ import {
   transactionRequestify,
 } from 'fuels';
 
-import {
-  Transaction,
-  TransactionProcessStatus,
-  TransactionStatus,
-  Witness,
-  WitnessesStatus,
-} from '@models/index';
+import { Transaction, Witness, WitnessesStatus } from '@models/index';
 
 import { NotFound } from '@utils/error';
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
@@ -82,7 +81,7 @@ export class TransactionService implements ITransactionService {
   async findById(id: string): Promise<Transaction> {
     return await Transaction.findOne({
       where: { id },
-      relations: ['assets', 'witnesses', 'predicate'],
+      relations: ['assets', 'witnesses', 'predicate', 'predicate.members'],
     })
       .then(transaction => {
         if (!transaction) {
@@ -165,6 +164,10 @@ export class TransactionService implements ITransactionService {
     this._filter.name &&
       queryBuilder.andWhere('LOWER(t.name) LIKE LOWER(:name)', {
         name: `%${this._filter.name}%`,
+      });
+    this._filter.id &&
+      queryBuilder.andWhere('t.id = :id', {
+        id: this._filter.id,
       });
 
     this._filter.limit && !hasPagination && queryBuilder.limit(this._filter.limit);
@@ -288,8 +291,8 @@ export class TransactionService implements ITransactionService {
 
   async sendToChain(bsafe_transaction: TransactionRequest, provider: Provider) {
     const tx = transactionRequestify(bsafe_transaction);
-    const tx_est = await provider.estimatePredicates(tx);
 
+    const tx_est = await provider.estimatePredicates(tx);
     const encodedTransaction = hexlify(tx_est.toTransactionBytes());
     const {
       submit: { id: transactionId },
@@ -310,7 +313,7 @@ export class TransactionService implements ITransactionService {
       result.status.type === TransactionProcessStatus.FAILED
     ) {
       const resume = {
-        ...JSON.parse(api_transaction.resume),
+        ...api_transaction.resume,
         status:
           result.status.type === TransactionProcessStatus.SUCCESS
             ? TransactionStatus.SUCCESS
@@ -323,8 +326,8 @@ export class TransactionService implements ITransactionService {
             : TransactionStatus.FAILED,
         sendTime: new Date(),
         gasUsed: result.gasPrice,
-        resume: JSON.stringify(resume),
       };
+
       await this.update(api_transaction.id, _api_transaction);
       return resume;
     }

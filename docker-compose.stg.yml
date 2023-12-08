@@ -1,0 +1,31 @@
+version: '3'
+services:
+  api:
+    container_name: bsafe_api
+    ports:
+      - '3333:3333'
+    build:
+      dockerfile: Dockerfile.stg
+      context: .
+    working_dir: /api
+    volumes:
+      - ./uploads:/api/uploads
+    environment:
+      - NODE_ENV=staging
+      # DATABASE
+      - DATABASE_HOST=containers-us-west-65.railway.app
+      - DATABASE_PORT=6343
+      - DATABASE_USERNAME=postgres
+      - DATABASE_PASSWORD=5sQtQXIrR6HLECTVB8SI
+      - DATABASE_NAME=railway
+      # APP
+      - API_PORT=3333
+      - APP_NAME=bsafe-api
+      # ADMIN USER
+      - APP_ADMIN_EMAIL=admin_user_email
+      - APP_ADMIN_PASSWORD=admin_user_password
+      # TOKENS
+      - ACCESS_TOKEN_SECRET=access_token_secret
+      - REFRESH_TOKEN_SECRET=refresh_token_secret
+      # AWS
+      - UI_URL=https://app.bsafe.pro

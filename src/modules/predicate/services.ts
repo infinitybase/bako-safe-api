@@ -1,13 +1,8 @@
-import { IConfVault, IPayloadVault, Vault } from 'bsafe';
+import { IConfVault, Vault } from 'bsafe';
 import { Provider } from 'fuels';
 import { Brackets } from 'typeorm';
 
-import { defaultConfigurable } from '@src/utils/configurable';
 import { NotFound } from '@src/utils/error';
-import {
-  Unauthorized,
-  UnauthorizedErrorTitles,
-} from '@src/utils/error/Unauthorized';
 import { IOrdination, setOrdination } from '@src/utils/ordination';
 import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination';
 
@@ -41,6 +36,7 @@ export class PredicateService implements IPredicateService {
     'p.owner',
     'p.provider',
     'p.chainId',
+    'p.configurable',
   ];
 
   filter(filter: IPredicateFilterParams) {
@@ -160,7 +156,7 @@ export class PredicateService implements IPredicateService {
       });
 
     this._filter.owner &&
-      queryBuilder.andWhere('LOWER(p.owner) = LOWER(:owner)', {
+      queryBuilder.andWhere('LOWER(p.owner.address) = LOWER(:owner)', {
         owner: `${this._filter.owner}`,
       });
 
@@ -198,26 +194,11 @@ export class PredicateService implements IPredicateService {
     return hasPagination
       ? Pagination.create(queryBuilder)
           .paginate(this._pagination)
-          .then(result => {
-            return {
-              ...result,
-              data: result.data.map(predicate => ({
-                ...predicate,
-                members: predicate.members.map(({ id, ...rest }) => rest),
-              })),
-            } as IPagination<Predicate>;
-          })
+          .then(result => result)
           .catch(handleInternalError)
       : queryBuilder
           .getMany()
-          .then(predicates => {
-            const result = predicates.map(predicate => ({
-              ...predicate,
-              members: predicate.members.map(({ id, ...rest }) => rest),
-            })) as Predicate[];
-
-            return result ?? [];
-          })
+          .then(predicates => predicates ?? [])
           .catch(handleInternalError);
   }
 

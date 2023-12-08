@@ -1,14 +1,16 @@
+import { TransactionStatus } from 'bsafe';
+
 import AddressBook from '@src/models/AddressBook';
 import { Predicate } from '@src/models/Predicate';
-import Role from '@src/models/Role';
 
-import { Asset, Transaction, TransactionStatus, User } from '@models/index';
+import { Asset, NotificationTitle, Transaction, User } from '@models/index';
 
 import { error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
 
 import { IAddressBookService } from '../addressBook/types';
 import { IUserService } from '../configs/user/types';
+import { INotificationService } from '../notification/types';
 import { ITransactionService } from '../transaction/types';
 import {
   ICreatePredicateRequest,
@@ -24,17 +26,20 @@ export class PredicateController {
   private predicateService: IPredicateService;
   private addressBookService: IAddressBookService;
   private transactionService: ITransactionService;
+  private notificationService: INotificationService;
 
   constructor(
     userService: IUserService,
     predicateService: IPredicateService,
     addressBookService: IAddressBookService,
     transactionService: ITransactionService,
+    notificationService: INotificationService,
   ) {
     this.userService = userService;
     this.predicateService = predicateService;
     this.addressBookService = addressBookService;
     this.transactionService = transactionService;
+    this.notificationService = notificationService;
     bindMethods(this);
   }
 
@@ -61,6 +66,19 @@ export class PredicateController {
         members,
       });
 
+      const { id, name, members: predicateMembers } = newPredicate;
+      const membersWithoutLoggedUser = predicateMembers.filter(
+        member => member.id !== user.id,
+      );
+
+      for await (const member of membersWithoutLoggedUser) {
+        await this.notificationService.create({
+          title: NotificationTitle.NEW_VAULT_CREATED,
+          user_id: member.id,
+          summary: { vaultId: id, vaultName: name },
+        });
+      }
+
       return successful(newPredicate, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
@@ -84,7 +102,6 @@ export class PredicateController {
       const favorites = (await this.addressBookService
         .filter({ createdBy: user.id, userIds: membersIds })
         .list()) as AddressBook[];
-
       const response = {
         ...predicate,
         members: predicate.members.map(member => ({
@@ -107,13 +124,10 @@ export class PredicateController {
         .filter({
           address,
         })
-        .paginate({
-          page: '',
-          perPage: '',
-        })
+        .paginate(undefined)
         .list()
-        .then((data: Predicate[]) => data);
-      return successful(response[0], Responses.Ok);
+        .then((data: Predicate[]) => data[0]);
+      return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }

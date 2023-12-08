@@ -1,11 +1,10 @@
 import { MigrationInterface, QueryRunner, Table } from 'typeorm';
 
-export class createTableTransactions1694536141266 implements MigrationInterface {
+export class addNotificationsTable1700852697110 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
     await queryRunner.createTable(
       new Table({
-        name: 'transactions',
+        name: 'notifications',
         columns: [
           {
             name: 'id',
@@ -16,38 +15,21 @@ export class createTableTransactions1694536141266 implements MigrationInterface 
             default: `uuid_generate_v4()`,
           },
           {
-            name: 'predicate_id',
+            name: 'user_id',
             type: 'uuid',
           },
           {
-            name: 'name',
+            name: 'title',
             type: 'varchar',
           },
           {
-            name: 'hash',
-            type: 'varchar',
-          },
-          {
-            name: 'tx_data',
+            name: 'summary',
             type: 'jsonb',
           },
           {
-            name: 'status',
-            type: 'varchar',
-          },
-          {
-            name: 'sendTime',
-            type: 'timestamp',
-            isNullable: true,
-          },
-          {
-            name: 'gasUsed',
-            type: 'varchar',
-            isNullable: true,
-          },
-          {
-            name: 'resume',
-            type: 'jsonb',
+            name: 'read',
+            type: 'boolean',
+            default: false,
           },
           {
             name: 'created_at',
@@ -66,10 +48,9 @@ export class createTableTransactions1694536141266 implements MigrationInterface 
         ],
         foreignKeys: [
           {
-            name: 'FK-predicate-transactions',
-            columnNames: ['predicate_id'],
+            columnNames: ['user_id'],
             referencedColumnNames: ['id'],
-            referencedTableName: 'predicates',
+            referencedTableName: 'users',
             onDelete: 'CASCADE',
           },
         ],
@@ -78,6 +59,6 @@ export class createTableTransactions1694536141266 implements MigrationInterface 
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.dropTable('transactions');
+    await queryRunner.dropTable('notifications');
   }
 }
