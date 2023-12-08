@@ -249,7 +249,7 @@ export class TransactionService implements ITransactionService {
           totalSigners - witness[WitnessesStatus.REJECTED] <
           transaction.predicate.minSigners
         ) {
-          return TransactionStatus.FAILED;
+          return TransactionStatus.DECLINED;
         }
 
         return TransactionStatus.AWAIT_REQUIREMENTS;
