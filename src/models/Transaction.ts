@@ -1,3 +1,4 @@
+import { Operation } from '@fuel-ts/providers';
 import { TransactionStatus, ITransactionResume } from 'bsafe';
 import { TransactionRequest } from 'fuels';
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
@@ -13,6 +14,7 @@ export interface TransactionSummary {
   origin: string;
   name: string;
   image?: string;
+  operations?: Operation[];
 }
 @Entity('transactions')
 class Transaction extends Base {

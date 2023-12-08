@@ -82,7 +82,7 @@ export const popAuth: IEventsExecute = {
     { content, to }: ISocketEvent,
   ) => {
     // add sumary on transaction
-    const { sessionId, origin } = content;
+    const { sessionId, origin, operations } = content;
     const transaction = await Transaction.findOne({
       where: { hash: content.hash },
     }).then(async (data: Transaction) => {
@@ -92,6 +92,7 @@ export const popAuth: IEventsExecute = {
           origin: session.origin,
           name: session.name,
           image: '',
+          operations,
         };
         await data.save();
       }
