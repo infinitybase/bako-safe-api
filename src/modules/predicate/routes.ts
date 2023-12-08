@@ -6,20 +6,18 @@ import { handleResponse } from '@utils/index';
 
 import { AddressBookService } from '../addressBook/services';
 import { UserService } from '../configs/user/service';
+import { NotificationService } from '../notification/services';
 import { TransactionService } from '../transaction/services';
-import { VaultTemplateService } from '../vaultTemplate/services';
 import { PredicateController } from './controller';
 import { PredicateService } from './services';
 import { validateAddPredicatePayload } from './validations';
 
 const router = Router();
 const predicateService = new PredicateService();
-
 const addressBookService = new AddressBookService();
-
 const userService = new UserService();
-
 const transactionService = new TransactionService();
+const notificationService = new NotificationService();
 const {
   create,
   findById,
@@ -31,6 +29,7 @@ const {
   predicateService,
   addressBookService,
   transactionService,
+  notificationService,
 );
 
 router.use(authMiddleware);
