@@ -295,10 +295,11 @@ export class TransactionService implements ITransactionService {
     const api_transaction = await this.findById(bsafe_txid);
     const { predicate, txData, witnesses } = api_transaction;
     const provider = await Provider.create(predicate.provider);
-    const _witnesses = witnesses.filter(w => !!w).map(witness => witness.signature);
-    txData.witnesses = witnesses
-      .filter(w => w.status === WitnessesStatus.DONE)
+    const _witnesses = witnesses
+      .filter(w => !!w.signature)
       .map(witness => witness.signature);
+    txData.witnesses = witnesses.map(witness => witness.signature).filter(w => !!w);
+
     const tx = transactionRequestify({
       ...txData,
       witnesses: _witnesses,
@@ -317,7 +318,6 @@ export class TransactionService implements ITransactionService {
           hash: transactionId.substring(2),
           status: TransactionStatus.PROCESS_ON_CHAIN,
         };
-
         return resume;
       });
 
