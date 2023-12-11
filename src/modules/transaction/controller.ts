@@ -1,4 +1,5 @@
-import { TransactionStatus } from 'bsafe';
+import { ITransactionResume, TransactionStatus } from 'bsafe';
+import { th } from 'date-fns/locale';
 import { Provider } from 'fuels';
 
 import AddressBook from '@src/models/AddressBook';
@@ -29,7 +30,6 @@ import {
   ISendTransactionRequest,
   ISignByIdRequest,
   ITransactionService,
-  IUpdateTransactionPayload,
 } from './types';
 
 export class TransactionController {
@@ -127,7 +127,24 @@ export class TransactionController {
 
   async findById({ params: { id } }: IFindTransactionByIdRequest) {
     try {
-      const response = await this.transactionService.findById(id);
+      const response = await this.transactionService
+        .findById(id)
+        .then(async (data: Transaction) => {
+          const { status, predicate } = data;
+          if (status === TransactionStatus.PROCESS_ON_CHAIN) {
+            const provider = await Provider.create(predicate.provider);
+            const result = await this.transactionService.verifyOnChain(
+              data,
+              provider,
+            );
+            return await this.transactionService.update(id, {
+              status: result.status,
+              resume: result,
+            });
+          }
+          return data;
+        });
+
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
@@ -171,13 +188,32 @@ export class TransactionController {
 
         const statusField = await this.transactionService.validateStatus(id);
 
-        await this.transactionService.update(id, {
+        const result = await this.transactionService.update(id, {
           status: statusField,
           resume: {
             ..._resume,
             status: statusField,
           },
         });
+
+        if (result.status === TransactionStatus.PENDING_SENDER) {
+          await this.transactionService
+            .sendToChain(id)
+            .then(async (result: ITransactionResume) => {
+              return await this.transactionService.update(id, {
+                status: TransactionStatus.PROCESS_ON_CHAIN,
+                sendTime: new Date(),
+                resume: result,
+              });
+            })
+            .catch(async () => {
+              await this.transactionService.update(id, {
+                status: TransactionStatus.FAILED,
+                sendTime: new Date(),
+              });
+              throw new Error('Transaction send failed');
+            });
+        }
 
         const notificationSummary = {
           vaultId: predicate.id,
@@ -305,7 +341,7 @@ export class TransactionController {
   }
 
   async close({
-    body: { gasUsed, transactionResult, hasError },
+    body: { gasUsed, transactionResult },
     params: { id },
   }: ICloseTransactionRequest) {
     try {
@@ -323,34 +359,23 @@ export class TransactionController {
 
   async send({ params: { id } }: ISendTransactionRequest) {
     try {
-      const api_transaction = await this.transactionService.findById(id);
-      const { predicate, txData, witnesses } = api_transaction;
-      const _witnesses = witnesses
-        .filter(w => !!w)
-        .map(witness => witness.signature);
-      txData.witnesses = witnesses
-        .filter(w => w.status === WitnessesStatus.DONE)
-        .map(witness => witness.signature);
+      const resume = await this.transactionService
+        .sendToChain(id)
+        .then(async (result: ITransactionResume) => {
+          return await this.transactionService.update(id, {
+            status: TransactionStatus.PROCESS_ON_CHAIN,
+            sendTime: new Date(),
+            resume: result,
+          });
+        })
+        .catch(async () => {
+          await this.transactionService.update(id, {
+            status: TransactionStatus.FAILED,
+            sendTime: new Date(),
+          });
+          throw new Error('Transaction send failed');
+        });
 
-      this.transactionService.checkInvalidConditions(api_transaction);
-
-      const tx_id = await this.transactionService.sendToChain(
-        txData,
-        await Provider.create(predicate.provider),
-      );
-      const resume = {
-        ...api_transaction.resume,
-        witnesses: _witnesses,
-        bsafeID: api_transaction.id,
-      };
-      const _api_transaction: IUpdateTransactionPayload = {
-        status: TransactionStatus.PROCESS_ON_CHAIN,
-        sendTime: new Date(),
-        resume: resume,
-        hash: tx_id.substring(2),
-      };
-
-      await this.transactionService.update(api_transaction.id, _api_transaction);
       return successful(resume, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);

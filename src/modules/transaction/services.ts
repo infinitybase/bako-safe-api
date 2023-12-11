@@ -3,6 +3,7 @@ import {
   Vault,
   TransactionProcessStatus,
   TransactionStatus,
+  ITransactionResume,
 } from 'bsafe';
 import {
   Provider,
@@ -249,7 +250,7 @@ export class TransactionService implements ITransactionService {
           totalSigners - witness[WitnessesStatus.REJECTED] <
           transaction.predicate.minSigners
         ) {
-          return TransactionStatus.FAILED;
+          return TransactionStatus.DECLINED;
         }
 
         return TransactionStatus.AWAIT_REQUIREMENTS;
@@ -290,22 +291,46 @@ export class TransactionService implements ITransactionService {
     }
   }
 
-  async sendToChain(bsafe_transaction: TransactionRequest, provider: Provider) {
-    const tx = transactionRequestify(bsafe_transaction);
+  async sendToChain(bsafe_txid: string) {
+    const api_transaction = await this.findById(bsafe_txid);
+    const { predicate, txData, witnesses } = api_transaction;
+    const provider = await Provider.create(predicate.provider);
+    const _witnesses = witnesses.filter(w => !!w).map(witness => witness.signature);
+    txData.witnesses = witnesses
+      .filter(w => w.status === WitnessesStatus.DONE)
+      .map(witness => witness.signature);
+    const tx = transactionRequestify({
+      ...txData,
+      witnesses: _witnesses,
+    });
+
+    this.checkInvalidConditions(api_transaction);
 
     const tx_est = await provider.estimatePredicates(tx);
     const encodedTransaction = hexlify(tx_est.toTransactionBytes());
-    const {
-      submit: { id: transactionId },
-    } = await provider.operations.submit({ encodedTransaction });
+    await provider.operations
+      .submit({ encodedTransaction })
+      .then(({ submit: { id: transactionId } }) => {
+        const resume: ITransactionResume = {
+          ...api_transaction.resume,
+          witnesses: _witnesses,
+          hash: transactionId.substring(2),
+          status: TransactionStatus.PROCESS_ON_CHAIN,
+        };
 
-    return transactionId;
+        return resume;
+      });
+
+    return {
+      ...api_transaction.resume,
+      witnesses: _witnesses,
+      status: TransactionStatus.FAILED,
+    };
   }
 
   async verifyOnChain(api_transaction: Transaction, provider: Provider) {
     const idOnChain = `0x${api_transaction.hash}`;
     const sender = new TransactionResponse(idOnChain, provider);
-
     const result = await sender.fetch();
     if (result.status.type === TransactionProcessStatus.SUBMITED) {
       return api_transaction.resume;
@@ -321,10 +346,7 @@ export class TransactionService implements ITransactionService {
             : TransactionStatus.FAILED,
       };
       const _api_transaction: IUpdateTransactionPayload = {
-        status:
-          result.status.type === TransactionProcessStatus.SUCCESS
-            ? TransactionStatus.SUCCESS
-            : TransactionStatus.FAILED,
+        status: resume.status,
         sendTime: new Date(),
         gasUsed: result.gasPrice,
       };
