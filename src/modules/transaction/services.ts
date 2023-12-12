@@ -308,7 +308,7 @@ export class TransactionService implements ITransactionService {
 
     const tx_est = await provider.estimatePredicates(tx);
     const encodedTransaction = hexlify(tx_est.toTransactionBytes());
-    await provider.operations
+    return await provider.operations
       .submit({ encodedTransaction })
       .then(({ submit: { id: transactionId } }) => {
         const resume: ITransactionResume = {
@@ -318,13 +318,14 @@ export class TransactionService implements ITransactionService {
           status: TransactionStatus.PROCESS_ON_CHAIN,
         };
         return resume;
+      })
+      .catch(() => {
+        return {
+          ...api_transaction.resume,
+          witnesses: _witnesses,
+          status: TransactionStatus.FAILED,
+        };
       });
-
-    return {
-      ...api_transaction.resume,
-      witnesses: _witnesses,
-      status: TransactionStatus.FAILED,
-    };
   }
 
   async verifyOnChain(api_transaction: Transaction, provider: Provider) {
