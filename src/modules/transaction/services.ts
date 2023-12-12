@@ -279,8 +279,7 @@ export class TransactionService implements ITransactionService {
     const invalidConditions =
       !api_transaction ||
       api_transaction.status === TransactionStatus.AWAIT_REQUIREMENTS ||
-      api_transaction.status === TransactionStatus.SUCCESS ||
-      api_transaction.status === TransactionStatus.FAILED;
+      api_transaction.status === TransactionStatus.SUCCESS;
 
     if (invalidConditions) {
       throw new NotFound({
