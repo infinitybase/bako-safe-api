@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
+import { IBSAFEAuth } from 'bsafe';
 import { IDefaultAccount } from 'bsafe/dist/cjs/mocks/accounts';
 import { createHash } from 'crypto';
 import { Provider, Wallet } from 'fuels';
@@ -7,7 +8,7 @@ import { User, Encoder } from '@src/models';
 
 export class AuthValidations {
   public user: User;
-  public authToken: string;
+  public authToken: IBSAFEAuth;
   public axios: AxiosInstance;
 
   constructor(
@@ -49,7 +50,10 @@ export class AuthValidations {
 
     this.axios.defaults.headers.common['Authorization'] = data.accessToken;
     this.axios.defaults.headers.common['Signeraddress'] = this.account.address;
-
+    this.authToken = {
+      address,
+      token: data.accessToken,
+    };
     return data;
   }
 
