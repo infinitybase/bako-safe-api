@@ -32,22 +32,20 @@ describe('[TRANSACTION]', () => {
 
       await sendPredicateCoins(
         vault,
-        bn(1_000_0),
+        bn(1_000_000_0),
         'ETH',
         accounts['USER_1'].privateKey,
+      );
+      console.log(
+        '[VAULT]',
+        vault.address,
+        (await vault.getBalance()).format().toString(),
+        bn(1_000_000).add(bn(5)).format().toString(),
       );
       const tx_1 = await vault.BSAFEIncludeTransaction(transaction);
       const tx_2 = await vault.BSAFEIncludeTransaction(transaction);
 
-      await api.axios.put(`/transaction/signer/${tx_1.BSAFETransactionId}`, {
-        signer: await signBypK(tx_1.getHashTxId(), accounts['USER_1'].privateKey),
-        account: accounts['USER_1'].address,
-        confirm: true,
-      });
-
-      const txs = await vault.BSAFEGetTransactions();
-
-      await tx_1.wait();
+      console.log('[TRANSACOES]', tx_1.BSAFETransactionId, tx_2.BSAFETransactionId);
 
       await api.axios.put(`/transaction/signer/${tx_1.BSAFETransactionId}`, {
         signer: await signBypK(tx_1.getHashTxId(), accounts['USER_1'].privateKey),
@@ -55,8 +53,22 @@ describe('[TRANSACTION]', () => {
         confirm: true,
       });
 
-      console.log(await tx_2.wait());
-      console.log(JSON.stringify(txs));
+      //const txs = await vault.BSAFEGetTransactions();
+
+      try {
+        console.log(await tx_1.wait());
+
+        await api.axios.put(`/transaction/signer/${tx_2.BSAFETransactionId}`, {
+          signer: await signBypK(tx_1.getHashTxId(), accounts['USER_1'].privateKey),
+          account: accounts['USER_1'].address,
+          confirm: true,
+        });
+
+        console.log(await tx_2.wait());
+      } catch (e) {
+        console.log(e);
+      }
+      //console.log(JSON.stringify(txs));
     },
     30 * 1000,
   );

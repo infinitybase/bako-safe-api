@@ -7,7 +7,7 @@ export const transaction = {
   name: 'Transaction A',
   assets: [
     {
-      amount: bn(1_000).format(),
+      amount: bn(1_000_000).format(),
       assetId: assets['ETH'],
       to: accounts['STORE'].address,
     },

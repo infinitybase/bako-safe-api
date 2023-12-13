@@ -1,4 +1,5 @@
 import { TransactionStatus } from 'bsafe';
+import { bn } from 'fuels';
 
 import AddressBook from '@src/models/AddressBook';
 import { Predicate } from '@src/models/Predicate';
@@ -135,29 +136,50 @@ export class PredicateController {
 
   async hasReservedCoins({ params: { address } }: IFindByHashRequest) {
     try {
+      //console.log('[HAS_RESERVED_COINS]: ', address);
       const response = await this.transactionService
         .filter({
-          predicateAddress: address,
+          predicateId: [address],
         })
         .list()
         .then((data: Transaction[]) => {
-          const a: string[] = [];
-          data
+          // const a: BN = bn.parseUnits('0');
+          // //console.log(data.map((transaction: Transaction) => transaction.assets));
+          // data
+          //   .filter(
+          //     (transaction: Transaction) =>
+          //       transaction.status == TransactionStatus.AWAIT_REQUIREMENTS ||
+          //       transaction.status == TransactionStatus.PENDING_SENDER,
+          //   )
+          //   .map((_filteredTransactions: Transaction) => {
+          //     _filteredTransactions.assets.map((_assets: Asset) => {
+          //       console.log(_assets.amount, a.add(bn.parseUnits(_assets.amount)));
+          //       return a.add(bn.parseUnits(_assets.amount));
+          //     });
+          //   });
+          return data
             .filter(
               (transaction: Transaction) =>
-                transaction.status == TransactionStatus.AWAIT_REQUIREMENTS ||
-                transaction.status == TransactionStatus.PENDING_SENDER,
+                transaction.status === TransactionStatus.AWAIT_REQUIREMENTS ||
+                transaction.status === TransactionStatus.PENDING_SENDER,
             )
-            .map((_filteredTransactions: Transaction) => {
-              _filteredTransactions.assets.map((_assets: Asset) =>
-                a.push(_assets.utxo),
+            .reduce((accumulator, transaction: Transaction) => {
+              return accumulator.add(
+                transaction.assets.reduce((assetAccumulator, asset: Asset) => {
+                  console.log(
+                    asset.amount,
+                    assetAccumulator.add(bn.parseUnits(asset.amount)),
+                  );
+                  return assetAccumulator.add(bn.parseUnits(asset.amount));
+                }, bn.parseUnits('0')),
               );
-            });
-          return a;
+            }, bn.parseUnits('0'));
         })
-        .catch(() => {
-          return [];
+        .catch(e => {
+          return bn.parseUnits('0');
         });
+
+      //console.log('[HAS_RESERVED_COINS]: ', response.format().toString());
 
       return successful(response, Responses.Ok);
     } catch (e) {

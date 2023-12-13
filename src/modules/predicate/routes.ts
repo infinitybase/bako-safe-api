@@ -24,6 +24,7 @@ const {
   list,
   findByAddress,
   delete: deleteService,
+  hasReservedCoins,
 } = new PredicateController(
   userService,
   predicateService,
@@ -37,7 +38,7 @@ router.use(authMiddleware);
 router.post('/', validateAddPredicatePayload, handleResponse(create));
 router.get('/', handleResponse(list));
 router.get('/:id', handleResponse(findById));
-//router.get('/reserved-coins/:address', handleResponse(hasReservedCoins));
+router.get('/reserved-coins/:address', handleResponse(hasReservedCoins));
 router.get('/by-address/:address', handleResponse(findByAddress));
 //router.delete('/:id', handleResponse(deleteService));
 

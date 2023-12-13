@@ -242,6 +242,14 @@ export class TransactionService implements ITransactionService {
           witness[WitnessesStatus.REJECTED] +
           witness[WitnessesStatus.PENDING];
 
+        if (
+          transaction.status === TransactionStatus.SUCCESS ||
+          transaction.status === TransactionStatus.FAILED ||
+          transaction.status === TransactionStatus.PROCESS_ON_CHAIN
+        ) {
+          return transaction.status;
+        }
+
         if (witness[WitnessesStatus.DONE] >= transaction.predicate.minSigners) {
           return TransactionStatus.PENDING_SENDER;
         }
@@ -317,14 +325,16 @@ export class TransactionService implements ITransactionService {
           hash: transactionId.substring(2),
           status: TransactionStatus.PROCESS_ON_CHAIN,
         };
+        console.log('[ENVIADO]', resume);
         return resume;
       })
-      .catch(() => {
-        return {
-          ...api_transaction.resume,
-          witnesses: _witnesses,
-          status: TransactionStatus.FAILED,
-        };
+      .catch(e => {
+        console.log('[ERRO AO ENVIAR]', e);
+        throw new Internal({
+          type: ErrorTypes.Internal,
+          title: 'Error on transaction sendToChain',
+          detail: 'Error on transaction sendToChain',
+        });
       });
   }
 
@@ -332,6 +342,14 @@ export class TransactionService implements ITransactionService {
     const idOnChain = `0x${api_transaction.hash}`;
     const sender = new TransactionResponse(idOnChain, provider);
     const result = await sender.fetch();
+
+    // console.log('[VERIFY_ON_CHAIN] result:', result.status.type);
+    // console.log('[LÓGICAS]: ', {
+    //   enviado:
+    //     result.status.type === TransactionProcessStatus.SUCCESS ||
+    //     result.status.type === TransactionProcessStatus.FAILED,
+    // });
+
     if (result.status.type === TransactionProcessStatus.SUBMITED) {
       return api_transaction.resume;
     } else if (
@@ -351,7 +369,9 @@ export class TransactionService implements ITransactionService {
         gasUsed: result.gasPrice,
       };
 
-      await this.update(api_transaction.id, _api_transaction);
+      const a = await this.update(api_transaction.id, _api_transaction);
+
+      //console.log('[DENTRO_ELSE_IF]', _api_transaction, resume, a);
       return resume;
     }
     return api_transaction.resume;

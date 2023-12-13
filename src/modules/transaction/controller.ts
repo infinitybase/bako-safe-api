@@ -186,6 +186,7 @@ export class TransactionController {
         }),
           _resume.witnesses.push(signer);
 
+        //console.log('[SIGNER_BY_ID_VALIDATE]: ', transaction.status);
         const statusField = await this.transactionService.validateStatus(id);
 
         const result = await this.transactionService.update(id, {
@@ -200,6 +201,7 @@ export class TransactionController {
           await this.transactionService
             .sendToChain(id)
             .then(async (result: ITransactionResume) => {
+              //console.log('[SUCCESS SEND]');
               return await this.transactionService.update(id, {
                 status: TransactionStatus.PROCESS_ON_CHAIN,
                 sendTime: new Date(),
@@ -207,6 +209,7 @@ export class TransactionController {
               });
             })
             .catch(async () => {
+              //console.log('[FAILED SEND]');
               await this.transactionService.update(id, {
                 status: TransactionStatus.FAILED,
                 sendTime: new Date(),
@@ -362,6 +365,7 @@ export class TransactionController {
       const resume = await this.transactionService
         .sendToChain(id)
         .then(async (result: ITransactionResume) => {
+          //console.log('[SUCCESS SEND]');
           return await this.transactionService.update(id, {
             status: TransactionStatus.PROCESS_ON_CHAIN,
             sendTime: new Date(),
@@ -369,6 +373,7 @@ export class TransactionController {
           });
         })
         .catch(async () => {
+          //console.log('[FAILED SEND]');
           await this.transactionService.update(id, {
             status: TransactionStatus.FAILED,
             sendTime: new Date(),
@@ -384,6 +389,7 @@ export class TransactionController {
 
   async verifyOnChain({ params: { id } }: ISendTransactionRequest) {
     try {
+      //console.log('[VERIFY_ON_CHAIN_CONTROLLER]');
       const api_transaction = await this.transactionService.findById(id);
       const { predicate, name, id: transactionId } = api_transaction;
       const provider = await Provider.create(predicate.provider);
@@ -394,7 +400,7 @@ export class TransactionController {
         api_transaction,
         provider,
       );
-
+      //console.log('[CONTROLLER]: ', result);
       // NOTIFY MEMBERS ON TRANSACTIONS SUCCESS
       if (result.status === TransactionStatus.SUCCESS) {
         for await (const member of predicate.members) {
