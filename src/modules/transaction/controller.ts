@@ -241,7 +241,7 @@ export class TransactionController {
         }
 
         // NOTIFY MEMBERS ON FAILED TRANSACTIONS
-        if (statusField === TransactionStatus.FAILED) {
+        if (statusField === TransactionStatus.DECLINED) {
           for await (const member of predicate.members) {
             await this.notificationService.create({
               title: NotificationTitle.TRANSACTION_DECLINED,
@@ -400,22 +400,23 @@ export class TransactionController {
         api_transaction,
         provider,
       );
+
       //console.log('[CONTROLLER]: ', result);
-      // NOTIFY MEMBERS ON TRANSACTIONS SUCCESS
-      if (result.status === TransactionStatus.SUCCESS) {
-        for await (const member of predicate.members) {
-          await this.notificationService.create({
-            title: NotificationTitle.TRANSACTION_COMPLETED,
-            summary: {
-              vaultId: predicate.id,
-              vaultName: predicate.name,
-              transactionId: transactionId,
-              transactionName: name,
-            },
-            user_id: member.id,
-          });
-        }
-      }
+      // NOTIFY MEMBERS ON TRANSACTIONS SUCCESS (first solution, now is on the service)
+      // if (result.status === TransactionStatus.SUCCESS) {
+      //   for await (const member of predicate.members) {
+      //     await this.notificationService.create({
+      //       title: NotificationTitle.TRANSACTION_COMPLETED,
+      //       summary: {
+      //         vaultId: predicate.id,
+      //         vaultName: predicate.name,
+      //         transactionId: transactionId,
+      //         transactionName: name,
+      //       },
+      //       user_id: member.id,
+      //     });
+      //   }
+      // }
 
       return successful(result, Responses.Ok);
     } catch (e) {
