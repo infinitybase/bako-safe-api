@@ -13,7 +13,13 @@ import {
   transactionRequestify,
 } from 'fuels';
 
-import { Transaction, Witness, WitnessesStatus } from '@models/index';
+import {
+  Notification,
+  NotificationTitle,
+  Transaction,
+  Witness,
+  WitnessesStatus,
+} from '@models/index';
 
 import { NotFound } from '@utils/error';
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
@@ -21,6 +27,7 @@ import Internal from '@utils/error/Internal';
 import { IOrdination, setOrdination } from '@utils/ordination';
 import { IPagination, Pagination, PaginationParams } from '@utils/pagination';
 
+import { NotificationService } from '../notification/services';
 import {
   ICreateTransactionPayload,
   ITransactionFilterParams,
@@ -371,9 +378,28 @@ export class TransactionService implements ITransactionService {
 
       const a = await this.update(api_transaction.id, _api_transaction);
 
+      // NOTIFY MEMBERS ON TRANSACTIONS SUCCESS
+      const notificationService = new NotificationService();
+
+      if (result.status.type === TransactionProcessStatus.SUCCESS) {
+        for await (const member of api_transaction.predicate.members) {
+          await notificationService.create({
+            title: NotificationTitle.TRANSACTION_COMPLETED,
+            summary: {
+              vaultId: api_transaction.predicate.id,
+              vaultName: api_transaction.predicate.name,
+              transactionId: api_transaction.id,
+              transactionName: api_transaction.name,
+            },
+            user_id: member.id,
+          });
+        }
+      }
+
       //console.log('[DENTRO_ELSE_IF]', _api_transaction, resume, a);
       return resume;
     }
+
     return api_transaction.resume;
   }
 }
