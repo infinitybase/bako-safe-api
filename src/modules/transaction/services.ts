@@ -322,6 +322,8 @@ export class TransactionService implements ITransactionService {
     this.checkInvalidConditions(api_transaction);
 
     const tx_est = await provider.estimatePredicates(tx);
+    const coast = await provider.getTransactionCost(tx_est);
+
     const encodedTransaction = hexlify(tx_est.toTransactionBytes());
     return await provider.operations
       .submit({ encodedTransaction })
@@ -330,6 +332,13 @@ export class TransactionService implements ITransactionService {
           ...api_transaction.resume,
           witnesses: _witnesses,
           hash: transactionId.substring(2),
+          // max_fee * gasUsed
+          gasUsed: (
+            parseFloat(coast.maxFee.format({ precision: 12 })) *
+            parseFloat(coast.gasPrice.format({ precision: 12 }))
+          )
+            .toFixed(12)
+            .toString(),
           status: TransactionStatus.PROCESS_ON_CHAIN,
         };
         console.log('[ENVIADO]', resume);
@@ -363,6 +372,18 @@ export class TransactionService implements ITransactionService {
       result.status.type === TransactionProcessStatus.SUCCESS ||
       result.status.type === TransactionProcessStatus.FAILED
     ) {
+      const transactionCoast = (
+        parseFloat(api_transaction.resume.gasUsed) *
+        parseFloat(result.gasPrice) *
+        result.receipts
+          .map(item =>
+            item.receiptType === 'SCRIPT_RESULT' ? parseFloat(item.gasUsed) : 0,
+          )
+          .reduce((a, b) => a + b, 0)
+      )
+        .toFixed(9)
+        .toString();
+
       const resume = {
         ...api_transaction.resume,
         status:
@@ -373,10 +394,14 @@ export class TransactionService implements ITransactionService {
       const _api_transaction: IUpdateTransactionPayload = {
         status: resume.status,
         sendTime: new Date(),
-        gasUsed: result.gasPrice,
+        gasUsed: transactionCoast,
+        resume: {
+          ...resume,
+          gasUsed: transactionCoast,
+        },
       };
 
-      const a = await this.update(api_transaction.id, _api_transaction);
+      await this.update(api_transaction.id, _api_transaction);
 
       // NOTIFY MEMBERS ON TRANSACTIONS SUCCESS
       const notificationService = new NotificationService();
