@@ -48,7 +48,6 @@ export class UserController {
         address,
         provider,
       } = req.body;
-
       const existingUser = await this.userService.findByAddress(address);
 
       if (existingUser) return successful(existingUser, Responses.Created);
@@ -59,7 +58,6 @@ export class UserController {
         password,
         active,
         language,
-        role,
         address,
         provider,
         avatar: await this.userService.randomAvatar(),
@@ -67,7 +65,7 @@ export class UserController {
 
       return successful(response, Responses.Created);
     } catch (e) {
-      return error(e.error[0], e.statusCode);
+      return error(e.error, e.statusCode);
     }
   }
 

@@ -1,6 +1,14 @@
+import {
+  ITransactionResume,
+  TransactionStatus,
+  Transfer,
+  Vault,
+  ITransactionSummary,
+} from 'bsafe';
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
+import { Provider, TransactionRequest } from 'fuels';
 
-import { Asset, Transaction, TransactionStatus, User } from '@models/index';
+import { Asset, Transaction, Witness } from '@models/index';
 
 import { AuthValidatedRequest } from '@middlewares/auth/types';
 
@@ -20,46 +28,58 @@ export enum Sort {
 }
 
 export interface ICreateTransactionPayload {
-  predicateAdress: string;
-  predicateID?: string;
   name: string;
-  txData: string;
   hash: string;
+  predicateAddress: string;
   status: TransactionStatus;
-  assets: Asset[];
-  createdBy: User;
+  txData: TransactionRequest;
+  assets: {
+    assetId: string;
+    amount: string;
+    to: string;
+  }[];
+  witnesses: Partial<Witness>[];
+  resume?: ITransactionResume;
+  sendTime?: Date;
+  gasUsed?: string;
+  predicateID?: string;
+  summary?: ITransactionSummary;
 }
 
 export interface IUpdateTransactionPayload {
   name?: string;
   status?: TransactionStatus;
-  resume?: string;
+  resume?: ITransactionResume;
   sendTime?: Date;
   gasUsed?: string;
+  hash?: string;
 }
 
 export type ICloseTransactionPayload = {
   gasUsed: string;
   status: TransactionStatus;
   sendTime: Date;
-  resume: string;
+  resume: ITransactionResume;
 };
 
 export interface ITransactionFilterParams {
-  startDate?: string;
-  endDate?: string;
   predicateId?: string[];
-  createdBy?: string;
+  predicateAddress?: string;
   to?: string;
   hash?: string;
   status?: TransactionStatus[];
   name?: string;
   limit?: number;
+  allOfUser?: boolean;
+  startDate?: string;
+  endDate?: string;
+  createdBy?: string;
+  id?: string;
 }
 
 export type ICloseTransactionBody = {
   gasUsed: string;
-  transactionResult: string;
+  transactionResult: ITransactionResume;
   hasError: boolean;
 };
 
@@ -74,7 +94,7 @@ interface ICreateTransactionRequestSchema extends ValidatedRequestSchema {
 }
 
 interface IUpdateTransactionRequestSchema extends ValidatedRequestSchema {
-  [ContainerTypes.Body]: IUpdateTransactionPayload;
+  [ContainerTypes.Body]: Omit<IUpdateTransactionPayload, 'hash'>;
   [ContainerTypes.Params]: { id: string };
 }
 
@@ -84,6 +104,9 @@ interface IDeleteTransactionRequestSchema extends ValidatedRequestSchema {
 
 interface ICloseTransactionRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Body]: ICloseTransactionBody;
+  [ContainerTypes.Params]: { id: string };
+}
+interface ISendTransactionRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Params]: { id: string };
 }
 
@@ -123,13 +146,20 @@ interface IListRequestSchema extends ValidatedRequestSchema {
     page: string;
     perPage: string;
     limit: number;
+    id: string;
   };
+}
+export interface ITCreateService
+  extends Partial<Omit<Transaction, 'assets' | 'witnesses'>> {
+  assets: Partial<Asset>[];
+  witnesses: Partial<Witness>[];
 }
 
 export type ICreateTransactionRequest = AuthValidatedRequest<ICreateTransactionRequestSchema>;
 export type IUpdateTransactionRequest = AuthValidatedRequest<IUpdateTransactionRequestSchema>;
 export type IDeleteTransactionRequest = AuthValidatedRequest<IDeleteTransactionRequestSchema>;
 export type ICloseTransactionRequest = AuthValidatedRequest<ICloseTransactionRequestSchema>;
+export type ISendTransactionRequest = AuthValidatedRequest<ISendTransactionRequestSchema>;
 export type ISignByIdRequest = AuthValidatedRequest<ISignByIdRequestSchema>;
 export type IFindTransactionByIdRequest = AuthValidatedRequest<IFindTransactionByIdRequestSchema>;
 export type IFindTransactionByHashRequest = AuthValidatedRequest<IFindTransactionByHashRequestSchema>;
@@ -142,8 +172,19 @@ export interface ITransactionService {
   paginate(pagination?: PaginationParams): this;
   filter(filter: ITransactionFilterParams): this;
 
+  instanceTransactionScript: (
+    api_transaction: TransactionRequest,
+    vault: Vault,
+    witnesses: string[],
+  ) => Promise<Transfer>;
   validateStatus: (transactionId: string) => Promise<TransactionStatus>;
-  create: (payload: ICreateTransactionPayload) => Promise<Transaction>;
+  checkInvalidConditions: (api_transaction: Transaction) => void;
+  verifyOnChain: (
+    api_transaction: Transaction,
+    provider: Provider,
+  ) => Promise<ITransactionResume>;
+  sendToChain: (transactionId: string) => Promise<ITransactionResume>;
+  create: (payload: ITCreateService) => Promise<Transaction>;
   update: (id: string, payload: IUpdateTransactionPayload) => Promise<Transaction>;
   list: () => Promise<IPagination<Transaction> | Transaction[]>;
   findById: (id: string) => Promise<Transaction>;

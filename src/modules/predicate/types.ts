@@ -1,3 +1,4 @@
+import { Vault } from 'bsafe';
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 
 import { AuthValidatedRequest } from '@src/middlewares/auth/types';
@@ -22,14 +23,20 @@ export interface IPredicatePayload {
   description: string;
   predicateAddress: string;
   minSigners: number;
-  addresses: string[];
-  owner: string;
+  addresses?: string[];
+  //owner_id: string;
   bytes: string;
   abi: string;
   configurable: string;
   provider: string;
   chainId?: number;
   user: User;
+  //members?: User[];
+}
+
+export interface IPredicateMemberPayload {
+  user_id: string;
+  predicate_id: string;
 }
 
 export interface IPredicateFilterParams {
@@ -85,9 +92,10 @@ export interface IPredicateService {
   paginate(pagination?: PaginationParams): this;
   filter(filter: IPredicateFilterParams): this;
 
-  create: (payload: IPredicatePayload) => Promise<Predicate>;
+  create: (payload: Partial<Predicate>) => Promise<Predicate>;
   update: (id: string, payload: IPredicatePayload) => Promise<Predicate>;
   delete: (id: string) => Promise<boolean>;
-  findById: (id: string) => Promise<Predicate>;
+  findById: (id: string, signer: string) => Promise<Predicate>;
   list: () => Promise<IPagination<Predicate> | Predicate[]>;
+  instancePredicate: (predicateId: string) => Promise<Vault>;
 }

@@ -8,7 +8,7 @@ import { IAssetService, ICreateAssetPayload, IUpdateAssetPayload } from './types
 
 export class AssetService implements IAssetService {
   async create(payload: ICreateAssetPayload): Promise<Asset> {
-    return Asset.create(payload)
+    return await Asset.create(payload)
       .save()
       .then(assets => assets)
       .catch(e => {

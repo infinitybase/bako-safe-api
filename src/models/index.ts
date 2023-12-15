@@ -6,3 +6,6 @@ export * from './Predicate';
 export * from './Transaction';
 export * from './Asset';
 export * from './Witness';
+export * from './DApp';
+export * from './Notification';
+export * from './AddressBook';

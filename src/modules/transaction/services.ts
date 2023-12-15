@@ -1,8 +1,22 @@
-import { predicate } from '@mocks/predicate';
+import {
+  Transfer,
+  Vault,
+  TransactionProcessStatus,
+  TransactionStatus,
+  ITransactionResume,
+} from 'bsafe';
+import {
+  Provider,
+  TransactionRequest,
+  TransactionResponse,
+  hexlify,
+  transactionRequestify,
+} from 'fuels';
 
 import {
+  Notification,
+  NotificationTitle,
   Transaction,
-  TransactionStatus,
   Witness,
   WitnessesStatus,
 } from '@models/index';
@@ -13,6 +27,7 @@ import Internal from '@utils/error/Internal';
 import { IOrdination, setOrdination } from '@utils/ordination';
 import { IPagination, Pagination, PaginationParams } from '@utils/pagination';
 
+import { NotificationService } from '../notification/services';
 import {
   ICreateTransactionPayload,
   ITransactionFilterParams,
@@ -27,8 +42,7 @@ export class TransactionService implements ITransactionService {
   };
   private _pagination: PaginationParams;
   private _filter: ITransactionFilterParams;
-  private nativeAssetId =
-    '0x000000000000000000000000000000000000000000000000000000';
+
   filter(filter: ITransactionFilterParams) {
     this._filter = filter;
     return this;
@@ -45,7 +59,7 @@ export class TransactionService implements ITransactionService {
   }
 
   async create(payload: ICreateTransactionPayload): Promise<Transaction> {
-    return Transaction.create(payload)
+    return await Transaction.create(payload)
       .save()
       .then(transaction => transaction)
       .catch(e => {
@@ -61,8 +75,8 @@ export class TransactionService implements ITransactionService {
     id: string,
     payload?: IUpdateTransactionPayload,
   ): Promise<Transaction> {
-    return Transaction.update({ id }, payload)
-      .then(() => this.findById(id))
+    return await Transaction.update({ id }, payload)
+      .then(async () => await this.findById(id))
       .catch(e => {
         throw new Internal({
           type: ErrorTypes.Internal,
@@ -73,9 +87,9 @@ export class TransactionService implements ITransactionService {
   }
 
   async findById(id: string): Promise<Transaction> {
-    return Transaction.findOne({
+    return await Transaction.findOne({
       where: { id },
-      relations: ['assets', 'witnesses', 'predicate'],
+      relations: ['assets', 'witnesses', 'predicate', 'predicate.members'],
     })
       .then(transaction => {
         if (!transaction) {
@@ -89,8 +103,6 @@ export class TransactionService implements ITransactionService {
         return transaction;
       })
       .catch(e => {
-        if (e instanceof GeneralError) throw e;
-
         throw new Internal({
           type: ErrorTypes.Internal,
           title: 'Error on transaction findById',
@@ -108,19 +120,20 @@ export class TransactionService implements ITransactionService {
       't.createdAt',
       't.id',
       't.name',
-      't.predicateAdress',
-      't.predicateID',
+      't.predicateId',
       't.resume',
       't.sendTime',
       't.status',
+      't.summary',
       't.updatedAt',
     ]);
 
-    this._filter.predicateId &&
-      this._filter.predicateId.length &&
-      queryBuilder.andWhere('t.predicateID IN (:...predicates)', {
-        predicates: this._filter.predicateId,
+    this._filter.predicateAddress &&
+      this._filter.predicateAddress.length > 0 &&
+      queryBuilder.andWhere('t.predicate.predicateAddress IN (:...address)', {
+        address: this._filter.predicateAddress,
       });
+
     this._filter.to &&
       queryBuilder
         .innerJoin('t.assets', 'asset')
@@ -129,6 +142,12 @@ export class TransactionService implements ITransactionService {
     this._filter.hash &&
       queryBuilder.andWhere('LOWER(t.hash) = LOWER(:hash)', {
         hash: this._filter.hash,
+      });
+
+    this._filter.predicateId &&
+      this._filter.predicateId.length > 0 &&
+      queryBuilder.andWhere('t.predicate_id IN (:...predicateID)', {
+        predicateID: this._filter.predicateId,
       });
 
     this._filter.status &&
@@ -152,8 +171,12 @@ export class TransactionService implements ITransactionService {
       });
 
     this._filter.name &&
-      queryBuilder.where('LOWER(t.name) LIKE LOWER(:name)', {
+      queryBuilder.andWhere('LOWER(t.name) LIKE LOWER(:name)', {
         name: `%${this._filter.name}%`,
+      });
+    this._filter.id &&
+      queryBuilder.andWhere('t.id = :id', {
+        id: this._filter.id,
       });
 
     this._filter.limit && !hasPagination && queryBuilder.limit(this._filter.limit);
@@ -166,8 +189,10 @@ export class TransactionService implements ITransactionService {
         'predicate.name',
         'predicate.id',
         'predicate.minSigners',
-        'predicate.addresses',
+        'predicate.predicateAddress',
       ])
+      .innerJoin('predicate.members', 'members')
+      .addSelect(['members.id', 'members.avatar', 'members.address'])
       .orderBy(`t.${this._ordination.orderBy}`, this._ordination.sort);
 
     const handleInternalError = e => {
@@ -193,7 +218,7 @@ export class TransactionService implements ITransactionService {
   }
 
   async delete(id: string): Promise<boolean> {
-    return Transaction.update({ id }, { deletedAt: new Date() })
+    return await Transaction.update({ id }, { deletedAt: new Date() })
       .then(() => true)
       .catch(e => {
         throw new Internal({
@@ -224,18 +249,26 @@ export class TransactionService implements ITransactionService {
           witness[WitnessesStatus.REJECTED] +
           witness[WitnessesStatus.PENDING];
 
+        if (
+          transaction.status === TransactionStatus.SUCCESS ||
+          transaction.status === TransactionStatus.FAILED ||
+          transaction.status === TransactionStatus.PROCESS_ON_CHAIN
+        ) {
+          return transaction.status;
+        }
+
         if (witness[WitnessesStatus.DONE] >= transaction.predicate.minSigners) {
-          return TransactionStatus.PENDING;
+          return TransactionStatus.PENDING_SENDER;
         }
 
         if (
           totalSigners - witness[WitnessesStatus.REJECTED] <
           transaction.predicate.minSigners
         ) {
-          return TransactionStatus.REJECTED;
+          return TransactionStatus.DECLINED;
         }
 
-        return TransactionStatus.AWAIT;
+        return TransactionStatus.AWAIT_REQUIREMENTS;
       })
       .catch(e => {
         throw new Internal({
@@ -244,5 +277,129 @@ export class TransactionService implements ITransactionService {
           detail: e,
         });
       });
+  }
+
+  async instanceTransactionScript(
+    tx_data: TransactionRequest,
+    vault: Vault,
+    witnesses: string[],
+  ): Promise<Transfer> {
+    return await vault.BSAFEIncludeTransaction({
+      ...tx_data,
+      witnesses,
+    });
+  }
+
+  checkInvalidConditions(api_transaction: Transaction) {
+    const invalidConditions =
+      !api_transaction ||
+      api_transaction.status === TransactionStatus.AWAIT_REQUIREMENTS ||
+      api_transaction.status === TransactionStatus.SUCCESS;
+
+    if (invalidConditions) {
+      throw new NotFound({
+        type: ErrorTypes.NotFound,
+        title: 'Error on transaction list',
+        detail: 'No transactions found with the provided params',
+      });
+    }
+  }
+
+  async sendToChain(bsafe_txid: string) {
+    const api_transaction = await this.findById(bsafe_txid);
+    const { predicate, txData, witnesses } = api_transaction;
+    const provider = await Provider.create(predicate.provider);
+    const _witnesses = witnesses
+      .filter(w => !!w.signature)
+      .map(witness => witness.signature);
+    txData.witnesses = witnesses.map(witness => witness.signature).filter(w => !!w);
+
+    const tx = transactionRequestify({
+      ...txData,
+      witnesses: _witnesses,
+    });
+
+    this.checkInvalidConditions(api_transaction);
+
+    const tx_est = await provider.estimatePredicates(tx);
+    const encodedTransaction = hexlify(tx_est.toTransactionBytes());
+    return await provider.operations
+      .submit({ encodedTransaction })
+      .then(({ submit: { id: transactionId } }) => {
+        const resume: ITransactionResume = {
+          ...api_transaction.resume,
+          witnesses: _witnesses,
+          hash: transactionId.substring(2),
+          status: TransactionStatus.PROCESS_ON_CHAIN,
+        };
+        console.log('[ENVIADO]', resume);
+        return resume;
+      })
+      .catch(e => {
+        console.log('[ERRO AO ENVIAR]', e);
+        throw new Internal({
+          type: ErrorTypes.Internal,
+          title: 'Error on transaction sendToChain',
+          detail: 'Error on transaction sendToChain',
+        });
+      });
+  }
+
+  async verifyOnChain(api_transaction: Transaction, provider: Provider) {
+    const idOnChain = `0x${api_transaction.hash}`;
+    const sender = new TransactionResponse(idOnChain, provider);
+    const result = await sender.fetch();
+
+    // console.log('[VERIFY_ON_CHAIN] result:', result.status.type);
+    // console.log('[LÓGICAS]: ', {
+    //   enviado:
+    //     result.status.type === TransactionProcessStatus.SUCCESS ||
+    //     result.status.type === TransactionProcessStatus.FAILED,
+    // });
+
+    if (result.status.type === TransactionProcessStatus.SUBMITED) {
+      return api_transaction.resume;
+    } else if (
+      result.status.type === TransactionProcessStatus.SUCCESS ||
+      result.status.type === TransactionProcessStatus.FAILED
+    ) {
+      const resume = {
+        ...api_transaction.resume,
+        status:
+          result.status.type === TransactionProcessStatus.SUCCESS
+            ? TransactionStatus.SUCCESS
+            : TransactionStatus.FAILED,
+      };
+      const _api_transaction: IUpdateTransactionPayload = {
+        status: resume.status,
+        sendTime: new Date(),
+        gasUsed: result.gasPrice,
+      };
+
+      const a = await this.update(api_transaction.id, _api_transaction);
+
+      // NOTIFY MEMBERS ON TRANSACTIONS SUCCESS
+      const notificationService = new NotificationService();
+
+      if (result.status.type === TransactionProcessStatus.SUCCESS) {
+        for await (const member of api_transaction.predicate.members) {
+          await notificationService.create({
+            title: NotificationTitle.TRANSACTION_COMPLETED,
+            summary: {
+              vaultId: api_transaction.predicate.id,
+              vaultName: api_transaction.predicate.name,
+              transactionId: api_transaction.id,
+              transactionName: api_transaction.name,
+            },
+            user_id: member.id,
+          });
+        }
+      }
+
+      //console.log('[DENTRO_ELSE_IF]', _api_transaction, resume, a);
+      return resume;
+    }
+
+    return api_transaction.resume;
   }
 }

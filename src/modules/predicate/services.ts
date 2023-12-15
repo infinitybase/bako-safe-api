@@ -1,3 +1,5 @@
+import { IConfVault, Vault } from 'bsafe';
+import { Provider } from 'fuels';
 import { Brackets } from 'typeorm';
 
 import { NotFound } from '@src/utils/error';
@@ -22,6 +24,20 @@ export class PredicateService implements IPredicateService {
   };
   private _pagination: PaginationParams;
   private _filter: IPredicateFilterParams;
+  private predicateFieldsSelection = [
+    'p.id',
+    'p.createdAt',
+    'p.deletedAt',
+    'p.updatedAt',
+    'p.name',
+    'p.predicateAddress',
+    'p.description',
+    'p.minSigners',
+    'p.owner',
+    'p.provider',
+    'p.chainId',
+    'p.configurable',
+  ];
 
   filter(filter: IPredicateFilterParams) {
     this._filter = filter;
@@ -39,10 +55,7 @@ export class PredicateService implements IPredicateService {
   }
 
   async create(payload: IPredicatePayload): Promise<Predicate> {
-    return Predicate.create({
-      ...payload,
-      addresses: JSON.stringify(payload.addresses),
-    })
+    return Predicate.create(payload)
       .save()
       .then(predicate => predicate)
       .catch(e => {
@@ -54,9 +67,33 @@ export class PredicateService implements IPredicateService {
       });
   }
 
-  async findById(id: string): Promise<Predicate> {
-    return Predicate.findOne({ where: { id } })
+  async findById(id: string, signer?: string): Promise<Predicate> {
+    return Predicate.createQueryBuilder('p')
+      .where({ id })
+      .leftJoinAndSelect('p.members', 'members')
+      .leftJoinAndSelect('p.owner', 'owner')
+      .select([
+        ...this.predicateFieldsSelection,
+        'p.configurable',
+        'members.id',
+        'members.avatar',
+        'members.address',
+        'owner.id',
+        'owner.address',
+      ])
+      .getOne()
+
       .then(predicate => {
+        const isNotMember = !predicate.members.map(m => m.address).includes(signer);
+
+        // if (isNotMember) {
+        //   throw new Unauthorized({
+        //     type: ErrorTypes.Unauthorized,
+        //     title: UnauthorizedErrorTitles.INVALID_PERMISSION,
+        //     detail: `You are not authorized to access requested predicate.`,
+        //   });
+        // }
+
         if (!predicate) {
           throw new NotFound({
             type: ErrorTypes.NotFound,
@@ -64,7 +101,6 @@ export class PredicateService implements IPredicateService {
             detail: `Predicate with id ${id} not found`,
           });
         }
-
         return predicate;
       })
       .catch(e => {
@@ -80,20 +116,17 @@ export class PredicateService implements IPredicateService {
 
   async list(): Promise<IPagination<Predicate> | Predicate[]> {
     const hasPagination = this._pagination?.page && this._pagination?.perPage;
-    const queryBuilder = Predicate.createQueryBuilder('p').select([
-      'p.id',
-      'p.createdAt',
-      'p.deletedAt',
-      'p.updatedAt',
-      'p.name',
-      'p.predicateAddress',
-      'p.description',
-      'p.minSigners',
-      'p.addresses',
-      'p.owner',
-      'p.provider',
-      'p.chainId',
-    ]);
+    const queryBuilder = Predicate.createQueryBuilder('p')
+      .select(this.predicateFieldsSelection)
+      .innerJoin('p.members', 'members')
+      .innerJoin('p.owner', 'owner')
+      .addSelect([
+        'members.id',
+        'members.address',
+        'members.avatar',
+        'owner.id',
+        'owner.address',
+      ]);
 
     const handleInternalError = e => {
       if (e instanceof GeneralError) throw e;
@@ -105,26 +138,43 @@ export class PredicateService implements IPredicateService {
       });
     };
 
+    // todo:
+    /**
+     * include inner join to transactions and assets
+     * return itens
+     * and filter just assets ID
+     */
+
     this._filter.address &&
-      queryBuilder.where('p.predicateAddress =:predicateAddress', {
+      queryBuilder.andWhere('p.predicateAddress =:predicateAddress', {
         predicateAddress: this._filter.address,
       });
 
     this._filter.provider &&
-      queryBuilder.where('LOWER(p.provider) = LOWER(:provider)', {
+      queryBuilder.andWhere('LOWER(p.provider) = LOWER(:provider)', {
         provider: `${this._filter.provider}`,
       });
 
     this._filter.owner &&
-      queryBuilder.where('LOWER(p.owner) = LOWER(:owner)', {
+      queryBuilder.andWhere('LOWER(p.owner.address) = LOWER(:owner)', {
         owner: `${this._filter.owner}`,
       });
 
     this._filter.signer &&
-      queryBuilder.where(
-        `:address = ANY(SELECT jsonb_array_elements_text(p.addresses::jsonb)::text)`,
-        { address: this._filter.signer },
-      );
+      queryBuilder.andWhere(qb => {
+        const subQuery = qb
+          .subQuery()
+          .select('1')
+          .from('predicate_members', 'pm')
+          .where('pm.predicate_id = p.id')
+          .andWhere(
+            '(pm.user_id = (SELECT u.id FROM users u WHERE u.address = :signer))',
+            { signer: this._filter.signer },
+          )
+          .getQuery();
+
+        return `EXISTS ${subQuery}`;
+      });
 
     this._filter.q &&
       queryBuilder.andWhere(
@@ -144,24 +194,16 @@ export class PredicateService implements IPredicateService {
     return hasPagination
       ? Pagination.create(queryBuilder)
           .paginate(this._pagination)
-          .then(paginationResult => paginationResult)
+          .then(result => result)
           .catch(handleInternalError)
       : queryBuilder
           .getMany()
-          .then(predicates => {
-            return predicates ?? [];
-          })
+          .then(predicates => predicates ?? [])
           .catch(handleInternalError);
   }
 
   async update(id: string, payload: IPredicatePayload): Promise<Predicate> {
-    return Predicate.update(
-      { id },
-      {
-        ...payload,
-        addresses: JSON.stringify(payload.addresses),
-      },
-    )
+    return Predicate.update({ id }, payload)
       .then(() => this.findById(id))
       .catch(e => {
         throw new Internal({
@@ -182,5 +224,16 @@ export class PredicateService implements IPredicateService {
           detail: `Predicate with id ${id} not found`,
         });
       });
+  }
+
+  async instancePredicate(predicateId: string): Promise<Vault> {
+    const predicate = await this.findById(predicateId);
+    const configurable: IConfVault = JSON.parse(predicate.configurable);
+    const provider = await Provider.create(predicate.provider);
+
+    return Vault.create({
+      configurable,
+      provider,
+    });
   }
 }

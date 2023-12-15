@@ -44,6 +44,7 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
     if (!isSignOut) web3Utils.verifyExpiredToken();
 
     requestAuth.user = userToken.user;
+    requestAuth.userToken = userToken;
 
     return next();
   } catch (e) {

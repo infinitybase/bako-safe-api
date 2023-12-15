@@ -2,8 +2,7 @@
 yarn database:test
 
 #give a timeout and run migrations
-sleep 5 && yarn migration:run
+sleep 5
 
 #run jest tests
-node --experimental-vm-modules ./node_modules/jest/bin/jest.js
-
+NODE_ENV=test node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --detectOpenHandles --forceExit --verbose

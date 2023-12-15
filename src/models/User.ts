@@ -12,17 +12,9 @@ import { EncryptUtils } from '@utils/index';
 import { Base } from './Base';
 import Role from './Role';
 
-const { UI_URL } = process.env;
-
 export enum Languages {
   ENGLISH = 'English',
   PORTUGUESE = 'Portuguese',
-}
-
-export interface ResumedUser {
-  name?: string;
-  avatar: string;
-  address: string;
 }
 
 @Entity('users')
@@ -48,12 +40,8 @@ class User extends Base {
   @Column({ enum: Languages })
   language?: Languages;
 
-  @JoinColumn({ name: 'role_id' })
-  @ManyToOne(() => Role)
-  role: Role;
-
   @Column()
-  avatar?: string;
+  avatar: string;
 
   @BeforeInsert()
   @BeforeUpdate()

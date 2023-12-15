@@ -1,6 +1,5 @@
+import { TransactionStatus } from 'bsafe';
 import Joi from 'joi';
-
-import { TransactionStatus } from '@models/index';
 
 import { validator } from '@utils/index';
 
@@ -8,23 +7,24 @@ const allowedStatus = Object.values(TransactionStatus);
 
 export const validateAddTransactionPayload = validator.body(
   Joi.object({
-    predicateAdress: Joi.string().required(),
-    predicateID: Joi.string().uuid(),
+    predicateAddress: Joi.string().required(),
     name: Joi.string().required(),
-    txData: Joi.string().required(),
     hash: Joi.string().required(),
+    txData: Joi.object().required(),
     status: Joi.string()
       .required()
       .valid(...allowedStatus),
     assets: Joi.array()
-      .items(
-        Joi.object({
-          to: Joi.string().required(),
-          assetID: Joi.string().required(),
-          amount: Joi.string().required(),
-        }),
-      )
+      .items({
+        assetId: Joi.string().required(),
+        to: Joi.string().required(),
+        amount: Joi.string().required(),
+        utxo: Joi.string().required().allow(null, ''),
+      })
       .required(),
+    sendTime: Joi.string(),
+    gasUsed: Joi.string(),
+    resume: Joi.string(),
   }),
 );
 

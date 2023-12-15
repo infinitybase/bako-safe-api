@@ -1,18 +1,18 @@
-import { TransactionStatus, Witness, WitnessesStatus } from '@models/index';
+import { Witness } from '@models/index';
 
 import { NotFound } from '@utils/error';
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
 
 import {
-  IWitnessService,
   ICreateWitnessPayload,
   IUpdateWitnessPayload,
+  IWitnessService,
 } from './types';
 
 export class WitnessService implements IWitnessService {
   async create(payload: ICreateWitnessPayload): Promise<Witness> {
-    return Witness.create(payload)
+    return await Witness.create(payload)
       .save()
       .then(witness => witness)
       .catch(e => {
@@ -24,8 +24,26 @@ export class WitnessService implements IWitnessService {
       });
   }
 
+  async findByTransactionId(transactionId: string, isSigned?: boolean) {
+    const queryBuilder = Witness.createQueryBuilder(
+      'w',
+    ).where('w.transactionID = :transactionId', { transactionId });
+    isSigned && queryBuilder.andWhere('w.signature is not null');
+
+    return await queryBuilder
+      .getMany()
+      .then(witnesses => witnesses)
+      .catch(e => {
+        throw new Internal({
+          type: ErrorTypes.Internal,
+          title: 'Error on witnesses list',
+          detail: e,
+        });
+      });
+  }
+
   async findById(id: string): Promise<Witness> {
-    return Witness.findOne({ where: { id } })
+    return await Witness.findOne({ where: { id } })
       .then(witness => {
         if (!witness) {
           throw new NotFound({
@@ -49,8 +67,10 @@ export class WitnessService implements IWitnessService {
   }
 
   async update(id: string, payload: IUpdateWitnessPayload): Promise<Witness> {
-    return Witness.update({ id }, payload)
-      .then(() => this.findById(id))
+    return await Witness.update({ id }, payload)
+      .then(async () => {
+        return await this.findById(id);
+      })
       .catch(e => {
         throw new Internal({
           type: ErrorTypes.Internal,
@@ -61,7 +81,7 @@ export class WitnessService implements IWitnessService {
   }
 
   async delete(id: string): Promise<boolean> {
-    return Witness.update({ id }, { deletedAt: new Date() })
+    return await Witness.update({ id }, { deletedAt: new Date() })
       .then(() => true)
       .catch(e => {
         throw new Internal({

@@ -1,6 +1,5 @@
 import { Router } from 'express';
 
-import { authMiddleware } from '@src/middlewares/auth';
 import { handleResponse } from '@src/utils/index';
 
 import { UserService } from '../configs/user/service';
@@ -21,6 +20,6 @@ router.post(
   handleResponse(authController.signIn),
 );
 
-router.delete(signOutPath, authMiddleware, handleResponse(authController.signOut));
+//router.delete(signOutPath, authMiddleware, handleResponse(authController.signOut));
 
 export default router;

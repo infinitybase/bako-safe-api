@@ -1,6 +1,3 @@
-import { predicate } from '@mocks/predicate';
-import { Brackets, In } from 'typeorm';
-
 import VaultTemplate from '@src/models/VaultTemplate';
 
 import { NotFound } from '@utils/error';
@@ -38,17 +35,18 @@ export class VaultTemplateService implements IVaultTemplateService {
     return this;
   }
 
-  async create(payload: ICreatePayload): Promise<VaultTemplate> {
-    return await VaultTemplate.create(payload)
-      .save()
-      .then(template => template)
-      .catch(e => {
-        throw new Internal({
-          type: ErrorTypes.Internal,
-          title: 'Error on vault template creation',
-          detail: e,
-        });
-      });
+  async create(): Promise<VaultTemplate> {
+    return new VaultTemplate();
+    // return await VaultTemplate.create(payload)
+    //   .save()
+    //   .then(template => template)
+    //   .catch(e => {
+    //     throw new Internal({
+    //       type: ErrorTypes.Internal,
+    //       title: 'Error on vault template creation',
+    //       detail: e,
+    //     });
+    //   });
   }
 
   async update(id: string, payload?: IUpdatePayload): Promise<VaultTemplate> {
@@ -66,9 +64,10 @@ export class VaultTemplateService implements IVaultTemplateService {
   async findById(id: string): Promise<VaultTemplate> {
     return await VaultTemplate.findOne({
       where: { id },
+      relations: ['addresses'],
     })
-      .then(transaction => {
-        if (!transaction) {
+      .then(template => {
+        if (!template) {
           throw new NotFound({
             type: ErrorTypes.NotFound,
             title: 'Vault not found',
@@ -76,7 +75,7 @@ export class VaultTemplateService implements IVaultTemplateService {
           });
         }
 
-        return transaction;
+        return template;
       })
       .catch(e => {
         if (e instanceof GeneralError) throw e;

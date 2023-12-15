@@ -1,20 +1,52 @@
+import { IConfVault, IPayloadVault, Vault } from 'bsafe';
+import crypto from 'crypto';
+import { Provider } from 'fuels';
+
 import { IPredicatePayload } from '@src/modules/predicate/types';
 
-export const predicate: IPredicatePayload = {
-  user: undefined,
-  name: 'Testing',
-  predicateAddress:
-    '0x0000000000000000000000000000000000000000000000000000000000000000',
-  description: 'desc_test',
-  minSigners: 3,
-  addresses: [
-    '0x0000000000000000000000000000000000000000000000000000000000000000',
-    '0x0000000000000000000000000000000000000000000000000000000000000000',
-  ],
-  owner: '0x0000000000000000000000000000000000000000000000000000000000000000',
-  bytes: 'bytes',
-  abi: 'abi',
-  configurable: 'configurable',
-  provider: 'network',
-  chainId: 1,
-};
+import { defaultConfigurable } from '../utils/configurable';
+
+export class PredicateMock {
+  public BSAFEVaultconfigurable: IConfVault;
+  public predicatePayload: Omit<IPredicatePayload, 'user'>;
+
+  protected constructor(
+    BSAFEVaultConfigurable: IConfVault,
+    predicatePayload: Omit<IPredicatePayload, 'user'>,
+  ) {
+    this.BSAFEVaultconfigurable = BSAFEVaultConfigurable;
+    this.predicatePayload = predicatePayload;
+  }
+
+  public static async create(
+    min: number,
+    SIGNERS: string[],
+  ): Promise<PredicateMock> {
+    const _BSAFEVaultconfigurable = {
+      SIGNATURES_COUNT: min,
+      SIGNERS,
+      network: defaultConfigurable['network'],
+      chainId: defaultConfigurable['chainId'],
+    };
+
+    const vault = await Vault.create({
+      configurable: _BSAFEVaultconfigurable,
+      provider: await Provider.create(defaultConfigurable['provider']),
+    });
+
+    const predicatePayload = {
+      name: crypto.randomUUID(),
+      description: crypto.randomUUID(),
+      provider: vault.provider.url,
+      chainId: vault.provider.getChainId(),
+      predicateAddress: vault.address.toString(),
+      minSigners: min,
+      bytes: vault.getBin(),
+      abi: JSON.stringify(vault.getAbi()),
+      configurable: JSON.stringify(_BSAFEVaultconfigurable),
+      addresses: _BSAFEVaultconfigurable.SIGNERS.map(signer => signer),
+    };
+
+    return new PredicateMock(_BSAFEVaultconfigurable, predicatePayload);
+  }
+}

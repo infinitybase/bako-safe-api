@@ -1,14 +1,6 @@
-import {
-  AfterLoad,
-  BeforeUpdate,
-  Column,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  OneToMany,
-} from 'typeorm';
-
-import { TransactionService } from '@src/modules/transaction/services';
+import { TransactionStatus, ITransactionResume, ITransactionSummary } from 'bsafe';
+import { TransactionRequest } from 'fuels';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 
 import { User } from '@models/User';
 
@@ -17,42 +9,43 @@ import { Base } from './Base';
 import { Predicate } from './Predicate';
 import { Witness } from './Witness';
 
-export enum TransactionStatus {
-  AWAIT = 'AWAIT',
-  DONE = 'DONE',
-  PENDING = 'PENDING',
-  REJECTED = 'REJECTED',
-  ERROR = 'ERROR',
-}
-
 @Entity('transactions')
 class Transaction extends Base {
-  @Column()
-  predicateAdress: string;
-
-  @Column()
-  predicateID: string;
-
   @Column()
   name: string;
 
   @Column()
-  txData: string;
-
-  @Column()
   hash: string;
 
-  @Column({ enum: TransactionStatus })
+  @Column({
+    type: 'jsonb',
+    name: 'tx_data',
+  })
+  txData: TransactionRequest;
+
+  @Column({
+    type: 'enum',
+    enum: TransactionStatus,
+    default: TransactionStatus.AWAIT_REQUIREMENTS,
+  })
   status: TransactionStatus;
+  @Column({
+    type: 'jsonb',
+    name: 'summary',
+  })
+  summary?: ITransactionSummary;
 
   @Column()
-  sendTime: Date;
+  sendTime?: Date;
 
   @Column()
-  gasUsed: string;
+  gasUsed?: string;
 
-  @Column()
-  resume: string;
+  @Column({
+    type: 'jsonb',
+    name: 'resume',
+  })
+  resume: ITransactionResume;
 
   @JoinColumn({ name: 'created_by' })
   @ManyToOne(() => User)
@@ -61,10 +54,13 @@ class Transaction extends Base {
   @OneToMany(() => Asset, asset => asset.transaction, { cascade: ['insert'] })
   assets: Asset[];
 
-  @OneToMany(() => Witness, witness => witness.transaction)
+  @OneToMany(() => Witness, witness => witness.transaction, { cascade: ['insert'] })
   witnesses: Witness[];
 
-  @JoinColumn({ name: 'predicateID' })
+  @Column({ name: 'predicate_id' })
+  predicateId: string;
+
+  @JoinColumn({ name: 'predicate_id' })
   @ManyToOne(() => Predicate)
   predicate: Predicate;
 }
