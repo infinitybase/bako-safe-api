@@ -29,3 +29,4 @@ services:
       - REFRESH_TOKEN_SECRET=refresh_token_secret
       # AWS
       - UI_URL=https://app.bsafe.pro
+      - API_URL=https://stg-api.bsafe.pro
