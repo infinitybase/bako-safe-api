@@ -1,5 +1,4 @@
 import { ITransactionResume, TransactionStatus } from 'bsafe';
-import { th } from 'date-fns/locale';
 import { Provider } from 'fuels';
 
 import AddressBook from '@src/models/AddressBook';
@@ -201,7 +200,7 @@ export class TransactionController {
           await this.transactionService
             .sendToChain(id)
             .then(async (result: ITransactionResume) => {
-              //console.log('[SUCCESS SEND]');
+              console.log('[SUCCESS SEND]');
               return await this.transactionService.update(id, {
                 status: TransactionStatus.PROCESS_ON_CHAIN,
                 sendTime: new Date(),
@@ -209,7 +208,7 @@ export class TransactionController {
               });
             })
             .catch(async () => {
-              //console.log('[FAILED SEND]');
+              console.log('[FAILED SEND]');
               await this.transactionService.update(id, {
                 status: TransactionStatus.FAILED,
                 sendTime: new Date(),
@@ -365,7 +364,7 @@ export class TransactionController {
       const resume = await this.transactionService
         .sendToChain(id)
         .then(async (result: ITransactionResume) => {
-          //console.log('[SUCCESS SEND]');
+          console.log('[SUCCESS SEND]');
           return await this.transactionService.update(id, {
             status: TransactionStatus.PROCESS_ON_CHAIN,
             sendTime: new Date(),
@@ -373,7 +372,7 @@ export class TransactionController {
           });
         })
         .catch(async () => {
-          //console.log('[FAILED SEND]');
+          console.log('[FAILED SEND]');
           await this.transactionService.update(id, {
             status: TransactionStatus.FAILED,
             sendTime: new Date(),
