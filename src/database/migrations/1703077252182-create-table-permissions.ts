@@ -28,6 +28,20 @@ export class createTablePermissions1703077252182 implements MigrationInterface {
             name: 'roles',
             type: 'jsonb',
           },
+          {
+            name: 'created_at',
+            type: 'timestamp',
+          },
+          {
+            name: 'updated_at',
+            type: 'timestamp',
+            isNullable: true,
+          },
+          {
+            name: 'deleted_at',
+            type: 'timestamp',
+            isNullable: true,
+          },
         ],
         foreignKeys: [
           {

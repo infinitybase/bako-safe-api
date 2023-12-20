@@ -8,7 +8,7 @@ import {
 const colWorkspace = new TableColumn({
   name: 'workspace_id',
   type: 'uuid',
-  isNullable: false,
+  isNullable: true,
 });
 
 const fkWorkspacePredicate = new TableForeignKey({

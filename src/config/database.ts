@@ -12,7 +12,6 @@ const {
   DATABASE_NAME,
   DATABASE_PORT,
   NODE_ENV,
-  DATABASE_PORT_TEST,
 } = process.env;
 
 const [host, port] = String(DATABASE_URL).split(':');

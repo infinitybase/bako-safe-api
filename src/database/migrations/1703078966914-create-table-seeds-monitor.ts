@@ -1,10 +1,10 @@
 import { MigrationInterface, QueryRunner, Table } from 'typeorm';
 
-export class createTableWorkspace1703070591761 implements MigrationInterface {
+export class createTableSeedsMonitor1703078966914 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.createTable(
       new Table({
-        name: 'workspace',
+        name: 'seeds_monitor',
         columns: [
           {
             name: 'id',
@@ -13,26 +13,6 @@ export class createTableWorkspace1703070591761 implements MigrationInterface {
             isUnique: true,
             generationStrategy: 'uuid',
             default: `uuid_generate_v4()`,
-          },
-          {
-            name: 'name',
-            type: 'varchar',
-            isNullable: false,
-          },
-          {
-            name: 'description',
-            type: 'text',
-            isNullable: true,
-          },
-          {
-            name: 'avatar',
-            type: 'varchar',
-            isNullable: true,
-          },
-          {
-            name: 'owner_id',
-            type: 'uuid',
-            isNullable: false,
           },
           {
             name: 'created_at',
@@ -48,13 +28,10 @@ export class createTableWorkspace1703070591761 implements MigrationInterface {
             type: 'timestamp',
             isNullable: true,
           },
-        ],
-        foreignKeys: [
           {
-            columnNames: ['owner_id'],
-            referencedColumnNames: ['id'],
-            referencedTableName: 'users',
-            onDelete: 'CASCADE',
+            name: 'filename',
+            type: 'varchar',
+            isNullable: false,
           },
         ],
       }),
@@ -62,6 +39,6 @@ export class createTableWorkspace1703070591761 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.dropTable('workspace');
+    await queryRunner.dropTable('seeds_monitor');
   }
 }
