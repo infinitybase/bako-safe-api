@@ -2,7 +2,7 @@ import { Router } from 'express';
 
 import { handleResponse } from '@src/utils/index';
 
-import { UserService } from '../configs/user/service';
+import { UserService } from '../user/service';
 import { AuthController } from './controller';
 import { AuthService } from './services';
 import { validateSignInPayload } from './validations';

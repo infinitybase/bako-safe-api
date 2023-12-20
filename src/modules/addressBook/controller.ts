@@ -5,7 +5,7 @@ import Internal from '@src/utils/error/Internal';
 import { ErrorTypes, error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
 
-import { IUserService } from '../configs/user/types';
+import { IUserService } from '../user/types';
 import {
   IAddressBookService,
   ICreateAddressBookRequest,

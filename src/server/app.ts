@@ -18,6 +18,7 @@ const { API_PORT, PORT } = process.env;
 
 type ServerHooks = {
   onServerStart?: Callback;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onServerStop?: Callback<any>;
 };
 

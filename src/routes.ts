@@ -1,9 +1,9 @@
 import { Router } from 'express';
 
+import users from '@src/modules/user/routes';
+
 import addressBook from '@modules/addressBook/routes';
 import auth from '@modules/auth/routes';
-import roles from '@modules/configs/roles/routes';
-import users from '@modules/configs/user/routes';
 import dApp from '@modules/dApps/routes';
 import notifications from '@modules/notification/routes';
 import predicates from '@modules/predicate/routes';
@@ -16,7 +16,6 @@ const ses = new DAppsService();
 const router = Router();
 
 router.use('/auth', auth);
-router.use('/role', roles);
 router.use('/user', users);
 router.use('/predicate', predicates);
 router.use('/transaction', transactions);

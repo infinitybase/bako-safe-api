@@ -8,7 +8,7 @@ import { IAuthRequest } from '@middlewares/auth/types';
 import { error } from '@utils/error';
 import { Responses, successful, bindMethods, Web3Utils } from '@utils/index';
 
-import { IUserService } from '../configs/user/types';
+import { IUserService } from '../user/types';
 import { IAuthService, ISignInRequest } from './types';
 
 export class AuthController {

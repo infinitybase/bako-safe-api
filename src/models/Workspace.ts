@@ -9,17 +9,22 @@ import {
 } from 'typeorm';
 
 import { Base } from './Base';
-import { Permission } from './Permissions';
 import { Predicate } from './Predicate';
 import { User } from './User';
 
 /**
- * permissoes   -> MUITAS PERMISSOES <-> 1 WORKSPACE
  * vaults       -> MUITOS VAULTS <-> 1 WORKSPACE
  * book         -> MUITOS BOOKS <-> 1 WORKSPACE
  *
  * users        -> MUITOS USERS <-> MUITOS WORKSPACES
  */
+
+export enum PermissionRoles {
+  SIGNER = 'SIGNER',
+  OWNER = 'OWNER',
+  ADMIN = 'ADMIN',
+  VIEWER = 'VIEWER',
+}
 
 @Entity('workspace')
 class Workspace extends Base {
@@ -36,20 +41,25 @@ class Workspace extends Base {
   @OneToOne(() => User)
   owner: User;
 
-  @OneToMany(() => Permission, permission => permission.workspace, {
-    cascade: ['insert', 'update'],
+  @Column({
+    name: 'permissions',
+    type: 'jsonb',
   })
-  permissions: Permission[];
+  permissions: {
+    [key: string]: {
+      [key in PermissionRoles]: string[];
+    };
+  };
 
   @OneToMany(() => Predicate, vault => vault.workspace, {
-    cascade: ['insert', 'update'],
+    cascade: true,
   })
   predicate: Predicate[];
 
   @ManyToMany(() => User)
   @JoinTable({
-    name: 'predicate_members',
-    joinColumn: { name: 'predicate_id', referencedColumnName: 'id' },
+    name: 'workspace_users',
+    joinColumn: { name: 'workspace_id', referencedColumnName: 'id' },
     inverseJoinColumn: { name: 'user_id', referencedColumnName: 'id' },
   })
   members: User[];

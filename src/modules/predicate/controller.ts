@@ -10,9 +10,9 @@ import { error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
 
 import { IAddressBookService } from '../addressBook/types';
-import { IUserService } from '../configs/user/types';
 import { INotificationService } from '../notification/types';
 import { ITransactionService } from '../transaction/types';
+import { IUserService } from '../user/types';
 import {
   ICreatePredicateRequest,
   IDeletePredicateRequest,

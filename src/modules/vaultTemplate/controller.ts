@@ -3,7 +3,7 @@ import Role from '@src/models/Role';
 import { error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
 
-import { IUserService } from '../configs/user/types';
+import { IUserService } from '../user/types';
 import {
   IVaultTemplateService,
   ICreateVaultTemplateRequest,

@@ -5,9 +5,9 @@ import { authMiddleware } from '@src/middlewares';
 import { handleResponse } from '@utils/index';
 
 import { AddressBookService } from '../addressBook/services';
-import { UserService } from '../configs/user/service';
 import { NotificationService } from '../notification/services';
 import { TransactionService } from '../transaction/services';
+import { UserService } from '../user/service';
 import { PredicateController } from './controller';
 import { PredicateService } from './services';
 import { validateAddPredicatePayload } from './validations';

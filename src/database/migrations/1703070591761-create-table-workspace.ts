@@ -25,6 +25,11 @@ export class createTableWorkspace1703070591761 implements MigrationInterface {
             isNullable: true,
           },
           {
+            name: 'permissions',
+            type: 'json',
+            isNullable: false,
+          },
+          {
             name: 'avatar',
             type: 'varchar',
             isNullable: true,

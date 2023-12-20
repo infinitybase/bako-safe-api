@@ -4,7 +4,7 @@ import { authMiddleware } from '@src/middlewares';
 
 import { handleResponse } from '@utils/index';
 
-import { UserService } from '../configs/user/service';
+import { UserService } from '../user/service';
 import { AddressBookController } from './controller';
 import { AddressBookService } from './services';
 import {

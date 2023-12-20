@@ -1,5 +1,5 @@
 import { User, Languages } from '@src/models';
-import { UserService } from '@src/modules/configs/user/service';
+import { UserService } from '@src/modules/user/service';
 
 import { accounts } from '../accounts';
 import { networks } from '../networks';
