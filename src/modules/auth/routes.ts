@@ -20,6 +20,8 @@ router.post(
   handleResponse(authController.signIn),
 );
 
+router.put('/workspace', handleResponse(authController.updateWorkspace));
+
 //router.delete(signOutPath, authMiddleware, handleResponse(authController.signOut));
 
 export default router;

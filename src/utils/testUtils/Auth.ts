@@ -57,6 +57,15 @@ export class AuthValidations {
     return data;
   }
 
+  async selectWorkspace(workspaceId: string) {
+    const { data } = await this.axios.put('/auth/workspace', {
+      workspace_id: workspaceId,
+      ...this.authToken,
+    });
+
+    return data;
+  }
+
   async signer(message: string) {
     const provider = await Provider.create(this.provider);
     const signer = Wallet.fromPrivateKey(this.account.privateKey, provider);

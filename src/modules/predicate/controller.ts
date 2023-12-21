@@ -166,10 +166,6 @@ export class PredicateController {
             .reduce((accumulator, transaction: Transaction) => {
               return accumulator.add(
                 transaction.assets.reduce((assetAccumulator, asset: Asset) => {
-                  console.log(
-                    asset.amount,
-                    assetAccumulator.add(bn.parseUnits(asset.amount)),
-                  );
                   return assetAccumulator.add(bn.parseUnits(asset.amount));
                 }, bn.parseUnits('0')),
               );

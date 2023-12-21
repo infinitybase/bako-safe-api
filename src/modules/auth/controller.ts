@@ -1,4 +1,4 @@
-import { addMinutes } from 'date-fns';
+import { add, addMinutes } from 'date-fns';
 
 import { Encoder } from '@src/models';
 import { Workspace } from '@src/models/Workspace';
@@ -10,8 +10,8 @@ import { error } from '@utils/error';
 import { Responses, successful, bindMethods, Web3Utils } from '@utils/index';
 
 import { IUserService } from '../user/types';
-import { ServiceWorkspace } from '../workspace/services';
-import { IAuthService, ISignInRequest } from './types';
+import { WorkspaceService } from '../workspace/services';
+import { IAuthService, IChangeWorkspaceRequest, ISignInRequest } from './types';
 
 export class AuthController {
   private authService: IAuthService;
@@ -42,7 +42,7 @@ export class AuthController {
         await this.authService.signOut(existingToken.user);
       }
 
-      const workspace = await new ServiceWorkspace()
+      const workspace = await new WorkspaceService()
         .filter(
           workspace_id
             ? { id: workspace_id }
@@ -64,15 +64,8 @@ export class AuthController {
         workspace,
       });
 
-      return successful(
-        {
-          accessToken: userToken.accessToken,
-          avatar: userToken.avatar,
-        },
-        Responses.Ok,
-      );
+      return successful(userToken, Responses.Ok);
     } catch (e) {
-      console.log(e);
       if (e instanceof GeneralError) throw e;
 
       return error(e.error, e.statusCode);
@@ -84,6 +77,40 @@ export class AuthController {
       const response = await this.authService.signOut(req.user);
 
       return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error[0], e.statusCode);
+    }
+  }
+
+  async updateWorkspace(req: IChangeWorkspaceRequest) {
+    try {
+      const { workspace_id, user } = req.body;
+
+      const workspace = await new WorkspaceService()
+        .filter({ id: workspace_id })
+        .list()
+        .then((response: Workspace[]) => response[0]);
+
+      const token = await this.authService.findToken({
+        userId: user,
+      });
+
+      token.workspace = workspace;
+
+      const response = await token.save();
+      return successful(
+        {
+          workspace: {
+            id: response.workspace.id,
+            name: response.workspace.name,
+            avatar: response.workspace.avatar,
+          },
+          token: response.token,
+          avatar: response.user.avatar,
+          address: response.user.address,
+        },
+        Responses.Ok,
+      );
     } catch (e) {
       return error(e.error[0], e.statusCode);
     }

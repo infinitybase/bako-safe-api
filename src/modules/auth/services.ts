@@ -20,6 +20,12 @@ export class AuthService implements IAuthService {
         return {
           accessToken: data.token,
           avatar: data.user.avatar,
+          address: data.user.address,
+          workspace: {
+            id: data.workspace.id,
+            name: data.workspace.name,
+            avatar: data.workspace.avatar,
+          },
         };
       })
       .catch(e => {

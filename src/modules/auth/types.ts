@@ -77,10 +77,17 @@ export interface ISignInResponse {
   avatar: string;
 }
 
-export type IActiveSession = AuthValidatedRequest<IActiveSessionRequestSchema>;
-export type ISignInRequest = AuthValidatedRequest<ISignInRequestSchema>;
+export interface IUpgradeWorkspace extends ValidatedRequestSchema {
+  [ContainerTypes.Query]: {
+    workspace: string;
+  };
+}
+
 export type IListRequest = AuthValidatedRequest<IListRequestSchema>;
+export type ISignInRequest = AuthValidatedRequest<ISignInRequestSchema>;
 export type IFindDappRequest = AuthValidatedRequest<IFindDappRequestSchema>;
+export type IActiveSession = AuthValidatedRequest<IActiveSessionRequestSchema>;
+export type IChangeWorkspaceRequest = AuthValidatedRequest<IUpgradeWorkspace>;
 export type IAuthorizeDappRequest = AuthValidatedRequest<IAuthorizeDappRequestSchema>;
 
 export interface IAuthService {

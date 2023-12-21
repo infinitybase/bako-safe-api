@@ -1,3 +1,5 @@
+import { Brackets } from 'typeorm';
+
 import { Workspace } from '@src/models/Workspace';
 import { ErrorTypes } from '@src/utils/error';
 import GeneralError from '@src/utils/error/GeneralError';
@@ -7,7 +9,7 @@ import { PaginationParams, IPagination, Pagination } from '@src/utils/pagination
 
 import { IFilterParams, IWorkspacePayload, IWorkspaceService } from './types';
 
-export class ServiceWorkspace implements IWorkspaceService {
+export class WorkspaceService implements IWorkspaceService {
   private _ordination: IOrdination<Workspace> = {
     orderBy: 'updatedAt',
     sort: 'DESC',
@@ -32,10 +34,10 @@ export class ServiceWorkspace implements IWorkspaceService {
 
   async list(): Promise<IPagination<Workspace> | Workspace[]> {
     try {
-      const hasPagination = this._pagination?.page && this._pagination?.perPage;
+      const hasPagination = !!this._pagination;
+      const hasOrdination = !!this._ordination;
       const queryBuilder = Workspace.createQueryBuilder('w')
         .select()
-        .orderBy(`w.${this._ordination.orderBy}`, this._ordination.sort)
         .leftJoinAndSelect('w.owner', 'owner')
         .leftJoinAndSelect('w.members', 'users');
 
@@ -43,16 +45,44 @@ export class ServiceWorkspace implements IWorkspaceService {
         queryBuilder.where('LOWER(w.name) LIKE LOWER(:name)', {
           name: `%${this._filter.q}%`,
         });
+
       this._filter.single &&
         queryBuilder.andWhere('single = :single', { single: this._filter.single });
+
       this._filter.owner &&
-        queryBuilder.andWhere('owner.id = :owner', { owner: this._filter.owner });
+        queryBuilder.andWhere(
+          `${
+            this._filter.owner.length <= 36 ? 'owner.id' : 'owner.address'
+          } = :owner`,
+          {
+            owner: this._filter.owner,
+          },
+        );
+
       this._filter.user &&
-        queryBuilder.andWhere('users.id = :user', { user: this._filter.user });
+        queryBuilder.andWhere(
+          `${
+            this._filter.user.length <= 36 ? 'users.id' : 'users.address'
+          } = :user`,
+          {
+            user: this._filter.user,
+          },
+        );
+
+      this._filter.id &&
+        queryBuilder.andWhere('w.id = :id', {
+          id: this._filter.id,
+        });
+
+      hasOrdination &&
+        queryBuilder.orderBy(
+          `w.${this._ordination.orderBy}`,
+          this._ordination.sort,
+        );
 
       return hasPagination
-        ? Pagination.create(queryBuilder).paginate(this._pagination)
-        : queryBuilder.getMany();
+        ? await Pagination.create(queryBuilder).paginate(this._pagination)
+        : await queryBuilder.getMany();
     } catch (error) {
       throw new Internal({
         type: ErrorTypes.Internal,
@@ -77,4 +107,34 @@ export class ServiceWorkspace implements IWorkspaceService {
       });
   }
   findById: (id: string) => Promise<Workspace>;
+
+  /**
+   * Formatar os dados para usuário nao logado, removendo as infos delicadas
+   *
+   * @params w: Workspace[]
+   *
+   * @return o workspace resumido, apenas com nome, avatar e endereco do owner e membros
+   *
+   */
+  static formatToUnloggedUser(w: Workspace[]) {
+    return w.map(workspace => {
+      return {
+        id: workspace.id,
+        name: workspace.name,
+        avatar: workspace.avatar,
+        owner: {
+          name: workspace.owner.name,
+          avatar: workspace.owner.avatar,
+          address: workspace.owner.address,
+        },
+        members: workspace.members.map(member => {
+          return {
+            name: member.name,
+            avatar: member.avatar,
+            address: member.address,
+          };
+        }),
+      };
+    });
+  }
 }

@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { Address } from 'fuels';
 
+import { accounts } from '@src/mocks/accounts';
 import { providers } from '@src/mocks/networks';
 
 describe('[User]', () => {
