@@ -1,0 +1,28 @@
+import axios from 'axios';
+import { Address } from 'fuels';
+
+import { providers } from '@src/mocks/networks';
+
+describe('[User]', () => {
+  let api = beforeAll(() => {
+    api = axios.create({
+      baseURL: 'http://localhost:3333',
+    });
+  });
+
+  test(
+    'Create user',
+    async () => {
+      const { data, status } = await api.post('/user/', {
+        address: Address.fromRandom().toAddress(),
+        provider: providers['local'].name,
+        name: `${new Date()} - Create user test`,
+      });
+
+      expect(status).toBe(201);
+      expect(data).toHaveProperty('id');
+      expect(data).toHaveProperty('address');
+    },
+    40 * 1000,
+  );
+});

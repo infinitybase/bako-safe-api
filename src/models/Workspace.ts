@@ -1,4 +1,5 @@
 import {
+  BeforeInsert,
   Column,
   Entity,
   JoinColumn,
@@ -26,20 +27,34 @@ export enum PermissionRoles {
   VIEWER = 'VIEWER',
 }
 
+export const defaultPermissions = {
+  [PermissionRoles.OWNER]: {
+    SIGNER: ['*'],
+    OWNER: ['*'],
+    ADMIN: ['*'],
+    VIEWER: ['*'],
+  },
+  [PermissionRoles.VIEWER]: {
+    VIEWER: ['*'],
+  },
+};
 @Entity('workspace')
 class Workspace extends Base {
   @Column()
   name: string;
 
-  @Column()
-  description: string;
+  @Column({ nullable: true })
+  description?: string;
 
-  @Column()
+  @Column({ nullable: true })
   avatar: string;
 
   @JoinColumn({ name: 'owner_id' })
   @OneToOne(() => User)
   owner: User;
+
+  @Column() // if true, the workspace is a single workspace
+  single: boolean;
 
   @Column({
     name: 'permissions',
@@ -63,6 +78,15 @@ class Workspace extends Base {
     inverseJoinColumn: { name: 'user_id', referencedColumnName: 'id' },
   })
   members: User[];
+
+  @BeforeInsert()
+  async isSingle() {
+    if (this.members && this.members.length > 1) {
+      this.single = false;
+    } else {
+      this.single = true;
+    }
+  }
 }
 
 export { Workspace };

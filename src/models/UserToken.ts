@@ -1,16 +1,8 @@
-import {
-  BeforeInsert,
-  BeforeUpdate,
-  Column,
-  Entity,
-  JoinColumn,
-  OneToOne,
-} from 'typeorm';
-
-import { EncryptUtils } from '@utils/index';
+import { Column, Entity, JoinColumn, OneToOne } from 'typeorm';
 
 import { Base } from './Base';
 import { User } from './User';
+import { Workspace } from './Workspace';
 
 export enum Encoder {
   fuel = 'fuel',
@@ -33,6 +25,10 @@ class UserToken extends Base {
 
   @Column()
   expired_at?: Date;
+
+  @JoinColumn({ name: 'workspace_id' })
+  @OneToOne(() => Workspace)
+  workspace: Workspace;
 
   @Column()
   user_id: string;

@@ -1,6 +1,7 @@
 import { addMinutes } from 'date-fns';
 
 import { Encoder } from '@src/models';
+import { Workspace } from '@src/models/Workspace';
 import GeneralError from '@src/utils/error/GeneralError';
 
 import { IAuthRequest } from '@middlewares/auth/types';
@@ -9,6 +10,7 @@ import { error } from '@utils/error';
 import { Responses, successful, bindMethods, Web3Utils } from '@utils/index';
 
 import { IUserService } from '../user/types';
+import { ServiceWorkspace } from '../workspace/services';
 import { IAuthService, ISignInRequest } from './types';
 
 export class AuthController {
@@ -23,7 +25,7 @@ export class AuthController {
 
   async signIn(req: ISignInRequest) {
     try {
-      const { signature, ...payloadWithoutSignature } = req.body;
+      const { signature, workspace_id, ...payloadWithoutSignature } = req.body;
       const expiresIn = process.env.TOKEN_EXPIRATION_TIME ?? '15';
 
       new Web3Utils({
@@ -40,6 +42,18 @@ export class AuthController {
         await this.authService.signOut(existingToken.user);
       }
 
+      const workspace = await new ServiceWorkspace()
+        .filter(
+          workspace_id
+            ? { id: workspace_id }
+            : {
+                owner: req.body.user_id,
+                single: true,
+              },
+        )
+        .list()
+        .then((response: Workspace[]) => response[0]);
+
       const userToken = await this.authService.signIn({
         token: req.body.signature,
         encoder: Encoder[req.body.encoder],
@@ -47,6 +61,7 @@ export class AuthController {
         expired_at: addMinutes(req.body.createdAt, Number(expiresIn)),
         payload: JSON.stringify(payloadWithoutSignature),
         user: await this.userService.findOne(req.body.user_id),
+        workspace,
       });
 
       return successful(
@@ -57,6 +72,7 @@ export class AuthController {
         Responses.Ok,
       );
     } catch (e) {
+      console.log(e);
       if (e instanceof GeneralError) throw e;
 
       return error(e.error, e.statusCode);

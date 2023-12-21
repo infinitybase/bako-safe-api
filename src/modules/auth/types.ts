@@ -1,5 +1,7 @@
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 
+import { Workspace } from '@src/models/Workspace';
+
 import UserToken, { Encoder } from '@models/UserToken';
 import { User } from '@models/index';
 
@@ -12,6 +14,7 @@ export interface ICreateUserTokenPayload {
   encoder: Encoder;
   provider: string;
   payload: string;
+  workspace: Workspace;
 }
 
 export interface ISignInPayload {
@@ -22,6 +25,7 @@ export interface ISignInPayload {
   provider: string;
   signature: string;
   user_id: string;
+  workspace_id?: string;
 }
 
 interface IActiveSessionRequestSchema extends ValidatedRequestSchema {
