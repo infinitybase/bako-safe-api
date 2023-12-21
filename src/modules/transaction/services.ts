@@ -192,6 +192,7 @@ export class TransactionService implements ITransactionService {
       .addSelect([
         'predicate.name',
         'predicate.id',
+        'predicate.description',
         'predicate.minSigners',
         'predicate.predicateAddress',
       ])
