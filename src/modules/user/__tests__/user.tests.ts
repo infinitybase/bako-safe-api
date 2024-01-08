@@ -1,10 +1,9 @@
 import axios from 'axios';
 import { Address } from 'fuels';
 
-import { accounts } from '@src/mocks/accounts';
 import { providers } from '@src/mocks/networks';
 
-describe('[User]', () => {
+describe('[USER]', () => {
   let api = beforeAll(() => {
     api = axios.create({
       baseURL: 'http://localhost:3333',

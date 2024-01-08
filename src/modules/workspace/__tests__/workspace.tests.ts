@@ -5,7 +5,7 @@ import { accounts } from '@src/mocks/accounts';
 import { networks, providers } from '@src/mocks/networks';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
 
-describe('[User]', () => {
+describe('[WORKSPACE]', () => {
   let api: AuthValidations;
   beforeAll(async () => {
     api = new AuthValidations(networks['local'], accounts['USER_1']);
@@ -78,7 +78,9 @@ describe('[User]', () => {
       expect(workspace).toHaveProperty('id');
       expect(workspace.id).toBe(data.id);
       expect(workspace).toHaveProperty('owner');
+      expect(workspace.owner).toEqual(data.owner);
       expect(workspace).toHaveProperty('members');
+      expect(workspace.members).toHaveLength(data.members.length);
     },
     60 * 1000,
   );
