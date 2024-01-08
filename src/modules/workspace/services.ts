@@ -106,6 +106,23 @@ export class WorkspaceService implements IWorkspaceService {
         });
       });
   }
+
+  async update(payload: Partial<Workspace>): Promise<boolean> {
+    return await Workspace.update({ id: payload.id }, payload)
+      .then(() => {
+        return true;
+      })
+      .catch(error => {
+        if (error instanceof GeneralError) throw error;
+
+        throw new Internal({
+          type: ErrorTypes.Update,
+          title: 'Error on workspace update',
+          detail: error,
+        });
+      });
+  }
+
   findById: (id: string) => Promise<Workspace>;
 
   /**

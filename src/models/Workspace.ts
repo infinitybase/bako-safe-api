@@ -63,7 +63,7 @@ class Workspace extends Base {
   avatar: string;
 
   @JoinColumn({ name: 'owner_id' })
-  @OneToOne(() => User)
+  @OneToOne(() => User, { cascade: true })
   owner: User;
 
   @Column() // if true, the workspace is a single workspace
@@ -80,7 +80,7 @@ class Workspace extends Base {
   })
   predicate: Predicate[];
 
-  @ManyToMany(() => User)
+  @ManyToMany(() => User, { cascade: true })
   @JoinTable({
     name: 'workspace_users',
     joinColumn: { name: 'workspace_id', referencedColumnName: 'id' },

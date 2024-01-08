@@ -15,7 +15,7 @@ export interface IFilterParams {
 
 export interface IWorkspacePayload {
   name: string;
-  members: string[];
+  members?: string[];
   description?: string;
   avatar?: string;
   single?: boolean;
@@ -42,9 +42,27 @@ interface ICreateRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Body]: IWorkspacePayload;
 }
 
+interface IUpdateRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Body]: Pick<IWorkspacePayload, 'name' | 'avatar' | 'description'>;
+  [ContainerTypes.Params]: { id: string };
+}
+
+interface IUpdateMembersRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Body]: { members: string[] };
+  [ContainerTypes.Params]: { id: string };
+}
+
+interface IUpdatePermissionsRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Body]: { permissions: IPermissions };
+  [ContainerTypes.Params]: { id: string };
+}
+
 export type IListByUserRequest = AuthValidatedRequest<IListRequestSchema>;
 export type IFindByIdRequest = AuthValidatedRequest<IFindByIdRequestSchema>;
 export type ICreateRequest = AuthValidatedRequest<ICreateRequestSchema>;
+export type IUpdateRequest = AuthValidatedRequest<IUpdateRequestSchema>;
+export type IUpdateMembersRequest = AuthValidatedRequest<IUpdateMembersRequestSchema>;
+export type IUpdatePermissionsRequest = AuthValidatedRequest<IUpdatePermissionsRequestSchema>;
 
 export interface IWorkspaceService {
   ordination(ordination?: IOrdination<Workspace>): this;

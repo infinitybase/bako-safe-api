@@ -10,7 +10,13 @@ import { Responses, successful } from '@utils/index';
 
 import { UserService } from '../user/service';
 import { WorkspaceService } from './services';
-import { ICreateRequest, IListByUserRequest } from './types';
+import {
+  ICreateRequest,
+  IListByUserRequest,
+  IUpdateMembersRequest,
+  IUpdatePermissionsRequest,
+  IUpdateRequest,
+} from './types';
 
 export class WorkspaceController {
   async listByUser(req: IListByUserRequest) {
@@ -66,6 +72,64 @@ export class WorkspaceController {
         })
         .list()
         .then((response: Workspace[]) => response[0]);
+
+      return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async update(req: IUpdateRequest) {
+    try {
+      const { id } = req.params;
+
+      const response = await new WorkspaceService()
+        .update({
+          ...req.body,
+          id,
+        })
+        .then(async () => {
+          return await new WorkspaceService()
+            .filter({ id })
+            .list()
+            .then(data => data[0]);
+        });
+      return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async updatePermissions(req: IUpdatePermissionsRequest) {
+    try {
+      const { id } = req.params;
+
+      const response = await new WorkspaceService().update({
+        ...req.body,
+        id,
+      });
+
+      return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async updateMembers(req: IUpdateMembersRequest) {
+    try {
+      const { id } = req.params;
+      const { members } = req.body;
+      const _members: User[] = [];
+      if (members) {
+        for await (const member of members) {
+          _members.push(await new UserService().findOne(member));
+        }
+      }
+
+      const response = await new WorkspaceService().update({
+        members: _members,
+        id,
+      });
 
       return successful(response, Responses.Ok);
     } catch (e) {
