@@ -28,8 +28,8 @@ describe('[WORKSPACE]', () => {
     });
 
     const { data, status } = await api.axios.post(`/workspace/`, {
-      name: 'Workspace 1',
-      description: 'Workspace 1 description',
+      name: '[GENERATED] Workspace 1',
+      description: '[GENERATED] Workspace 1 description',
       members: [data_user1.id, data_user2.id],
     });
 
