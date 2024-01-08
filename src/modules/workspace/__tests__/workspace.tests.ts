@@ -207,6 +207,10 @@ describe('[WORKSPACE]', () => {
     expect(workspace_updated).toHaveProperty('members');
     expect(workspace_updated.members).toHaveLength(workspace.members.length - 1);
     expect(workspace_updated.members[0]).toHaveProperty('id', notOwner[0].id);
+    expect(workspace_updated.permissions).toEqual({
+      [workspace.owner.id]: defaultPermissions[PermissionRoles.OWNER],
+      [notOwner[0].id]: defaultPermissions[PermissionRoles.VIEWER],
+    });
   });
 
   test('Cannot remove owner from workspace', async () => {
