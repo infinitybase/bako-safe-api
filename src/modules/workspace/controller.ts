@@ -136,14 +136,36 @@ export class WorkspaceController {
           _members.push(await new UserService().findOne(member));
         }
       }
+      const _permissions = {};
+      // verify if user owner is removed
+      const hasOwner = await new WorkspaceService()
+        .filter({ id })
+        .list()
+        .then(data => {
+          const { owner, permissions } = data[0];
+          _members.map(member => {
+            _permissions[member.id] = permissions[member.id];
+          });
+          return _members.find(member => member.id === owner.id);
+        });
+      if (!hasOwner) return error('Owner cannot be removed', 400);
 
-      const response = await new WorkspaceService().update({
-        members: _members,
-        id,
-      });
+      const response = await new WorkspaceService()
+        .update({
+          permissions: _permissions,
+          members: _members,
+          id,
+        })
+        .then(async () => {
+          return await new WorkspaceService()
+            .filter({ id })
+            .list()
+            .then(data => data[0]);
+        });
 
       return successful(response, Responses.Ok);
     } catch (e) {
+      console.log(e);
       return error(e.error, e.statusCode);
     }
   }

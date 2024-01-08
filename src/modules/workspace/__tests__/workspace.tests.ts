@@ -174,4 +174,63 @@ describe('[WORKSPACE]', () => {
     },
     40 * 1000,
   );
+
+  test('Upgrade workspace members', async () => {
+    const { data } = await generateWorkspacePayload();
+
+    const { data: workspace, status: status_find } = await api.axios.get(
+      `/workspace/${data.id}`,
+    );
+
+    const notOwner = workspace.members.filter(m => m.id !== workspace.owner.id);
+
+    const { data: workspace_updated, status: status_update } = await api.axios.put(
+      `/workspace/${data.id}/members`,
+      {
+        members: [notOwner[0].id, workspace.owner.id],
+      },
+    );
+
+    expect(status_find).toBe(200);
+    expect(workspace).toHaveProperty('id');
+    expect(workspace.id).toBe(data.id);
+    expect(workspace).toHaveProperty('owner');
+    expect(workspace.owner).toEqual(data.owner);
+    expect(workspace).toHaveProperty('members');
+    expect(workspace.members).toHaveLength(data.members.length);
+
+    expect(status_update).toBe(200);
+    expect(workspace_updated).toHaveProperty('id');
+    expect(workspace_updated.id).toBe(data.id);
+    expect(workspace_updated).toHaveProperty('owner');
+    expect(workspace_updated.owner).toEqual(data.owner);
+    expect(workspace_updated).toHaveProperty('members');
+    expect(workspace_updated.members).toHaveLength(workspace.members.length - 1);
+    expect(workspace_updated.members[0]).toHaveProperty('id', notOwner[0].id);
+  });
+
+  test('Cannot remove owner from workspace', async () => {
+    const { data } = await generateWorkspacePayload();
+
+    const { data: workspace, status: status_find } = await api.axios.get(
+      `/workspace/${data.id}`,
+    );
+
+    const { status, data: workspace_error } = await api.axios
+      .put(`/workspace/${data.id}/members`, {
+        members: [workspace.members[1].id],
+      })
+      .catch(e => e.response);
+
+    expect(status_find).toBe(200);
+    expect(workspace).toHaveProperty('id');
+    expect(workspace.id).toBe(data.id);
+    expect(workspace).toHaveProperty('owner');
+    expect(workspace.owner).toEqual(data.owner);
+    expect(workspace).toHaveProperty('members');
+    expect(workspace.members).toHaveLength(data.members.length);
+
+    expect(status).toBe(400);
+    expect(workspace_error).toEqual('Owner cannot be removed');
+  });
 });

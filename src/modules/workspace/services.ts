@@ -108,7 +108,10 @@ export class WorkspaceService implements IWorkspaceService {
   }
 
   async update(payload: Partial<Workspace>): Promise<boolean> {
-    return await Workspace.update({ id: payload.id }, payload)
+    const w = Object.assign(await Workspace.findOne({ id: payload.id }), payload);
+
+    return w
+      .save()
       .then(() => {
         return true;
       })
