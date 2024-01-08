@@ -64,4 +64,22 @@ describe('[User]', () => {
     },
     60 * 1000,
   );
+
+  test(
+    'Find workspace by ID',
+    async () => {
+      const { data } = await generateWorkspacePayload();
+
+      const { data: workspace, status: status_find } = await api.axios.get(
+        `/workspace/${data.id}`,
+      );
+
+      expect(status_find).toBe(200);
+      expect(workspace).toHaveProperty('id');
+      expect(workspace.id).toBe(data.id);
+      expect(workspace).toHaveProperty('owner');
+      expect(workspace).toHaveProperty('members');
+    },
+    60 * 1000,
+  );
 });

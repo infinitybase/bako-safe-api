@@ -12,6 +12,6 @@ router.get('/by-user/:user', handleResponse(workspaceController.listByUser));
 
 router.use(authMiddleware);
 router.post('/', handleResponse(workspaceController.create));
-router.post('/:id', handleResponse(workspaceController.findById));
+router.get('/:id', handleResponse(workspaceController.findById));
 
 export default router;

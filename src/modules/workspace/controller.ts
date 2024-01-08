@@ -55,4 +55,21 @@ export class WorkspaceController {
       return error(e.error, e.statusCode);
     }
   }
+
+  async findById(req: IListByUserRequest) {
+    try {
+      const { id } = req.params;
+
+      const response = await new WorkspaceService()
+        .filter({
+          id,
+        })
+        .list()
+        .then((response: Workspace[]) => response[0]);
+
+      return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
 }
