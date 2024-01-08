@@ -52,6 +52,7 @@ export class UserController {
       await new WorkspaceService().create({
         name: `singleWorkspace[${response.id}]`,
         owner: response,
+        members: [response],
         avatar: await this.userService.randomAvatar(),
         permissions: {
           [response.id]: defaultPermissions[PermissionRoles.OWNER],

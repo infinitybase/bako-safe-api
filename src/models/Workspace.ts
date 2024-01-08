@@ -20,6 +20,9 @@ import { User } from './User';
  * users        -> MUITOS USERS <-> MUITOS WORKSPACES
  */
 
+/**
+ * PERMISSIONS TYPING
+ */
 export enum PermissionRoles {
   SIGNER = 'SIGNER',
   OWNER = 'OWNER',
@@ -38,13 +41,23 @@ export const defaultPermissions = {
     VIEWER: ['*'],
   },
 };
+
+export interface IPermissions {
+  [key: string]: {
+    [key in PermissionRoles]: string[];
+  };
+}
+/**
+ * PERMISSIONS TYPING
+ */
+
 @Entity('workspace')
 class Workspace extends Base {
   @Column()
   name: string;
 
   @Column({ nullable: true })
-  description?: string;
+  description: string;
 
   @Column({ nullable: true })
   avatar: string;
@@ -60,11 +73,7 @@ class Workspace extends Base {
     name: 'permissions',
     type: 'jsonb',
   })
-  permissions: {
-    [key: string]: {
-      [key in PermissionRoles]: string[];
-    };
-  };
+  permissions: IPermissions;
 
   @OneToMany(() => Predicate, vault => vault.workspace, {
     cascade: true,
