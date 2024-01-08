@@ -1,4 +1,4 @@
-import { TransactionStatus } from 'bsafe';
+import { ITransactionResume, TransactionStatus } from 'bsafe';
 import { Provider } from 'fuels';
 
 import AddressBook from '@src/models/AddressBook';
@@ -29,7 +29,6 @@ import {
   ISendTransactionRequest,
   ISignByIdRequest,
   ITransactionService,
-  IUpdateTransactionPayload,
 } from './types';
 
 export class TransactionController {
@@ -127,7 +126,24 @@ export class TransactionController {
 
   async findById({ params: { id } }: IFindTransactionByIdRequest) {
     try {
-      const response = await this.transactionService.findById(id);
+      const response = await this.transactionService
+        .findById(id)
+        .then(async (data: Transaction) => {
+          const { status, predicate } = data;
+          if (status === TransactionStatus.PROCESS_ON_CHAIN) {
+            const provider = await Provider.create(predicate.provider);
+            const result = await this.transactionService.verifyOnChain(
+              data,
+              provider,
+            );
+            return await this.transactionService.update(id, {
+              status: result.status,
+              resume: result,
+            });
+          }
+          return data;
+        });
+
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
@@ -169,15 +185,37 @@ export class TransactionController {
         }),
           _resume.witnesses.push(signer);
 
+        //console.log('[SIGNER_BY_ID_VALIDATE]: ', transaction.status);
         const statusField = await this.transactionService.validateStatus(id);
 
-        await this.transactionService.update(id, {
+        const result = await this.transactionService.update(id, {
           status: statusField,
           resume: {
             ..._resume,
             status: statusField,
           },
         });
+
+        if (result.status === TransactionStatus.PENDING_SENDER) {
+          await this.transactionService
+            .sendToChain(id)
+            .then(async (result: ITransactionResume) => {
+              console.log('[SUCCESS SEND]');
+              return await this.transactionService.update(id, {
+                status: TransactionStatus.PROCESS_ON_CHAIN,
+                sendTime: new Date(),
+                resume: result,
+              });
+            })
+            .catch(async () => {
+              console.log('[FAILED SEND]');
+              await this.transactionService.update(id, {
+                status: TransactionStatus.FAILED,
+                sendTime: new Date(),
+              });
+              throw new Error('Transaction send failed');
+            });
+        }
 
         const notificationSummary = {
           vaultId: predicate.id,
@@ -202,7 +240,7 @@ export class TransactionController {
         }
 
         // NOTIFY MEMBERS ON FAILED TRANSACTIONS
-        if (statusField === TransactionStatus.FAILED) {
+        if (statusField === TransactionStatus.DECLINED) {
           for await (const member of predicate.members) {
             await this.notificationService.create({
               title: NotificationTitle.TRANSACTION_DECLINED,
@@ -305,7 +343,7 @@ export class TransactionController {
   }
 
   async close({
-    body: { gasUsed, transactionResult, hasError },
+    body: { gasUsed, transactionResult },
     params: { id },
   }: ICloseTransactionRequest) {
     try {
@@ -323,34 +361,25 @@ export class TransactionController {
 
   async send({ params: { id } }: ISendTransactionRequest) {
     try {
-      const api_transaction = await this.transactionService.findById(id);
-      const { predicate, txData, witnesses } = api_transaction;
-      const _witnesses = witnesses
-        .filter(w => !!w)
-        .map(witness => witness.signature);
-      txData.witnesses = witnesses
-        .filter(w => w.status === WitnessesStatus.DONE)
-        .map(witness => witness.signature);
+      const resume = await this.transactionService
+        .sendToChain(id)
+        .then(async (result: ITransactionResume) => {
+          console.log('[SUCCESS SEND]');
+          return await this.transactionService.update(id, {
+            status: TransactionStatus.PROCESS_ON_CHAIN,
+            sendTime: new Date(),
+            resume: result,
+          });
+        })
+        .catch(async () => {
+          console.log('[FAILED SEND]');
+          await this.transactionService.update(id, {
+            status: TransactionStatus.FAILED,
+            sendTime: new Date(),
+          });
+          throw new Error('Transaction send failed');
+        });
 
-      this.transactionService.checkInvalidConditions(api_transaction);
-
-      const tx_id = await this.transactionService.sendToChain(
-        txData,
-        await Provider.create(predicate.provider),
-      );
-      const resume = {
-        ...api_transaction.resume,
-        witnesses: _witnesses,
-        bsafeID: api_transaction.id,
-      };
-      const _api_transaction: IUpdateTransactionPayload = {
-        status: TransactionStatus.PROCESS_ON_CHAIN,
-        sendTime: new Date(),
-        resume: resume,
-        hash: tx_id.substring(2),
-      };
-
-      await this.transactionService.update(api_transaction.id, _api_transaction);
       return successful(resume, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
@@ -359,6 +388,7 @@ export class TransactionController {
 
   async verifyOnChain({ params: { id } }: ISendTransactionRequest) {
     try {
+      //console.log('[VERIFY_ON_CHAIN_CONTROLLER]');
       const api_transaction = await this.transactionService.findById(id);
       const { predicate, name, id: transactionId } = api_transaction;
       const provider = await Provider.create(predicate.provider);
@@ -370,21 +400,22 @@ export class TransactionController {
         provider,
       );
 
-      // NOTIFY MEMBERS ON TRANSACTIONS SUCCESS
-      if (result.status === TransactionStatus.SUCCESS) {
-        for await (const member of predicate.members) {
-          await this.notificationService.create({
-            title: NotificationTitle.TRANSACTION_COMPLETED,
-            summary: {
-              vaultId: predicate.id,
-              vaultName: predicate.name,
-              transactionId: transactionId,
-              transactionName: name,
-            },
-            user_id: member.id,
-          });
-        }
-      }
+      //console.log('[CONTROLLER]: ', result);
+      // NOTIFY MEMBERS ON TRANSACTIONS SUCCESS (first solution, now is on the service)
+      // if (result.status === TransactionStatus.SUCCESS) {
+      //   for await (const member of predicate.members) {
+      //     await this.notificationService.create({
+      //       title: NotificationTitle.TRANSACTION_COMPLETED,
+      //       summary: {
+      //         vaultId: predicate.id,
+      //         vaultName: predicate.name,
+      //         transactionId: transactionId,
+      //         transactionName: name,
+      //       },
+      //       user_id: member.id,
+      //     });
+      //   }
+      // }
 
       return successful(result, Responses.Ok);
     } catch (e) {

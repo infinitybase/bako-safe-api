@@ -1,3 +1,7 @@
+import { BSafe } from 'bsafe';
+
+import { DiscordUtils } from '@src/utils';
+
 import App from './app';
 import Bootstrap from './bootstrap';
 
@@ -6,6 +10,24 @@ const start = async () => {
   await Bootstrap.start();
   app.init();
 };
+
+BSafe.setup({
+  api_url: process.env.API_URL,
+  bsafe_url: process.env.UI_URL,
+});
+
+if (process.env.NODE_ENV === 'production') {
+  App.pm2HandleServerStop();
+  App.serverHooks({
+    onServerStart: () => DiscordUtils.sendStartMessage(),
+    onServerStop: error =>
+      DiscordUtils.sendErrorMessage({
+        name: error.data?.name,
+        stack: error.data?.stack,
+        message: error.data?.message,
+      }),
+  });
+}
 
 try {
   start();

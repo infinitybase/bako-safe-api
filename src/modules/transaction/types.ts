@@ -183,10 +183,7 @@ export interface ITransactionService {
     api_transaction: Transaction,
     provider: Provider,
   ) => Promise<ITransactionResume>;
-  sendToChain: (
-    bsafe_transaction: TransactionRequest,
-    provider: Provider,
-  ) => Promise<string>;
+  sendToChain: (transactionId: string) => Promise<ITransactionResume>;
   create: (payload: ITCreateService) => Promise<Transaction>;
   update: (id: string, payload: IUpdateTransactionPayload) => Promise<Transaction>;
   list: () => Promise<IPagination<Transaction> | Transaction[]>;

@@ -29,3 +29,6 @@ services:
       - REFRESH_TOKEN_SECRET=refresh_token_secret
       # AWS
       - UI_URL=https://app.bsafe.pro
+      - API_URL=https://api-multsig.infinitybase.com
+      # DISCORD
+      - DISCORD_WEBHOOK=https://discord.com/api/webhooks/1179911741568733295/Y2Re5SpoxBzwLMZfmZyHqCAIp0sr3NvXc6DCfrpMgNY7KO-bGkOJg2FBiTmJbAnvgD2b
