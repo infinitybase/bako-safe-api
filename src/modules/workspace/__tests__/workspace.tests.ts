@@ -3,6 +3,7 @@ import { Address } from 'fuels';
 
 import { accounts } from '@src/mocks/accounts';
 import { networks, providers } from '@src/mocks/networks';
+import { PermissionRoles, defaultPermissions } from '@src/models/Workspace';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
 
 describe('[WORKSPACE]', () => {
@@ -56,11 +57,17 @@ describe('[WORKSPACE]', () => {
     'Create workspace',
     async () => {
       const { data, status } = await generateWorkspacePayload();
+      const notOwner = data.members.filter(m => m.id !== data.owner.id);
 
       expect(status).toBe(201);
       expect(data).toHaveProperty('id');
       expect(data).toHaveProperty('owner');
       expect(data).toHaveProperty('members');
+      expect(data.permissions).toStrictEqual({
+        [data.owner.id]: defaultPermissions[PermissionRoles.OWNER],
+        [notOwner[0].id]: defaultPermissions[PermissionRoles.VIEWER],
+        [notOwner[1].id]: defaultPermissions[PermissionRoles.VIEWER],
+      });
     },
     60 * 1000,
   );
@@ -121,4 +128,50 @@ describe('[WORKSPACE]', () => {
       'Workspace 1 description updated',
     );
   });
+
+  test(
+    'Upgrade workspace permissions',
+    async () => {
+      const { data } = await generateWorkspacePayload();
+
+      const { data: workspace, status: status_find } = await api.axios.get(
+        `/workspace/${data.id}`,
+      );
+
+      const notOwner = workspace.members.filter(m => m.id !== workspace.owner.id);
+
+      const {
+        data: workspace_updated,
+        status: status_update,
+      } = await api.axios.put(`/workspace/${data.id}/permissions`, {
+        permissions: {
+          ...workspace.permissions,
+          [notOwner[0].id]: defaultPermissions[PermissionRoles.OWNER],
+          [notOwner[1].id]: defaultPermissions[PermissionRoles.VIEWER],
+        },
+      });
+
+      expect(status_find).toBe(200);
+      expect(workspace).toHaveProperty('id');
+      expect(workspace.id).toBe(data.id);
+      expect(workspace).toHaveProperty('owner');
+      expect(workspace.owner).toEqual(data.owner);
+      expect(workspace).toHaveProperty('members');
+      expect(workspace.members).toHaveLength(data.members.length);
+
+      expect(status_update).toBe(200);
+      expect(workspace_updated).toHaveProperty('id');
+      expect(workspace_updated.id).toBe(data.id);
+      expect(workspace_updated).toHaveProperty('owner');
+      expect(workspace_updated.owner).toEqual(data.owner);
+      expect(workspace_updated).toHaveProperty('members');
+      expect(workspace_updated.members).toHaveLength(data.members.length);
+      expect(workspace_updated).toHaveProperty('permissions', {
+        ...workspace.permissions,
+        [notOwner[0].id]: defaultPermissions[PermissionRoles.OWNER],
+        [notOwner[1].id]: defaultPermissions[PermissionRoles.VIEWER],
+      });
+    },
+    40 * 1000,
+  );
 });

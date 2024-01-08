@@ -53,6 +53,10 @@ export class WorkspaceController {
         members: [..._members, user],
         permissions: permissions ?? {
           [user.id]: defaultPermissions[PermissionRoles.OWNER],
+          ..._members.reduce((acc, member) => {
+            acc[member.id] = defaultPermissions[PermissionRoles.VIEWER];
+            return acc;
+          }, {}),
         },
       });
 
@@ -104,10 +108,17 @@ export class WorkspaceController {
     try {
       const { id } = req.params;
 
-      const response = await new WorkspaceService().update({
-        ...req.body,
-        id,
-      });
+      const response = await new WorkspaceService()
+        .update({
+          ...req.body,
+          id,
+        })
+        .then(async () => {
+          return await new WorkspaceService()
+            .filter({ id })
+            .list()
+            .then(data => data[0]);
+        });
 
       return successful(response, Responses.Ok);
     } catch (e) {

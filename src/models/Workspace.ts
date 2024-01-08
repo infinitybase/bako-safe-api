@@ -29,7 +29,7 @@ export enum PermissionRoles {
   ADMIN = 'ADMIN',
   VIEWER = 'VIEWER',
 }
-
+//todo: change to specific permissions of each role depends the complete flow
 export const defaultPermissions = {
   [PermissionRoles.OWNER]: {
     SIGNER: ['*'],

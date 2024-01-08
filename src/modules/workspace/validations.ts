@@ -30,6 +30,6 @@ export const PayloadUpdateMembersWorkspaceSchema = validator.body(
 
 export const PayloadUpdatePermissionsWorkspaceSchema = validator.body(
   Joi.object({
-    permissions: Joi.object({}).required(),
+    permissions: Joi.object().required(),
   }),
 );
