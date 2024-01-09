@@ -6,6 +6,7 @@ import { Provider, Wallet } from 'fuels';
 
 import { User, Encoder } from '@src/models';
 
+//todo: repply this class on SDK to user autentication resource
 export class AuthValidations {
   public user: User;
   public authToken: IBSAFEAuth;
@@ -63,6 +64,16 @@ export class AuthValidations {
       ...this.authToken,
     });
 
+    return data;
+  }
+
+  async listMyWorkspaces() {
+    console.log('[LIST_MY_WORKSPACES]');
+
+    const { data } = await this.axios.get(`
+      /workspace/by-user/${this.account.address}`);
+
+    console.log(data);
     return data;
   }
 

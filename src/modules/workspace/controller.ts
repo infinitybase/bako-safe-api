@@ -29,7 +29,6 @@ export class WorkspaceController {
         .then((response: Workspace[]) =>
           WorkspaceService.formatToUnloggedUser(response),
         );
-
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);

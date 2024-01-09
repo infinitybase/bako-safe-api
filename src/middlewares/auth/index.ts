@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 
+import { PermissionRoles } from '@src/models/Workspace';
+
 import { signOutPath } from '@modules/auth/routes';
 import { AuthService } from '@modules/auth/services';
 
@@ -53,4 +55,38 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
   }
 }
 
-export { authMiddleware };
+function authPermissionMiddleware(permission?: PermissionRoles) {
+  return async function (req: Request, res: Response, next: NextFunction) {
+    try {
+      const requestAuth: IAuthRequest = req;
+
+      if (!permission) return next();
+
+      const { user, workspace } = requestAuth;
+
+      if (!user || !workspace) {
+        throw new Unauthorized({
+          type: ErrorTypes.Unauthorized,
+          title: UnauthorizedErrorTitles.MISSING_CREDENTIALS,
+          detail: 'Some required credentials are missing',
+        });
+      }
+
+      const hasPermission = workspace.permissions[user.id][permission];
+
+      if (!hasPermission) {
+        throw new Unauthorized({
+          type: ErrorTypes.Unauthorized,
+          title: UnauthorizedErrorTitles.MISSING_PERMISSION,
+          detail: 'You do not have permission to access this resource',
+        });
+      }
+
+      return next();
+    } catch (e) {
+      return next(e);
+    }
+  };
+}
+
+export { authMiddleware, authPermissionMiddleware };

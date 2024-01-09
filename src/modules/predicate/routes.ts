@@ -1,6 +1,7 @@
 import { Router } from 'express';
 
-import { authMiddleware } from '@src/middlewares';
+import { authMiddleware, authPermissionMiddleware } from '@src/middlewares';
+import { PermissionRoles } from '@src/models/Workspace';
 
 import { handleResponse } from '@utils/index';
 
@@ -35,7 +36,12 @@ const {
 
 router.use(authMiddleware);
 
-router.post('/', validateAddPredicatePayload, handleResponse(create));
+router.post(
+  '/',
+  validateAddPredicatePayload,
+  authPermissionMiddleware(PermissionRoles.OWNER),
+  handleResponse(create),
+);
 router.get('/', handleResponse(list));
 router.get('/:id', handleResponse(findById));
 router.get('/reserved-coins/:address', handleResponse(hasReservedCoins));
