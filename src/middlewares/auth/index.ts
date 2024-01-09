@@ -47,11 +47,8 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
     requestAuth.userToken = userToken;
     requestAuth.workspace = userToken.workspace;
 
-    console.log('[AUTH_MIDDLEWARE_WORKSPACE_REQUEST]', requestAuth.workspace);
-
     return next();
   } catch (e) {
-    console.log('[ERRO_MIDDLEWARE]: ', e);
     return next(e);
   }
 }
