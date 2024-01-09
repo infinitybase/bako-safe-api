@@ -1,8 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 
-import { Workspace } from '@src/models/Workspace';
-import { WorkspaceService } from '@src/modules/workspace/services';
-
 import { signOutPath } from '@modules/auth/routes';
 import { AuthService } from '@modules/auth/services';
 
