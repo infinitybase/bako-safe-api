@@ -44,7 +44,7 @@ export class PredicateController {
     bindMethods(this);
   }
 
-  async create({ body: payload, user }: ICreatePredicateRequest) {
+  async create({ body: payload, user, workspace }: ICreatePredicateRequest) {
     try {
       const members: User[] = [];
       for await (const member of payload.addresses) {
@@ -65,6 +65,7 @@ export class PredicateController {
         ...payload,
         owner: user,
         members,
+        workspace,
       });
 
       const { id, name, members: predicateMembers } = newPredicate;
