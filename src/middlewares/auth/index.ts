@@ -1,5 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 
+import { Workspace } from '@src/models/Workspace';
+import { WorkspaceService } from '@src/modules/workspace/services';
+
 import { signOutPath } from '@modules/auth/routes';
 import { AuthService } from '@modules/auth/services';
 
@@ -45,9 +48,13 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
 
     requestAuth.user = userToken.user;
     requestAuth.userToken = userToken;
+    requestAuth.workspace = userToken.workspace;
+
+    console.log('[AUTH_MIDDLEWARE_WORKSPACE_REQUEST]', requestAuth.workspace);
 
     return next();
   } catch (e) {
+    console.log('[ERRO_MIDDLEWARE]: ', e);
     return next(e);
   }
 }
