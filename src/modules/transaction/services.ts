@@ -13,6 +13,8 @@ import {
   TransactionResponse,
 } from 'fuels';
 
+import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
+
 import {
   NotificationTitle,
   Transaction,
@@ -411,18 +413,27 @@ export class TransactionService implements ITransactionService {
       // NOTIFY MEMBERS ON TRANSACTIONS SUCCESS
       const notificationService = new NotificationService();
 
+      const summary = {
+        vaultId: api_transaction.predicate.id,
+        vaultName: api_transaction.predicate.name,
+        transactionId: api_transaction.id,
+        transactionName: api_transaction.name,
+      };
+
       if (result.status.type === TransactionProcessStatus.SUCCESS) {
         for await (const member of api_transaction.predicate.members) {
           await notificationService.create({
             title: NotificationTitle.TRANSACTION_COMPLETED,
-            summary: {
-              vaultId: api_transaction.predicate.id,
-              vaultName: api_transaction.predicate.name,
-              transactionId: api_transaction.id,
-              transactionName: api_transaction.name,
-            },
+            summary,
             user_id: member.id,
           });
+
+          if (member.notify) {
+            await sendMail(EmailTemplateType.TRANSACTION_CREATED, {
+              to: member.email,
+              data: { summary },
+            });
+          }
         }
       }
 
