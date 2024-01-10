@@ -81,6 +81,16 @@ export class UserController {
     }
   }
 
+  async me(req: IFindOneRequest) {
+    try {
+      const response = await this.userService.findByAddress(req?.user.address);
+
+      return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error[0], e.statusCode);
+    }
+  }
+
   async update(req: IUpdateRequest) {
     try {
       const { id } = req.params;
