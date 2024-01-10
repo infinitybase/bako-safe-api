@@ -31,7 +31,7 @@ class User extends Base {
   @Column({ default: true })
   active: boolean;
 
-  @Column()
+  @Column({ select: false })
   email?: string;
 
   @Column({ select: false })
