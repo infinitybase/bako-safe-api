@@ -2,6 +2,7 @@ import { ITransactionResume, TransactionStatus } from 'bsafe';
 import { Provider } from 'fuels';
 
 import AddressBook from '@src/models/AddressBook';
+import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
 import { IPagination } from '@src/utils/pagination';
 
 import {
@@ -101,6 +102,12 @@ export class TransactionController {
       });
 
       const { id, name } = newTransaction;
+      const notificationSummary = {
+        vaultId: predicate.id,
+        vaultName: predicate.name,
+        transactionName: name,
+        transactionId: id,
+      };
       const membersWithoutLoggedUser = predicate.members.filter(
         member => member.id !== user.id,
       );
@@ -108,14 +115,16 @@ export class TransactionController {
       for await (const member of membersWithoutLoggedUser) {
         await this.notificationService.create({
           title: NotificationTitle.TRANSACTION_CREATED,
-          summary: {
-            vaultId: predicate.id,
-            vaultName: predicate.name,
-            transactionName: name,
-            transactionId: id,
-          },
+          summary: notificationSummary,
           user_id: member.id,
         });
+
+        if (member.notify) {
+          await sendMail(EmailTemplateType.TRANSACTION_CREATED, {
+            to: member.email,
+            data: { summary: notificationSummary },
+          });
+        }
       }
 
       return successful(newTransaction, Responses.Ok);
@@ -236,6 +245,13 @@ export class TransactionController {
               summary: notificationSummary,
               user_id: member.id,
             });
+
+            if (member.notify) {
+              await sendMail(EmailTemplateType.TRANSACTION_SIGNED, {
+                to: member.email,
+                data: { summary: notificationSummary },
+              });
+            }
           }
         }
 
@@ -247,6 +263,13 @@ export class TransactionController {
               summary: notificationSummary,
               user_id: member.id,
             });
+
+            if (member.notify) {
+              await sendMail(EmailTemplateType.TRANSACTION_REPROVED, {
+                to: member.email,
+                data: { summary: notificationSummary },
+              });
+            }
           }
         }
       }
