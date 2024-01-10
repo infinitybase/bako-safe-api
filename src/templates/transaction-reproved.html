@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Transaction Declined</title>
+    <style>
+      @import url(http://fonts.googleapis.com/css?family=Roboto);
+
+      * {
+        font-family: Roboto, Arial, Helvetica, sans-serif;
+      }
+
+      .Body {
+        max-width: 100%;
+        width: 585px;
+        padding: 0 20px;
+        margin: 0 auto;
+        box-sizing: border-box;
+      }
+
+      .Header {
+        margin-top: 40px;
+        margin-bottom: 60px;
+      }
+
+      .Title {
+        font-size: 30px;
+      }
+
+      .Title span {
+        color: #333333;
+      }
+
+      .SubTitle {
+        font-size: 30px;
+        font-weight: 400;
+        color: #555555;
+      }
+
+      .Footer {
+        border-top: 2px solid #dadada;
+      }
+
+      .Description {
+        font-weight: normal;
+        font-size: 14px;
+        line-height: 22px;
+        color: #000000;
+        margin: 24px 0px;
+      }
+
+      .Button {
+        font-weight: 500;
+        font-size: 18px;
+        text-transform: uppercase;
+        background-color: black;
+        color: #ffffff;
+        margin: 24px 0px;
+        padding: 18px 36px;
+        display: inline-block;
+        box-sizing: border-box;
+        text-align: center;
+        cursor: pointer;
+        width: 100%;
+        text-decoration: none;
+      }
+
+      .FaultbackButton {
+        font-size: 11px;
+        color: #888;
+        text-decoration: none;
+      }
+
+      .Brand {
+        font-style: normal;
+        font-weight: normal;
+        font-size: 12px;
+        line-height: 14px;
+        color: #676666;
+      }
+
+      .Footer {
+        margin-top: 80px;
+        padding: 20px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="Body">
+      <!-- <div class="Header">{{{logo}}}</div> -->
+      <h1 class="Title"><span>Transaction Declined</span> {{name}}</h1>
+      <h2 class="SubTitle">
+        The transaction '{{summary.transactionName}}' has been declined in the
+        '{{summary.vaultName}}' vault.
+      </h2>
+      <!-- <div>
+        <p class="Description">
+          Finalize seu cadastro utilizando o CPF e senha preenchidos durante o
+          cadastro
+        </p>
+      </div>
+      <div>
+        <a
+          href="{{link}}"
+          style="color: #ffffff; background-color: black"
+          class="Button"
+          >finalizar cadastro</a
+        >
+      </div>
+      <div class="Footer">
+        <p class="FaultbackButton">
+          Problemas com o botão? acesse o link: <br />
+          <a class="FaultbackButton" style="color: #888" href="{{link}}"
+            >{{link}}</a
+          >
+        </p>
+        <span class="Brand">© {{bank}} {{year}}</span>
+      </div> -->
+    </div>
+  </body>
+</html>
