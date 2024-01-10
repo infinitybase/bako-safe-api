@@ -21,6 +21,7 @@ export const PayloadUpdateUserSchema = validator.body(
   Joi.object({
     name: Joi.string().allow(''),
     email: Joi.string().email().allow(''),
-    notify: Joi.boolean().required(),
+    notify: Joi.boolean().optional(),
+    first_login: Joi.boolean().optional(),
   }),
 );
