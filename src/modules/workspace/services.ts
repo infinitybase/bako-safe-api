@@ -37,9 +37,21 @@ export class WorkspaceService implements IWorkspaceService {
       const hasPagination = !!this._pagination;
       const hasOrdination = !!this._ordination;
       const queryBuilder = Workspace.createQueryBuilder('w')
-        .select()
+        .select([
+          'w', // Todos os campos de Workspace
+          'owner', // Todos os campos de User (relação owner)
+          'users', // Todos os campos de User (relação members)
+          'predicates.id', // Seleção específica: apenas o campo 'id' de Predicate com alias
+        ])
         .leftJoinAndSelect('w.owner', 'owner')
-        .leftJoinAndSelect('w.members', 'users');
+        .leftJoinAndSelect('w.members', 'users')
+        .leftJoin('w.predicates', 'predicates');
+
+      // .innerJoin('w.predicates', 'predicate')
+      // .select(['predicate.id']);
+
+      // .innerJoin('w.predicate', 'predicates')
+      // .select(['predicates.id']);
 
       this._filter.q &&
         queryBuilder.where('LOWER(w.name) LIKE LOWER(:name)', {
@@ -79,7 +91,6 @@ export class WorkspaceService implements IWorkspaceService {
           `w.${this._ordination.orderBy}`,
           this._ordination.sort,
         );
-
       return hasPagination
         ? await Pagination.create(queryBuilder).paginate(this._pagination)
         : await queryBuilder.getMany();
@@ -154,6 +165,7 @@ export class WorkspaceService implements IWorkspaceService {
             address: member.address,
           };
         }),
+        predicates: workspace.predicates.length,
       };
     });
   }

@@ -53,7 +53,7 @@ class Predicate extends Base {
   owner: User;
 
   @JoinColumn({ name: 'workspace_id' })
-  @ManyToOne(() => Workspace, workspace => workspace.predicate)
+  @ManyToOne(() => Workspace, workspace => workspace.predicates)
   workspace: Workspace;
 
   @OneToMany(() => Transaction, transaction => transaction.predicate)

@@ -75,10 +75,9 @@ class Workspace extends Base {
   })
   permissions: IPermissions;
 
-  @OneToMany(() => Predicate, vault => vault.workspace, {
-    cascade: true,
-  })
-  predicate: Predicate[];
+  @JoinColumn()
+  @OneToMany(() => Predicate, predicate => predicate.workspace, { cascade: true })
+  predicates: Predicate[];
 
   @ManyToMany(() => User, { cascade: true })
   @JoinTable({

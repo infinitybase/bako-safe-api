@@ -68,12 +68,9 @@ export class AuthValidations {
   }
 
   async listMyWorkspaces() {
-    console.log('[LIST_MY_WORKSPACES]');
-
     const { data } = await this.axios.get(`
       /workspace/by-user/${this.account.address}`);
 
-    console.log(data);
     return data;
   }
 
