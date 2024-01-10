@@ -42,7 +42,11 @@ export class WorkspaceController {
       const _members: User[] = [];
       if (members) {
         for await (const member of members) {
-          _members.push(await new UserService().findOne(member));
+          const m =
+            member.length <= 36
+              ? await new UserService().findOne(member)
+              : await new UserService().findByAddress(member);
+          _members.push(m);
         }
       }
 
