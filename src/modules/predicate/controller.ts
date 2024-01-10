@@ -97,12 +97,12 @@ export class PredicateController {
     }
   }
 
-  async findById({ params: { id }, user }: IFindByIdRequest) {
+  async findById({ params: { id }, user, workspace }: IFindByIdRequest) {
     try {
       const predicate = await this.predicateService.findById(id, user.address);
       const membersIds = predicate.members.map(member => member.id);
       const favorites = (await this.addressBookService
-        .filter({ createdBy: user.id, userIds: membersIds })
+        .filter({ owner: [workspace.id], userIds: membersIds })
         .list()) as AddressBook[];
       const response = {
         ...predicate,
