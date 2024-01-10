@@ -341,11 +341,9 @@ export class TransactionService implements ITransactionService {
             .toString(),
           status: TransactionStatus.PROCESS_ON_CHAIN,
         };
-        console.log('[ENVIADO]', resume);
         return resume;
       })
       .catch(e => {
-        console.log('[ERRO AO ENVIAR]', e);
         throw new Internal({
           type: ErrorTypes.Internal,
           title: 'Error on transaction sendToChain',

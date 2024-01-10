@@ -25,17 +25,19 @@ import { User } from './User';
  * PERMISSIONS TYPING
  */
 export enum PermissionRoles {
-  SIGNER = 'SIGNER',
-  OWNER = 'OWNER',
+  OWNER = 'OWNER', // owner of the workspace, THIS ROLE CAN'T BE CHANGED
   ADMIN = 'ADMIN',
+  MANAGER = 'MANAGER',
+  SIGNER = 'SIGNER',
   VIEWER = 'VIEWER',
 }
 //todo: change to specific permissions of each role depends the complete flow
 export const defaultPermissions = {
   [PermissionRoles.OWNER]: {
-    SIGNER: ['*'],
     OWNER: ['*'],
     ADMIN: ['*'],
+    MANAGER: ['*'],
+    SIGNER: ['*'],
     VIEWER: ['*'],
   },
   [PermissionRoles.VIEWER]: {

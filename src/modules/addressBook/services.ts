@@ -69,8 +69,8 @@ export class AddressBookService implements IAddressBookService {
     };
 
     this._filter.owner &&
-      queryBuilder.andWhere('ab.owner = :owner', {
-        owner: `${this._filter.owner}`,
+      queryBuilder.andWhere('ab.owner IN (:...owner)', {
+        owner: this._filter.owner,
       });
 
     this._filter.contactAddress &&

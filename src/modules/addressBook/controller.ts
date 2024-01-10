@@ -1,11 +1,13 @@
 import AddressBook from '@src/models/AddressBook';
 import Role from '@src/models/Role';
+import { Workspace } from '@src/models/Workspace';
 import Internal from '@src/utils/error/Internal';
 
 import { ErrorTypes, error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
 
 import { IUserService } from '../user/types';
+import { WorkspaceService } from '../workspace/services';
 import { AddressBookService } from './services';
 import {
   IAddressBookService,
@@ -31,7 +33,7 @@ export class AddressBookController {
 
       const duplicatedNickname = await new AddressBookService()
         .filter({
-          owner: workspace.id,
+          owner: [workspace.id],
           nickname,
         })
         .list()
@@ -39,7 +41,7 @@ export class AddressBookController {
 
       const duplicatedAddress = await new AddressBookService()
         .filter({
-          owner: workspace.id,
+          owner: [workspace.id],
           contactAddress: address,
         })
         .paginate(undefined)
@@ -83,14 +85,14 @@ export class AddressBookController {
     try {
       const duplicatedNickname = await this.addressBookService
         .filter({
-          owner: user.id,
+          owner: [user.id],
           nickname: body.nickname,
         })
         .list();
 
       const duplicatedAddress = await this.addressBookService
         .filter({
-          owner: user.id,
+          owner: [user.id],
           contactAddress: body.address,
         })
         .list();
@@ -142,12 +144,19 @@ export class AddressBookController {
   }
 
   async list(req: IListAddressBookRequest) {
-    const { workspace } = req;
+    const { workspace, user } = req;
     const { orderBy, sort, page, perPage, q } = req.query;
 
     try {
+      const userSingleWorkspace = await new WorkspaceService()
+        .filter({
+          user: user.id,
+          single: true,
+        })
+        .list()
+        .then((response: Workspace[]) => response[0]);
       const response = await this.addressBookService
-        .filter({ owner: workspace.id, q })
+        .filter({ owner: [userSingleWorkspace.id, workspace.id], q })
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })
         .list();

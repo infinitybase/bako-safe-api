@@ -55,12 +55,13 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
   }
 }
 
-function authPermissionMiddleware(permission?: PermissionRoles) {
+//todo: if required permission to specific vault, check on request this vault ID
+function authPermissionMiddleware(permission?: PermissionRoles[]) {
   return async function (req: Request, res: Response, next: NextFunction) {
     try {
       const requestAuth: IAuthRequest = req;
 
-      if (!permission) return next();
+      if (!permission || permission.length === 0) return next();
 
       const { user, workspace } = requestAuth;
 
@@ -72,7 +73,12 @@ function authPermissionMiddleware(permission?: PermissionRoles) {
         });
       }
 
-      const hasPermission = workspace.permissions[user.id][permission];
+      //todo: on this check, verify permission of user to vault id
+      // using ->
+      // workspace.permissions[user.id][p] === * ||
+      // workspace.permissions[user.id][p].includes(vaultId)
+      const hasPermission =
+        permission.filter(p => workspace.permissions[user.id][p]).length > 0;
 
       if (!hasPermission) {
         throw new Unauthorized({

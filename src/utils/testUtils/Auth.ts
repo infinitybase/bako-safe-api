@@ -11,6 +11,11 @@ export class AuthValidations {
   public user: User;
   public authToken: IBSAFEAuth;
   public axios: AxiosInstance;
+  public workspace: {
+    id: string;
+    name: string;
+    avatar: string;
+  };
 
   constructor(
     private readonly provider: string,
@@ -55,6 +60,7 @@ export class AuthValidations {
       address,
       token: data.accessToken,
     };
+    this.workspace = data.workspace;
     return data;
   }
 
@@ -64,6 +70,7 @@ export class AuthValidations {
       ...this.authToken,
     });
 
+    this.workspace = data.workspace;
     return data;
   }
 

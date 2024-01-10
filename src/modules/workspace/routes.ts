@@ -1,6 +1,7 @@
 import { Router } from 'express';
 
-import { authMiddleware } from '@src/middlewares';
+import { authMiddleware, authPermissionMiddleware } from '@src/middlewares';
+import { PermissionRoles } from '@src/models/Workspace';
 import { handleResponse } from '@src/utils';
 
 import { WorkspaceController } from './controller';
@@ -23,19 +24,23 @@ router.post(
   handleResponse(workspaceController.create),
 );
 router.get('/:id', handleResponse(workspaceController.findById));
+
 router.put(
   '/:id',
   PayloadUpdateWorkspaceSchema,
+  authPermissionMiddleware([PermissionRoles.OWNER, PermissionRoles.ADMIN]),
   handleResponse(workspaceController.update),
 );
 router.put(
   '/:id/permissions',
   PayloadUpdatePermissionsWorkspaceSchema,
+  authPermissionMiddleware([PermissionRoles.OWNER, PermissionRoles.ADMIN]),
   handleResponse(workspaceController.updatePermissions),
 );
 router.put(
   '/:id/members',
   PayloadUpdateMembersWorkspaceSchema,
+  authPermissionMiddleware([PermissionRoles.OWNER, PermissionRoles.ADMIN]),
   handleResponse(workspaceController.updateMembers),
 );
 export default router;

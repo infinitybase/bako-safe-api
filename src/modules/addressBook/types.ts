@@ -37,7 +37,7 @@ export type IUpdateAddressBookBody = Omit<ICreateAddressBookPayload, 'owner'>;
 
 export interface IFilterAddressBookParams {
   q?: string;
-  owner?: string;
+  owner?: string[];
   contactAddress?: string;
   nickname?: string;
   userIds?: string[];
@@ -60,7 +60,7 @@ interface IDeleteAddressBookRequestSchema extends ValidatedRequestSchema {
 interface IListAddressBookRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Query]: {
     q: string;
-    owner: string;
+    owner: string[];
     orderBy: OrderBy;
     sort: Sort;
     page: string;
