@@ -9,6 +9,7 @@ import {
   OneToOne,
 } from 'typeorm';
 
+import AddressBook from './AddressBook';
 import { Base } from './Base';
 import { Predicate } from './Predicate';
 import { User } from './User';
@@ -78,6 +79,10 @@ class Workspace extends Base {
   @JoinColumn()
   @OneToMany(() => Predicate, predicate => predicate.workspace, { cascade: true })
   predicates: Predicate[];
+
+  @JoinColumn({ name: 'address_book' })
+  @OneToMany(() => AddressBook, adb => adb.owner, { cascade: true })
+  addressBook: AddressBook[];
 
   @ManyToMany(() => User, { cascade: true })
   @JoinTable({

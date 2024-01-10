@@ -1,3 +1,6 @@
+import exp from 'constants';
+import { Address } from 'fuels';
+
 import { accounts } from '@src/mocks/accounts';
 import { networks } from '@src/mocks/networks';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
@@ -12,30 +15,74 @@ describe('[ADDRESS_BOOK]', () => {
   });
 
   test(`List address book of user ${accounts['USER_2'].address}`, async () => {
-    //todo: fix this request using pagination
-    // const params = {
-    //   page: 1,
-    //   perPage: 10,
-    //   //orderBy: 'createdAt',
-    //   //sort: 'DESC',
-    // };
-    const { data } = await api.axios.get('/address-book/');
+    const { data, status } = await api.axios.get(
+      `/address-book/by-user/${accounts['USER_2'].address}`,
+    );
 
-    // expect(data).toHaveProperty('[0]', expect.any(Object));
-    //expect(data.addressBook).toHaveLength(1);
+    expect(status).toBe(200);
+    expect(data).toBeInstanceOf(Array);
+
+    expect(data[0]).toHaveProperty('id');
+    expect(data[0]).toHaveProperty('nickname');
+    expect(data[0]).toHaveProperty('user');
+    expect(data[0]).toHaveProperty('owner.id');
   });
 
   test(
-    'Create address book',
+    'Create address book using a personal workspace',
     async () => {
+      const nickname = `[FAKE_CONTACT_NAME]: ${new Date()}`;
+      const address = Address.fromRandom().toAddress();
       const { data } = await api.axios.post('/address-book/', {
-        nickname: 'fake_name',
-        address: accounts['USER_1'].address,
+        nickname,
+        address,
       });
 
-      // expect(data).toHaveProperty('id');
-      // expect(data).toHaveProperty('name', 'fake_name');
-      // expect(data).toHaveProperty('address', accounts['USER_2'].address);
+      const aux = await api.axios
+        .post('/address-book/', {
+          nickname,
+          address,
+        })
+        .catch(e => e.response.data);
+
+      expect(data).toHaveProperty('id');
+      expect(data).toHaveProperty('nickname', nickname);
+      expect(data).toHaveProperty('user.address', address);
+
+      expect(aux).toHaveProperty('detail', 'Duplicated nickname');
+    },
+    5 * 1000,
+  );
+
+  test(
+    'Create address book using a group workspace',
+    async () => {
+      const { data: data_workspace } = await api.axios.get(
+        `/workspace/by-user/${accounts['USER_1'].address}`,
+      );
+      const w = data_workspace.find(w => w.name.includes('[INITIAL]'));
+
+      await api.selectWorkspace(w.id);
+
+      const nickname = `[FAKE_CONTACT_NAME]: ${new Date()}`;
+      const address = Address.fromRandom().toAddress();
+      const { data } = await api.axios.post('/address-book/', {
+        nickname,
+        address,
+      });
+
+      const aux = await api.axios
+        .post('/address-book/', {
+          nickname,
+          address,
+        })
+        .catch(e => e.response.data);
+
+      expect(data).toHaveProperty('id');
+      expect(data).toHaveProperty('nickname', nickname);
+      expect(data).toHaveProperty('user.address', address);
+
+      expect(aux).toHaveProperty('detail', 'Duplicated nickname');
     },
     5 * 1000,
   );

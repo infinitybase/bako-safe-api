@@ -14,16 +14,9 @@ class AddressBook extends Base {
   @Column()
   nickname: string;
 
-  @Column({ nullable: false })
-  type: AddressBookType;
-
-  @JoinColumn({ name: 'p_owner' })
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
-  POwner: User;
-
-  @JoinColumn({ name: 'w_owner' })
+  @JoinColumn({ name: 'owner_id' })
   @ManyToOne(() => Workspace, { onDelete: 'CASCADE' })
-  WOwner: Workspace;
+  owner: Workspace;
 
   @JoinColumn({ name: 'user_id' })
   @OneToOne(() => User)
