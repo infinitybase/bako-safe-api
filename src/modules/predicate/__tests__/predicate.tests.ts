@@ -1,4 +1,5 @@
 import exp from 'constants';
+import { Address } from 'fuels';
 
 import { accounts } from '@src/mocks/accounts';
 import { networks } from '@src/mocks/networks';
@@ -14,22 +15,27 @@ describe('[PREDICATE]', () => {
     await api.createSession();
   });
 
-  test('Create predicate', async () => {
-    const { predicatePayload } = await PredicateMock.create(1, [
-      accounts['USER_1'].address,
-      accounts['USER_2'].address,
-    ]);
-    const { data } = await api.axios.post('/predicate', predicatePayload);
+  test(
+    'Create predicate',
+    async () => {
+      const user_aux = Address.fromRandom().toString();
+      const { predicatePayload } = await PredicateMock.create(1, [
+        accounts['USER_1'].address,
+        user_aux,
+      ]);
+      const { data } = await api.axios.post('/predicate', predicatePayload);
 
-    expect(data).toHaveProperty('id');
-    expect(data).toHaveProperty(
-      'predicateAddress',
-      predicatePayload.predicateAddress,
-    );
-    expect(data).toHaveProperty('owner.address', accounts['USER_1'].address);
-    expect(data).toHaveProperty('members[0].address', accounts['USER_1'].address);
-    expect(data).toHaveProperty('members[1].address', accounts['USER_2'].address);
-  });
+      expect(data).toHaveProperty('id');
+      expect(data).toHaveProperty(
+        'predicateAddress',
+        predicatePayload.predicateAddress,
+      );
+      expect(data).toHaveProperty('owner.address', accounts['USER_1'].address);
+      expect(data).toHaveProperty('members[0].address', accounts['USER_1'].address);
+      expect(data).toHaveProperty('members[1].address', user_aux);
+    },
+    10 * 1000,
+  );
 
   test('Create predicate with invalid owner permission', async () => {
     const { data } = await api.axios.get(

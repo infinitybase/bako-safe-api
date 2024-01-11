@@ -1,6 +1,10 @@
 import { Brackets } from 'typeorm';
 
-import { Workspace } from '@src/models/Workspace';
+import {
+  PermissionRoles,
+  Workspace,
+  defaultPermissions,
+} from '@src/models/Workspace';
 import { ErrorTypes } from '@src/utils/error';
 import GeneralError from '@src/utils/error/GeneralError';
 import Internal from '@src/utils/error/Internal';
@@ -138,6 +142,43 @@ export class WorkspaceService implements IWorkspaceService {
   }
 
   findById: (id: string) => Promise<Workspace>;
+
+  async includeSigner(
+    signers: string[],
+    predicate: string,
+    worksapce: string,
+  ): Promise<void> {
+    return await Workspace.findOne({ id: worksapce })
+      .then(async workspace => {
+        const p = workspace.permissions;
+        signers.map(s => {
+          if (p[s]) {
+            p[s][PermissionRoles.SIGNER] = [
+              ...p[s][PermissionRoles.SIGNER].filter(i => i != '*'),
+              predicate,
+            ];
+            return;
+          }
+          p[s] = {
+            ...defaultPermissions[PermissionRoles.SIGNER],
+            [PermissionRoles.SIGNER]: [predicate],
+          };
+          return;
+        });
+        workspace.permissions = p;
+
+        await workspace.save();
+        return;
+      })
+      .catch(error => {
+        if (error instanceof GeneralError) throw error;
+        throw new Internal({
+          type: ErrorTypes.Update,
+          title: 'Error on workspace update',
+          detail: error,
+        });
+      });
+  }
 
   /**
    * Formatar os dados para usuário nao logado, removendo as infos delicadas

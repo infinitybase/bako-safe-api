@@ -3,6 +3,7 @@ import { bn } from 'fuels';
 
 import AddressBook from '@src/models/AddressBook';
 import { Predicate } from '@src/models/Predicate';
+import { Workspace } from '@src/models/Workspace';
 
 import { Asset, NotificationTitle, Transaction, User } from '@models/index';
 
@@ -13,6 +14,7 @@ import { IAddressBookService } from '../addressBook/types';
 import { INotificationService } from '../notification/types';
 import { ITransactionService } from '../transaction/types';
 import { IUserService } from '../user/types';
+import { WorkspaceService } from '../workspace/services';
 import {
   ICreatePredicateRequest,
   IDeletePredicateRequest,
@@ -47,6 +49,7 @@ export class PredicateController {
   async create({ body: payload, user, workspace }: ICreatePredicateRequest) {
     try {
       const members: User[] = [];
+
       for await (const member of payload.addresses) {
         let user = await this.userService.findByAddress(member);
 
@@ -67,6 +70,13 @@ export class PredicateController {
         members,
         workspace,
       });
+
+      // include signer permission to vault on workspace
+      await new WorkspaceService().includeSigner(
+        members.map(member => member.id),
+        newPredicate.id,
+        workspace.id,
+      );
 
       const { id, name, members: predicateMembers } = newPredicate;
       const membersWithoutLoggedUser = predicateMembers.filter(

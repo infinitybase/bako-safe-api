@@ -40,8 +40,12 @@ export const defaultPermissions = {
     SIGNER: ['*'],
     VIEWER: ['*'],
   },
-  [PermissionRoles.VIEWER]: {
-    VIEWER: ['*'],
+  [PermissionRoles.SIGNER]: {
+    OWNER: [''],
+    ADMIN: [''],
+    MANAGER: [''],
+    SIGNER: [''],
+    VIEWER: [''],
   },
 };
 
