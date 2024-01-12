@@ -122,7 +122,7 @@ export class TransactionController {
         if (member.notify) {
           await sendMail(EmailTemplateType.TRANSACTION_CREATED, {
             to: member.email,
-            data: { summary: notificationSummary },
+            data: { summary: { ...notificationSummary, name: member?.name ?? '' } },
           });
         }
       }
@@ -249,7 +249,9 @@ export class TransactionController {
             if (member.notify) {
               await sendMail(EmailTemplateType.TRANSACTION_SIGNED, {
                 to: member.email,
-                data: { summary: notificationSummary },
+                data: {
+                  summary: { ...notificationSummary, name: member?.name ?? '' },
+                },
               });
             }
           }
@@ -265,9 +267,11 @@ export class TransactionController {
             });
 
             if (member.notify) {
-              await sendMail(EmailTemplateType.TRANSACTION_REPROVED, {
+              await sendMail(EmailTemplateType.TRANSACTION_DECLINED, {
                 to: member.email,
-                data: { summary: notificationSummary },
+                data: {
+                  summary: { ...notificationSummary, name: member?.name ?? '' },
+                },
               });
             }
           }

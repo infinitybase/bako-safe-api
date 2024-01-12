@@ -84,7 +84,7 @@ export class PredicateController {
         if (member.notify) {
           await sendMail(EmailTemplateType.VAULT_CREATED, {
             to: member.email,
-            data: { summary },
+            data: { summary: { ...summary, name: member?.name ?? '' } },
           });
         }
       }
