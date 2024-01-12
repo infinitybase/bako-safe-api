@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>New Vault Created</title>
+    <title>Transaction Completed</title>
     <style>
       @import url(http://fonts.googleapis.com/css?family=Roboto);
 
@@ -67,11 +67,12 @@
       <h1 class="Title">Hello, {{summary.name}}</h1>
 
       <h2 class="SubTitle">
-        The '{{summary.vaultName}}' has been created, and you are a signer!
+        The transaction '{{summary.transactionName}}' has been completed in the
+        '{{summary.vaultName}}' vault.
       </h2>
 
       <small class="Description">
-        To view your vault details, please click
+        To view your transaction details, please click
         <a href="{{bsafeUrl}}">here</a> to log in to your BSAFE account and navigate
         to your vault.
       </small>
