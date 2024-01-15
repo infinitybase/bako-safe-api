@@ -143,6 +143,18 @@ export class WorkspaceService implements IWorkspaceService {
 
   findById: (id: string) => Promise<Workspace>;
 
+  /**
+   * Formatar o capo de permissões do workspace, inserindo o assinante
+   * caso o usuário ainda nao esteja na lista de membros, um novo field é criado, e o id do predicado adicionado
+   * caso o usuário já esteja na lista de membros, o id do predicado é adicionado
+   *
+   * @params signers: string[] - lista de endereços dos signatários
+   * @params predicate: string - id do predicado
+   * @params worksapce: string - id do workspace
+   *
+   * @return Workspace
+   *
+   */
   async includeSigner(
     signers: string[],
     predicate: string,
