@@ -19,8 +19,7 @@ export interface IUserPayload {
 }
 
 export interface IFilterParams {
-  user: string;
-  active: boolean;
+  addresses: string[];
 }
 
 interface ICreateRequestSchema extends ValidatedRequestSchema {
@@ -65,7 +64,7 @@ export interface IUserService {
   filter(filter: IFilterParams): this;
   paginate(pagination: PaginationParams): this;
   ordination(ordination: IOrdination<User>): this;
-  find(): Promise<IPagination<User> | User[]>;
+  list(): Promise<IPagination<User> | User[]>;
   create(payload: Partial<User>): Promise<User>;
   findOne(id: string): Promise<User>;
   findByAddress(address: string): Promise<User | undefined>;
