@@ -89,7 +89,20 @@ export class PredicateController {
         }
       }
 
-      return successful(newPredicate, Responses.Ok);
+      const fieldsToHide = ['email', 'name'];
+      const filteredMembers = newPredicate.members.map(member =>
+        Object.keys(member).reduce((filteredMember, key) => {
+          if (!fieldsToHide.includes(key)) {
+            filteredMember[key] = member[key];
+          }
+          return filteredMember;
+        }, {}),
+      );
+
+      return successful(
+        { ...newPredicate, members: filteredMembers },
+        Responses.Ok,
+      );
     } catch (e) {
       return error(e.error, e.statusCode);
     }
