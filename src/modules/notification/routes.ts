@@ -24,10 +24,10 @@ router.get('/mail', async (_, res) => {
   };
 
   try {
-    // await sendMail(EmailTemplateType.TRANSACTION_CREATED, { to, data });
-    // await sendMail(EmailTemplateType.TRANSACTION_COMPLETED, { to, data });
-    // await sendMail(EmailTemplateType.TRANSACTION_DECLINED, { to, data });
-    // await sendMail(EmailTemplateType.TRANSACTION_SIGNED, { to, data });
+    await sendMail(EmailTemplateType.TRANSACTION_CREATED, { to, data });
+    await sendMail(EmailTemplateType.TRANSACTION_COMPLETED, { to, data });
+    await sendMail(EmailTemplateType.TRANSACTION_DECLINED, { to, data });
+    await sendMail(EmailTemplateType.TRANSACTION_SIGNED, { to, data });
     await sendMail(EmailTemplateType.VAULT_CREATED, { to, data });
   } catch (error) {
     console.log('🚀 ~ router.get ~ error:', error);
