@@ -1,4 +1,3 @@
-import exp from 'constants';
 import { Address } from 'fuels';
 
 import { accounts } from '@src/mocks/accounts';
@@ -38,17 +37,54 @@ describe('[PREDICATE]', () => {
   );
 
   test('Create predicate with invalid owner permission', async () => {
-    const { data } = await api.axios.get(
+    const auth = new AuthValidations(networks['local'], accounts['USER_2']);
+    await auth.create();
+    await auth.createSession();
+    const user_aux = [
+      Address.fromRandom().toString(),
+      Address.fromRandom().toString(),
+    ];
+    const workspace_name = `${new Date()} - Create workspace test [PREDICATE]`;
+
+    //create a new workspace
+    const { data: data_user1 } = await auth.axios.post('/user/', {
+      address: accounts['USER_1'].address,
+      provider: networks['local'],
+      name: `${new Date()} - Create user test [PREDICATE]`,
+    });
+    const { data: data_user2 } = await auth.axios.post('/user/', {
+      address: user_aux[1],
+      provider: networks['local'],
+      name: `${new Date()} - Create user test [PREDICATE]`,
+    });
+    const { data: data_workspace } = await auth.axios.post(`/workspace/`, {
+      name: workspace_name,
+      description: '[GENERATED] Workspace [PREDICATE] description',
+      members: [data_user1.id, data_user2.id],
+    });
+
+    //auth with new account
+    const auth_aux = new AuthValidations(networks['local'], accounts['USER_1']);
+    await auth_aux.create();
+    await auth_aux.createSession();
+    const { data } = await auth.axios.get(
       `/workspace/by-user/${accounts['USER_1'].address}`,
     );
-    const w = data.find(w => w.name.includes('[INITIAL]'));
+    const w = data.find(w => w.name == workspace_name);
+    //console.log('[a]: ', auth_aux.workspace, w);
+    await auth.selectWorkspace(w.id);
 
-    await api.selectWorkspace(w.id);
+    //console.log('[b]: ', auth.workspace, w.id);
+
     const { predicatePayload } = await PredicateMock.create(1, [
       accounts['USER_1'].address,
       accounts['USER_2'].address,
+      accounts['USER_3'].address,
     ]);
-    const { status, data: predicate_data } = await api.axios
+
+    //console.log('[c]: ', auth_aux.workspace, auth_aux.axios.defaults.headers);
+
+    const { status, data: predicate_data } = await auth_aux.axios
       .post('/predicate', predicatePayload)
       .catch(e => e.response);
 

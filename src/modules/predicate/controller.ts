@@ -154,20 +154,6 @@ export class PredicateController {
         })
         .list()
         .then((data: Transaction[]) => {
-          // const a: BN = bn.parseUnits('0');
-          // //console.log(data.map((transaction: Transaction) => transaction.assets));
-          // data
-          //   .filter(
-          //     (transaction: Transaction) =>
-          //       transaction.status == TransactionStatus.AWAIT_REQUIREMENTS ||
-          //       transaction.status == TransactionStatus.PENDING_SENDER,
-          //   )
-          //   .map((_filteredTransactions: Transaction) => {
-          //     _filteredTransactions.assets.map((_assets: Asset) => {
-          //       console.log(_assets.amount, a.add(bn.parseUnits(_assets.amount)));
-          //       return a.add(bn.parseUnits(_assets.amount));
-          //     });
-          //   });
           return data
             .filter(
               (transaction: Transaction) =>
@@ -185,9 +171,6 @@ export class PredicateController {
         .catch(e => {
           return bn.parseUnits('0');
         });
-
-      //console.log('[HAS_RESERVED_COINS]: ', response.format().toString());
-
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);

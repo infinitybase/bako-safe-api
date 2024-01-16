@@ -319,7 +319,7 @@ export class TransactionController {
       const assets = data.map(i => i.assets);
       const recipientAddresses = assets.flat().map(i => i.to);
       const favorites = (await this.addressBookService
-        .filter({ createdBy: user.id, contactAddresses: recipientAddresses })
+        .filter({ owner: [user.id], contactAddresses: recipientAddresses })
         .list()) as AddressBook[];
 
       if (favorites.length > 0) {

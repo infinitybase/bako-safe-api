@@ -44,12 +44,15 @@ export const generateInitialWorkspace = async (): Promise<Workspace> => {
 };
 
 export const generateInitialAuxWorkspace = async (): Promise<Workspace> => {
-  const members = await User.find({
-    take: 3,
-    order: {
-      createdAt: 'ASC',
-    },
-  });
+  const members = await User.createQueryBuilder('user')
+    .where('user.address IN (:...address)', {
+      address: [
+        accounts['USER_1'].address,
+        accounts['USER_2'].address,
+        accounts['USER_3'].address,
+      ],
+    })
+    .getMany();
 
   const acc_1 = members.find(m => m.address === accounts['USER_1'].address);
   const non_acc = members.filter(m => m.address !== accounts['USER_1'].address);
@@ -61,9 +64,9 @@ export const generateInitialAuxWorkspace = async (): Promise<Workspace> => {
     members,
     owner: members[0],
     permissions: {
-      [acc_1.id]: defaultPermissions[PermissionRoles.VIEWER],
-      [non_acc[0].id]: defaultPermissions[PermissionRoles.OWNER],
-      [non_acc[1].id]: defaultPermissions[PermissionRoles.OWNER],
+      [acc_1.id]: defaultPermissions[PermissionRoles.OWNER],
+      [non_acc[0].id]: defaultPermissions[PermissionRoles.VIEWER],
+      [non_acc[1].id]: defaultPermissions[PermissionRoles.VIEWER],
     },
   });
 };

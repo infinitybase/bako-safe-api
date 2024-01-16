@@ -47,6 +47,27 @@ export const defaultPermissions = {
     SIGNER: [''],
     VIEWER: [''],
   },
+  [PermissionRoles.ADMIN]: {
+    OWNER: [''],
+    ADMIN: [''],
+    MANAGER: [''],
+    SIGNER: [''],
+    VIEWER: [''],
+  },
+  [PermissionRoles.MANAGER]: {
+    OWNER: [''],
+    ADMIN: [''],
+    MANAGER: [''],
+    SIGNER: [''],
+    VIEWER: [''],
+  },
+  [PermissionRoles.VIEWER]: {
+    OWNER: [''],
+    ADMIN: [''],
+    MANAGER: [''],
+    SIGNER: [''],
+    VIEWER: ['*'],
+  },
 };
 
 export interface IPermissions {

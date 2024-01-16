@@ -77,10 +77,20 @@ function authPermissionMiddleware(permission?: PermissionRoles[]) {
       // using ->
       // workspace.permissions[user.id][p] === * ||
       // workspace.permissions[user.id][p].includes(vaultId)
-      const hasPermission =
-        permission.filter(p => workspace.permissions[user.id][p]).length > 0;
 
-      if (!hasPermission) {
+      if (!workspace.permissions[user.id]) {
+        throw new Unauthorized({
+          type: ErrorTypes.Unauthorized,
+          title: UnauthorizedErrorTitles.MISSING_PERMISSION,
+          detail: 'You do not have permission to access this resource',
+        });
+      }
+
+      const hasPermission = permission.filter(
+        p => workspace.permissions[user.id][p][0] === '*',
+      );
+
+      if (hasPermission.length <= 0) {
         throw new Unauthorized({
           type: ErrorTypes.Unauthorized,
           title: UnauthorizedErrorTitles.MISSING_PERMISSION,

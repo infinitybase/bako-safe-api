@@ -1,5 +1,8 @@
+import { object } from 'joi';
+
 import { User } from '@src/models';
 import {
+  IPermissions,
   PermissionRoles,
   Workspace,
   defaultPermissions,
@@ -51,17 +54,20 @@ export class WorkspaceController {
         }
       }
 
+      const _permissions: IPermissions = {};
+
+      if (!permissions && members.length > 0) {
+        _permissions[user.id] = defaultPermissions[PermissionRoles.OWNER];
+        for await (const member of _members) {
+          _permissions[member.id] = defaultPermissions[PermissionRoles.VIEWER];
+        }
+      }
+
       const response = await new WorkspaceService().create({
         ...req.body,
         owner: user,
         members: [..._members, user],
-        permissions: permissions ?? {
-          [user.id]: defaultPermissions[PermissionRoles.OWNER],
-          ..._members.reduce((acc, member) => {
-            acc[member.id] = defaultPermissions[PermissionRoles.VIEWER];
-            return acc;
-          }, {}),
-        },
+        permissions: _permissions,
       });
 
       return successful(response, Responses.Created);

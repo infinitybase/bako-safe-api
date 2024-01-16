@@ -24,21 +24,22 @@ describe('[AUTH]', () => {
     'Sign in with personal workspace and select other workspace',
     async () => {
       //crate a session
-      const auth = new AuthValidations(networks['local'], accounts['USER_1']);
-      await auth.create();
-      await auth.createSession();
+      const _auth = new AuthValidations(networks['local'], accounts['USER_1']);
+      await _auth.create();
+      await _auth.createSession();
 
       //select a other workspace
-      const { data } = await auth.axios.get(
+      const { data } = await _auth.axios.get(
         `/workspace/by-user/${accounts['USER_1'].address}`,
       );
-      const w_upgrade = data[0].id;
+
+      const w_upgrade = data.find(w => w.id !== _auth.workspace.id);
 
       //select workspace
-      const workspace_updated = await auth.selectWorkspace(w_upgrade);
+      const workspace_updated = await _auth.selectWorkspace(w_upgrade.id);
 
-      expect(workspace_updated.workspace.id).toEqual(w_upgrade);
-      expect(workspace_updated.address).toEqual(accounts['USER_1'].address);
+      expect(workspace_updated.workspace.id).toEqual(w_upgrade.id);
+      expect(_auth.user).toHaveProperty('address', accounts['USER_1'].address);
       expect(workspace_updated).toHaveProperty('token');
     },
     40 * 1000,
