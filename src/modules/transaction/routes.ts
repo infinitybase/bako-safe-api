@@ -9,6 +9,7 @@ import { handleResponse } from '@utils/index';
 
 import { AddressBookService } from '../addressBook/services';
 import { AssetService } from '../asset/services';
+import { UserService } from '../configs/user/service';
 import { NotificationService } from '../notification/services';
 import { TransactionController } from './controller';
 import { TransactionService } from './services';
@@ -25,6 +26,7 @@ const witnessService = new WitnessService();
 const addressBookService = new AddressBookService();
 const assetService = new AssetService();
 const notificationService = new NotificationService();
+const userService = new UserService();
 
 const {
   create,
@@ -42,6 +44,7 @@ const {
   addressBookService,
   assetService,
   notificationService,
+  userService,
 );
 
 router.use(authMiddleware);
