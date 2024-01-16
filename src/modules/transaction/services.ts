@@ -429,7 +429,7 @@ export class TransactionService implements ITransactionService {
           });
 
           if (member.notify) {
-            await sendMail(EmailTemplateType.TRANSACTION_CREATED, {
+            await sendMail(EmailTemplateType.TRANSACTION_COMPLETED, {
               to: member.email,
               data: { summary: { ...summary, name: member?.name ?? '' } },
             });
