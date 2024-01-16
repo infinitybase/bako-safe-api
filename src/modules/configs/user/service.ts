@@ -95,16 +95,6 @@ export class UserService implements IUserService {
   async findByAddress(address: string): Promise<User | undefined> {
     return await User.findOne({
       where: { address },
-      select: [
-        'id',
-        'email',
-        'name',
-        'address',
-        'avatar',
-        'first_login',
-        'notify',
-        'provider',
-      ],
     })
       .then(user => user)
       .catch(() => {
