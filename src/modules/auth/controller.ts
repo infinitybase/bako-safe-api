@@ -67,6 +67,7 @@ export class AuthController {
       return successful(
         {
           ...userToken,
+          user_id: req.body.user_id,
           workspace: {
             id: workspace.id,
             name: workspace.name,

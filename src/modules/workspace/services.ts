@@ -62,8 +62,9 @@ export class WorkspaceService implements IWorkspaceService {
           name: `%${this._filter.q}%`,
         });
 
-      this._filter.single &&
-        queryBuilder.andWhere('single = :single', { single: this._filter.single });
+      queryBuilder.andWhere('single = :single', {
+        single: this._filter.single ?? true,
+      });
 
       this._filter.owner &&
         queryBuilder.andWhere(
