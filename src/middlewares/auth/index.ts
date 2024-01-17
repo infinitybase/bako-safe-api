@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 
+import { Predicate } from '@src/models';
 import { PermissionRoles } from '@src/models/Workspace';
+import { PredicateService } from '@src/modules/predicate/services';
 
 import { signOutPath } from '@modules/auth/routes';
 import { AuthService } from '@modules/auth/services';
@@ -61,10 +63,18 @@ function authPermissionMiddleware(permission?: PermissionRoles[]) {
     try {
       const requestAuth: IAuthRequest = req;
 
-      if (!permission || permission.length === 0) return next();
+      console.log('[REQUEST]: ', {
+        base_url: req.baseUrl,
+        url: req.url,
+        path: req.path,
+        route_path: req.route.path,
+        method: req.method,
+      });
 
+      if (!permission || permission.length === 0) return next();
       const { user, workspace } = requestAuth;
 
+      // if not required info
       if (!user || !workspace) {
         throw new Unauthorized({
           type: ErrorTypes.Unauthorized,
@@ -73,11 +83,7 @@ function authPermissionMiddleware(permission?: PermissionRoles[]) {
         });
       }
 
-      //todo: on this check, verify permission of user to vault id
-      // using ->
-      // workspace.permissions[user.id][p] === * ||
-      // workspace.permissions[user.id][p].includes(vaultId)
-
+      // if not required premission info
       if (!workspace.permissions[user.id]) {
         throw new Unauthorized({
           type: ErrorTypes.Unauthorized,
@@ -86,20 +92,48 @@ function authPermissionMiddleware(permission?: PermissionRoles[]) {
         });
       }
 
-      const hasPermission = permission.filter(
-        p => workspace.permissions[user.id][p][0] === '*',
-      );
+      //verifica se o usuário tem acesso full, dependendo da permissao solicitada
+      // console.log(
+      //   '[VALIDACAO_1]: ',
+      //   permission.find(p => workspace.permissions[user.id][p][0] === '*'),
+      //   workspace.permissions[user.id],
+      //   user.id,
+      // );
+      if (permission.find(p => workspace.permissions[user.id][p][0] === '*'))
+        return next();
 
-      if (hasPermission.length <= 0) {
-        throw new Unauthorized({
-          type: ErrorTypes.Unauthorized,
-          title: UnauthorizedErrorTitles.MISSING_PERMISSION,
-          detail: 'You do not have permission to access this resource',
-        });
+      /**
+       * verifica a combinacao endpoint + metodo
+       * devolve um item do objeto criado para tratar separadamente cada caso de validacao
+       * [key: function(req, permissions, user, workspace)] -> [`${req.method}_${req.path}`] -> fn(req, permissions, user, workspace): true | false
+       * recebendo true[valido] ou false[invalido] retorna o next() ou throw new Unauthorized
+       */
+
+      //validate permissions
+      if (!permission.includes(PermissionRoles.SIGNER)) {
+        // console.log(
+        //   '[ENTROU AQUI]: ',
+        //   permission,
+        //   JSON.stringify(workspace.permissions),
+        //   workspace.permissions[user.id],
+        //   user.id,
+        // );
+        const isValid = permission.filter(
+          p => workspace.permissions[user.id][p][0] === '*',
+        );
+        if (isValid.length > 0) return next();
       }
 
-      return next();
+      // if not required premissions
+      throw new Unauthorized({
+        type: ErrorTypes.Unauthorized,
+        title: UnauthorizedErrorTitles.MISSING_PERMISSION,
+        detail: 'You do not have permission to access this resource',
+      });
+
+      //return next();
     } catch (e) {
+      console.log('[ERRO]: ', e);
       return next(e);
     }
   };

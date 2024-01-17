@@ -1,6 +1,7 @@
 import { Router } from 'express';
 
-import { authMiddleware } from '@src/middlewares';
+import { authMiddleware, authPermissionMiddleware } from '@src/middlewares';
+import { PermissionRoles } from '@src/models/Workspace';
 
 import { PredicateService } from '@modules/predicate/services';
 import { WitnessService } from '@modules/witness/services';
@@ -46,7 +47,17 @@ const {
 
 router.use(authMiddleware);
 
-router.post('/', validateAddTransactionPayload, handleResponse(create));
+router.post(
+  '/',
+  validateAddTransactionPayload,
+  authPermissionMiddleware([
+    PermissionRoles.OWNER,
+    PermissionRoles.ADMIN,
+    PermissionRoles.MANAGER,
+    PermissionRoles.SIGNER,
+  ]),
+  handleResponse(create),
+);
 router.get('/', handleResponse(list));
 router.get('/:id', handleResponse(findById));
 router.get('/by-hash/:hash', handleResponse(findByHash));

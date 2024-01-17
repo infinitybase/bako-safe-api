@@ -1,12 +1,10 @@
-import { Vault, defaultConfigurable } from 'bsafe';
-import { Provider, bn, WalletUnlocked } from 'fuels';
+import { Address } from 'fuels';
 
 import { accounts } from '@src/mocks/accounts';
 import { networks } from '@src/mocks/networks';
 import { PredicateMock } from '@src/mocks/predicate';
-import { transaction } from '@src/mocks/transaction';
+import { transaction, transactionMock } from '@src/mocks/transaction';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
-import { sendPredicateCoins, signBypK } from '@src/utils/testUtils/Wallet';
 
 describe('[TRANSACTION]', () => {
   let api: AuthValidations;
@@ -18,56 +16,29 @@ describe('[TRANSACTION]', () => {
   });
 
   test(
-    'Create and send a transaction to the vault FLOW',
+    'Create transaction',
     async () => {
-      // const { BSAFEVaultconfigurable } = await PredicateMock.create(1, [
-      //   accounts['USER_1'].address,
-      // ]);
+      const user_aux = Address.fromRandom().toString();
+      const members = [accounts['USER_1'].address, user_aux];
+      const { predicatePayload, vault } = await PredicateMock.create(1, members);
+      await api.axios.post('/predicate', predicatePayload);
 
-      // const vault = await Vault.create({
-      //   configurable: BSAFEVaultconfigurable,
-      //   BSAFEAuth: api.authToken,
-      //   provider: await Provider.create(defaultConfigurable['provider']),
-      // });
+      const { tx, payload_transfer } = await transactionMock(vault);
+      const { data: data_transaction } = await api.axios.post(
+        '/transaction',
+        payload_transfer,
+      );
 
-      // await sendPredicateCoins(
-      //   vault,
-      //   bn(1_000_000_0),
-      //   'ETH',
-      //   accounts['USER_1'].privateKey,
-      // );
-      // // console.log(
-      // //   '[VAULT]',
-      // //   vault.address,
-      // //   (await vault.getBalance()).format().toString(),
-      // //   bn(1_000_000).add(bn(5)).format().toString(),
-      // // );
-      // const tx_1 = await vault.BSAFEIncludeTransaction(transaction);
-
-      // console.log('[TRANSACOES_UM]', tx_1.getHashTxId(), tx_1.BSAFETransactionId);
-
-      // await api.axios.put(`/transaction/signer/${tx_1.BSAFETransactionId}`, {
-      //   signer: await signBypK(tx_1.getHashTxId(), accounts['USER_1'].privateKey),
-      //   account: accounts['USER_1'].address,
-      //   confirm: true,
-      // });
-
-      // //const txs = await vault.BSAFEGetTransactions();
-
-      // await tx_1.wait();
-
-      // const tx_2 = await vault.BSAFEIncludeTransaction(transaction);
-      // console.log('[TRANSACOES_DOIS]', tx_2.getHashTxId(), tx_2.BSAFETransactionId);
-
-      // // await api.axios.put(`/transaction/signer/${tx_2.BSAFETransactionId}`, {
-      // //   signer: await signBypK(tx_2.getHashTxId(), accounts['USER_1'].privateKey),
-      // //   account: accounts['USER_1'].address,
-      // //   confirm: true,
-      // // });
-
-      // //await tx_2.wait();
-      return true;
+      expect(data_transaction).toHaveProperty('id');
+      expect(data_transaction).toHaveProperty(
+        'predicate.predicateAddress',
+        vault.address.toString(),
+      );
+      expect(data_transaction).toHaveProperty('witnesses');
+      expect(data_transaction.witnesses).toHaveLength(members.length);
+      expect(data_transaction).toHaveProperty('assets');
+      expect(tx.getHashTxId()).toEqual(data_transaction.hash);
     },
-    30 * 1000,
+    60 * 1000,
   );
 });
