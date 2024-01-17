@@ -1,6 +1,6 @@
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 
-import { Workspace } from '@src/models/Workspace';
+import { IPermissions, Workspace } from '@src/models/Workspace';
 
 import UserToken, { Encoder } from '@models/UserToken';
 import { User } from '@models/index';
@@ -75,6 +75,12 @@ export interface IFindTokenParams {
 export interface ISignInResponse {
   accessToken: string;
   avatar: string;
+  workspace: {
+    id: string;
+    name: string;
+    avatar: string;
+    permissions: IPermissions;
+  };
 }
 
 export interface IUpgradeWorkspace extends ValidatedRequestSchema {
