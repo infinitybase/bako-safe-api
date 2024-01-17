@@ -146,7 +146,7 @@ export class PredicateService implements IPredicateService {
      */
 
     this._filter.address &&
-      queryBuilder.andWhere('p.predicateAddress =:predicateAddress', {
+      queryBuilder.andWhere('p.predicateAddress = :predicateAddress', {
         predicateAddress: this._filter.address,
       });
 
