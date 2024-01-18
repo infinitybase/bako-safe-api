@@ -3,6 +3,7 @@ import { Address } from 'fuels';
 import { accounts } from '@src/mocks/accounts';
 import { networks } from '@src/mocks/networks';
 import { PredicateMock } from '@src/mocks/predicate';
+import { PermissionRoles } from '@src/models/Workspace';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
 import { generateWorkspacePayload } from '@src/utils/testUtils/Workspace';
 
@@ -18,21 +19,38 @@ describe('[PREDICATE]', () => {
   test(
     'Create predicate',
     async () => {
-      const user_aux = Address.fromRandom().toString();
-      const { predicatePayload } = await PredicateMock.create(1, [
-        accounts['USER_1'].address,
-        user_aux,
-      ]);
+      const {
+        data: data_workspace,
+        data_user1,
+        data_user2,
+        USER_5,
+      } = await generateWorkspacePayload(api);
+      const members = [USER_5.address, data_user1.address, data_user2.address];
+      const { predicatePayload } = await PredicateMock.create(1, members);
       const { data } = await api.axios.post('/predicate', predicatePayload);
 
+      const { data: workspace, status: status_find } = await api.axios.get(
+        `/workspace/${api.workspace.id}`,
+      );
+
+      //predicate validation
       expect(data).toHaveProperty('id');
       expect(data).toHaveProperty(
         'predicateAddress',
         predicatePayload.predicateAddress,
       );
       expect(data).toHaveProperty('owner.address', accounts['USER_1'].address);
-      expect(data).toHaveProperty('members[0].address', accounts['USER_1'].address);
-      expect(data).toHaveProperty('members[1].address', user_aux);
+
+      //permissions validation
+      expect(
+        workspace.permissions[data_user1.id][PermissionRoles.SIGNER],
+      ).toContain(data.id);
+      expect(
+        workspace.permissions[data_user2.id][PermissionRoles.SIGNER],
+      ).toContain(data.id);
+      expect(workspace.permissions[USER_5.id][PermissionRoles.SIGNER]).toContain(
+        data.id,
+      );
     },
     10 * 1000,
   );

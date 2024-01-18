@@ -169,16 +169,16 @@ export class WorkspaceService implements IWorkspaceService {
               ...p[s][PermissionRoles.SIGNER].filter(i => i != '*'),
               predicate,
             ];
-            return;
+          } else {
+            p[s] = {
+              ...defaultPermissions[PermissionRoles.SIGNER],
+              [PermissionRoles.SIGNER]: [predicate],
+            };
           }
-          p[s] = {
-            ...defaultPermissions[PermissionRoles.SIGNER],
-            [PermissionRoles.SIGNER]: [predicate],
-          };
           return;
         });
         workspace.permissions = p;
-
+        console.log('[PERMISSOES_INCLUSAS]: ', p);
         await workspace.save();
         return;
       })

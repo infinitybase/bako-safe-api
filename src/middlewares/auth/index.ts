@@ -70,7 +70,7 @@ function authPermissionMiddleware(permission?: PermissionRoles[]) {
       // });
 
       const mylOGICAL =
-        `${req.method}-${req.baseUrl}${req.url}` === 'POST-/predicate/';
+        `${req.method}-${req.baseUrl}${req.url}` === 'POST-/transaction/';
 
       if (mylOGICAL)
         console.log({
@@ -120,20 +120,20 @@ function authPermissionMiddleware(permission?: PermissionRoles[]) {
        * recebendo true[valido] ou false[invalido] retorna o next() ou throw new Unauthorized
        */
 
-      //validate permissions
-      if (!permission.includes(PermissionRoles.SIGNER)) {
-        // console.log(
-        //   '[ENTROU AQUI]: ',
-        //   permission,
-        //   JSON.stringify(workspace.permissions),
-        //   workspace.permissions[user.id],
-        //   user.id,
-        // );
-        const isValid = permission.filter(
-          p => workspace.permissions[user.id][p][0] === '*',
-        );
-        if (isValid.length > 0) return next();
-      }
+      // //validate permissions
+      // if (!permission.includes(PermissionRoles.SIGNER)) {
+      //   // console.log(
+      //   //   '[ENTROU AQUI]: ',
+      //   //   permission,
+      //   //   JSON.stringify(workspace.permissions),
+      //   //   workspace.permissions[user.id],
+      //   //   user.id,
+      //   // );
+      //   const isValid = permission.filter(
+      //     p => workspace.permissions[user.id][p][0] === '*',
+      //   );
+      //   if (isValid.length > 0) return next();
+      // }
 
       // if not required premissions
       throw new Unauthorized({
