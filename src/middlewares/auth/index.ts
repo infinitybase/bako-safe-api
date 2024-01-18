@@ -1,8 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 
-import { Predicate } from '@src/models';
 import { PermissionRoles } from '@src/models/Workspace';
-import { PredicateService } from '@src/modules/predicate/services';
 
 import { signOutPath } from '@modules/auth/routes';
 import { AuthService } from '@modules/auth/services';
@@ -63,13 +61,26 @@ function authPermissionMiddleware(permission?: PermissionRoles[]) {
     try {
       const requestAuth: IAuthRequest = req;
 
-      console.log('[REQUEST]: ', {
-        base_url: req.baseUrl,
-        url: req.url,
-        path: req.path,
-        route_path: req.route.path,
-        method: req.method,
-      });
+      // console.log('[REQUEST]: ', {
+      //   base_url: req.baseUrl,
+      //   url: req.url,
+      //   path: req.path,
+      //   route_path: req.route.path,
+      //   method: req.method,
+      // });
+
+      const mylOGICAL =
+        `${req.method}-${req.baseUrl}${req.url}` === 'POST-/predicate/';
+
+      if (mylOGICAL)
+        console.log({
+          permissions: permission,
+          user_id: requestAuth.user.id,
+          workspace: JSON.stringify(requestAuth.workspace),
+          user_permissions: JSON.stringify(
+            requestAuth.workspace.permissions[requestAuth.user.id],
+          ),
+        });
 
       if (!permission || permission.length === 0) return next();
       const { user, workspace } = requestAuth;

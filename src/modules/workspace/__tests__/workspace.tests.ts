@@ -5,6 +5,7 @@ import { accounts } from '@src/mocks/accounts';
 import { networks, providers } from '@src/mocks/networks';
 import { PermissionRoles, defaultPermissions } from '@src/models/Workspace';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
+import { generateWorkspacePayload } from '@src/utils/testUtils/Workspace';
 
 describe('[WORKSPACE]', () => {
   let api: AuthValidations;
@@ -14,27 +15,6 @@ describe('[WORKSPACE]', () => {
     await api.create();
     await api.createSession();
   });
-
-  const generateWorkspacePayload = async () => {
-    const { data: data_user1 } = await api.axios.post('/user/', {
-      address: Address.fromRandom().toAddress(),
-      provider: providers['local'].name,
-      name: `${new Date()} - Create user test`,
-    });
-    const { data: data_user2 } = await api.axios.post('/user/', {
-      address: Address.fromRandom().toAddress(),
-      provider: providers['local'].name,
-      name: `${new Date()} - Create user test`,
-    });
-
-    const { data, status } = await api.axios.post(`/workspace/`, {
-      name: '[GENERATED] Workspace 1',
-      description: '[GENERATED] Workspace 1 description',
-      members: [data_user1.id, data_user2.id],
-    });
-
-    return { data, status, data_user1, data_user2 };
-  };
 
   test(
     'List workspaces to user',
@@ -56,18 +36,32 @@ describe('[WORKSPACE]', () => {
   test(
     'Create workspace',
     async () => {
-      const { data, status } = await generateWorkspacePayload();
+      const {
+        data,
+        data_user1,
+        data_user2,
+        USER_5,
+        status,
+      } = await generateWorkspacePayload(api);
       const notOwner = data.members.filter(m => m.id !== data.owner.id);
 
       expect(status).toBe(201);
       expect(data).toHaveProperty('id');
       expect(data).toHaveProperty('owner');
       expect(data).toHaveProperty('members');
-      expect(data.permissions).toStrictEqual({
-        [data.owner.id]: defaultPermissions[PermissionRoles.OWNER],
-        [notOwner[0].id]: defaultPermissions[PermissionRoles.VIEWER],
-        [notOwner[1].id]: defaultPermissions[PermissionRoles.VIEWER],
-      });
+      expect(data.members).toHaveLength(notOwner.length + 1);
+      expect(data.permissions[data.owner.id]).toStrictEqual(
+        defaultPermissions[PermissionRoles.OWNER],
+      );
+      expect(data.permissions[data_user1.id]).toStrictEqual(
+        defaultPermissions[PermissionRoles.VIEWER],
+      );
+      expect(data.permissions[data_user2.id]).toStrictEqual(
+        defaultPermissions[PermissionRoles.VIEWER],
+      );
+      expect(data.permissions[USER_5.id]).toStrictEqual(
+        defaultPermissions[PermissionRoles.VIEWER],
+      );
     },
     60 * 1000,
   );
@@ -75,7 +69,7 @@ describe('[WORKSPACE]', () => {
   test(
     'Find workspace by ID',
     async () => {
-      const { data } = await generateWorkspacePayload();
+      const { data } = await generateWorkspacePayload(api);
 
       const { data: workspace, status: status_find } = await api.axios.get(
         `/workspace/${data.id}`,
@@ -93,7 +87,7 @@ describe('[WORKSPACE]', () => {
   );
 
   test('Update workspace', async () => {
-    const { data } = await generateWorkspacePayload();
+    const { data } = await generateWorkspacePayload(api);
 
     const { data: workspace, status: status_find } = await api.axios.get(
       `/workspace/${data.id}`,
@@ -132,7 +126,7 @@ describe('[WORKSPACE]', () => {
   test(
     'Upgrade workspace permissions',
     async () => {
-      const { data } = await generateWorkspacePayload();
+      const { data } = await generateWorkspacePayload(api);
 
       const { data: workspace, status: status_find } = await api.axios.get(
         `/workspace/${data.id}`,
@@ -176,18 +170,19 @@ describe('[WORKSPACE]', () => {
   );
 
   test('Upgrade workspace members', async () => {
-    const { data } = await generateWorkspacePayload();
+    const { data } = await generateWorkspacePayload(api);
 
     const { data: workspace, status: status_find } = await api.axios.get(
       `/workspace/${data.id}`,
     );
 
     const notOwner = workspace.members.filter(m => m.id !== workspace.owner.id);
+    const new_members = [notOwner[0].id, workspace.owner.id];
 
     const { data: workspace_updated, status: status_update } = await api.axios.put(
       `/workspace/${data.id}/members`,
       {
-        members: [notOwner[0].id, workspace.owner.id],
+        members: new_members,
       },
     );
 
@@ -205,7 +200,7 @@ describe('[WORKSPACE]', () => {
     expect(workspace_updated).toHaveProperty('owner');
     expect(workspace_updated.owner).toEqual(data.owner);
     expect(workspace_updated).toHaveProperty('members');
-    expect(workspace_updated.members).toHaveLength(workspace.members.length - 1);
+    expect(workspace_updated.members).toHaveLength(new_members.length);
     expect(workspace_updated.permissions).toEqual({
       [workspace.owner.id]: defaultPermissions[PermissionRoles.OWNER],
       [notOwner[0].id]: defaultPermissions[PermissionRoles.VIEWER],
@@ -213,7 +208,7 @@ describe('[WORKSPACE]', () => {
   });
 
   test('Cannot remove owner from workspace', async () => {
-    const { data } = await generateWorkspacePayload();
+    const { data } = await generateWorkspacePayload(api);
 
     const { data: workspace, status: status_find } = await api.axios.get(
       `/workspace/${data.id}`,

@@ -84,8 +84,9 @@ export interface ISignInResponse {
 }
 
 export interface IUpgradeWorkspace extends ValidatedRequestSchema {
-  [ContainerTypes.Query]: {
-    workspace: string;
+  [ContainerTypes.Body]: {
+    workspace_id: string;
+    user: string;
   };
 }
 

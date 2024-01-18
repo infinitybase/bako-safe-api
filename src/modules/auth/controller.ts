@@ -2,11 +2,15 @@ import { add, addMinutes } from 'date-fns';
 
 import { Encoder } from '@src/models';
 import { Workspace } from '@src/models/Workspace';
-import GeneralError from '@src/utils/error/GeneralError';
+import GeneralError, { ErrorTypes } from '@src/utils/error/GeneralError';
+import {
+  Unauthorized,
+  UnauthorizedErrorTitles,
+} from '@src/utils/error/Unauthorized';
 
 import { IAuthRequest } from '@middlewares/auth/types';
 
-import { error } from '@utils/error';
+import { NotFound, error } from '@utils/error';
 import { Responses, successful, bindMethods, Web3Utils } from '@utils/index';
 
 import { IUserService } from '../user/types';
@@ -98,10 +102,33 @@ export class AuthController {
     try {
       const { workspace_id, user } = req.body;
 
+      //console.log('[WORKSPACE_ID]: ', workspace_id, user);
+
       const workspace = await new WorkspaceService()
         .filter({ id: workspace_id })
         .list()
         .then((response: Workspace[]) => response[0]);
+
+      if (!workspace)
+        throw new NotFound({
+          type: ErrorTypes.NotFound,
+          title: 'Workspace not found',
+          detail: `Workspace not found`,
+        });
+
+      // console.log(
+      //   '[WORKSPACE]: ',
+      //   workspace.members.map(m => m.id),
+      // );
+      const isUserMember = workspace.members.find(m => m.id === user);
+
+      if (!isUserMember) {
+        throw new Unauthorized({
+          type: ErrorTypes.NotFound,
+          title: UnauthorizedErrorTitles.INVALID_PERMISSION,
+          detail: `User not found`,
+        });
+      }
 
       const token = await this.authService.findToken({
         userId: user,
@@ -110,23 +137,23 @@ export class AuthController {
       token.workspace = workspace;
 
       const response = await token.save();
-      return successful(
-        {
-          workspace: {
-            id: response.workspace.id,
-            name: response.workspace.name,
-            avatar: response.workspace.avatar,
-            permissions: response.workspace.permissions,
-            single: response.workspace.single,
-          },
-          token: response.token,
-          avatar: response.user.avatar,
-          address: response.user.address,
+      const result = {
+        workspace: {
+          id: response.workspace.id,
+          name: response.workspace.name,
+          avatar: response.workspace.avatar,
+          permissions: response.workspace.permissions[response.user.id],
+          single: response.workspace.single,
         },
-        Responses.Ok,
-      );
+        token: response.token,
+        avatar: response.user.avatar,
+        address: response.user.address,
+      };
+
+      return successful(result, Responses.Ok);
     } catch (e) {
-      return error(e.error[0], e.statusCode);
+      console.log(e);
+      return error(e.error, e.statusCode);
     }
   }
 }

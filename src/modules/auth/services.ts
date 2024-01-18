@@ -25,6 +25,7 @@ export class AuthService implements IAuthService {
             id: data.workspace.id,
             name: data.workspace.name,
             avatar: data.workspace.avatar,
+            permissions: data.workspace.permissions,
           },
         };
       })
