@@ -68,19 +68,7 @@ export class AuthController {
         workspace,
       });
 
-      return successful(
-        {
-          ...userToken,
-          workspace: {
-            id: workspace.id,
-            name: workspace.name,
-            avatar: workspace.avatar,
-            permissions: workspace.permissions,
-            single: workspace.single,
-          },
-        },
-        Responses.Ok,
-      );
+      return successful(userToken, Responses.Ok);
     } catch (e) {
       if (e instanceof GeneralError) throw e;
 

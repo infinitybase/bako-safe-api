@@ -21,10 +21,12 @@ export class AuthService implements IAuthService {
           accessToken: data.token,
           avatar: data.user.avatar,
           address: data.user.address,
+          user_id: data.user.id,
           workspace: {
             id: data.workspace.id,
             name: data.workspace.name,
             avatar: data.workspace.avatar,
+            single: data.workspace.single,
             permissions: data.workspace.permissions,
           },
         };

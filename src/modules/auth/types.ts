@@ -75,11 +75,13 @@ export interface IFindTokenParams {
 export interface ISignInResponse {
   accessToken: string;
   avatar: string;
+  user_id: string;
   workspace: {
     id: string;
     name: string;
     avatar: string;
     permissions: IPermissions;
+    single: boolean;
   };
 }
 
