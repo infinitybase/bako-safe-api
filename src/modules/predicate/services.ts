@@ -120,12 +120,14 @@ export class PredicateService implements IPredicateService {
       .select(this.predicateFieldsSelection)
       .innerJoin('p.members', 'members')
       .innerJoin('p.owner', 'owner')
+      .innerJoin('p.workspace', 'workspace')
       .addSelect([
         'members.id',
         'members.address',
         'members.avatar',
         'owner.id',
         'owner.address',
+        'workspace.id',
       ]);
 
     const handleInternalError = e => {

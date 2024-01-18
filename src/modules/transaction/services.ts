@@ -13,9 +13,11 @@ import {
   transactionRequestify,
 } from 'fuels';
 
+import { PermissionRoles, Workspace } from '@src/models/Workspace';
+
 import {
-  Notification,
   NotificationTitle,
+  Predicate,
   Transaction,
   Witness,
   WitnessesStatus,

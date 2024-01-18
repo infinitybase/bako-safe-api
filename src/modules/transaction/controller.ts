@@ -2,7 +2,16 @@ import { ITransactionResume, TransactionStatus } from 'bsafe';
 import { Provider } from 'fuels';
 
 import AddressBook from '@src/models/AddressBook';
+import { PermissionRoles, Workspace } from '@src/models/Workspace';
+import {
+  Unauthorized,
+  UnauthorizedErrorTitles,
+} from '@src/utils/error/Unauthorized';
 import { IPagination } from '@src/utils/pagination';
+import {
+  validatePermissionVault,
+  validatePermissionGeneral,
+} from '@src/utils/permissionValidate';
 
 import {
   NotificationTitle,
@@ -14,12 +23,14 @@ import {
 import { IPredicateService } from '@modules/predicate/types';
 import { IWitnessService } from '@modules/witness/types';
 
-import { error } from '@utils/error';
+import { ErrorTypes, error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
 
 import { IAddressBookService } from '../addressBook/types';
 import { IAssetService } from '../asset/types';
 import { INotificationService } from '../notification/types';
+import { PredicateService } from '../predicate/services';
+import { WorkspaceService } from '../workspace/services';
 import {
   ICloseTransactionRequest,
   ICreateTransactionRequest,
@@ -61,13 +72,21 @@ export class TransactionController {
     const { predicateAddress, summary } = transaction;
 
     try {
-      const predicate = await this.predicateService
-        .filter({
-          address: predicateAddress,
-        })
-        .paginate(undefined)
+      const predicate = await new PredicateService()
+        .filter({ address: predicateAddress })
         .list()
         .then((result: Predicate[]) => result[0]);
+
+      // if possible move this next part to a middleware, but we dont have access to body of request
+      // ========================================================================================================
+      if (!predicate.members.find(member => member.id === user.id)) {
+        throw new Unauthorized({
+          type: ErrorTypes.Unauthorized,
+          title: UnauthorizedErrorTitles.MISSING_PERMISSION,
+          detail: 'You do not have permission to access this resource',
+        });
+      }
+      // ========================================================================================================
 
       const witnesses = predicate.members.map(member => ({
         account: member.address,

@@ -77,39 +77,13 @@ describe('[PREDICATE]', () => {
 
     const { status, data: predicate_data } = await auth_aux.axios
       .post('/predicate', predicatePayload)
-      .catch(e => e.response);
+      .catch(e => {
+        return e.response;
+      });
 
     expect(status).toBe(401);
     expect(predicate_data.errors.detail).toEqual(
       'You do not have permission to access this resource',
     );
   });
-
-  // test('Find predicate by ID', async () => {
-  //   const { predicatePayload } = await PredicateMock.create(1, [
-  //     accounts['USER_1'].address,
-  //     accounts['USER_2'].address,
-  //   ]);
-  //   const { data } = await api.axios.post('/predicate', predicatePayload);
-
-  //   const { data: predicate } = await api.axios.get(`/predicate/${data.id}`);
-
-  //   // expect(predicate).toHaveProperty('id', data.id);
-  //   // expect(predicate).toHaveProperty('predicateAddress', data.predicateAddress);
-  // });
-
-  // test('Find predicate by Address', async () => {
-  //   const { predicatePayload } = await PredicateMock.create(1, [
-  //     accounts['USER_1'].address,
-  //     accounts['USER_2'].address,
-  //   ]);
-  //   const { data } = await api.axios.post('/predicate', predicatePayload);
-
-  //   const { data: predicate } = await api.axios.get(
-  //     `/predicate/by-address/${data.predicateAddress}`,
-  //   );
-
-  //   // expect(predicate).toHaveProperty('id', data.id);
-  //   // expect(predicate).toHaveProperty('predicateAddress', data.predicateAddress);
-  // });
 });

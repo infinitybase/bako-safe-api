@@ -1,6 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 
+import { Predicate } from '@src/models';
 import { PermissionRoles } from '@src/models/Workspace';
+import { PredicateService } from '@src/modules/predicate/services';
+import { validatePermissionGeneral } from '@src/utils/permissionValidate';
 
 import { signOutPath } from '@modules/auth/routes';
 import { AuthService } from '@modules/auth/services';
@@ -61,27 +64,6 @@ function authPermissionMiddleware(permission?: PermissionRoles[]) {
     try {
       const requestAuth: IAuthRequest = req;
 
-      // console.log('[REQUEST]: ', {
-      //   base_url: req.baseUrl,
-      //   url: req.url,
-      //   path: req.path,
-      //   route_path: req.route.path,
-      //   method: req.method,
-      // });
-
-      const mylOGICAL =
-        `${req.method}-${req.baseUrl}${req.url}` === 'POST-/transaction/';
-
-      if (mylOGICAL)
-        console.log({
-          permissions: permission,
-          user_id: requestAuth.user.id,
-          workspace: JSON.stringify(requestAuth.workspace),
-          user_permissions: JSON.stringify(
-            requestAuth.workspace.permissions[requestAuth.user.id],
-          ),
-        });
-
       if (!permission || permission.length === 0) return next();
       const { user, workspace } = requestAuth;
 
@@ -103,37 +85,31 @@ function authPermissionMiddleware(permission?: PermissionRoles[]) {
         });
       }
 
-      //verifica se o usuário tem acesso full, dependendo da permissao solicitada
-      // console.log(
-      //   '[VALIDACAO_1]: ',
-      //   permission.find(p => workspace.permissions[user.id][p][0] === '*'),
-      //   workspace.permissions[user.id],
-      //   user.id,
-      // );
-      if (permission.find(p => workspace.permissions[user.id][p][0] === '*'))
-        return next();
+      // DEBUG VALIDATIONS
+      // const myValidation = `${req.method}-${req.baseUrl}${req.path}`;
+      // const combination = 'POST-/predicate/';
 
-      /**
-       * verifica a combinacao endpoint + metodo
-       * devolve um item do objeto criado para tratar separadamente cada caso de validacao
-       * [key: function(req, permissions, user, workspace)] -> [`${req.method}_${req.path}`] -> fn(req, permissions, user, workspace): true | false
-       * recebendo true[valido] ou false[invalido] retorna o next() ou throw new Unauthorized
-       */
-
-      // //validate permissions
-      // if (!permission.includes(PermissionRoles.SIGNER)) {
-      //   // console.log(
-      //   //   '[ENTROU AQUI]: ',
-      //   //   permission,
-      //   //   JSON.stringify(workspace.permissions),
-      //   //   workspace.permissions[user.id],
-      //   //   user.id,
-      //   // );
-      //   const isValid = permission.filter(
-      //     p => workspace.permissions[user.id][p][0] === '*',
-      //   );
-      //   if (isValid.length > 0) return next();
+      // if (combination === myValidation) {
+      //   console.log('[validacao]: ', {
+      //     //workspace: workspace.permissions,
+      //     user: {
+      //       id: user.id,
+      //       name: user.name,
+      //       address: user.address,
+      //     },
+      //     permission: permission,
+      //     user_p: workspace.permissions[user.id],
+      //     validations: {
+      //       a: !!workspace.permissions[user.id],
+      //       b: permission.length === 0,
+      //       c: permission.filter(p =>
+      //         workspace.permissions[user.id][p].includes('*'),
+      //       ),
+      //     },
+      //   });
       // }
+
+      if (validatePermissionGeneral(workspace, user.id, permission)) return next();
 
       // if not required premissions
       throw new Unauthorized({
@@ -141,10 +117,7 @@ function authPermissionMiddleware(permission?: PermissionRoles[]) {
         title: UnauthorizedErrorTitles.MISSING_PERMISSION,
         detail: 'You do not have permission to access this resource',
       });
-
-      //return next();
     } catch (e) {
-      console.log('[ERRO]: ', e);
       return next(e);
     }
   };

@@ -44,48 +44,38 @@ describe('[TRANSACTION]', () => {
   );
 
   test(
-    'Create transaction with invalid user permissions',
+    'Create transaction with invalid permission',
     async () => {
+      // logar com usuário inválido no workspace
+      const auth = new AuthValidations(networks['local'], accounts['USER_3']);
+      await auth.create();
+      await auth.createSession();
       const {
         data,
         status,
         data_user1,
         data_user2,
         USER_5,
-      } = await generateWorkspacePayload(api);
+      } = await generateWorkspacePayload(auth);
 
       //gerar um predicate
-      const members = [
-        accounts['USER_1'].address,
-        data_user1.address,
-        data_user2.address,
-        USER_5.address,
-      ];
+      const members = [data_user1.address, data_user2.address, USER_5.address];
+
       const { predicatePayload, vault } = await PredicateMock.create(1, members);
       await api.axios.post('/predicate', predicatePayload);
-
-      // logar com usuário inválido no workspace
-      const auth = new AuthValidations(networks['local'], accounts['USER_5']);
-      await auth.create();
-      await auth.createSession();
-
-      await auth.selectWorkspace(data.id);
 
       //gerar uma transacao com um usuário inválido
       const { payload_transfer } = await transactionMock(vault);
       const {
-        data: data_transaction,
         status: status_transaction,
+        data: data_transaction,
       } = await auth.axios.post('/transaction', payload_transfer).catch(e => {
-        return {
-          data: e.response.data,
-          status: e.response.status,
-        };
+        return e.response;
       });
 
       //validacoes
       expect(status_transaction).toBe(401);
-      expect(data_transaction.errors).toHaveProperty(
+      expect(data_transaction).toHaveProperty(
         'detail',
         'You do not have permission to access this resource',
       );
@@ -94,51 +84,35 @@ describe('[TRANSACTION]', () => {
   );
 
   test(
-    'Create transaction with SIGNER user permission',
+    'Create transaction with vault member',
     async () => {
+      // logar com usuário inválido no workspace
+      const auth = new AuthValidations(networks['local'], accounts['USER_5']);
+      await auth.create();
+      await auth.createSession();
       const {
         data,
         status,
         data_user1,
         data_user2,
         USER_5,
-      } = await generateWorkspacePayload(api);
+      } = await generateWorkspacePayload(auth);
 
       //gerar um predicate
-      const members = [
-        accounts['USER_1'].address,
-        data_user1.address,
-        data_user2.address,
-        USER_5.address,
-      ];
+      const members = [data_user1.address, data_user2.address, USER_5.address];
+
       const { predicatePayload, vault } = await PredicateMock.create(1, members);
       await api.axios.post('/predicate', predicatePayload);
-
-      // logar com usuário inválido no workspace
-      const auth = new AuthValidations(networks['local'], accounts['USER_5']);
-      await auth.create();
-      await auth.createSession();
-
-      await auth.selectWorkspace(data.id);
 
       //gerar uma transacao com um usuário inválido
       const { payload_transfer } = await transactionMock(vault);
       const {
-        data: data_transaction,
         status: status_transaction,
-      } = await auth.axios.post('/transaction', payload_transfer).catch(e => {
-        return {
-          data: e.response.data,
-          status: e.response.status,
-        };
-      });
+        data: data_transaction,
+      } = await auth.axios.post('/transaction', payload_transfer);
 
       //validacoes
-      expect(status_transaction).toBe(401);
-      expect(data_transaction.errors).toHaveProperty(
-        'detail',
-        'You do not have permission to access this resource',
-      );
+      expect(status_transaction).toBe(200);
     },
     60 * 1000,
   );

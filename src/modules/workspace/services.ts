@@ -178,7 +178,6 @@ export class WorkspaceService implements IWorkspaceService {
           return;
         });
         workspace.permissions = p;
-        console.log('[PERMISSOES_INCLUSAS]: ', p);
         await workspace.save();
         return;
       })
