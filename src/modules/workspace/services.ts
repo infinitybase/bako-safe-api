@@ -40,6 +40,7 @@ export class WorkspaceService implements IWorkspaceService {
     try {
       const hasPagination = !!this._pagination;
       const hasOrdination = !!this._ordination;
+      const enableSingleFilter = this._filter.single !== undefined;
       const queryBuilder = Workspace.createQueryBuilder('w')
         .select([
           'w', // Todos os campos de Workspace
@@ -57,14 +58,15 @@ export class WorkspaceService implements IWorkspaceService {
       // .innerJoin('w.predicate', 'predicates')
       // .select(['predicates.id']);
 
+      enableSingleFilter &&
+        queryBuilder.andWhere('single = :single', {
+          single: this._filter.single,
+        });
+
       this._filter.q &&
         queryBuilder.where('LOWER(w.name) LIKE LOWER(:name)', {
           name: `%${this._filter.q}%`,
         });
-
-      queryBuilder.andWhere('single = :single', {
-        single: this._filter.single ?? true,
-      });
 
       this._filter.owner &&
         queryBuilder.andWhere(
