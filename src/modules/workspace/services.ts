@@ -207,6 +207,8 @@ export class WorkspaceService implements IWorkspaceService {
         id: workspace.id,
         name: workspace.name,
         avatar: workspace.avatar,
+        single: workspace.single,
+        description: workspace.description,
         owner: {
           name: workspace.owner.name,
           avatar: workspace.owner.avatar,
@@ -220,6 +222,7 @@ export class WorkspaceService implements IWorkspaceService {
           };
         }),
         predicates: workspace.predicates.length,
+        permissions: workspace.permissions,
       };
     });
   }
