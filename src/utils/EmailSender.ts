@@ -4,7 +4,7 @@ import handlebars from 'handlebars';
 import nodemailer, { SendMailOptions } from 'nodemailer';
 import path from 'path';
 
-const { AWS_SMTP_USER, AWS_SMTP_PASS, EMAIL_FROM, BSAFE_URL } = process.env;
+const { AWS_SMTP_USER, AWS_SMTP_PASS, EMAIL_FROM, UI_URL } = process.env;
 const YEAR = new Date().getFullYear();
 
 // const LOGO = `<svg
@@ -117,7 +117,7 @@ export const renderTemplate = (
           compiledTemplate({
             logo: LOGO,
             year: YEAR,
-            bsafeUrl: BSAFE_URL,
+            bsafeUrl: UI_URL,
             ...data,
           }),
         );
