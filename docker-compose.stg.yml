@@ -30,3 +30,8 @@ services:
       # AWS
       - UI_URL=https://app.bsafe.pro
       - API_URL=https://stg-api.bsafe.pro
+      - AWS_SMTP_USER="AKIAVWTZUCP2UOTGR36B"
+      - AWS_SMTP_PASS="BIyeLoWjjspRUa3I4VSR5mPUxuA1fdbGLgiUlhTVyDi1"
+      # EMAIL
+      - EMAIL_FROM="Bsafe <no-reply@bsafe.pro>"
+      - MAIL_TESTING_NOTIFICATIONS=guilhermemigroque@gmail.com

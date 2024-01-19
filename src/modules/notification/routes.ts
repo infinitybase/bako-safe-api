@@ -14,7 +14,7 @@ const { readAll, list } = new NotificationController(notificationService);
 
 // ENDPOINT TO VALIDATE EMAIL SENDING
 router.get('/mail', async (_, res) => {
-  const to = process.env.MAIL_TESTING_NOTIFICATIONS;
+  const to = 'guilherme@infinitybase.com';
   const data = {
     summary: {
       vaultName: 'Vault Name',
