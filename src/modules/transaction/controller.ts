@@ -2,12 +2,14 @@ import { ITransactionResume, TransactionStatus } from 'bsafe';
 import { Provider } from 'fuels';
 
 import AddressBook from '@src/models/AddressBook';
+import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
 import { IPagination } from '@src/utils/pagination';
 
 import {
   NotificationTitle,
   Predicate,
   Transaction,
+  User,
   WitnessesStatus,
 } from '@models/index';
 
@@ -19,6 +21,7 @@ import { Responses, bindMethods, successful } from '@utils/index';
 
 import { IAddressBookService } from '../addressBook/types';
 import { IAssetService } from '../asset/types';
+import { IUserService } from '../configs/user/types';
 import { INotificationService } from '../notification/types';
 import {
   ICloseTransactionRequest,
@@ -37,6 +40,7 @@ export class TransactionController {
   private witnessService: IWitnessService;
   private addressBookService: IAddressBookService;
   private notificationService: INotificationService;
+  private userService: IUserService;
 
   constructor(
     transactionService: ITransactionService,
@@ -45,6 +49,7 @@ export class TransactionController {
     addressBookService: IAddressBookService,
     assetService: IAssetService,
     notificationService: INotificationService,
+    userService: IUserService,
   ) {
     Object.assign(this, {
       transactionService,
@@ -53,6 +58,7 @@ export class TransactionController {
       addressBookService,
       assetService,
       notificationService,
+      userService,
     });
     bindMethods(this);
   }
@@ -101,21 +107,35 @@ export class TransactionController {
       });
 
       const { id, name } = newTransaction;
-      const membersWithoutLoggedUser = predicate.members.filter(
-        member => member.id !== user.id,
-      );
+      const notificationSummary = {
+        vaultId: predicate.id,
+        vaultName: predicate.name,
+        transactionName: name,
+        transactionId: id,
+      };
+      const membersWithoutLoggedUser = predicate.members
+        .filter(member => member.id !== user.id)
+        .map(user => user.address);
 
-      for await (const member of membersWithoutLoggedUser) {
+      const members = (await this.userService
+        .filter({ addresses: membersWithoutLoggedUser })
+        .list()) as User[];
+
+      for await (const member of members) {
         await this.notificationService.create({
           title: NotificationTitle.TRANSACTION_CREATED,
-          summary: {
-            vaultId: predicate.id,
-            vaultName: predicate.name,
-            transactionName: name,
-            transactionId: id,
-          },
+          summary: notificationSummary,
           user_id: member.id,
         });
+
+        if (member.notify) {
+          await sendMail(EmailTemplateType.TRANSACTION_CREATED, {
+            to: member.email,
+            data: {
+              summary: { ...notificationSummary, name: member?.name ?? '' },
+            },
+          });
+        }
       }
 
       return successful(newTransaction, Responses.Ok);
@@ -236,6 +256,15 @@ export class TransactionController {
               summary: notificationSummary,
               user_id: member.id,
             });
+
+            if (member.notify) {
+              await sendMail(EmailTemplateType.TRANSACTION_SIGNED, {
+                to: member.email,
+                data: {
+                  summary: { ...notificationSummary, name: member?.name ?? '' },
+                },
+              });
+            }
           }
         }
 
@@ -247,6 +276,15 @@ export class TransactionController {
               summary: notificationSummary,
               user_id: member.id,
             });
+
+            if (member.notify) {
+              await sendMail(EmailTemplateType.TRANSACTION_DECLINED, {
+                to: member.email,
+                data: {
+                  summary: { ...notificationSummary, name: member?.name ?? '' },
+                },
+              });
+            }
           }
         }
       }

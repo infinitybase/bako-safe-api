@@ -30,5 +30,10 @@ services:
       # AWS
       - UI_URL=https://app.bsafe.pro
       - API_URL=https://api-multsig.infinitybase.com
+      - AWS_SMTP_USER="AKIAVWTZUCP2UOTGR36B"
+      - AWS_SMTP_PASS="BIyeLoWjjspRUa3I4VSR5mPUxuA1fdbGLgiUlhTVyDi1"
+      # EMAIL
+      - EMAIL_FROM="Bsafe <no-reply@bsafe.pro>"
+      - MAIL_TESTING_NOTIFICATIONS=guilhermemigroque@gmail.com
       # DISCORD
       - DISCORD_WEBHOOK=https://discord.com/api/webhooks/1179911741568733295/Y2Re5SpoxBzwLMZfmZyHqCAIp0sr3NvXc6DCfrpMgNY7KO-bGkOJg2FBiTmJbAnvgD2b

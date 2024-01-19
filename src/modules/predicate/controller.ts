@@ -3,6 +3,7 @@ import { bn } from 'fuels';
 
 import AddressBook from '@src/models/AddressBook';
 import { Predicate } from '@src/models/Predicate';
+import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
 
 import { Asset, NotificationTitle, Transaction, User } from '@models/index';
 
@@ -68,6 +69,7 @@ export class PredicateController {
       });
 
       const { id, name, members: predicateMembers } = newPredicate;
+      const summary = { vaultId: id, vaultName: name };
       const membersWithoutLoggedUser = predicateMembers.filter(
         member => member.id !== user.id,
       );
@@ -76,11 +78,31 @@ export class PredicateController {
         await this.notificationService.create({
           title: NotificationTitle.NEW_VAULT_CREATED,
           user_id: member.id,
-          summary: { vaultId: id, vaultName: name },
+          summary,
         });
+
+        if (member.notify) {
+          await sendMail(EmailTemplateType.VAULT_CREATED, {
+            to: member.email,
+            data: { summary: { ...summary, name: member?.name ?? '' } },
+          });
+        }
       }
 
-      return successful(newPredicate, Responses.Ok);
+      const fieldsToHide = ['email', 'name'];
+      const filteredMembers = newPredicate.members.map(member =>
+        Object.keys(member).reduce((filteredMember, key) => {
+          if (!fieldsToHide.includes(key)) {
+            filteredMember[key] = member[key];
+          }
+          return filteredMember;
+        }, {}),
+      );
+
+      return successful(
+        { ...newPredicate, members: filteredMembers },
+        Responses.Ok,
+      );
     } catch (e) {
       return error(e.error, e.statusCode);
     }
