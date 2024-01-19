@@ -19,7 +19,8 @@ export interface IUserPayload {
 }
 
 export interface IFilterParams {
-  addresses: string[];
+  addresses?: string[];
+  active?: boolean;
 }
 
 interface ICreateRequestSchema extends ValidatedRequestSchema {

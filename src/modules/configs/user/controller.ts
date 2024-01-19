@@ -25,10 +25,10 @@ export class UserController {
       const { user, active, orderBy, sort, page, perPage } = req.query;
 
       const response = await this.userService
-        .filter({ user, active })
+        .filter({ addresses: [user], active })
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })
-        .find();
+        .list();
 
       return successful(response, Responses.Ok);
     } catch (e) {

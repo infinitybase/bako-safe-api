@@ -118,7 +118,9 @@ export class TransactionController {
         .map(user => user.address);
 
       const members = (await this.userService
-        .filter({ addresses: membersWithoutLoggedUser })
+        .filter({
+          addresses: membersWithoutLoggedUser,
+        })
         .list()) as User[];
 
       for await (const member of members) {
