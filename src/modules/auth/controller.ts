@@ -88,12 +88,12 @@ export class AuthController {
 
   async updateWorkspace(req: IChangeWorkspaceRequest) {
     try {
-      const { workspace_id, user } = req.body;
+      const { workspace: workspaceId, user } = req.body;
 
       //console.log('[WORKSPACE_ID]: ', workspace_id, user);
 
       const workspace = await new WorkspaceService()
-        .filter({ id: workspace_id })
+        .filter({ id: workspaceId })
         .list()
         .then((response: Workspace[]) => response[0]);
 
