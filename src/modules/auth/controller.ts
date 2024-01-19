@@ -53,6 +53,7 @@ export class AuthController {
         {
           accessToken: userToken.accessToken,
           avatar: userToken.avatar,
+          id: req.body.user_id,
         },
         Responses.Ok,
       );
