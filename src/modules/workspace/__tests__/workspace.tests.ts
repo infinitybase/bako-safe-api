@@ -29,7 +29,8 @@ describe('[WORKSPACE]', () => {
       expect(data[0]).toHaveProperty('id');
       expect(data[0]).toHaveProperty('owner');
       expect(data[0]).toHaveProperty('members');
-      expect(data[0].single).toBeFalsy();
+      expect(data[0]).toHaveProperty('single', false);
+      expect(data[0]).toHaveProperty('permissions');
     },
     40 * 1000,
   );
