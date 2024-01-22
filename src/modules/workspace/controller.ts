@@ -44,6 +44,7 @@ export class WorkspaceController {
       const { user } = req;
       const { permissions, members } = req.body;
       const _members: User[] = [];
+
       if (members) {
         for await (const member of members) {
           const m =
@@ -54,12 +55,15 @@ export class WorkspaceController {
         }
       }
 
-      const _permissions: IPermissions = {};
+      const _permissions: IPermissions = {
+        [user.id]: defaultPermissions[PermissionRoles.OWNER],
+      };
 
-      if (!permissions && members.length > 0) {
-        _permissions[user.id] = defaultPermissions[PermissionRoles.OWNER];
+      if (!permissions && members?.length > 0) {
         for await (const member of _members) {
-          _permissions[member.id] = defaultPermissions[PermissionRoles.VIEWER];
+          if (member.id !== user.id) {
+            _permissions[member.id] = defaultPermissions[PermissionRoles.VIEWER];
+          }
         }
       }
 
