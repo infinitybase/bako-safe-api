@@ -179,7 +179,7 @@ describe('[WORKSPACE]', () => {
     );
 
     const notOwner = workspace.members.filter(m => m.id !== workspace.owner.id);
-    const new_members = [notOwner[0].id, workspace.owner.id];
+    const new_members = [notOwner[0].id, workspace.owner.id, notOwner[1].address];
 
     const { data: workspace_updated, status: status_update } = await api.axios.put(
       `/workspace/${data.id}/members`,
