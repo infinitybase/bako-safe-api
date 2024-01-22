@@ -206,6 +206,7 @@ describe('[WORKSPACE]', () => {
     expect(workspace_updated.permissions).toEqual({
       [workspace.owner.id]: defaultPermissions[PermissionRoles.OWNER],
       [notOwner[0].id]: defaultPermissions[PermissionRoles.VIEWER],
+      [notOwner[1].id]: defaultPermissions[PermissionRoles.VIEWER],
     });
   });
 
