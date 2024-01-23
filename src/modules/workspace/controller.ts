@@ -50,14 +50,6 @@ export class WorkspaceController {
       const { user } = req;
       const { members } = req.body;
 
-      if (!members || !user) {
-        throw new Internal({
-          type: ErrorTypes.Create,
-          title: 'Error on workspace creation',
-          detail: 'Members is required',
-        });
-      }
-
       const {
         _members,
         _permissions,
@@ -68,6 +60,7 @@ export class WorkspaceController {
         owner: user,
         members: _members,
         permissions: _permissions,
+        single: false,
       });
 
       return successful(response, Responses.Created);

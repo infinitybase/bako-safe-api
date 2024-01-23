@@ -45,6 +45,7 @@ describe('[WORKSPACE]', () => {
       expect(data).toHaveProperty('id');
       expect(data).toHaveProperty('owner');
       expect(data).toHaveProperty('members');
+      expect(data).toHaveProperty('single', false);
       expect(data.members).toHaveLength(notOwner.length + 1);
       for (const member of notOwner) {
         expect(data.permissions[member.id]).toStrictEqual(

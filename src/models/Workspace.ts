@@ -119,15 +119,6 @@ class Workspace extends Base {
     inverseJoinColumn: { name: 'user_id', referencedColumnName: 'id' },
   })
   members: User[];
-
-  @BeforeInsert()
-  async isSingle() {
-    if (this.members && this.members.length > 1) {
-      this.single = false;
-    } else {
-      this.single = true;
-    }
-  }
 }
 
 export { Workspace };
