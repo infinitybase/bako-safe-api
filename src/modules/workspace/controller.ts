@@ -1,3 +1,4 @@
+import { defaultConfigurable } from 'bsafe';
 import { object } from 'joi';
 
 import { User } from '@src/models';
@@ -7,8 +8,13 @@ import {
   Workspace,
   defaultPermissions,
 } from '@src/models/Workspace';
+import Internal from '@src/utils/error/Internal';
+import {
+  Unauthorized,
+  UnauthorizedErrorTitles,
+} from '@src/utils/error/Unauthorized';
 
-import { error } from '@utils/error';
+import { ErrorTypes, error } from '@utils/error';
 import { Responses, successful } from '@utils/index';
 
 import { UserService } from '../user/service';
@@ -42,35 +48,25 @@ export class WorkspaceController {
   async create(req: ICreateRequest) {
     try {
       const { user } = req;
-      const { permissions, members } = req.body;
-      const _members: User[] = [];
+      const { members } = req.body;
 
-      if (members) {
-        for await (const member of members) {
-          const m =
-            member.length <= 36
-              ? await new UserService().findOne(member)
-              : await new UserService().findByAddress(member);
-          _members.push(m);
-        }
+      if (!members || !user) {
+        new Internal({
+          type: ErrorTypes.Create,
+          title: 'Error on workspace creation',
+          detail: 'Members is required',
+        });
       }
 
-      const _permissions: IPermissions = {
-        [user.id]: defaultPermissions[PermissionRoles.OWNER],
-      };
-
-      if (!permissions && members?.length > 0) {
-        for await (const member of _members) {
-          if (member.id !== user.id) {
-            _permissions[member.id] = defaultPermissions[PermissionRoles.VIEWER];
-          }
-        }
-      }
+      const {
+        _members,
+        _permissions,
+      } = await new WorkspaceService().includeMembers(members, req.user);
 
       const response = await new WorkspaceService().create({
         ...req.body,
         owner: user,
-        members: [..._members, user],
+        members: _members,
         permissions: _permissions,
       });
 
@@ -120,18 +116,36 @@ export class WorkspaceController {
 
   async updatePermissions(req: IUpdatePermissionsRequest) {
     try {
-      const { id } = req.params;
+      const { id, member } = req.params;
+      const { permissions } = req.body;
+      const { user } = req;
 
       const response = await new WorkspaceService()
-        .update({
-          ...req.body,
-          id,
-        })
-        .then(async () => {
-          return await new WorkspaceService()
-            .filter({ id })
-            .list()
-            .then(data => data[0]);
+        .filter({ id })
+        .list()
+        .then(async (data: Workspace[]) => {
+          if (!data) {
+            throw new Internal({
+              type: ErrorTypes.NotFound,
+              title: 'Workspace not found',
+              detail: `Workspace ${id} not found`,
+            });
+          }
+          const workspace = data[0];
+          if (workspace.owner.id === member) {
+            throw new Unauthorized({
+              type: ErrorTypes.Unauthorized,
+              title: UnauthorizedErrorTitles.MISSING_PERMISSION,
+              detail: `Owner cannot change his own permissions`,
+            });
+          }
+
+          workspace.permissions = {
+            ...workspace.permissions,
+            [member]: permissions,
+          };
+
+          return await workspace.save();
         });
 
       return successful(response, Responses.Ok);
@@ -140,48 +154,79 @@ export class WorkspaceController {
     }
   }
 
-  async updateMembers(req: IUpdateMembersRequest) {
+  async addMember(req: IUpdateMembersRequest) {
     try {
-      const { id } = req.params;
-      const { members } = req.body;
-      const _members: User[] = [];
-      if (members) {
-        for await (const member of members) {
-          _members.push(
-            member.length <= 36
-              ? await new UserService().findOne(member)
-              : await new UserService().findByAddress(member),
-          );
-        }
-      }
-      const _permissions = {};
-      // verify if user owner is removed
-      const hasOwner = await new WorkspaceService()
+      const { id, member } = req.params;
+      const workspace = await new WorkspaceService()
         .filter({ id })
         .list()
         .then(data => {
-          const { owner, permissions } = data[0];
-          _members.map(member => {
-            _permissions[member.id] = permissions[member.id];
-          });
-          return _members.find(member => member.id === owner.id);
-        });
-      if (!hasOwner) return error('Owner cannot be removed', 400);
-
-      const response = await new WorkspaceService()
-        .update({
-          permissions: _permissions,
-          members: _members,
-          id,
-        })
-        .then(async () => {
-          return await new WorkspaceService()
-            .filter({ id })
-            .list()
-            .then(data => data[0]);
+          if (!data) {
+            throw new Internal({
+              type: ErrorTypes.NotFound,
+              title: 'Workspace not found',
+              detail: `Workspace ${id} not found`,
+            });
+          }
+          return data[0];
         });
 
-      return successful(response, Responses.Ok);
+      const _member =
+        member.length <= 36
+          ? await new UserService().findOne(member)
+          : await new UserService()
+              .findByAddress(member)
+              .then(async (data: User) => {
+                if (!data) {
+                  return await new UserService().create({
+                    address: member,
+                    provider: defaultConfigurable['provider'],
+                    avatar: await new UserService().randomAvatar(),
+                  });
+                }
+                return data;
+              });
+
+      if (!workspace.members.find(m => m.id === _member.id)) {
+        workspace.members = [...workspace.members, _member];
+        workspace.permissions[_member.id] =
+          defaultPermissions[PermissionRoles.VIEWER];
+      }
+
+      return successful(await workspace.save(), Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async removeMember(req: IUpdateMembersRequest) {
+    try {
+      const { id, member } = req.params;
+      const workspace = await new WorkspaceService()
+        .filter({ id })
+        .list()
+        .then(data => {
+          if (!data) {
+            throw new Internal({
+              type: ErrorTypes.NotFound,
+              title: 'Workspace not found',
+              detail: `Workspace ${id} not found`,
+            });
+          }
+          if (data[0].owner.id === member) {
+            throw new Unauthorized({
+              type: ErrorTypes.Unauthorized,
+              title: UnauthorizedErrorTitles.MISSING_PERMISSION,
+              detail: `Owner cannot be removed from workspace`,
+            });
+          }
+          return data[0];
+        });
+
+      workspace.members = workspace.members.filter(m => m.id !== member);
+      delete workspace.permissions[member];
+
+      return successful(await workspace.save(), Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }

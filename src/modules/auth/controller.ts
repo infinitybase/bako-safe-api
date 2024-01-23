@@ -140,7 +140,6 @@ export class AuthController {
 
       return successful(result, Responses.Ok);
     } catch (e) {
-      console.log(e);
       return error(e.error, e.statusCode);
     }
   }

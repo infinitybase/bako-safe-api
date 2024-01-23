@@ -22,9 +22,10 @@ export const PayloadUpdateWorkspaceSchema = validator.body(
   }),
 );
 
-export const PayloadUpdateMembersWorkspaceSchema = validator.body(
+export const PayloadUpdateWorkspaceParams = validator.params(
   Joi.object({
-    members: Joi.array().items(Joi.string()).required(),
+    member: Joi.string().required(),
+    id: Joi.string().required(),
   }),
 );
 

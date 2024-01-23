@@ -8,8 +8,8 @@ import { WorkspaceController } from './controller';
 import {
   PayloadCreateWorkspaceSchema,
   PayloadUpdateWorkspaceSchema,
-  PayloadUpdateMembersWorkspaceSchema,
   PayloadUpdatePermissionsWorkspaceSchema,
+  PayloadUpdateWorkspaceParams,
 } from './validations';
 
 const router = Router();
@@ -36,15 +36,22 @@ router.put(
   handleResponse(workspaceController.update),
 );
 router.put(
-  '/:id/permissions',
+  '/:id/permissions/:member',
+  PayloadUpdateWorkspaceParams,
   PayloadUpdatePermissionsWorkspaceSchema,
   authPermissionMiddleware([PermissionRoles.OWNER, PermissionRoles.ADMIN]),
   handleResponse(workspaceController.updatePermissions),
 );
-router.put(
-  '/:id/members',
-  PayloadUpdateMembersWorkspaceSchema,
+router.post(
+  '/:id/members/:member/remove',
+  PayloadUpdateWorkspaceParams,
   authPermissionMiddleware([PermissionRoles.OWNER, PermissionRoles.ADMIN]),
-  handleResponse(workspaceController.updateMembers),
+  handleResponse(workspaceController.removeMember),
+);
+router.post(
+  '/:id/members/:member/include',
+  PayloadUpdateWorkspaceParams,
+  authPermissionMiddleware([PermissionRoles.OWNER, PermissionRoles.ADMIN]),
+  handleResponse(workspaceController.addMember),
 );
 export default router;

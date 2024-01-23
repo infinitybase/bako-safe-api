@@ -27,7 +27,12 @@ const generateWorkspacePayload = async (api: AuthValidations) => {
   const { data, status } = await api.axios.post(`/workspace/`, {
     name: `[GENERATED] Workspace 1 ${new Date()}`,
     description: '[GENERATED] Workspace 1 description',
-    members: [data_user1.id, data_user2.id, USER_5.id],
+    members: [
+      data_user1.id,
+      data_user2.id,
+      USER_5.id,
+      Address.fromRandom().toAddress(),
+    ],
   });
 
   return { data, status, data_user1, data_user2, USER_5 };

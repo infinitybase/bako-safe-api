@@ -12,7 +12,6 @@ export interface IUserPayload {
   password?: string;
   active?: boolean;
   language?: Languages;
-  role: Role;
   address: string;
   provider: string;
   avatar: string;

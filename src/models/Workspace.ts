@@ -31,6 +31,7 @@ export enum PermissionRoles {
   SIGNER = 'SIGNER',
   VIEWER = 'VIEWER',
 }
+
 //todo: change to specific permissions of each role depends the complete flow
 export const defaultPermissions = {
   [PermissionRoles.OWNER]: {
@@ -40,13 +41,6 @@ export const defaultPermissions = {
     SIGNER: ['*'],
     VIEWER: ['*'],
   },
-  [PermissionRoles.SIGNER]: {
-    OWNER: [''],
-    ADMIN: [''],
-    MANAGER: [''],
-    SIGNER: [''],
-    VIEWER: [''],
-  },
   [PermissionRoles.ADMIN]: {
     OWNER: [''],
     ADMIN: [''],
@@ -55,6 +49,13 @@ export const defaultPermissions = {
     VIEWER: [''],
   },
   [PermissionRoles.MANAGER]: {
+    OWNER: [''],
+    ADMIN: [''],
+    MANAGER: [''],
+    SIGNER: [''],
+    VIEWER: [''],
+  },
+  [PermissionRoles.SIGNER]: {
     OWNER: [''],
     ADMIN: [''],
     MANAGER: [''],

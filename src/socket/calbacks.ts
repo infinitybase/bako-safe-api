@@ -17,10 +17,8 @@ export const popAuth: IEventsExecute = {
     { content }: ISocketEvent,
   ) => {
     try {
-      console.log('[AUTH_CONFIRMED]', content);
       const { vaultId, sessionId, name, origin } = content;
       const predicate = await new PredicateService().findById(vaultId);
-      console.log('[AUTH_CONFIRMED]', predicate);
       let dapp = await new DAppsService().findBySessionID(sessionId, origin);
       const room = `${sessionId}:${origin}`;
 

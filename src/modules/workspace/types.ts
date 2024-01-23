@@ -1,7 +1,7 @@
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 
 import { AuthValidatedRequest } from '@src/middlewares/auth/types';
-import { IPermissions, Workspace } from '@src/models/Workspace';
+import { IPermissions, PermissionRoles, Workspace } from '@src/models/Workspace';
 import { IOrdination } from '@src/utils/ordination';
 import { PaginationParams, IPagination } from '@src/utils/pagination';
 
@@ -48,13 +48,16 @@ interface IUpdateRequestSchema extends ValidatedRequestSchema {
 }
 
 interface IUpdateMembersRequestSchema extends ValidatedRequestSchema {
-  [ContainerTypes.Body]: { members: string[] };
-  [ContainerTypes.Params]: { id: string };
+  [ContainerTypes.Params]: { id: string; member: string };
 }
 
 interface IUpdatePermissionsRequestSchema extends ValidatedRequestSchema {
-  [ContainerTypes.Body]: { permissions: IPermissions };
-  [ContainerTypes.Params]: { id: string };
+  [ContainerTypes.Body]: {
+    permissions: {
+      [key in PermissionRoles]: string[];
+    };
+  };
+  [ContainerTypes.Params]: { id: string; member: string };
 }
 
 export type IListByUserRequest = AuthValidatedRequest<IListRequestSchema>;

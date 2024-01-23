@@ -1,6 +1,9 @@
+import { defaultConfigurable } from 'bsafe';
 import { Brackets } from 'typeorm';
 
+import { User } from '@src/models';
 import {
+  IPermissions,
   PermissionRoles,
   Workspace,
   defaultPermissions,
@@ -11,7 +14,8 @@ import Internal from '@src/utils/error/Internal';
 import { IOrdination, setOrdination } from '@src/utils/ordination';
 import { PaginationParams, IPagination, Pagination } from '@src/utils/pagination';
 
-import { IFilterParams, IWorkspacePayload, IWorkspaceService } from './types';
+import { UserService } from '../user/service';
+import { IFilterParams, IWorkspaceService } from './types';
 
 export class WorkspaceService implements IWorkspaceService {
   private _ordination: IOrdination<Workspace> = {
@@ -142,6 +146,59 @@ export class WorkspaceService implements IWorkspaceService {
           detail: error,
         });
       });
+  }
+
+  async includeMembers(members: string[], owner: User, workspace?: string) {
+    const _members: User[] = [];
+
+    const _permissions: IPermissions = {};
+    for await (const member of [...members, owner.id]) {
+      const m =
+        member.length <= 36
+          ? await new UserService().findOne(member).then(data => data)
+          : await new UserService()
+              .findByAddress(member)
+              .then(async (data: User) => {
+                if (!data) {
+                  return await new UserService().create({
+                    address: member,
+                    provider: defaultConfigurable['provider'],
+                    avatar: await new UserService().randomAvatar(),
+                  });
+                }
+                return data;
+              });
+      _members.push(m);
+    }
+
+    _members.map(m => {
+      _permissions[m.id] =
+        m.id === owner.id
+          ? defaultPermissions[PermissionRoles.OWNER]
+          : defaultPermissions[PermissionRoles.VIEWER];
+    });
+    const hasOwner =
+      workspace &&
+      (await new WorkspaceService()
+        .filter({ id: workspace })
+        .list()
+        .then(data => {
+          const { owner, permissions } = data[0];
+          _members.map(member => {
+            _permissions[member.id] = permissions[member.id];
+          });
+          return _members.find(member => member.id === owner.id);
+        }));
+
+    if (workspace && !hasOwner) {
+      throw new Internal({
+        type: ErrorTypes.NotFound,
+        title: 'Owner not found',
+        detail: `Owner cannot be removed from workspace`,
+      });
+    }
+
+    return { _members, _permissions };
   }
 
   findById: (id: string) => Promise<Workspace>;
