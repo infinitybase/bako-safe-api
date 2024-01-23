@@ -118,7 +118,7 @@ function authPermissionMiddleware(permission?: PermissionRoles[]) {
         detail: 'You do not have permission to access this resource',
       });
     } catch (e) {
-      next(e);
+      return next(e);
       //return e;
     }
   };
