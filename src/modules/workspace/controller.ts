@@ -48,7 +48,7 @@ export class WorkspaceController {
   async create(req: ICreateRequest) {
     try {
       const { user } = req;
-      const { members } = req.body;
+      const { members = [] } = req.body;
 
       const {
         _members,
