@@ -39,7 +39,11 @@ router.use(authMiddleware);
 router.post(
   '/',
   validateAddPredicatePayload,
-  authPermissionMiddleware([PermissionRoles.OWNER, PermissionRoles.ADMIN]),
+  authPermissionMiddleware([
+    PermissionRoles.OWNER,
+    PermissionRoles.ADMIN,
+    PermissionRoles.MANAGER,
+  ]),
   handleResponse(create),
 );
 router.get('/', handleResponse(list));
