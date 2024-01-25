@@ -22,10 +22,8 @@ export const transactionMock = async (vault: Vault) => {
     vault,
     bn(1_000_000),
     'ETH',
-    accounts['STORE'].privateKey,
+    accounts['FULL'].privateKey,
   );
-
-  //console.log('[VAULT]: ', (await vault.getBalance()).format().toString());
 
   const tx = await vault.BSAFEIncludeTransaction(transaction);
 

@@ -20,6 +20,7 @@ export default async function () {
       },
       members: [_user],
       avatar: await new UserService().randomAvatar(),
+      single: true,
     }).save();
   }
 }

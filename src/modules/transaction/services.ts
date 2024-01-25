@@ -115,20 +115,36 @@ export class TransactionService implements ITransactionService {
 
   async list(): Promise<IPagination<Transaction> | Transaction[]> {
     const hasPagination = this._pagination?.page && this._pagination?.perPage;
-    const queryBuilder = Transaction.createQueryBuilder('t').select([
-      't.createdAt',
-      't.gasUsed',
-      't.hash',
-      't.createdAt',
-      't.id',
-      't.name',
-      't.predicateId',
-      't.resume',
-      't.sendTime',
-      't.status',
-      't.summary',
-      't.updatedAt',
-    ]);
+    const queryBuilder = Transaction.createQueryBuilder('t')
+      .select([
+        't.createdAt',
+        't.gasUsed',
+        't.hash',
+        't.createdAt',
+        't.id',
+        't.name',
+        't.predicateId',
+        't.resume',
+        't.sendTime',
+        't.status',
+        't.summary',
+        't.updatedAt',
+      ])
+      .leftJoinAndSelect('t.assets', 'assets')
+      .leftJoinAndSelect('t.witnesses', 'witnesses')
+      .innerJoin('t.predicate', 'predicate')
+      .addSelect([
+        'predicate.name',
+        'predicate.id',
+        'predicate.minSigners',
+        'predicate.predicateAddress',
+      ])
+      .innerJoin('predicate.members', 'members')
+      .addSelect(['members.id', 'members.avatar', 'members.address'])
+      .innerJoin('predicate.workspace', 'workspace')
+      .addSelect(['workspace.id', 'workspace.name']);
+
+    console.log('[transaction_filter]: ', this._filter);
 
     this._filter.predicateAddress &&
       this._filter.predicateAddress.length > 0 &&
@@ -183,19 +199,7 @@ export class TransactionService implements ITransactionService {
 
     this._filter.limit && !hasPagination && queryBuilder.limit(this._filter.limit);
 
-    queryBuilder
-      .leftJoinAndSelect('t.assets', 'assets')
-      .leftJoinAndSelect('t.witnesses', 'witnesses')
-      .innerJoin('t.predicate', 'predicate')
-      .addSelect([
-        'predicate.name',
-        'predicate.id',
-        'predicate.minSigners',
-        'predicate.predicateAddress',
-      ])
-      .innerJoin('predicate.members', 'members')
-      .addSelect(['members.id', 'members.avatar', 'members.address'])
-      .orderBy(`t.${this._ordination.orderBy}`, this._ordination.sort);
+    queryBuilder.orderBy(`t.${this._ordination.orderBy}`, this._ordination.sort);
 
     const handleInternalError = e => {
       if (e instanceof GeneralError) throw e;

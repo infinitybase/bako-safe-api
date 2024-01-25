@@ -31,6 +31,7 @@ import { IAssetService } from '../asset/types';
 import { INotificationService } from '../notification/types';
 import { PredicateService } from '../predicate/services';
 import { WorkspaceService } from '../workspace/services';
+import { TransactionService } from './services';
 import {
   ICloseTransactionRequest,
   ICreateTransactionRequest,
@@ -274,87 +275,131 @@ export class TransactionController {
     }
   }
 
+  // async list(req: IListRequest) {
+  //   const {
+  //     predicateId,
+  //     to,
+  //     status,
+  //     orderBy,
+  //     sort,
+  //     page,
+  //     perPage,
+  //     limit,
+  //     endDate,
+  //     startDate,
+  //     createdBy,
+  //     name,
+  //     allOfUser,
+  //     id,
+  //   } = req.query;
+  //   const { user } = req;
+
+  //   const _predicateId =
+  //     typeof predicateId == 'string' ? [predicateId] : predicateId;
+  //   const hasPagination = !!page && !!perPage;
+
+  //   try {
+  //     const predicateIds: string[] = allOfUser
+  //       ? await this.predicateService
+  //           .filter({ signer: user.address })
+  //           .paginate(undefined)
+  //           .list()
+  //           .then((data: Predicate[]) => {
+  //             return data.map(predicate => predicate.id);
+  //           })
+  //       : predicateId
+  //       ? _predicateId
+  //       : undefined;
+
+  //     if (predicateIds && predicateIds.length === 0)
+  //       return successful([], Responses.Ok);
+
+  //     let response = await this.transactionService
+  //       .filter({
+  //         predicateId: predicateIds,
+  //         to,
+  //         status,
+  //         endDate,
+  //         startDate,
+  //         createdBy,
+  //         name,
+  //         limit,
+  //         id,
+  //       })
+  //       .ordination({ orderBy, sort })
+  //       .paginate({ page, perPage })
+  //       .list();
+
+  //     let data = hasPagination
+  //       ? (response as IPagination<Transaction>).data
+  //       : (response as Transaction[]);
+
+  //     const assets = data.map(i => i.assets);
+  //     const recipientAddresses = assets.flat().map(i => i.to);
+  //     const favorites = (await this.addressBookService
+  //       .filter({ owner: [user.id], contactAddresses: recipientAddresses })
+  //       .list()) as AddressBook[];
+
+  //     if (favorites.length > 0) {
+  //       data = (data.map(transaction => ({
+  //         ...transaction,
+  //         assets: transaction.assets.map(asset => ({
+  //           ...asset,
+  //           recipientNickname:
+  //             favorites?.find(favorite => favorite.user.address === asset.to)
+  //               ?.nickname ?? undefined,
+  //         })),
+  //       })) as unknown) as Transaction[];
+  //     }
+
+  //     response = hasPagination ? { ...response, data } : data;
+
+  //     return successful(response, Responses.Ok);
+  //   } catch (e) {
+  //     return error(e.error, e.statusCode);
+  //   }
+  // }
+
   async list(req: IListRequest) {
-    const {
-      predicateId,
-      to,
-      status,
-      orderBy,
-      sort,
-      page,
-      perPage,
-      limit,
-      endDate,
-      startDate,
-      createdBy,
-      name,
-      allOfUser,
-      id,
-    } = req.query;
-    const { user } = req;
-
-    const _predicateId =
-      typeof predicateId == 'string' ? [predicateId] : predicateId;
-    const hasPagination = !!page && !!perPage;
-
     try {
-      const predicateIds: string[] = allOfUser
-        ? await this.predicateService
-            .filter({ signer: user.address })
-            .paginate(undefined)
-            .list()
-            .then((data: Predicate[]) => {
-              return data.map(predicate => predicate.id);
-            })
-        : predicateId
-        ? _predicateId
-        : undefined;
+      const {
+        to,
+        status,
+        orderBy,
+        sort,
+        page,
+        perPage,
+        createdBy,
+        name,
+      } = req.query;
+      const { workspace } = req;
 
-      if (predicateIds && predicateIds.length === 0)
-        return successful([], Responses.Ok);
-
-      let response = await this.transactionService
+      const predicates = await new PredicateService()
         .filter({
-          predicateId: predicateIds,
+          workspace: workspace.id,
+        })
+        .list()
+        .then((result: Predicate[]) => result.map(predicate => predicate.id));
+
+      if (predicates.length === 0) return successful([], Responses.Ok);
+
+      console.log('[LIST_TRANSACTION_CONTROLLER]: ', status);
+
+      const result = await new TransactionService()
+        .filter({
+          predicateId: predicates,
           to,
-          status,
-          endDate,
-          startDate,
+          status: status ?? undefined,
           createdBy,
           name,
-          limit,
-          id,
         })
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })
         .list();
 
-      let data = hasPagination
-        ? (response as IPagination<Transaction>).data
-        : (response as Transaction[]);
-
-      const assets = data.map(i => i.assets);
-      const recipientAddresses = assets.flat().map(i => i.to);
-      const favorites = (await this.addressBookService
-        .filter({ owner: [user.id], contactAddresses: recipientAddresses })
-        .list()) as AddressBook[];
-
-      if (favorites.length > 0) {
-        data = (data.map(transaction => ({
-          ...transaction,
-          assets: transaction.assets.map(asset => ({
-            ...asset,
-            recipientNickname:
-              favorites?.find(favorite => favorite.user.address === asset.to)
-                ?.nickname ?? undefined,
-          })),
-        })) as unknown) as Transaction[];
-      }
-
-      response = hasPagination ? { ...response, data } : data;
-
-      return successful(response, Responses.Ok);
+      return successful(result, Responses.Ok);
     } catch (e) {
+      console.log(e);
       return error(e.error, e.statusCode);
     }
   }

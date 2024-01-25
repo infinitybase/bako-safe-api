@@ -40,6 +40,7 @@ export const generateInitialWorkspace = async (): Promise<Workspace> => {
         [PermissionRoles.SIGNER]: ['*'],
       },
     },
+    single: false,
   });
 };
 
@@ -68,5 +69,6 @@ export const generateInitialAuxWorkspace = async (): Promise<Workspace> => {
       [non_acc[0].id]: defaultPermissions[PermissionRoles.VIEWER],
       [non_acc[1].id]: defaultPermissions[PermissionRoles.VIEWER],
     },
+    single: false,
   });
 };
