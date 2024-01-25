@@ -29,9 +29,7 @@ describe('[AUTH]', () => {
       await _auth.createSession();
 
       //select a other workspace
-      const { data } = await _auth.axios.get(
-        `/workspace/by-user/${accounts['USER_1'].address}`,
-      );
+      const { data } = await _auth.axios.get(`/workspace/by-user`);
 
       const w_upgrade = data.find(w => w.id !== _auth.workspace.id);
 

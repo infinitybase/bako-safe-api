@@ -19,9 +19,7 @@ describe('[WORKSPACE]', () => {
   test(
     'List workspaces to user',
     async () => {
-      const { data, status } = await api.axios.get(
-        `/workspace/by-user/${accounts['USER_1'].address}`,
-      );
+      const { data, status } = await api.axios.get(`/workspace/by-user`);
 
       expect(status).toBe(200);
       expect(data).toBeInstanceOf(Array);

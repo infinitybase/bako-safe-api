@@ -14,6 +14,7 @@ const config: JestConfigWithTsJest = {
     '^@utils/(.*)$': '<rootDir>/src/utils/$1',
     '^@mocks/(.*)$': '<rootDir>/src/mocks/$1',
   },
+  testPathIgnorePatterns: ['/node_modules/', '/build/'],
 };
 
 export default config;

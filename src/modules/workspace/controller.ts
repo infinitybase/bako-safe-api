@@ -30,10 +30,10 @@ import {
 export class WorkspaceController {
   async listByUser(req: IListByUserRequest) {
     try {
-      const { user } = req.params;
+      const { user } = req;
 
       const response = await new WorkspaceService()
-        .filter({ user, single: false })
+        .filter({ user: user.id, single: false })
         .list()
         .then((response: Workspace[]) =>
           WorkspaceService.formatToUnloggedUser(response),
@@ -41,6 +41,7 @@ export class WorkspaceController {
 
       return successful(response, Responses.Ok);
     } catch (e) {
+      console.log(e);
       return error(e.error, e.statusCode);
     }
   }

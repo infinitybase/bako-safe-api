@@ -15,9 +15,10 @@ import {
 const router = Router();
 const workspaceController = new WorkspaceController();
 
-router.get('/by-user/:user', handleResponse(workspaceController.listByUser));
-
 router.use(authMiddleware);
+
+router.get('/by-user', handleResponse(workspaceController.listByUser));
+
 router.post(
   '/',
   PayloadCreateWorkspaceSchema,
