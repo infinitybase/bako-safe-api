@@ -189,10 +189,17 @@ export class PredicateController {
       q,
     } = req.query;
     const { address } = req.user;
-
+    const { id: workapceId } = req.workspace;
     try {
       const response = await this.predicateService
-        .filter({ address: predicateAddress, signer: address, provider, owner, q })
+        .filter({
+          address: predicateAddress,
+          signer: address,
+          provider,
+          owner,
+          q,
+          workspace: workapceId,
+        })
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })
         .list();

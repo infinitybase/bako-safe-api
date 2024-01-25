@@ -86,4 +86,41 @@ describe('[PREDICATE]', () => {
       'You do not have permission to access this resource',
     );
   });
+
+  test('List predicates', async () => {
+    const auth = new AuthValidations(networks['local'], accounts['USER_1']);
+    await auth.create();
+    await auth.createSession();
+
+    //on single workspace
+    await auth.axios.get('/predicate').then(({ data, status }) => {
+      expect(status).toBe(200);
+      data.forEach(element => {
+        expect(element).toHaveProperty('id');
+        expect(element.workspace).toHaveProperty('id', api.workspace.id);
+      });
+    });
+
+    //with pagination
+    const page = 1;
+    const perPage = 9;
+    await auth.axios
+      .get(`/predicate?page=${page}&perPage=${perPage}`)
+      .then(({ data, status }) => {
+        expect(status).toBe(200);
+        expect(data).toHaveProperty('data');
+        expect(data.data).toHaveLength(perPage);
+        expect(data).toHaveProperty('total');
+        expect(data).toHaveProperty('currentPage', page);
+        expect(data).toHaveProperty('perPage', perPage);
+      });
+
+    //an another workspace
+    const { data: data_workspace } = await generateWorkspacePayload(auth);
+    await auth.selectWorkspace(data_workspace.id);
+    await auth.axios.get('/predicate').then(({ data, status }) => {
+      expect(status).toBe(200);
+      expect(data).toHaveLength(0);
+    });
+  });
 });

@@ -162,21 +162,26 @@ export class PredicateService implements IPredicateService {
         owner: `${this._filter.owner}`,
       });
 
-    this._filter.signer &&
-      queryBuilder.andWhere(qb => {
-        const subQuery = qb
-          .subQuery()
-          .select('1')
-          .from('predicate_members', 'pm')
-          .where('pm.predicate_id = p.id')
-          .andWhere(
-            '(pm.user_id = (SELECT u.id FROM users u WHERE u.address = :signer))',
-            { signer: this._filter.signer },
-          )
-          .getQuery();
-
-        return `EXISTS ${subQuery}`;
+    this._filter.workspace &&
+      queryBuilder.andWhere('p.workspace.id = :workspace', {
+        workspace: `${this._filter.workspace}`,
       });
+
+    // this._filter.signer &&
+    //   queryBuilder.andWhere(qb => {
+    //     const subQuery = qb
+    //       .subQuery()
+    //       .select('1')
+    //       .from('predicate_members', 'pm')
+    //       .where('pm.predicate_id = p.id')
+    //       .andWhere(
+    //         '(pm.user_id = (SELECT u.id FROM users u WHERE u.address = :signer))',
+    //         { signer: this._filter.signer },
+    //       )
+    //       .getQuery();
+
+    //     return `EXISTS ${subQuery}`;
+    //   });
 
     this._filter.q &&
       queryBuilder.andWhere(
