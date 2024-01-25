@@ -164,7 +164,6 @@ describe('[TRANSACTION]', () => {
     await auth.axios
       .get(`/transaction?status=${_status[0]}&status=${_status[1]}`)
       .then(({ data, status }) => {
-        console.log(data);
         expect(status).toBe(200);
         expect(data).toHaveProperty('data');
         data.forEach(element => {

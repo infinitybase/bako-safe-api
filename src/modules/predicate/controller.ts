@@ -91,7 +91,11 @@ export class PredicateController {
         });
       }
 
-      return successful(newPredicate, Responses.Ok);
+      const result = await this.predicateService
+        .filter(undefined)
+        .findById(newPredicate.id);
+
+      return successful(result, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }

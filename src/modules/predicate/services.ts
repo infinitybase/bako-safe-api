@@ -68,50 +68,67 @@ export class PredicateService implements IPredicateService {
   }
 
   async findById(id: string, signer?: string): Promise<Predicate> {
-    return Predicate.createQueryBuilder('p')
-      .where({ id })
-      .leftJoinAndSelect('p.members', 'members')
-      .leftJoinAndSelect('p.owner', 'owner')
-      .select([
-        ...this.predicateFieldsSelection,
-        'p.configurable',
-        'members.id',
-        'members.avatar',
-        'members.address',
-        'owner.id',
-        'owner.address',
-      ])
-      .getOne()
+    return (
+      Predicate.createQueryBuilder('p')
+        .where({ id })
+        .leftJoinAndSelect('p.members', 'members')
+        .leftJoinAndSelect('p.owner', 'owner')
+        .leftJoin('p.workspace', 'workspace')
+        .leftJoin('workspace.addressBook', 'addressBook')
+        .leftJoin('addressBook.user', 'adb_workspace')
+        .select([
+          ...this.predicateFieldsSelection,
+          'p.configurable',
+          'members.id',
+          'members.avatar',
+          'members.address',
+          'owner.id',
+          'owner.address',
+          'workspace.id',
+          'workspace.name',
+          'addressBook.nickname',
+          'addressBook.id',
+          'addressBook.user_id',
+          'adb_workspace.id',
+        ])
+        //.addSelect(['workspace.id', 'workspace.address_book'])
+        //.innerJoin('workspace.address_book', 'address_book')
+        // .innerJoin('address_book.user', 'address_book_user')
+        // .addSelect(['workspace.id', 'address_book.nickname', 'address_book_user.id'])
+        .getOne()
 
-      .then(predicate => {
-        const isNotMember = !predicate.members.map(m => m.address).includes(signer);
+        .then(predicate => {
+          const isNotMember = !predicate.members
+            .map(m => m.address)
+            .includes(signer);
 
-        // if (isNotMember) {
-        //   throw new Unauthorized({
-        //     type: ErrorTypes.Unauthorized,
-        //     title: UnauthorizedErrorTitles.INVALID_PERMISSION,
-        //     detail: `You are not authorized to access requested predicate.`,
-        //   });
-        // }
+          // if (isNotMember) {
+          //   throw new Unauthorized({
+          //     type: ErrorTypes.Unauthorized,
+          //     title: UnauthorizedErrorTitles.INVALID_PERMISSION,
+          //     detail: `You are not authorized to access requested predicate.`,
+          //   });
+          // }
 
-        if (!predicate) {
-          throw new NotFound({
-            type: ErrorTypes.NotFound,
-            title: 'Predicate not found',
-            detail: `Predicate with id ${id} not found`,
+          if (!predicate) {
+            throw new NotFound({
+              type: ErrorTypes.NotFound,
+              title: 'Predicate not found',
+              detail: `Predicate with id ${id} not found`,
+            });
+          }
+          return predicate;
+        })
+        .catch(e => {
+          if (e instanceof GeneralError) throw e;
+
+          throw new Internal({
+            type: ErrorTypes.Internal,
+            title: 'Error on predicate findById',
+            detail: e,
           });
-        }
-        return predicate;
-      })
-      .catch(e => {
-        if (e instanceof GeneralError) throw e;
-
-        throw new Internal({
-          type: ErrorTypes.Internal,
-          title: 'Error on predicate findById',
-          detail: e,
-        });
-      });
+        })
+    );
   }
 
   async list(): Promise<IPagination<Predicate> | Predicate[]> {

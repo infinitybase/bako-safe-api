@@ -1,5 +1,3 @@
-import { Address } from 'fuels';
-
 import { accounts } from '@src/mocks/accounts';
 import { networks } from '@src/mocks/networks';
 import { PredicateMock } from '@src/mocks/predicate';
@@ -103,7 +101,7 @@ describe('[PREDICATE]', () => {
 
     //with pagination
     const page = 1;
-    const perPage = 9;
+    const perPage = 2;
     await auth.axios
       .get(`/predicate?page=${page}&perPage=${perPage}`)
       .then(({ data, status }) => {
@@ -122,5 +120,67 @@ describe('[PREDICATE]', () => {
       expect(status).toBe(200);
       expect(data).toHaveLength(0);
     });
+  });
+
+  test('ATUAL', async () => {
+    const auth = new AuthValidations(networks['local'], accounts['USER_3']);
+    await auth.create();
+    await auth.createSession();
+
+    //create a new workspace
+    const {
+      data: data_workspace,
+      USER_5,
+      data_user1,
+      data_user2,
+    } = await generateWorkspacePayload(auth);
+    await auth.selectWorkspace(data_workspace.id);
+
+    //create a new nicknames
+    const { data: n_data5 } = await auth.axios.post('/address-book/', {
+      address: USER_5.address,
+      nickname: `[TESTE]${USER_5.address}`,
+    });
+    const { data: n_data1 } = await auth.axios.post('/address-book/', {
+      address: data_user1.address,
+      nickname: `[TESTE]${data_user1.address}`,
+    });
+    const { data: n_data2 } = await auth.axios.post('/address-book/', {
+      address: data_user2.address,
+      nickname: `[TESTE]${data_user2.address}`,
+    });
+
+    //create a vault
+    const members = [USER_5.address, data_user1.address, data_user2.address];
+
+    const { predicatePayload } = await PredicateMock.create(3, members);
+    const { data: data_predicate } = await auth.axios.post(
+      '/predicate',
+      predicatePayload,
+    );
+
+    await auth.axios
+      .get(`/predicate/${data_predicate.id}`)
+      .then(({ data, status }) => {
+        const { workspace, members, id } = data;
+        const n_members = [n_data2.nickname, n_data1.nickname, n_data5.nickname];
+
+        expect(status).toBe(200);
+
+        //validate workspace members
+        workspace.addressBook.forEach(element => {
+          const aux = n_members.includes(element.nickname);
+          expect(aux).toBe(true);
+        });
+
+        //validate members
+        members.forEach(element => {
+          const aux = members.find(m => element.id === m.id);
+          expect(!!aux).toBe(true);
+        });
+
+        //validate vault
+        expect(id).toBe(data_predicate.id);
+      });
   });
 });
