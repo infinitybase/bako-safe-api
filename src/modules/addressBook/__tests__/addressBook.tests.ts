@@ -3,7 +3,6 @@ import { Address } from 'fuels';
 import { accounts } from '@src/mocks/accounts';
 import { providers } from '@src/mocks/networks';
 import { networks } from '@src/mocks/networks';
-import { PermissionRoles, defaultPermissions } from '@src/models/Workspace';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
 
 describe('[ADDRESS_BOOK]', () => {
@@ -87,26 +86,65 @@ describe('[ADDRESS_BOOK]', () => {
     5 * 1000,
   );
 
-  test(`List address book of user ${accounts['USER_1'].address}`, async () => {
-    //list with not single workspace, including your address book and other users address book of workspace
-    const { data, status } = await api.axios.get(`/address-book`);
-    const { workspace } = api;
+  test(`list addressBook`, async () => {
+    //list with single workspace [your address book]
+    await api.axios.get(`/address-book`).then(({ data, status }) => {
+      data.forEach(element => {
+        expect(element).toHaveProperty('id');
+        expect(element).toHaveProperty('nickname');
+        expect(element.user).toHaveProperty('address');
 
-    const notSingle = data.filter(i => i.owner.id === workspace.id);
+        expect(element.owner).toHaveProperty('id', api.workspace.id);
+      });
+    });
 
-    //list with single workspace, including just your address book
-    await api.selectWorkspace(single_workspace);
-    const single = data.filter(i => i.owner.id === single_workspace);
+    //list with workspace
+    const auth = new AuthValidations(networks['local'], accounts['USER_1']);
+    await auth.create();
+    await auth.createSession();
 
-    expect(status).toBe(200);
-    expect(data).toBeInstanceOf(Array);
+    const old_workspace = api.workspace.id;
 
-    expect(data[0]).toHaveProperty('id');
-    expect(data[0]).toHaveProperty('nickname');
-    expect(data[0]).toHaveProperty('user');
-    expect(data[0]).toHaveProperty('owner.id');
+    await auth.axios.get(`/workspace/by-user`).then(({ data, status }) => {
+      const new_workspace = data.find(i => i.id !== old_workspace);
+      const owners = [new_workspace.id, api.workspace.id];
 
-    expect(notSingle.length).toBeGreaterThan(0);
-    expect(single.length).toBeGreaterThan(0);
+      //with personal contacts
+      auth.axios.get(`/address-book`).then(({ data, status }) => {
+        data.forEach(element => {
+          expect(status).toBe(200);
+          expect(element).toHaveProperty('id');
+          expect(element).toHaveProperty('nickname');
+          expect(element.user).toHaveProperty('address');
+          expect(element.owner).toHaveProperty('id', new_workspace.id);
+        });
+      });
+
+      //without personal contacts
+      auth.selectWorkspace(new_workspace.id);
+      auth.axios.get(`/address-book`).then(({ data, status }) => {
+        data.forEach(element => {
+          expect(status).toBe(200);
+          expect(element).toHaveProperty('id');
+          expect(element).toHaveProperty('nickname');
+          expect(element.user).toHaveProperty('address');
+          expect(element.owner).toHaveProperty('id', new_workspace.id);
+        });
+      });
+
+      auth.axios
+        .get(`/address-book?includePersonal=true`)
+        .then(({ data, status }) => {
+          data.forEach(element => {
+            expect(status).toBe(200);
+            expect(element).toHaveProperty('id');
+            expect(element).toHaveProperty('nickname');
+            expect(element.user).toHaveProperty('address');
+            expect(element.owner).toHaveProperty('id', new_workspace.id);
+            const aux = owners.includes(element.owner.id);
+            expect(aux).toBe(true);
+          });
+        });
+    });
   });
 });

@@ -145,18 +145,21 @@ export class AddressBookController {
 
   async list(req: IListAddressBookRequest) {
     const { workspace, user } = req;
-    const { orderBy, sort, page, perPage, q } = req.query;
+    const { orderBy, sort, page, perPage, q, includePersonal } = req.query;
 
     try {
-      const userSingleWorkspace = await new WorkspaceService()
-        .filter({
-          user: user.id,
-          single: true,
-        })
-        .list()
-        .then((response: Workspace[]) => response[0]);
+      const owner = [workspace.id];
+      if (includePersonal) {
+        await new WorkspaceService()
+          .filter({
+            user: user.id,
+            single: true,
+          })
+          .list()
+          .then((response: Workspace[]) => owner.push(response[0].id));
+      }
       const response = await this.addressBookService
-        .filter({ owner: [userSingleWorkspace.id, workspace.id], q })
+        .filter({ owner, q })
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })
         .list();

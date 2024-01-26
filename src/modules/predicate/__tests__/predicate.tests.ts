@@ -122,7 +122,7 @@ describe('[PREDICATE]', () => {
     });
   });
 
-  test('ATUAL', async () => {
+  test('Find [redicate by id', async () => {
     const auth = new AuthValidations(networks['local'], accounts['USER_3']);
     await auth.create();
     await auth.createSession();

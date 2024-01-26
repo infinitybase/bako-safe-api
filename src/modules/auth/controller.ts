@@ -104,10 +104,6 @@ export class AuthController {
           detail: `Workspace not found`,
         });
 
-      // console.log(
-      //   '[WORKSPACE]: ',
-      //   workspace.members.map(m => m.id),
-      // );
       const isUserMember = workspace.members.find(m => m.id === user);
 
       if (!isUserMember) {

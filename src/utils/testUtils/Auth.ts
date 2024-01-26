@@ -66,7 +66,7 @@ export class AuthValidations {
 
   async selectWorkspace(workspaceId: string) {
     const { data } = await this.axios.put('/auth/workspace', {
-      workspace_id: workspaceId,
+      workspace: workspaceId,
       user: this.user.id,
       ...this.authToken,
     });

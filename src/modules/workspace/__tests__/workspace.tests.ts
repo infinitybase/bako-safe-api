@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { Address } from 'fuels';
 
 import { accounts } from '@src/mocks/accounts';

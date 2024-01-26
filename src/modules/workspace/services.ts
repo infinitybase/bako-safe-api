@@ -56,12 +56,6 @@ export class WorkspaceService implements IWorkspaceService {
           'predicates.id', // Seleção específica: apenas o campo 'id' de Predicate com alias
         ]);
 
-      // .innerJoin('w.predicates', 'predicate')
-      // .select(['predicate.id']);
-
-      // .innerJoin('w.predicate', 'predicates')
-      // .select(['predicates.id']);
-
       enableSingleFilter &&
         queryBuilder.andWhere('single = :single', {
           single: this._filter.single,
