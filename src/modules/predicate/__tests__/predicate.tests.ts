@@ -101,7 +101,7 @@ describe('[PREDICATE]', () => {
 
     //with pagination
     const page = 1;
-    const perPage = 2;
+    const perPage = 8;
     await auth.axios
       .get(`/predicate?page=${page}&perPage=${perPage}`)
       .then(({ data, status }) => {
@@ -122,7 +122,7 @@ describe('[PREDICATE]', () => {
     });
   });
 
-  test('Find [redicate by id', async () => {
+  test('Find predicate by id', async () => {
     const auth = new AuthValidations(networks['local'], accounts['USER_3']);
     await auth.create();
     await auth.createSession();

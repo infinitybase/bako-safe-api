@@ -109,6 +109,18 @@ describe('[ADDRESS_BOOK]', () => {
       const new_workspace = data.find(i => i.id !== old_workspace);
       const owners = [new_workspace.id, api.workspace.id];
 
+      //with pagination
+      const page = 1;
+      const perPage = 8;
+      auth.axios.get(`/address-book`).then(({ data, status }) => {
+        expect(status).toBe(200);
+        expect(data).toHaveProperty('data');
+        expect(data.data).toHaveLength(perPage);
+        expect(data).toHaveProperty('total');
+        expect(data).toHaveProperty('currentPage', page);
+        expect(data).toHaveProperty('perPage', perPage);
+      });
+
       //with personal contacts
       auth.axios.get(`/address-book`).then(({ data, status }) => {
         data.forEach(element => {

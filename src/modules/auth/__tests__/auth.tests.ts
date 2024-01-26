@@ -12,10 +12,12 @@ describe('[AUTH]', () => {
 
       await auth.create();
 
-      await auth.createSession();
-
-      expect(auth.user.address).toBe(accounts['USER_1'].address);
-      expect(auth.authToken);
+      await auth.createSession().then(() => {
+        expect(auth.user.address).toBe(accounts['USER_1'].address);
+        expect(auth.workspace).toHaveProperty('id');
+        expect(auth.workspace).toHaveProperty('single', true);
+        expect(auth.authToken);
+      });
     },
     40 * 1000,
   );

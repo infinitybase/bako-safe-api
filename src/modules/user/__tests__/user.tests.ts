@@ -13,15 +13,17 @@ describe('[USER]', () => {
   test(
     'Create user',
     async () => {
-      const { data, status } = await api.post('/user/', {
-        address: Address.fromRandom().toAddress(),
-        provider: providers['local'].name,
-        name: `${new Date()} - Create user test`,
-      });
-
-      expect(status).toBe(201);
-      expect(data).toHaveProperty('id');
-      expect(data).toHaveProperty('address');
+      await api
+        .post('/user/', {
+          address: Address.fromRandom().toAddress(),
+          provider: providers['local'].name,
+          name: `${new Date()} - Create user test`,
+        })
+        .then(({ data, status }) => {
+          expect(status).toBe(201);
+          expect(data).toHaveProperty('id');
+          expect(data).toHaveProperty('address');
+        });
     },
     40 * 1000,
   );
