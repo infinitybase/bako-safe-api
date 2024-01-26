@@ -46,15 +46,15 @@ export class WorkspaceService implements IWorkspaceService {
       const hasOrdination = !!this._ordination;
       const enableSingleFilter = this._filter.single !== undefined;
       const queryBuilder = Workspace.createQueryBuilder('w')
+        .leftJoin('w.owner', 'owner')
+        .leftJoin('w.members', 'users')
+        .leftJoin('w.predicates', 'predicates')
         .select([
           'w', // Todos os campos de Workspace
           'owner', // Todos os campos de User (relação owner)
           'users', // Todos os campos de User (relação members)
           'predicates.id', // Seleção específica: apenas o campo 'id' de Predicate com alias
-        ])
-        .leftJoinAndSelect('w.owner', 'owner')
-        .leftJoinAndSelect('w.members', 'users')
-        .leftJoin('w.predicates', 'predicates');
+        ]);
 
       // .innerJoin('w.predicates', 'predicate')
       // .select(['predicate.id']);
@@ -83,14 +83,20 @@ export class WorkspaceService implements IWorkspaceService {
         );
 
       this._filter.user &&
-        queryBuilder.andWhere(
-          `${
-            this._filter.user.length <= 36 ? 'users.id' : 'users.address'
-          } = :user`,
-          {
-            user: this._filter.user,
-          },
-        );
+        queryBuilder.andWhere(qb => {
+          const subQuery = qb
+            .subQuery()
+            .select('*')
+            .from('workspace_users', 'wu')
+            .where('wu.workspace_id = w.id')
+            .andWhere(
+              '(wu.user_id = (SELECT u.id FROM users u WHERE u.id = :user))',
+              { user: this._filter.user },
+            )
+            .getQuery();
+
+          return `EXISTS ${subQuery}`;
+        });
 
       this._filter.id &&
         queryBuilder.andWhere('w.id = :id', {

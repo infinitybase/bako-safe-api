@@ -24,6 +24,7 @@ router.post(
   PayloadCreateWorkspaceSchema,
   handleResponse(workspaceController.create),
 );
+
 router.get('/:id', handleResponse(workspaceController.findById));
 
 router.put(

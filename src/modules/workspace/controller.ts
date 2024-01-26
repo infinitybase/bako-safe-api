@@ -1,9 +1,7 @@
 import { defaultConfigurable } from 'bsafe';
-import { object } from 'joi';
 
 import { User } from '@src/models';
 import {
-  IPermissions,
   PermissionRoles,
   Workspace,
   defaultPermissions,
@@ -41,6 +39,7 @@ export class WorkspaceController {
 
       return successful(response, Responses.Ok);
     } catch (e) {
+      console.log(e);
       return error(e.error, e.statusCode);
     }
   }

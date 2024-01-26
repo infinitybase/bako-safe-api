@@ -17,18 +17,26 @@ describe('[WORKSPACE]', () => {
   });
 
   test(
-    'List workspaces to user',
+    'List all workspaces to user',
     async () => {
-      const { data, status } = await api.axios.get(`/workspace/by-user`);
+      //list workspaces
+      await api.axios.get(`/workspace/by-user`).then(({ data, status }) => {
+        expect(status).toBe(200);
+        expect(data).toBeInstanceOf(Array);
 
-      expect(status).toBe(200);
-      expect(data).toBeInstanceOf(Array);
-
-      expect(data[0]).toHaveProperty('id');
-      expect(data[0]).toHaveProperty('owner');
-      expect(data[0]).toHaveProperty('members');
-      expect(data[0]).toHaveProperty('single', false);
-      expect(data[0]).toHaveProperty('permissions');
+        data.forEach(element => {
+          expect(element).toHaveProperty('id');
+          expect(element).toHaveProperty('name');
+          expect(element).toHaveProperty('owner');
+          expect(element).toHaveProperty('members');
+          expect(element).toHaveProperty('single', false);
+          expect(element).toHaveProperty('permissions');
+          const aux = element.members.find(
+            m => m.address === api.authToken.address,
+          );
+          expect(!!aux).toBe(true);
+        });
+      });
     },
     40 * 1000,
   );
@@ -73,6 +81,7 @@ describe('[WORKSPACE]', () => {
       expect(workspace.owner).toEqual(data.owner);
       expect(workspace).toHaveProperty('members');
       expect(workspace.members).toHaveLength(data.members.length);
+      expect(workspace).toHaveProperty('name', data.name);
     },
     60 * 1000,
   );

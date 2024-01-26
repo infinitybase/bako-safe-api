@@ -33,7 +33,16 @@ router.post(
   ]),
   handleResponse(create),
 );
-router.put('/:id', validateUpdateAddressBookPayload, handleResponse(update));
+router.put(
+  '/:id',
+  authPermissionMiddleware([
+    PermissionRoles.OWNER,
+    PermissionRoles.ADMIN,
+    PermissionRoles.MANAGER,
+  ]),
+  validateUpdateAddressBookPayload,
+  handleResponse(update),
+);
 router.delete('/:id', handleResponse(deleteContact));
 router.get('/', handleResponse(list));
 
