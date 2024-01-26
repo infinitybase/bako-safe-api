@@ -144,8 +144,6 @@ export class TransactionService implements ITransactionService {
       .innerJoin('predicate.workspace', 'workspace')
       .addSelect(['workspace.id', 'workspace.name']);
 
-    console.log('[transaction_filter]: ', this._filter);
-
     this._filter.predicateAddress &&
       this._filter.predicateAddress.length > 0 &&
       queryBuilder.andWhere('t.predicate.predicateAddress IN (:...address)', {

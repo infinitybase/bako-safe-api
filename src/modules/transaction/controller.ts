@@ -383,8 +383,6 @@ export class TransactionController {
 
       if (predicates.length === 0) return successful([], Responses.Ok);
 
-      console.log('[LIST_TRANSACTION_CONTROLLER]: ', status);
-
       const result = await new TransactionService()
         .filter({
           predicateId: predicates,

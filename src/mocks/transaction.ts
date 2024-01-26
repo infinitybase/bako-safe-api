@@ -9,7 +9,7 @@ export const transaction = {
   name: 'Transaction A',
   assets: [
     {
-      amount: bn(1_000).format(),
+      amount: bn(1_0).format(),
       assetId: assets['ETH'],
       to: accounts['STORE'].address,
     },
@@ -18,12 +18,7 @@ export const transaction = {
 };
 
 export const transactionMock = async (vault: Vault) => {
-  await sendPredicateCoins(
-    vault,
-    bn(1_000_000),
-    'ETH',
-    accounts['FULL'].privateKey,
-  );
+  await sendPredicateCoins(vault, bn(1_000_0), 'ETH', accounts['FULL'].privateKey);
 
   const tx = await vault.BSAFEIncludeTransaction(transaction);
 

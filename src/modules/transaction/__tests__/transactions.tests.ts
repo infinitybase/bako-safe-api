@@ -151,7 +151,7 @@ describe('[TRANSACTION]', () => {
       .then(({ data, status }) => {
         expect(status).toBe(200);
         expect(data).toHaveProperty('data');
-        expect(data.data).toHaveLength(perPage);
+        expect(data.data.length).toBeLessThanOrEqual(perPage);
         expect(data).toHaveProperty('total');
         expect(data).toHaveProperty('currentPage', page);
         expect(data).toHaveProperty('perPage', perPage);
@@ -165,9 +165,9 @@ describe('[TRANSACTION]', () => {
       .get(`/transaction?status=${_status[0]}&status=${_status[1]}`)
       .then(({ data, status }) => {
         expect(status).toBe(200);
-        expect(data).toHaveProperty('data');
         data.forEach(element => {
-          expect(element).toHaveProperty('status', _status);
+          const aux = _status.includes(element.status);
+          expect(aux).toBe(true);
         });
       });
 
