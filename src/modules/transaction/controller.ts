@@ -374,18 +374,9 @@ export class TransactionController {
       } = req.query;
       const { workspace } = req;
 
-      const predicates = await new PredicateService()
-        .filter({
-          workspace: workspace.id,
-        })
-        .list()
-        .then((result: Predicate[]) => result.map(predicate => predicate.id));
-
-      if (predicates.length === 0) return successful([], Responses.Ok);
-
       const result = await new TransactionService()
         .filter({
-          predicateId: predicates,
+          workspaceId: workspace.id,
           to,
           status: status ?? undefined,
           createdBy,

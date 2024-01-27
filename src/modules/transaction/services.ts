@@ -150,6 +150,11 @@ export class TransactionService implements ITransactionService {
         address: this._filter.predicateAddress,
       });
 
+    this._filter.workspaceId &&
+      queryBuilder.andWhere('predicate.workspace.id = :workspaceId', {
+        workspaceId: this._filter.workspaceId,
+      });
+
     this._filter.to &&
       queryBuilder
         .innerJoin('t.assets', 'asset')

@@ -174,11 +174,6 @@ export class PredicateService implements IPredicateService {
         provider: `${this._filter.provider}`,
       });
 
-    this._filter.owner &&
-      queryBuilder.andWhere('LOWER(p.owner.address) = LOWER(:owner)', {
-        owner: `${this._filter.owner}`,
-      });
-
     this._filter.workspace &&
       queryBuilder.andWhere('p.workspace.id = :workspace', {
         workspace: `${this._filter.workspace}`,

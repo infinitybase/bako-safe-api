@@ -1,7 +1,9 @@
 import axios from 'axios';
+import { accounts } from 'bsafe/dist/cjs/mocks/accounts';
 import { Address } from 'fuels';
 
-import { providers } from '@src/mocks/networks';
+import { networks, providers } from '@src/mocks/networks';
+import { AuthValidations } from '@src/utils/testUtils/Auth';
 
 describe('[USER]', () => {
   let api = beforeAll(() => {
@@ -27,4 +29,23 @@ describe('[USER]', () => {
     },
     40 * 1000,
   );
+
+  test('home', async () => {
+    const auth = new AuthValidations(networks['local'], accounts['USER_1']);
+    await auth.create();
+    await auth.createSession();
+
+    //list by personal workspace
+    await auth.axios.get('user/me').then(({ data, status }) => {
+      expect(status).toBe(200);
+      expect(data).toHaveProperty('predicates');
+      expect(data).toHaveProperty('transactions');
+      data.predicates.forEach(element => {
+        expect(element.workspace).toHaveProperty('id', auth.workspace.id);
+      });
+      data.transactions.forEach(element => {
+        expect(element.predicate.workspace).toHaveProperty('id', auth.workspace.id);
+      });
+    });
+  });
 });

@@ -65,6 +65,7 @@ export type ICloseTransactionPayload = {
 export interface ITransactionFilterParams {
   predicateId?: string[];
   predicateAddress?: string;
+  workspaceId?: string;
   to?: string;
   hash?: string;
   status?: TransactionStatus[];

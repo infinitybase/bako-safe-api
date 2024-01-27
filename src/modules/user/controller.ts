@@ -1,15 +1,20 @@
+import { Predicate, Transaction } from '@src/models';
 import { PermissionRoles, defaultPermissions } from '@src/models/Workspace';
 import { bindMethods } from '@src/utils/bindMethods';
+import { IPagination, Pagination } from '@src/utils/pagination';
 
 import { error } from '@utils/error';
 import { Responses, successful } from '@utils/index';
 
+import { PredicateService } from '../predicate/services';
+import { TransactionService } from '../transaction/services';
 import { WorkspaceService } from '../workspace/services';
 import {
   ICreateRequest,
   IDeleteRequest,
   IFindOneRequest,
   IListRequest,
+  IMeRequest,
   IUpdateRequest,
   IUserService,
 } from './types';
@@ -35,6 +40,44 @@ export class UserController {
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error[0], e.statusCode);
+    }
+  }
+
+  async me(req: IMeRequest) {
+    try {
+      //list all 8 last vaults of user
+      const { workspace } = req;
+      const predicates = await new PredicateService()
+        .filter({
+          workspace: workspace.id,
+        })
+        .paginate({ page: '1', perPage: '8' })
+        .ordination({ orderBy: 'createdAt', sort: 'DESC' })
+        .list()
+        .then(async (response: IPagination<Predicate>) => {
+          return response.data;
+        });
+
+      const transactions = await new TransactionService()
+        .filter({
+          workspaceId: workspace.id,
+        })
+        .paginate({ page: '1', perPage: '8' })
+        .ordination({ orderBy: 'updatedAt', sort: 'DESC' })
+        .list()
+        .then(async (response: IPagination<Transaction>) => {
+          return response.data;
+        });
+
+      return successful(
+        {
+          predicates,
+          transactions,
+        },
+        Responses.Ok,
+      );
+    } catch (e) {
+      return error(e.error, e.statusCode);
     }
   }
 

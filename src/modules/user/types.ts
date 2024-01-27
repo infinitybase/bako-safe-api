@@ -60,6 +60,8 @@ export type IUpdateRequest = AuthValidatedRequest<IUpdateRequestSchema>;
 
 export type IDeleteRequest = AuthValidatedRequest<IFindOneRequestSchema>;
 
+export type IMeRequest = AuthValidatedRequest<IListRequestSchema>;
+
 export interface IUserService {
   filter(filter: IFilterParams): this;
   paginate(pagination: PaginationParams): this;
