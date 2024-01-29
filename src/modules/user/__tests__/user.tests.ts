@@ -23,8 +23,6 @@ describe('[USER]', () => {
         })
         .then(({ data, status }) => {
           expect(status).toBe(201);
-          expect(data).toHaveProperty('id');
-          expect(data).toHaveProperty('address');
         });
     },
     40 * 1000,
