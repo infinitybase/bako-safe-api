@@ -12,15 +12,14 @@ export interface IUserPayload {
   password?: string;
   active?: boolean;
   language?: Languages;
-  role: Role;
   address: string;
   provider: string;
   avatar: string;
 }
 
 export interface IFilterParams {
-  addresses?: string[];
-  active?: boolean;
+  user: string;
+  active: boolean;
 }
 
 interface ICreateRequestSchema extends ValidatedRequestSchema {
@@ -61,11 +60,13 @@ export type IUpdateRequest = AuthValidatedRequest<IUpdateRequestSchema>;
 
 export type IDeleteRequest = AuthValidatedRequest<IFindOneRequestSchema>;
 
+export type IMeRequest = AuthValidatedRequest<IListRequestSchema>;
+
 export interface IUserService {
   filter(filter: IFilterParams): this;
   paginate(pagination: PaginationParams): this;
   ordination(ordination: IOrdination<User>): this;
-  list(): Promise<IPagination<User> | User[]>;
+  find(): Promise<IPagination<User> | User[]>;
   create(payload: Partial<User>): Promise<User>;
   findOne(id: string): Promise<User>;
   findByAddress(address: string): Promise<User | undefined>;

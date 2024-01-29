@@ -2,27 +2,36 @@ import { ITransactionResume, TransactionStatus } from 'bsafe';
 import { Provider } from 'fuels';
 
 import AddressBook from '@src/models/AddressBook';
-import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
+import { PermissionRoles, Workspace } from '@src/models/Workspace';
+import {
+  Unauthorized,
+  UnauthorizedErrorTitles,
+} from '@src/utils/error/Unauthorized';
 import { IPagination } from '@src/utils/pagination';
+import {
+  validatePermissionVault,
+  validatePermissionGeneral,
+} from '@src/utils/permissionValidate';
 
 import {
   NotificationTitle,
   Predicate,
   Transaction,
-  User,
   WitnessesStatus,
 } from '@models/index';
 
 import { IPredicateService } from '@modules/predicate/types';
 import { IWitnessService } from '@modules/witness/types';
 
-import { error } from '@utils/error';
+import { ErrorTypes, error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
 
 import { IAddressBookService } from '../addressBook/types';
 import { IAssetService } from '../asset/types';
-import { IUserService } from '../configs/user/types';
 import { INotificationService } from '../notification/types';
+import { PredicateService } from '../predicate/services';
+import { WorkspaceService } from '../workspace/services';
+import { TransactionService } from './services';
 import {
   ICloseTransactionRequest,
   ICreateTransactionRequest,
@@ -40,7 +49,6 @@ export class TransactionController {
   private witnessService: IWitnessService;
   private addressBookService: IAddressBookService;
   private notificationService: INotificationService;
-  private userService: IUserService;
 
   constructor(
     transactionService: ITransactionService,
@@ -49,7 +57,6 @@ export class TransactionController {
     addressBookService: IAddressBookService,
     assetService: IAssetService,
     notificationService: INotificationService,
-    userService: IUserService,
   ) {
     Object.assign(this, {
       transactionService,
@@ -58,7 +65,6 @@ export class TransactionController {
       addressBookService,
       assetService,
       notificationService,
-      userService,
     });
     bindMethods(this);
   }
@@ -67,13 +73,21 @@ export class TransactionController {
     const { predicateAddress, summary } = transaction;
 
     try {
-      const predicate = await this.predicateService
-        .filter({
-          address: predicateAddress,
-        })
-        .paginate(undefined)
+      const predicate = await new PredicateService()
+        .filter({ address: predicateAddress })
         .list()
         .then((result: Predicate[]) => result[0]);
+
+      // if possible move this next part to a middleware, but we dont have access to body of request
+      // ========================================================================================================
+      if (!predicate.members.find(member => member.id === user.id)) {
+        throw new Unauthorized({
+          type: ErrorTypes.Unauthorized,
+          title: UnauthorizedErrorTitles.MISSING_PERMISSION,
+          detail: 'You do not have permission to access this resource',
+        });
+      }
+      // ========================================================================================================
 
       const witnesses = predicate.members.map(member => ({
         account: member.address,
@@ -107,37 +121,21 @@ export class TransactionController {
       });
 
       const { id, name } = newTransaction;
-      const notificationSummary = {
-        vaultId: predicate.id,
-        vaultName: predicate.name,
-        transactionName: name,
-        transactionId: id,
-      };
-      const membersWithoutLoggedUser = predicate.members
-        .filter(member => member.id !== user.id)
-        .map(user => user.address);
+      const membersWithoutLoggedUser = predicate.members.filter(
+        member => member.id !== user.id,
+      );
 
-      const members = (await this.userService
-        .filter({
-          addresses: membersWithoutLoggedUser,
-        })
-        .list()) as User[];
-
-      for await (const member of members) {
+      for await (const member of membersWithoutLoggedUser) {
         await this.notificationService.create({
           title: NotificationTitle.TRANSACTION_CREATED,
-          summary: notificationSummary,
+          summary: {
+            vaultId: predicate.id,
+            vaultName: predicate.name,
+            transactionName: name,
+            transactionId: id,
+          },
           user_id: member.id,
         });
-
-        if (member.notify) {
-          await sendMail(EmailTemplateType.TRANSACTION_CREATED, {
-            to: member.email,
-            data: {
-              summary: { ...notificationSummary, name: member?.name ?? '' },
-            },
-          });
-        }
       }
 
       return successful(newTransaction, Responses.Ok);
@@ -222,7 +220,6 @@ export class TransactionController {
           await this.transactionService
             .sendToChain(id)
             .then(async (result: ITransactionResume) => {
-              console.log('[SUCCESS SEND]');
               return await this.transactionService.update(id, {
                 status: TransactionStatus.PROCESS_ON_CHAIN,
                 sendTime: new Date(),
@@ -230,7 +227,6 @@ export class TransactionController {
               });
             })
             .catch(async () => {
-              console.log('[FAILED SEND]');
               await this.transactionService.update(id, {
                 status: TransactionStatus.FAILED,
                 sendTime: new Date(),
@@ -258,15 +254,6 @@ export class TransactionController {
               summary: notificationSummary,
               user_id: member.id,
             });
-
-            if (member.notify) {
-              await sendMail(EmailTemplateType.TRANSACTION_SIGNED, {
-                to: member.email,
-                data: {
-                  summary: { ...notificationSummary, name: member?.name ?? '' },
-                },
-              });
-            }
           }
         }
 
@@ -278,15 +265,6 @@ export class TransactionController {
               summary: notificationSummary,
               user_id: member.id,
             });
-
-            if (member.notify) {
-              await sendMail(EmailTemplateType.TRANSACTION_DECLINED, {
-                to: member.email,
-                data: {
-                  summary: { ...notificationSummary, name: member?.name ?? '' },
-                },
-              });
-            }
           }
         }
       }
@@ -297,86 +275,118 @@ export class TransactionController {
     }
   }
 
+  // async list(req: IListRequest) {
+  //   const {
+  //     predicateId,
+  //     to,
+  //     status,
+  //     orderBy,
+  //     sort,
+  //     page,
+  //     perPage,
+  //     limit,
+  //     endDate,
+  //     startDate,
+  //     createdBy,
+  //     name,
+  //     allOfUser,
+  //     id,
+  //   } = req.query;
+  //   const { user } = req;
+
+  //   const _predicateId =
+  //     typeof predicateId == 'string' ? [predicateId] : predicateId;
+  //   const hasPagination = !!page && !!perPage;
+
+  //   try {
+  //     const predicateIds: string[] = allOfUser
+  //       ? await this.predicateService
+  //           .filter({ signer: user.address })
+  //           .paginate(undefined)
+  //           .list()
+  //           .then((data: Predicate[]) => {
+  //             return data.map(predicate => predicate.id);
+  //           })
+  //       : predicateId
+  //       ? _predicateId
+  //       : undefined;
+
+  //     if (predicateIds && predicateIds.length === 0)
+  //       return successful([], Responses.Ok);
+
+  //     let response = await this.transactionService
+  //       .filter({
+  //         predicateId: predicateIds,
+  //         to,
+  //         status,
+  //         endDate,
+  //         startDate,
+  //         createdBy,
+  //         name,
+  //         limit,
+  //         id,
+  //       })
+  //       .ordination({ orderBy, sort })
+  //       .paginate({ page, perPage })
+  //       .list();
+
+  //     let data = hasPagination
+  //       ? (response as IPagination<Transaction>).data
+  //       : (response as Transaction[]);
+
+  //     const assets = data.map(i => i.assets);
+  //     const recipientAddresses = assets.flat().map(i => i.to);
+  //     const favorites = (await this.addressBookService
+  //       .filter({ owner: [user.id], contactAddresses: recipientAddresses })
+  //       .list()) as AddressBook[];
+
+  //     if (favorites.length > 0) {
+  //       data = (data.map(transaction => ({
+  //         ...transaction,
+  //         assets: transaction.assets.map(asset => ({
+  //           ...asset,
+  //           recipientNickname:
+  //             favorites?.find(favorite => favorite.user.address === asset.to)
+  //               ?.nickname ?? undefined,
+  //         })),
+  //       })) as unknown) as Transaction[];
+  //     }
+
+  //     response = hasPagination ? { ...response, data } : data;
+
+  //     return successful(response, Responses.Ok);
+  //   } catch (e) {
+  //     return error(e.error, e.statusCode);
+  //   }
+  // }
+
   async list(req: IListRequest) {
-    const {
-      predicateId,
-      to,
-      status,
-      orderBy,
-      sort,
-      page,
-      perPage,
-      limit,
-      endDate,
-      startDate,
-      createdBy,
-      name,
-      allOfUser,
-      id,
-    } = req.query;
-    const { user } = req;
-
-    const _predicateId =
-      typeof predicateId == 'string' ? [predicateId] : predicateId;
-    const hasPagination = !!page && !!perPage;
-
     try {
-      const predicateIds: string[] = allOfUser
-        ? await this.predicateService
-            .filter({ signer: user.address })
-            .paginate(undefined)
-            .list()
-            .then((data: Predicate[]) => {
-              return data.map(predicate => predicate.id);
-            })
-        : predicateId
-        ? _predicateId
-        : undefined;
+      const {
+        to,
+        status,
+        orderBy,
+        sort,
+        page,
+        perPage,
+        createdBy,
+        name,
+      } = req.query;
+      const { workspace } = req;
 
-      if (predicateIds && predicateIds.length === 0)
-        return successful([], Responses.Ok);
-
-      let response = await this.transactionService
+      const result = await new TransactionService()
         .filter({
-          predicateId: predicateIds,
+          workspaceId: workspace.id,
           to,
-          status,
-          endDate,
-          startDate,
+          status: status ?? undefined,
           createdBy,
           name,
-          limit,
-          id,
         })
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })
         .list();
 
-      let data = hasPagination
-        ? (response as IPagination<Transaction>).data
-        : (response as Transaction[]);
-
-      const assets = data.map(i => i.assets);
-      const recipientAddresses = assets.flat().map(i => i.to);
-      const favorites = (await this.addressBookService
-        .filter({ createdBy: user.id, contactAddresses: recipientAddresses })
-        .list()) as AddressBook[];
-
-      if (favorites.length > 0) {
-        data = (data.map(transaction => ({
-          ...transaction,
-          assets: transaction.assets.map(asset => ({
-            ...asset,
-            recipientNickname:
-              favorites?.find(favorite => favorite.user.address === asset.to)
-                ?.nickname ?? undefined,
-          })),
-        })) as unknown) as Transaction[];
-      }
-
-      response = hasPagination ? { ...response, data } : data;
-
-      return successful(response, Responses.Ok);
+      return successful(result, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }
@@ -404,7 +414,6 @@ export class TransactionController {
       const resume = await this.transactionService
         .sendToChain(id)
         .then(async (result: ITransactionResume) => {
-          console.log('[SUCCESS SEND]');
           return await this.transactionService.update(id, {
             status: TransactionStatus.PROCESS_ON_CHAIN,
             sendTime: new Date(),
@@ -412,7 +421,6 @@ export class TransactionController {
           });
         })
         .catch(async () => {
-          console.log('[FAILED SEND]');
           await this.transactionService.update(id, {
             status: TransactionStatus.FAILED,
             sendTime: new Date(),

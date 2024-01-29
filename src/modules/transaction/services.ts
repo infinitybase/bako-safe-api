@@ -13,10 +13,12 @@ import {
   TransactionResponse,
 } from 'fuels';
 
-import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
+import { PermissionRoles, Workspace } from '@src/models/Workspace';
+import { sendMail, EmailTemplateType } from '@src/utils/EmailSender';
 
 import {
   NotificationTitle,
+  Predicate,
   Transaction,
   Witness,
   WitnessesStatus,
@@ -114,25 +116,44 @@ export class TransactionService implements ITransactionService {
 
   async list(): Promise<IPagination<Transaction> | Transaction[]> {
     const hasPagination = this._pagination?.page && this._pagination?.perPage;
-    const queryBuilder = Transaction.createQueryBuilder('t').select([
-      't.createdAt',
-      't.gasUsed',
-      't.hash',
-      't.createdAt',
-      't.id',
-      't.name',
-      't.predicateId',
-      't.resume',
-      't.sendTime',
-      't.status',
-      't.summary',
-      't.updatedAt',
-    ]);
+    const queryBuilder = Transaction.createQueryBuilder('t')
+      .select([
+        't.createdAt',
+        't.gasUsed',
+        't.hash',
+        't.createdAt',
+        't.id',
+        't.name',
+        't.predicateId',
+        't.resume',
+        't.sendTime',
+        't.status',
+        't.summary',
+        't.updatedAt',
+      ])
+      .leftJoinAndSelect('t.assets', 'assets')
+      .leftJoinAndSelect('t.witnesses', 'witnesses')
+      .innerJoin('t.predicate', 'predicate')
+      .addSelect([
+        'predicate.name',
+        'predicate.id',
+        'predicate.minSigners',
+        'predicate.predicateAddress',
+      ])
+      .innerJoin('predicate.members', 'members')
+      .addSelect(['members.id', 'members.avatar', 'members.address'])
+      .innerJoin('predicate.workspace', 'workspace')
+      .addSelect(['workspace.id', 'workspace.name']);
 
     this._filter.predicateAddress &&
       this._filter.predicateAddress.length > 0 &&
       queryBuilder.andWhere('t.predicate.predicateAddress IN (:...address)', {
         address: this._filter.predicateAddress,
+      });
+
+    this._filter.workspaceId &&
+      queryBuilder.andWhere('predicate.workspace.id = :workspaceId', {
+        workspaceId: this._filter.workspaceId,
       });
 
     this._filter.to &&
@@ -187,20 +208,7 @@ export class TransactionService implements ITransactionService {
      *  */
     this._filter.limit && !hasPagination && queryBuilder.take(this._filter.limit);
 
-    queryBuilder
-      .leftJoinAndSelect('t.assets', 'assets')
-      .leftJoinAndSelect('t.witnesses', 'witnesses')
-      .innerJoin('t.predicate', 'predicate')
-      .addSelect([
-        'predicate.name',
-        'predicate.id',
-        'predicate.description',
-        'predicate.minSigners',
-        'predicate.predicateAddress',
-      ])
-      .innerJoin('predicate.members', 'members')
-      .addSelect(['members.id', 'members.avatar', 'members.address'])
-      .orderBy(`t.${this._ordination.orderBy}`, this._ordination.sort);
+    queryBuilder.orderBy(`t.${this._ordination.orderBy}`, this._ordination.sort);
 
     const handleInternalError = e => {
       if (e instanceof GeneralError) throw e;
@@ -348,11 +356,9 @@ export class TransactionService implements ITransactionService {
             .toString(),
           status: TransactionStatus.PROCESS_ON_CHAIN,
         };
-        console.log('[ENVIADO]', resume);
         return resume;
       })
       .catch(e => {
-        console.log('[ERRO AO ENVIAR]', e);
         throw new Internal({
           type: ErrorTypes.Internal,
           title: 'Error on transaction sendToChain',

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { Brackets } from 'typeorm';
 
 import { User } from '@src/models';
 import { ErrorTypes, NotFound } from '@src/utils/error';
@@ -14,10 +15,7 @@ const { UI_URL } = process.env;
 export class UserService implements IUserService {
   private _pagination: PaginationParams;
   private _filter: IFilterParams;
-  private _ordination: IOrdination<User> = {
-    orderBy: 'updatedAt',
-    sort: 'DESC',
-  };
+  private _ordination: IOrdination<User>;
 
   filter(filter: IFilterParams) {
     this._filter = filter;
@@ -34,17 +32,33 @@ export class UserService implements IUserService {
     return this;
   }
 
-  async list(): Promise<IPagination<User> | User[]> {
+  async find(): Promise<IPagination<User> | User[]> {
     try {
-      const hasPagination = this._pagination?.page && this._pagination?.perPage;
-      const qb = User.createQueryBuilder('u').select();
+      const hasPagination = this._pagination.page && this._pagination.perPage;
+      const qb = User.createQueryBuilder('u')
+        .select()
+        .innerJoinAndSelect('u.role', 'role');
 
-      this._filter.addresses &&
-        qb.andWhere('u.address IN (:...addresses)', {
-          addresses: this._filter.addresses,
-        });
+      qb.andWhere(
+        new Brackets(subQuery => {
+          this._filter.user &&
+            subQuery
+              .where('LOWER(u.name) LIKE LOWER(:name)', {
+                name: `%${this._filter.user}%`,
+              })
+              .orWhere('LOWER(u.email) LIKE LOWER(:email)', {
+                email: `%${this._filter.user}%`,
+              })
+              .orWhere('LOWER(role.name) LIKE LOWER(:role)', {
+                role: `%${this._filter.user}%`,
+              });
+        }),
+      );
 
-      qb.orderBy(`u.${this._ordination?.orderBy}`, this._ordination?.sort);
+      this._filter.active &&
+        qb.andWhere('u.active = :active', { active: this._filter.active });
+
+      qb.orderBy(`u.${this._ordination.orderBy}`, this._ordination.sort);
 
       return hasPagination
         ? await Pagination.create(qb).paginate(this._pagination)
@@ -93,9 +107,7 @@ export class UserService implements IUserService {
   }
 
   async findByAddress(address: string): Promise<User | undefined> {
-    return await User.findOne({
-      where: { address },
-    })
+    return await User.findOne({ where: { address } })
       .then(user => user)
       .catch(() => {
         throw new NotFound({

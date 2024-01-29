@@ -1,15 +1,21 @@
-import { addMinutes } from 'date-fns';
+import { add, addMinutes } from 'date-fns';
 
 import { Encoder } from '@src/models';
-import GeneralError from '@src/utils/error/GeneralError';
+import { Workspace } from '@src/models/Workspace';
+import GeneralError, { ErrorTypes } from '@src/utils/error/GeneralError';
+import {
+  Unauthorized,
+  UnauthorizedErrorTitles,
+} from '@src/utils/error/Unauthorized';
 
 import { IAuthRequest } from '@middlewares/auth/types';
 
-import { error } from '@utils/error';
+import { NotFound, error } from '@utils/error';
 import { Responses, successful, bindMethods, Web3Utils } from '@utils/index';
 
-import { IUserService } from '../configs/user/types';
-import { IAuthService, ISignInRequest } from './types';
+import { IUserService } from '../user/types';
+import { WorkspaceService } from '../workspace/services';
+import { IAuthService, IChangeWorkspaceRequest, ISignInRequest } from './types';
 
 export class AuthController {
   private authService: IAuthService;
@@ -23,7 +29,7 @@ export class AuthController {
 
   async signIn(req: ISignInRequest) {
     try {
-      const { signature, ...payloadWithoutSignature } = req.body;
+      const { signature, workspace_id, ...payloadWithoutSignature } = req.body;
       const expiresIn = process.env.TOKEN_EXPIRATION_TIME ?? '15';
 
       new Web3Utils({
@@ -40,6 +46,18 @@ export class AuthController {
         await this.authService.signOut(existingToken.user);
       }
 
+      const workspace = await new WorkspaceService()
+        .filter(
+          workspace_id
+            ? { id: workspace_id }
+            : {
+                owner: req.body.user_id,
+                single: true,
+              },
+        )
+        .list()
+        .then((response: Workspace[]) => response[0]);
+
       const userToken = await this.authService.signIn({
         token: req.body.signature,
         encoder: Encoder[req.body.encoder],
@@ -47,16 +65,10 @@ export class AuthController {
         expired_at: addMinutes(req.body.createdAt, Number(expiresIn)),
         payload: JSON.stringify(payloadWithoutSignature),
         user: await this.userService.findOne(req.body.user_id),
+        workspace,
       });
 
-      return successful(
-        {
-          accessToken: userToken.accessToken,
-          avatar: userToken.avatar,
-          id: req.body.user_id,
-        },
-        Responses.Ok,
-      );
+      return successful(userToken, Responses.Ok);
     } catch (e) {
       if (e instanceof GeneralError) throw e;
 
@@ -71,6 +83,60 @@ export class AuthController {
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error[0], e.statusCode);
+    }
+  }
+
+  async updateWorkspace(req: IChangeWorkspaceRequest) {
+    try {
+      const { workspace: workspaceId, user } = req.body;
+
+      //console.log('[WORKSPACE_ID]: ', workspace_id, user);
+
+      const workspace = await new WorkspaceService()
+        .filter({ id: workspaceId })
+        .list()
+        .then((response: Workspace[]) => response[0]);
+
+      if (!workspace)
+        throw new NotFound({
+          type: ErrorTypes.NotFound,
+          title: 'Workspace not found',
+          detail: `Workspace not found`,
+        });
+
+      const isUserMember = workspace.members.find(m => m.id === user);
+
+      if (!isUserMember) {
+        throw new Unauthorized({
+          type: ErrorTypes.NotFound,
+          title: UnauthorizedErrorTitles.INVALID_PERMISSION,
+          detail: `User not found`,
+        });
+      }
+
+      const token = await this.authService.findToken({
+        userId: user,
+      });
+
+      token.workspace = workspace;
+
+      const response = await token.save();
+      const result = {
+        workspace: {
+          id: response.workspace.id,
+          name: response.workspace.name,
+          avatar: response.workspace.avatar,
+          permissions: response.workspace.permissions[response.user.id],
+          single: response.workspace.single,
+        },
+        token: response.token,
+        avatar: response.user.avatar,
+        address: response.user.address,
+      };
+
+      return successful(result, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
     }
   }
 }

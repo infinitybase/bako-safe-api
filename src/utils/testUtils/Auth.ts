@@ -6,10 +6,16 @@ import { Provider, Wallet } from 'fuels';
 
 import { User, Encoder } from '@src/models';
 
+//todo: repply this class on SDK to user autentication resource
 export class AuthValidations {
   public user: User;
   public authToken: IBSAFEAuth;
   public axios: AxiosInstance;
+  public workspace: {
+    id: string;
+    name: string;
+    avatar: string;
+  };
 
   constructor(
     private readonly provider: string,
@@ -54,6 +60,25 @@ export class AuthValidations {
       address,
       token: data.accessToken,
     };
+    this.workspace = data.workspace;
+    return data;
+  }
+
+  async selectWorkspace(workspaceId: string) {
+    const { data } = await this.axios.put('/auth/workspace', {
+      workspace: workspaceId,
+      user: this.user.id,
+      ...this.authToken,
+    });
+
+    this.workspace = data.workspace;
+    return data;
+  }
+
+  async listMyWorkspaces() {
+    const { data } = await this.axios.get(`
+      /workspace/by-user/${this.account.address}`);
+
     return data;
   }
 

@@ -14,15 +14,7 @@ class Bootstrap {
   }
 
   static async start() {
-    const {
-      DATABASE_HOST,
-      DATABASE_PORT,
-      DATABASE_USERNAME,
-      DATABASE_PASSWORD,
-      DATABASE_NAME,
-      NODE_ENV,
-      DATABASE_PORT_TEST,
-    } = process.env;
+    const { NODE_ENV } = process.env;
 
     this.startEnv();
     await this.connectDatabase();

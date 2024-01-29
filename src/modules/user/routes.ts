@@ -16,6 +16,7 @@ router.post('/', PayloadCreateUserSchema, handleResponse(userController.create))
 
 router.use(authMiddleware);
 
+router.get('/me', handleResponse(userController.me));
 router.get('/', handleResponse(userController.find));
 router.get('/me', handleResponse(userController.me));
 router.get('/:id', handleResponse(userController.findOne));

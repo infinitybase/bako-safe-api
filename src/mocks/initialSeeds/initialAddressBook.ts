@@ -1,18 +1,21 @@
 import { User } from '@src/models';
 import AddressBook from '@src/models/AddressBook';
+import { Workspace } from '@src/models/Workspace';
 
 import { accounts } from '../accounts';
 
 export const generateInitialAddressBook = async (): Promise<
   Partial<AddressBook>[]
 > => {
-  const owner = await User.findOne({
-    where: { address: accounts['USER_1'].address },
+  const owner = await Workspace.findOne({
+    order: {
+      createdAt: 'DESC',
+    },
   });
 
   const a1: Partial<AddressBook> = {
     nickname: 'Store',
-    createdBy: owner,
+    owner,
     user: await User.findOne({
       where: { address: accounts['STORE'].address },
     }),
@@ -20,7 +23,7 @@ export const generateInitialAddressBook = async (): Promise<
 
   const a2: Partial<AddressBook> = {
     nickname: 'User 2',
-    createdBy: owner,
+    owner,
     user: await User.findOne({
       where: { address: accounts['USER_2'].address },
     }),

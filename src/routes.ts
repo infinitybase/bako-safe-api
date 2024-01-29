@@ -1,22 +1,19 @@
 import { Router } from 'express';
 
+import users from '@src/modules/user/routes';
+
 import addressBook from '@modules/addressBook/routes';
 import auth from '@modules/auth/routes';
-import roles from '@modules/configs/roles/routes';
-import users from '@modules/configs/user/routes';
 import dApp from '@modules/dApps/routes';
 import notifications from '@modules/notification/routes';
 import predicates from '@modules/predicate/routes';
 import transactions from '@modules/transaction/routes';
 import vaultTemplate from '@modules/vaultTemplate/routes';
+import workspace from '@modules/workspace/routes';
 
-import { DAppsService } from './modules/dApps/service';
-
-const ses = new DAppsService();
 const router = Router();
 
 router.use('/auth', auth);
-router.use('/role', roles);
 router.use('/user', users);
 router.use('/predicate', predicates);
 router.use('/transaction', transactions);
@@ -24,6 +21,7 @@ router.use('/template', vaultTemplate);
 router.use('/address-book', addressBook);
 router.use('/connections', dApp);
 router.use('/notifications', notifications);
+router.use('/workspace', workspace);
 
 // ping route
 router.get('/ping', ({ res }) =>

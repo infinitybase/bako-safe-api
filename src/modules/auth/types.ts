@@ -1,5 +1,7 @@
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 
+import { IPermissions, Workspace } from '@src/models/Workspace';
+
 import UserToken, { Encoder } from '@models/UserToken';
 import { User } from '@models/index';
 
@@ -12,6 +14,7 @@ export interface ICreateUserTokenPayload {
   encoder: Encoder;
   provider: string;
   payload: string;
+  workspace: Workspace;
 }
 
 export interface ISignInPayload {
@@ -22,6 +25,7 @@ export interface ISignInPayload {
   provider: string;
   signature: string;
   user_id: string;
+  workspace_id?: string;
 }
 
 interface IActiveSessionRequestSchema extends ValidatedRequestSchema {
@@ -71,12 +75,28 @@ export interface IFindTokenParams {
 export interface ISignInResponse {
   accessToken: string;
   avatar: string;
+  user_id: string;
+  workspace: {
+    id: string;
+    name: string;
+    avatar: string;
+    permissions: IPermissions;
+    single: boolean;
+  };
 }
 
-export type IActiveSession = AuthValidatedRequest<IActiveSessionRequestSchema>;
-export type ISignInRequest = AuthValidatedRequest<ISignInRequestSchema>;
+export interface IUpgradeWorkspace extends ValidatedRequestSchema {
+  [ContainerTypes.Body]: {
+    workspace: string;
+    user: string;
+  };
+}
+
 export type IListRequest = AuthValidatedRequest<IListRequestSchema>;
+export type ISignInRequest = AuthValidatedRequest<ISignInRequestSchema>;
 export type IFindDappRequest = AuthValidatedRequest<IFindDappRequestSchema>;
+export type IActiveSession = AuthValidatedRequest<IActiveSessionRequestSchema>;
+export type IChangeWorkspaceRequest = AuthValidatedRequest<IUpgradeWorkspace>;
 export type IAuthorizeDappRequest = AuthValidatedRequest<IAuthorizeDappRequestSchema>;
 
 export interface IAuthService {

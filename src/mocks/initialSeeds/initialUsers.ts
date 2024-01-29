@@ -1,5 +1,5 @@
 import { User, Languages } from '@src/models';
-import { UserService } from '@src/modules/configs/user/service';
+import { UserService } from '@src/modules/user/service';
 
 import { accounts } from '../accounts';
 import { networks } from '../networks';
@@ -8,7 +8,7 @@ export const generateInitialUsers = async (): Promise<Partial<User>[]> => {
   const userService = new UserService();
 
   const user1: Partial<User> = {
-    name: `[${networks['local']}] ${accounts['STORE'].account}`,
+    name: `[${networks['local']}] ${accounts['STORE'].address}`,
     active: true,
     email: process.env.APP_ADMIN_EMAIL || '',
     password: process.env.APP_ADMIN_PASSWORD || '',
@@ -19,7 +19,7 @@ export const generateInitialUsers = async (): Promise<Partial<User>[]> => {
   };
 
   const user2: Partial<User> = {
-    name: `[${networks['local']}] ${accounts['USER_1'].account}`,
+    name: `[${networks['local']}] ${accounts['USER_1'].address}`,
     active: true,
     email: process.env.APP_ADMIN_EMAIL || '',
     password: process.env.APP_ADMIN_PASSWORD || '',
@@ -30,7 +30,7 @@ export const generateInitialUsers = async (): Promise<Partial<User>[]> => {
   };
 
   const user3: Partial<User> = {
-    name: `[${networks['local']}] ${accounts['USER_2'].account}`,
+    name: `[${networks['local']}] ${accounts['USER_2'].address}`,
     active: true,
     email: process.env.APP_ADMIN_EMAIL || '',
     password: process.env.APP_ADMIN_PASSWORD || '',
@@ -40,5 +40,16 @@ export const generateInitialUsers = async (): Promise<Partial<User>[]> => {
     avatar: await userService.randomAvatar(),
   };
 
-  return [user1, user2, user3];
+  const user4: Partial<User> = {
+    name: `[${networks['local']}] ${accounts['USER_3'].address}`,
+    active: true,
+    email: process.env.APP_ADMIN_EMAIL || '',
+    password: process.env.APP_ADMIN_PASSWORD || '',
+    language: Languages.PORTUGUESE,
+    provider: networks['local'],
+    address: accounts['USER_3'].address,
+    avatar: await userService.randomAvatar(),
+  };
+
+  return [user1, user2, user3, user4];
 };

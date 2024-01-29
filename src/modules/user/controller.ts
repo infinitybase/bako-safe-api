@@ -1,13 +1,20 @@
+import { Predicate, Transaction } from '@src/models';
+import { PermissionRoles, defaultPermissions } from '@src/models/Workspace';
 import { bindMethods } from '@src/utils/bindMethods';
+import { IPagination, Pagination } from '@src/utils/pagination';
 
 import { error } from '@utils/error';
 import { Responses, successful } from '@utils/index';
 
+import { PredicateService } from '../predicate/services';
+import { TransactionService } from '../transaction/services';
+import { WorkspaceService } from '../workspace/services';
 import {
   ICreateRequest,
   IDeleteRequest,
   IFindOneRequest,
   IListRequest,
+  IMeRequest,
   IUpdateRequest,
   IUserService,
 } from './types';
@@ -25,10 +32,10 @@ export class UserController {
       const { user, active, orderBy, sort, page, perPage } = req.query;
 
       const response = await this.userService
-        .filter({ addresses: [user], active })
+        .filter({ user, active })
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })
-        .list();
+        .find();
 
       return successful(response, Responses.Ok);
     } catch (e) {
@@ -36,31 +43,65 @@ export class UserController {
     }
   }
 
+  async me(req: IMeRequest) {
+    try {
+      //list all 8 last vaults of user
+      const { workspace } = req;
+      const predicates = await new PredicateService()
+        .filter({
+          workspace: workspace.id,
+        })
+        .paginate({ page: '1', perPage: '8' })
+        .ordination({ orderBy: 'createdAt', sort: 'DESC' })
+        .list();
+
+      const transactions = await new TransactionService()
+        .filter({
+          workspaceId: workspace.id,
+        })
+        .paginate({ page: '1', perPage: '8' })
+        .ordination({ orderBy: 'updatedAt', sort: 'DESC' })
+        .list();
+
+      return successful(
+        {
+          workspace: {
+            id: workspace.id,
+            name: workspace.name,
+            avatar: workspace.avatar,
+            owner: workspace.owner,
+            description: workspace.description,
+          },
+          predicates,
+          transactions,
+        },
+        Responses.Ok,
+      );
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
   async create(req: ICreateRequest) {
     try {
-      const {
-        name,
-        email,
-        password,
-        active,
-        language,
-        role,
-        address,
-        provider,
-      } = req.body;
+      const { address } = req.body;
       const existingUser = await this.userService.findByAddress(address);
 
       if (existingUser) return successful(existingUser, Responses.Created);
 
       const response = await this.userService.create({
-        name,
-        email,
-        password,
-        active,
-        language,
-        address,
-        provider,
+        ...req.body,
         avatar: await this.userService.randomAvatar(),
+      });
+      await new WorkspaceService().create({
+        name: `singleWorkspace[${response.id}]`,
+        owner: response,
+        members: [response],
+        avatar: await this.userService.randomAvatar(),
+        permissions: {
+          [response.id]: defaultPermissions[PermissionRoles.OWNER],
+        },
+        single: true,
       });
 
       return successful(response, Responses.Created);
@@ -74,16 +115,6 @@ export class UserController {
       const { id } = req.params;
 
       const response = await this.userService.findOne(id);
-
-      return successful(response, Responses.Ok);
-    } catch (e) {
-      return error(e.error[0], e.statusCode);
-    }
-  }
-
-  async me(req: IFindOneRequest) {
-    try {
-      const response = await this.userService.findByAddress(req?.user.address);
 
       return successful(response, Responses.Ok);
     } catch (e) {

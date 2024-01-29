@@ -45,6 +45,7 @@ export interface IPredicateFilterParams {
   signer?: string;
   provider?: string;
   owner?: string;
+  workspace?: string;
 }
 
 interface ICreatePredicateRequestSchema extends ValidatedRequestSchema {
@@ -95,7 +96,7 @@ export interface IPredicateService {
   create: (payload: Partial<Predicate>) => Promise<Predicate>;
   update: (id: string, payload: IPredicatePayload) => Promise<Predicate>;
   delete: (id: string) => Promise<boolean>;
-  findById: (id: string, signer: string) => Promise<Predicate>;
+  findById: (id: string, signer?: string) => Promise<Predicate>;
   list: () => Promise<IPagination<Predicate> | Predicate[]>;
   instancePredicate: (predicateId: string) => Promise<Vault>;
 }

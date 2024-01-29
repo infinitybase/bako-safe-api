@@ -9,8 +9,8 @@ import { handleResponse } from '@utils/index';
 
 import { AddressBookService } from '../addressBook/services';
 import { AssetService } from '../asset/services';
-import { UserService } from '../configs/user/service';
 import { NotificationService } from '../notification/services';
+import { UserService } from '../user/service';
 import { TransactionController } from './controller';
 import { TransactionService } from './services';
 import {
@@ -44,7 +44,6 @@ const {
   addressBookService,
   assetService,
   notificationService,
-  userService,
 );
 
 router.use(authMiddleware);
