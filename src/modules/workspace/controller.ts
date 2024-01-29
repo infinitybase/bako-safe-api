@@ -59,6 +59,7 @@ export class WorkspaceController {
         members: _members,
         permissions: _permissions,
         single: false,
+        avatar: await new UserService().randomAvatar(),
       });
 
       return successful(response, Responses.Created);
@@ -77,7 +78,6 @@ export class WorkspaceController {
         })
         .list()
         .then((response: Workspace[]) => response[0]);
-
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);

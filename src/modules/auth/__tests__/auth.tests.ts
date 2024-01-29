@@ -1,5 +1,3 @@
-import exp from 'constants';
-
 import { accounts } from '@src/mocks/accounts';
 import { networks } from '@src/mocks/networks';
 import { AuthValidations } from '@src/utils/testUtils/Auth';

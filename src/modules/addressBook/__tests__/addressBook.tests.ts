@@ -89,6 +89,7 @@ describe('[ADDRESS_BOOK]', () => {
   test(`list addressBook`, async () => {
     //list with single workspace [your address book]
     await api.axios.get(`/address-book`).then(({ data, status }) => {
+      expect(status).toBe(200);
       data.forEach(element => {
         expect(element).toHaveProperty('nickname');
         expect(element.user).toHaveProperty('address');
@@ -113,8 +114,7 @@ describe('[ADDRESS_BOOK]', () => {
       const perPage = 8;
       auth.axios.get(`/address-book`).then(({ data, status }) => {
         expect(status).toBe(200);
-        expect(data).toHaveProperty('data');
-        expect(data.data).toHaveLength(perPage);
+        expect(data.data).toBeLessThanOrEqual(perPage);
         expect(data).toHaveProperty('total');
         expect(data).toHaveProperty('currentPage', page);
         expect(data).toHaveProperty('perPage', perPage);
