@@ -15,6 +15,12 @@ class User extends Base {
   name?: string;
 
   @Column({ default: true })
+  first_login: boolean;
+
+  @Column({ default: false })
+  notify: boolean;
+
+  @Column({ default: true })
   active: boolean;
 
   @Column()

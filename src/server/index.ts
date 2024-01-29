@@ -1,3 +1,5 @@
+import { BSafe } from 'bsafe';
+
 import { DiscordUtils } from '@src/utils';
 
 import App from './app';
@@ -8,6 +10,11 @@ const start = async () => {
   await Bootstrap.start();
   app.init();
 };
+
+BSafe.setup({
+  api_url: process.env.API_URL,
+  bsafe_url: process.env.UI_URL,
+});
 
 if (process.env.NODE_ENV === 'production') {
   App.pm2HandleServerStop();

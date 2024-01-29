@@ -1,19 +1,20 @@
 import {
-  Transfer,
-  Vault,
+  ITransactionResume,
   TransactionProcessStatus,
   TransactionStatus,
-  ITransactionResume,
+  Transfer,
+  Vault,
 } from 'bsafe';
 import {
+  hexlify,
   Provider,
   TransactionRequest,
-  TransactionResponse,
-  hexlify,
   transactionRequestify,
+  TransactionResponse,
 } from 'fuels';
 
 import { PermissionRoles, Workspace } from '@src/models/Workspace';
+import { sendMail, EmailTemplateType } from '@src/utils/EmailSender';
 
 import {
   NotificationTitle,
@@ -200,7 +201,12 @@ export class TransactionService implements ITransactionService {
         id: this._filter.id,
       });
 
-    this._filter.limit && !hasPagination && queryBuilder.limit(this._filter.limit);
+    /* *
+     * TODO: Not best solution for performance, "take" dont limit this method
+     *       just find all and create an array with length. The best way is use
+     *       distinct select.
+     *  */
+    this._filter.limit && !hasPagination && queryBuilder.take(this._filter.limit);
 
     queryBuilder.orderBy(`t.${this._ordination.orderBy}`, this._ordination.sort);
 
@@ -413,18 +419,27 @@ export class TransactionService implements ITransactionService {
       // NOTIFY MEMBERS ON TRANSACTIONS SUCCESS
       const notificationService = new NotificationService();
 
+      const summary = {
+        vaultId: api_transaction.predicate.id,
+        vaultName: api_transaction.predicate.name,
+        transactionId: api_transaction.id,
+        transactionName: api_transaction.name,
+      };
+
       if (result.status.type === TransactionProcessStatus.SUCCESS) {
         for await (const member of api_transaction.predicate.members) {
           await notificationService.create({
             title: NotificationTitle.TRANSACTION_COMPLETED,
-            summary: {
-              vaultId: api_transaction.predicate.id,
-              vaultName: api_transaction.predicate.name,
-              transactionId: api_transaction.id,
-              transactionName: api_transaction.name,
-            },
+            summary,
             user_id: member.id,
           });
+
+          if (member.notify) {
+            await sendMail(EmailTemplateType.TRANSACTION_COMPLETED, {
+              to: member.email,
+              data: { summary: { ...summary, name: member?.name ?? '' } },
+            });
+          }
         }
       }
 

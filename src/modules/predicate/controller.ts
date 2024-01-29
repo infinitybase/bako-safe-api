@@ -3,7 +3,7 @@ import { bn } from 'fuels';
 
 import AddressBook from '@src/models/AddressBook';
 import { Predicate } from '@src/models/Predicate';
-import { Workspace } from '@src/models/Workspace';
+import { sendMail, EmailTemplateType } from '@src/utils/EmailSender';
 
 import { Asset, NotificationTitle, Transaction, User } from '@models/index';
 
@@ -79,6 +79,7 @@ export class PredicateController {
       );
 
       const { id, name, members: predicateMembers } = newPredicate;
+      const summary = { vaultId: id, vaultName: name };
       const membersWithoutLoggedUser = predicateMembers.filter(
         member => member.id !== user.id,
       );
@@ -87,8 +88,15 @@ export class PredicateController {
         await this.notificationService.create({
           title: NotificationTitle.NEW_VAULT_CREATED,
           user_id: member.id,
-          summary: { vaultId: id, vaultName: name },
+          summary,
         });
+
+        if (member.notify) {
+          await sendMail(EmailTemplateType.VAULT_CREATED, {
+            to: member.email,
+            data: { summary: { ...summary, name: member?.name ?? '' } },
+          });
+        }
       }
 
       const result = await this.predicateService
