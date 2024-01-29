@@ -70,6 +70,7 @@ export class UserController {
             name: workspace.name,
             avatar: workspace.avatar,
             owner: workspace.owner,
+            description: workspace.description,
           },
           predicates,
           transactions,
