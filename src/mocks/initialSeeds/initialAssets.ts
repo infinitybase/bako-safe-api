@@ -10,14 +10,12 @@ export const generateInitialAssets = async (): Promise<Partial<Asset>[]> => {
   const asset1: Partial<Asset> = {
     assetId: ETH_id,
     amount: bn(1000).toString(),
-    utxo: 'fake_utxo',
     to: accounts['STORE'].address,
   };
 
   const asset2: Partial<Asset> = {
     assetId: ETH_id,
     amount: bn(100000).toString(),
-    utxo: 'fake_utxo',
     to: accounts['STORE'].address,
   };
 
