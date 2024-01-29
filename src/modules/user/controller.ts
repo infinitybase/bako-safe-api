@@ -93,16 +93,6 @@ export class UserController {
         ...req.body,
         avatar: await this.userService.randomAvatar(),
       });
-      await new WorkspaceService().create({
-        name: `singleWorkspace[${response.id}]`,
-        owner: response,
-        members: [response],
-        avatar: await this.userService.randomAvatar(),
-        permissions: {
-          [response.id]: defaultPermissions[PermissionRoles.OWNER],
-        },
-        single: true,
-      });
 
       return successful(response, Responses.Created);
     } catch (e) {

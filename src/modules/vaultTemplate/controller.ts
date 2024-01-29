@@ -40,7 +40,6 @@ export class VaultTemplateController {
         return user;
       });
 
-      const members = await Promise.all(addMembers);
       const newTemplate = await this.vaultTemplateService
         .create
         //   {
