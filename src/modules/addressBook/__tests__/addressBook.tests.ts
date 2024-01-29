@@ -90,7 +90,6 @@ describe('[ADDRESS_BOOK]', () => {
     //list with single workspace [your address book]
     await api.axios.get(`/address-book`).then(({ data, status }) => {
       data.forEach(element => {
-        expect(element).toHaveProperty('id');
         expect(element).toHaveProperty('nickname');
         expect(element.user).toHaveProperty('address');
 

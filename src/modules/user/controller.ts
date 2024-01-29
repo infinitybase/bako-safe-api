@@ -53,10 +53,7 @@ export class UserController {
         })
         .paginate({ page: '1', perPage: '8' })
         .ordination({ orderBy: 'createdAt', sort: 'DESC' })
-        .list()
-        .then(async (response: IPagination<Predicate>) => {
-          return response.data;
-        });
+        .list();
 
       const transactions = await new TransactionService()
         .filter({
@@ -64,13 +61,16 @@ export class UserController {
         })
         .paginate({ page: '1', perPage: '8' })
         .ordination({ orderBy: 'updatedAt', sort: 'DESC' })
-        .list()
-        .then(async (response: IPagination<Transaction>) => {
-          return response.data;
-        });
+        .list();
 
       return successful(
         {
+          workspace: {
+            id: workspace.id,
+            name: workspace.name,
+            avatar: workspace.avatar,
+            owner: workspace.owner,
+          },
           predicates,
           transactions,
         },

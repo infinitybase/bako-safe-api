@@ -36,11 +36,11 @@ describe('[AUTH]', () => {
       const w_upgrade = data.find(w => w.id !== _auth.workspace.id);
 
       //select workspace
-      const workspace_updated = await _auth.selectWorkspace(w_upgrade.id);
-
-      expect(workspace_updated.workspace.id).toEqual(w_upgrade.id);
-      expect(_auth.user).toHaveProperty('address', accounts['USER_1'].address);
-      expect(workspace_updated).toHaveProperty('token');
+      await _auth.selectWorkspace(w_upgrade.id).then(({ data }) => {
+        expect(_auth.workspace.id).toEqual(w_upgrade.id);
+        expect(_auth.user).toHaveProperty('address', accounts['USER_1'].address);
+        expect(_auth.authToken).toHaveProperty('token');
+      });
     },
     40 * 1000,
   );

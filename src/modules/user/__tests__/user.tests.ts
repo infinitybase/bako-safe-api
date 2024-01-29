@@ -22,6 +22,7 @@ describe('[USER]', () => {
           name: `${new Date()} - Create user test`,
         })
         .then(({ data, status }) => {
+          console.log(data);
           expect(status).toBe(201);
           expect(data).toHaveProperty('id');
           expect(data).toHaveProperty('address');
@@ -40,10 +41,12 @@ describe('[USER]', () => {
       expect(status).toBe(200);
       expect(data).toHaveProperty('predicates');
       expect(data).toHaveProperty('transactions');
-      data.predicates.forEach(element => {
+      expect(data.predicates.data).toHaveLength(8);
+      expect(data.transactions.data).toHaveLength(8);
+      data.predicates.data.forEach(element => {
         expect(element.workspace).toHaveProperty('id', auth.workspace.id);
       });
-      data.transactions.forEach(element => {
+      data.transactions.data.forEach(element => {
         expect(element.predicate.workspace).toHaveProperty('id', auth.workspace.id);
       });
     });
