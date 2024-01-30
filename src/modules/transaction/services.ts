@@ -12,13 +12,12 @@ import {
   transactionRequestify,
   TransactionResponse,
 } from 'fuels';
+import { Brackets } from 'typeorm';
 
-import { PermissionRoles, Workspace } from '@src/models/Workspace';
 import { sendMail, EmailTemplateType } from '@src/utils/EmailSender';
 
 import {
   NotificationTitle,
-  Predicate,
   Transaction,
   Witness,
   WitnessesStatus,
@@ -132,13 +131,15 @@ export class TransactionService implements ITransactionService {
         't.updatedAt',
       ])
       .leftJoinAndSelect('t.assets', 'assets')
-      .leftJoinAndSelect('t.witnesses', 'witnesses')
+      .innerJoin('t.witnesses', 'witnesses')
       .innerJoin('t.predicate', 'predicate')
       .addSelect([
         'predicate.name',
         'predicate.id',
         'predicate.minSigners',
         'predicate.predicateAddress',
+        'witnesses.id',
+        'witnesses.account',
       ])
       .innerJoin('predicate.members', 'members')
       .addSelect(['members.id', 'members.avatar', 'members.address'])
@@ -151,10 +152,38 @@ export class TransactionService implements ITransactionService {
         address: this._filter.predicateAddress,
       });
 
-    this._filter.workspaceId &&
-      queryBuilder.andWhere('predicate.workspace.id = :workspaceId', {
-        workspaceId: this._filter.workspaceId,
-      });
+    // =============== specific for workspace ===============
+    this._filter.workspaceId && !this._filter.signer;
+    queryBuilder.andWhere(
+      new Brackets(qb => {
+        if (this._filter.workspaceId) {
+          qb.orWhere('workspace.id IN (:...workspace)', {
+            workspace: this._filter.workspaceId,
+          });
+        }
+      }),
+    );
+    // =============== specific for workspace ===============
+
+    // =============== specific for home ===============
+    this._filter.workspaceId || this._filter.signer;
+    queryBuilder.andWhere(
+      new Brackets(qb => {
+        if (this._filter.workspaceId) {
+          qb.orWhere('workspace.id IN (:...workspace)', {
+            workspace: this._filter.workspaceId,
+          });
+        }
+        if (this._filter.signer) {
+          qb.orWhere(subQb => {
+            subQb.where('witnesses.account = :signer', {
+              signer: this._filter.signer,
+            });
+          });
+        }
+      }),
+    );
+    // =============== specific for home ===============
 
     this._filter.to &&
       queryBuilder

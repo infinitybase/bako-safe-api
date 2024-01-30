@@ -45,7 +45,7 @@ export interface IPredicateFilterParams {
   signer?: string;
   provider?: string;
   owner?: string;
-  workspace?: string;
+  workspace?: string[];
 }
 
 interface ICreatePredicateRequestSchema extends ValidatedRequestSchema {
