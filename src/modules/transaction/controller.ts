@@ -372,15 +372,15 @@ export class TransactionController {
         createdBy,
         name,
       } = req.query;
-      const { workspace } = req;
+      const { workspace, user } = req;
 
       const result = await new TransactionService()
         .filter({
-          workspaceId: workspace.id,
           to,
           status: status ?? undefined,
           createdBy,
           name,
+          signer: user.address,
         })
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })

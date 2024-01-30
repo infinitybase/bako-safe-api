@@ -1,7 +1,9 @@
-import { Predicate, Transaction } from '@src/models';
-import { PermissionRoles, defaultPermissions } from '@src/models/Workspace';
+import {
+  PermissionRoles,
+  Workspace,
+  defaultPermissions,
+} from '@src/models/Workspace';
 import { bindMethods } from '@src/utils/bindMethods';
-import { IPagination, Pagination } from '@src/utils/pagination';
 
 import { error } from '@utils/error';
 import { Responses, successful } from '@utils/index';
@@ -46,20 +48,44 @@ export class UserController {
   async me(req: IMeRequest) {
     try {
       //list all 8 last vaults of user
-      const { workspace } = req;
+      const { workspace, user } = req;
+      const workspaceList = [workspace.id];
+      const singleWorkspace = await new WorkspaceService()
+        .filter({
+          user: user.id,
+          single: true,
+        })
+        .list()
+        .then((response: Workspace[]) => response[0]);
+      const hasSingle = singleWorkspace.id === workspace.id;
+
+      if (hasSingle) {
+        await new WorkspaceService()
+          .filter({
+            user: user.id,
+            single: false,
+          })
+          .list()
+          .then((response: Workspace[]) =>
+            response.map(w => workspaceList.push(w.id)),
+          );
+      }
+
       const predicates = await new PredicateService()
         .filter({
-          workspace: workspace.id,
+          workspace: workspaceList,
+          signer: hasSingle ? user.address : undefined,
         })
-        .paginate({ page: '1', perPage: '8' })
+        .paginate({ page: '0', perPage: '8' })
         .ordination({ orderBy: 'createdAt', sort: 'DESC' })
         .list();
 
       const transactions = await new TransactionService()
         .filter({
-          workspaceId: workspace.id,
+          workspaceId: workspaceList,
+          signer: hasSingle ? user.address : undefined,
         })
-        .paginate({ page: '1', perPage: '8' })
+        .paginate({ page: '0', perPage: '6' })
         .ordination({ orderBy: 'updatedAt', sort: 'DESC' })
         .list();
 

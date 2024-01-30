@@ -22,8 +22,6 @@ export const transactionMock = async (vault: Vault) => {
 
   const tx = await vault.BSAFEIncludeTransaction(transaction);
 
-  //console.log('[TRANSACTION_MOCK]: ', tx);
-
   const payload_transfer = {
     predicateAddress: vault.address.toString(),
     name: `[TESTE_MOCK] ${Address.fromRandom().toString()}`,

@@ -210,7 +210,6 @@ export class PredicateController {
           provider,
           owner,
           q,
-          workspace: workapceId,
         })
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })
