@@ -374,6 +374,16 @@ export class TransactionController {
       } = req.query;
       const { workspace, user } = req;
 
+      const singleWorkspace = await new WorkspaceService()
+        .filter({
+          user: user.id,
+          single: true,
+        })
+        .list()
+        .then((response: Workspace[]) => response[0]);
+
+      const hasSingle = singleWorkspace.id === workspace.id;
+
       const result = await new TransactionService()
         .filter({
           to,
@@ -381,6 +391,7 @@ export class TransactionController {
           createdBy,
           name,
           workspaceId: [workspace.id],
+          signer: hasSingle ? user.address : undefined,
         })
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })

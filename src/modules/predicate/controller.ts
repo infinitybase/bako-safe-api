@@ -3,6 +3,7 @@ import { bn } from 'fuels';
 
 import AddressBook from '@src/models/AddressBook';
 import { Predicate } from '@src/models/Predicate';
+import { Workspace } from '@src/models/Workspace';
 import { sendMail, EmailTemplateType } from '@src/utils/EmailSender';
 
 import { Asset, NotificationTitle, Transaction, User } from '@models/index';
@@ -200,15 +201,27 @@ export class PredicateController {
       perPage,
       q,
     } = req.query;
-    const { id: workapceId } = req.workspace;
+    const { workspace, user } = req;
+
     try {
+      const singleWorkspace = await new WorkspaceService()
+        .filter({
+          user: user.id,
+          single: true,
+        })
+        .list()
+        .then((response: Workspace[]) => response[0]);
+
+      const hasSingle = singleWorkspace.id === workspace.id;
+
       const response = await this.predicateService
         .filter({
           address: predicateAddress,
           provider,
           owner,
           q,
-          workspace: [workapceId],
+          workspace: [workspace.id],
+          signer: hasSingle ? user.address : undefined,
         })
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })
