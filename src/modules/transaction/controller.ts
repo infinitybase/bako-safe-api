@@ -380,7 +380,7 @@ export class TransactionController {
           status: status ?? undefined,
           createdBy,
           name,
-          signer: user.address,
+          workspaceId: [workspace.id],
         })
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })
