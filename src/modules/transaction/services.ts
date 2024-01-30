@@ -140,6 +140,8 @@ export class TransactionService implements ITransactionService {
         'predicate.predicateAddress',
         'witnesses.id',
         'witnesses.account',
+        'witnesses.signature',
+        'witnesses.status',
       ])
       .innerJoin('predicate.members', 'members')
       .addSelect(['members.id', 'members.avatar', 'members.address'])
