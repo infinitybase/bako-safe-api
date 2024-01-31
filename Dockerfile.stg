@@ -1,21 +1,18 @@
 FROM node:18.14.2
 
-# Define o diretório de trabalho no contêiner
-WORKDIR /api
 
-# Copia os arquivos do projeto para o diretório de trabalho no contêiner
-COPY . .
+# Create app directory
+WORKDIR api
 
-# Instala as dependências do projeto
+ADD . /api
+
+# Install app dependencies
 RUN yarn install
 
-# Instala o pm2 globalmente
-RUN yarn global add pm2
-
-# Compila o projeto
+# Build
 RUN yarn build
 
-# Expõe a porta que a API usará
+# Run!
 EXPOSE 3333
 
 ENTRYPOINT ["yarn", "start"]

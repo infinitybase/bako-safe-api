@@ -1,10 +1,9 @@
-import { IConfVault, Vault } from 'bsafe';
+import { IConfVault, IPayloadVault, Vault } from 'bsafe';
 import crypto from 'crypto';
 import { Provider } from 'fuels';
 
 import { IPredicatePayload } from '@src/modules/predicate/types';
 
-import config from '../../jest.config';
 import { defaultConfigurable } from '../utils/configurable';
 
 export class PredicateMock {
