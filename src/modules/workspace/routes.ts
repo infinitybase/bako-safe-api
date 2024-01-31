@@ -19,6 +19,16 @@ router.use(authMiddleware);
 
 router.get('/by-user', handleResponse(workspaceController.listByUser));
 
+router.get(
+  '/balance',
+  authPermissionMiddleware([
+    PermissionRoles.OWNER,
+    PermissionRoles.ADMIN,
+    PermissionRoles.MANAGER,
+  ]),
+  handleResponse(workspaceController.getBalance),
+);
+
 router.post(
   '/',
   PayloadCreateWorkspaceSchema,
@@ -30,13 +40,10 @@ router.get('/:id', handleResponse(workspaceController.findById));
 router.put(
   '/:id',
   PayloadUpdateWorkspaceSchema,
-  authPermissionMiddleware([
-    PermissionRoles.OWNER,
-    PermissionRoles.ADMIN,
-    PermissionRoles.MANAGER,
-  ]),
+
   handleResponse(workspaceController.update),
 );
+
 router.put(
   '/:id/permissions/:member',
   PayloadUpdateWorkspaceParams,

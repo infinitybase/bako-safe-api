@@ -1,6 +1,9 @@
-import { defaultConfigurable } from 'bsafe';
+import axios from 'axios';
+import { Vault, defaultConfigurable } from 'bsafe';
+import { BN, Provider, bn } from 'fuels';
+import { parse } from 'path';
 
-import { User } from '@src/models';
+import { Predicate, User } from '@src/models';
 import {
   PermissionRoles,
   Workspace,
@@ -15,10 +18,12 @@ import {
 import { ErrorTypes, error } from '@utils/error';
 import { Responses, successful } from '@utils/index';
 
+import { PredicateService } from '../predicate/services';
 import { UserService } from '../user/service';
 import { WorkspaceService } from './services';
 import {
   ICreateRequest,
+  IGetBalanceRequest,
   IListByUserRequest,
   IUpdateMembersRequest,
   IUpdatePermissionsRequest,
@@ -68,6 +73,44 @@ export class WorkspaceController {
     }
   }
 
+  // todo: implement this by other coins, and use utils of bsafe-sdk
+  async getBalance(req: IGetBalanceRequest) {
+    try {
+      const { workspace } = req;
+      const predicateService = new PredicateService();
+      const balance = await Predicate.find({
+        where: {
+          workspace: workspace.id,
+        },
+        select: ['id'],
+      }).then(async (response: Predicate[]) => {
+        let _balance: BN = bn(0);
+        for await (const predicate of response) {
+          const vault = await predicateService.instancePredicate(predicate.id);
+          _balance = _balance.add(await vault.getBalance());
+        }
+        return _balance;
+      });
+
+      const priceUSD = await axios
+        .get(
+          'https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=BTC,USD,EUR',
+        )
+        .then(({ data }) => data.USD)
+        .catch(() => 0);
+
+      return successful(
+        {
+          balance: balance.toString(),
+          balanceUSD: parseFloat(balance.toString()) * priceUSD,
+        },
+        Responses.Ok,
+      );
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
   async findById(req: IListByUserRequest) {
     try {
       const { id } = req.params;
@@ -109,7 +152,6 @@ export class WorkspaceController {
     try {
       const { id, member } = req.params;
       const { permissions } = req.body;
-      const { user } = req;
 
       const response = await new WorkspaceService()
         .filter({ id })

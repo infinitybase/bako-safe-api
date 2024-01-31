@@ -28,7 +28,7 @@ describe('[USER]', () => {
     40 * 1000,
   );
 
-  test.only('ATUAL', async () => {
+  test.only('Home endpoint', async () => {
     const auth = new AuthValidations(networks['local'], accounts['USER_1']);
     await auth.create();
     await auth.createSession();
