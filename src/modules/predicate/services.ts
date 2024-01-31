@@ -175,46 +175,48 @@ export class PredicateService implements IPredicateService {
       });
 
     // =============== specific for workspace ===============
-    this._filter.workspace && !this._filter.signer;
-    queryBuilder.andWhere(
-      new Brackets(qb => {
-        if (this._filter.workspace) {
-          qb.orWhere('workspace.id IN (:...workspace)', {
-            workspace: this._filter.workspace,
-          });
-        }
-      }),
-    );
+    this._filter.workspace &&
+      !this._filter.signer &&
+      queryBuilder.andWhere(
+        new Brackets(qb => {
+          if (this._filter.workspace) {
+            qb.orWhere('workspace.id IN (:...workspace)', {
+              workspace: this._filter.workspace,
+            });
+          }
+        }),
+      );
     // =============== specific for workspace ===============
 
     // =============== specific for home ===============
-    this._filter.workspace || this._filter.signer;
-    queryBuilder.andWhere(
-      new Brackets(qb => {
-        if (this._filter.workspace) {
-          qb.orWhere('workspace.id IN (:...workspace)', {
-            workspace: this._filter.workspace,
-          });
-        }
-        // Se o filtro signer existe
-        if (this._filter.signer) {
-          qb.orWhere(subQb => {
-            const subQuery = subQb
-              .subQuery()
-              .select('1')
-              .from('predicate_members', 'pm')
-              .where('pm.predicate_id = p.id')
-              .andWhere(
-                '(pm.user_id = (SELECT u.id FROM users u WHERE u.address = :signer))',
-                { signer: this._filter.signer },
-              )
-              .getQuery();
+    this._filter.workspace ||
+      (this._filter.signer &&
+        queryBuilder.andWhere(
+          new Brackets(qb => {
+            if (this._filter.workspace) {
+              qb.orWhere('workspace.id IN (:...workspace)', {
+                workspace: this._filter.workspace,
+              });
+            }
+            // Se o filtro signer existe
+            if (this._filter.signer) {
+              qb.orWhere(subQb => {
+                const subQuery = subQb
+                  .subQuery()
+                  .select('1')
+                  .from('predicate_members', 'pm')
+                  .where('pm.predicate_id = p.id')
+                  .andWhere(
+                    '(pm.user_id = (SELECT u.id FROM users u WHERE u.address = :signer))',
+                    { signer: this._filter.signer },
+                  )
+                  .getQuery();
 
-            return `EXISTS ${subQuery}`;
-          });
-        }
-      }),
-    );
+                return `EXISTS ${subQuery}`;
+              });
+            }
+          }),
+        ));
     // =============== specific for home ===============
 
     // this._filter.signer &&
@@ -285,7 +287,12 @@ export class PredicateService implements IPredicateService {
 
   async instancePredicate(predicateId: string): Promise<Vault> {
     const predicate = await this.findById(predicateId);
-    const configurable: IConfVault = JSON.parse(predicate.configurable);
+
+    const configurable: IConfVault = {
+      ...JSON.parse(predicate.configurable),
+      abi: predicate.abi,
+      bytecode: predicate.bytes,
+    };
     const provider = await Provider.create(predicate.provider);
 
     return Vault.create({

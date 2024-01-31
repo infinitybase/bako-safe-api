@@ -1,9 +1,10 @@
-import { IConfVault, IPayloadVault, Vault } from 'bsafe';
+import { IConfVault, Vault } from 'bsafe';
 import crypto from 'crypto';
 import { Provider } from 'fuels';
 
 import { IPredicatePayload } from '@src/modules/predicate/types';
 
+import config from '../../jest.config';
 import { defaultConfigurable } from '../utils/configurable';
 
 export class PredicateMock {
@@ -46,7 +47,7 @@ export class PredicateMock {
       minSigners: min,
       bytes: vault.getBin(),
       abi: JSON.stringify(vault.getAbi()),
-      configurable: JSON.stringify(_BSAFEVaultconfigurable),
+      configurable: JSON.stringify({ ...vault.getConfigurable() }),
       addresses: _BSAFEVaultconfigurable.SIGNERS.map(signer => signer),
     };
 

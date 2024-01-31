@@ -265,4 +265,15 @@ describe('[WORKSPACE]', () => {
         );
       });
   });
+
+  // get balance of workspace
+  test.only(
+    'ATUAL',
+    async () => {
+      await api.axios.get(`/workspace/balance`).then(({ data, status }) => {
+        expect(status).toBe(200);
+      });
+    },
+    40 * 1000,
+  );
 });

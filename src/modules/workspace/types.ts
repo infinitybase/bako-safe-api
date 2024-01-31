@@ -66,6 +66,7 @@ export type ICreateRequest = AuthValidatedRequest<ICreateRequestSchema>;
 export type IUpdateRequest = AuthValidatedRequest<IUpdateRequestSchema>;
 export type IUpdateMembersRequest = AuthValidatedRequest<IUpdateMembersRequestSchema>;
 export type IUpdatePermissionsRequest = AuthValidatedRequest<IUpdatePermissionsRequestSchema>;
+export type IGetBalanceRequest = AuthValidatedRequest<ValidatedRequestSchema>;
 
 export interface IWorkspaceService {
   ordination(ordination?: IOrdination<Workspace>): this;
