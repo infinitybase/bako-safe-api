@@ -96,13 +96,17 @@ export class WorkspaceController {
         .get(
           'https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=BTC,USD,EUR',
         )
-        .then(({ data }) => data.USD)
+        .then(({ data }) => {
+          return data.USD;
+        })
         .catch(() => 0);
+
+      const balanceUSD = parseFloat(balance.format().toString()) * priceUSD;
 
       return successful(
         {
-          balance: balance.toString(),
-          balanceUSD: parseFloat(balance.toString()) * priceUSD,
+          balance: balance.format().toString(),
+          balanceUSD: balanceUSD.toFixed(2),
         },
         Responses.Ok,
       );
