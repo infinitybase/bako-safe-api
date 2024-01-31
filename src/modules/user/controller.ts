@@ -80,16 +80,7 @@ export class UserController {
         })
         .paginate({ page: '0', perPage: '8' })
         .ordination({ orderBy: 'createdAt', sort: 'DESC' })
-        .list()
-        .then((r: IPagination<Predicate>) => {
-          return {
-            ...r,
-            data: r.data.filter(p => {
-              console.log(!p.workspace.members.find(m => m.id === user.id));
-              return !p.workspace.members.find(m => m.id === user.id);
-            }),
-          };
-        });
+        .list();
 
       const transactions = await new TransactionService()
         .filter({
