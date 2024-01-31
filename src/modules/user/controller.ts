@@ -1,9 +1,11 @@
+import { Predicate } from '@src/models';
 import {
   PermissionRoles,
   Workspace,
   defaultPermissions,
 } from '@src/models/Workspace';
 import { bindMethods } from '@src/utils/bindMethods';
+import { IPagination } from '@src/utils/pagination';
 
 import { error } from '@utils/error';
 import { Responses, successful } from '@utils/index';
@@ -78,7 +80,16 @@ export class UserController {
         })
         .paginate({ page: '0', perPage: '8' })
         .ordination({ orderBy: 'createdAt', sort: 'DESC' })
-        .list();
+        .list()
+        .then((r: IPagination<Predicate>) => {
+          return {
+            ...r,
+            data: r.data.filter(p => {
+              console.log(!p.workspace.members.find(m => m.id === user.id));
+              return !p.workspace.members.find(m => m.id === user.id);
+            }),
+          };
+        });
 
       const transactions = await new TransactionService()
         .filter({
