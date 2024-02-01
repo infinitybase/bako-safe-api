@@ -25,6 +25,7 @@ router.get(
     PermissionRoles.OWNER,
     PermissionRoles.ADMIN,
     PermissionRoles.MANAGER,
+    PermissionRoles.VIEWER,
   ]),
   handleResponse(workspaceController.getBalance),
 );
@@ -40,7 +41,7 @@ router.get('/:id', handleResponse(workspaceController.findById));
 router.put(
   '/:id',
   PayloadUpdateWorkspaceSchema,
-
+  authPermissionMiddleware([PermissionRoles.OWNER, PermissionRoles.ADMIN]),
   handleResponse(workspaceController.update),
 );
 
