@@ -79,7 +79,7 @@ export class UserController {
           signer: hasSingle ? user.address : undefined,
         })
         .paginate({ page: '0', perPage: '8' })
-        .ordination({ orderBy: 'createdAt', sort: 'DESC' })
+        .ordination({ orderBy: 'updatedAt', sort: 'DESC' })
         .list();
 
       const transactions = await new TransactionService()

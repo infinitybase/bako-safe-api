@@ -146,6 +146,7 @@ export class PredicateService implements IPredicateService {
         'owner.address',
         'workspace.id',
         'workspace.name',
+        'workspace.permissions',
       ]);
 
     const handleInternalError = e => {
@@ -261,8 +262,14 @@ export class PredicateService implements IPredicateService {
           .catch(handleInternalError);
   }
 
-  async update(id: string, payload: IPredicatePayload): Promise<Predicate> {
-    return Predicate.update({ id }, payload)
+  async update(id: string, payload?: IPredicatePayload): Promise<Predicate> {
+    return Predicate.update(
+      { id },
+      {
+        ...payload,
+        updatedAt: new Date(),
+      },
+    )
       .then(() => this.findById(id))
       .catch(e => {
         throw new Internal({

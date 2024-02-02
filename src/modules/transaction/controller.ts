@@ -120,6 +120,8 @@ export class TransactionController {
         summary,
       });
 
+      await new PredicateService().update(predicate.id);
+
       const { id, name } = newTransaction;
       const membersWithoutLoggedUser = predicate.members.filter(
         member => member.id !== user.id,
