@@ -370,6 +370,7 @@ export class TransactionController {
         page,
         perPage,
         createdBy,
+        predicateId,
         name,
       } = req.query;
       const { workspace, user } = req;
@@ -392,6 +393,7 @@ export class TransactionController {
           name,
           workspaceId: [workspace.id],
           signer: hasSingle ? user.address : undefined,
+          predicateId: predicateId ?? undefined,
         })
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })
