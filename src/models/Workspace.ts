@@ -36,14 +36,14 @@ export enum PermissionRoles {
 export const defaultPermissions = {
   [PermissionRoles.OWNER]: {
     OWNER: ['*'],
-    ADMIN: ['*'],
-    MANAGER: ['*'],
-    SIGNER: ['*'],
-    VIEWER: ['*'],
+    ADMIN: [''],
+    MANAGER: [''],
+    SIGNER: [''],
+    VIEWER: [''],
   },
   [PermissionRoles.ADMIN]: {
     OWNER: [''],
-    ADMIN: [''],
+    ADMIN: ['*'],
     MANAGER: [''],
     SIGNER: [''],
     VIEWER: [''],
@@ -51,7 +51,7 @@ export const defaultPermissions = {
   [PermissionRoles.MANAGER]: {
     OWNER: [''],
     ADMIN: [''],
-    MANAGER: [''],
+    MANAGER: ['*'],
     SIGNER: [''],
     VIEWER: [''],
   },
