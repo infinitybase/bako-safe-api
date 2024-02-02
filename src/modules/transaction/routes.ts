@@ -29,13 +29,14 @@ const notificationService = new NotificationService();
 const userService = new UserService();
 
 const {
-  create,
-  signByID,
   list,
-  findById,
-  close,
-  findByHash,
   send,
+  close,
+  create,
+  pending,
+  findById,
+  signByID,
+  findByHash,
   verifyOnChain,
 } = new TransactionController(
   transactionService,
@@ -50,6 +51,7 @@ router.use(authMiddleware);
 
 router.post('/', validateAddTransactionPayload, handleResponse(create));
 router.get('/', handleResponse(list));
+router.get('/pending', handleResponse(pending));
 router.get('/:id', handleResponse(findById));
 router.get('/by-hash/:hash', handleResponse(findByHash));
 router.put('/close/:id', validateCloseTransactionPayload, handleResponse(close));

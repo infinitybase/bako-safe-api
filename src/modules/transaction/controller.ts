@@ -69,6 +69,29 @@ export class TransactionController {
     bindMethods(this);
   }
 
+  async pending(req: IListRequest) {
+    try {
+      const { user, workspace } = req;
+      const result = await this.transactionService
+        .filter({
+          status: [TransactionStatus.AWAIT_REQUIREMENTS],
+          workspaceId: [workspace.id],
+        })
+        .list()
+        .then((result: Transaction[]) =>
+          result.filter(transaction =>
+            transaction.witnesses.find(
+              w =>
+                w.account === user.address && w.status === WitnessesStatus.PENDING,
+            ),
+          ),
+        );
+      return successful(result.length ?? 0, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
   async create({ body: transaction, user }: ICreateTransactionRequest) {
     const { predicateAddress, summary } = transaction;
 
