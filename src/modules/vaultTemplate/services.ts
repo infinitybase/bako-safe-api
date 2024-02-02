@@ -1,4 +1,4 @@
-import VaultTemplate from '@src/models/VaultTemplate';
+import { VaultTemplate } from '@src/models/VaultTemplate';
 
 import { NotFound } from '@utils/error';
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';

@@ -35,4 +35,4 @@ class VaultTemplate extends Base {
   addresses: User[];
 }
 
-export default VaultTemplate;
+export { VaultTemplate };

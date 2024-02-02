@@ -1,3 +1,4 @@
+import { User } from '@src/models';
 import Role from '@src/models/Role';
 
 import { error } from '@utils/error';
@@ -26,7 +27,8 @@ export class VaultTemplateController {
 
   async create({ body, user }: ICreateVaultTemplateRequest) {
     try {
-      const addMembers = body.addresses.map(async address => {
+      const members: User[] = [];
+      for await (const address of body.addresses) {
         let user = await this.userService.findByAddress(address);
 
         if (!user) {
@@ -37,17 +39,14 @@ export class VaultTemplateController {
           });
         }
 
-        return user;
-      });
+        members.push(user);
+      }
 
-      const newTemplate = await this.vaultTemplateService
-        .create
-        //   {
-        //   ...body,
-        //   createdBy: user,
-        //   addresses: members,
-        // }
-        ();
+      const newTemplate = await this.vaultTemplateService.create({
+        ...body,
+        createdBy: user,
+        addresses: members,
+      });
       return successful(newTemplate, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
@@ -78,7 +77,13 @@ export class VaultTemplateController {
     try {
       const response = await this.vaultTemplateService.findById(id);
 
-      return successful(response, Responses.Ok);
+      return successful(
+        {
+          ...response,
+          addresses: response.addresses.map(address => address.address),
+        },
+        Responses.Ok,
+      );
     } catch (e) {
       return error(e.error, e.statusCode);
     }
