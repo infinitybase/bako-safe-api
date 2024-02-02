@@ -69,6 +69,10 @@ interface IFindByIdVaultTemplate extends ValidatedRequestSchema {
   };
 }
 
+interface IReturnVaultTemplate extends Omit<VaultTemplate, 'addresses'> {
+  addresses: string[];
+}
+
 export type ICreateVaultTemplateRequest = AuthValidatedRequest<ICreateVaultTemplate>;
 export type IUpdateVaultTemplateRequest = AuthValidatedRequest<IUpdateVaultTemplate>;
 export type ILisVaultTemplatetRequest = AuthValidatedRequest<IListVaultTemplate>;
