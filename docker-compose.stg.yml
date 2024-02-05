@@ -13,10 +13,10 @@ services:
     environment:
       - NODE_ENV=staging
       # DATABASE
-      - DATABASE_HOST=containers-us-west-65.railway.app
-      - DATABASE_PORT=6343
+      - DATABASE_HOST=viaduct.proxy.rlwy.net
+      - DATABASE_PORT=10417
       - DATABASE_USERNAME=postgres
-      - DATABASE_PASSWORD=5sQtQXIrR6HLECTVB8SI
+      - DATABASE_PASSWORD=B5gFeEfECab55DdAg56e3BaF1G12Dccb
       - DATABASE_NAME=railway
       # APP
       - API_PORT=3333
