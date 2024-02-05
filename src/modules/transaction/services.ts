@@ -146,7 +146,7 @@ export class TransactionService implements ITransactionService {
       .innerJoin('predicate.members', 'members')
       .addSelect(['members.id', 'members.avatar', 'members.address'])
       .innerJoin('predicate.workspace', 'workspace')
-      .addSelect(['workspace.id', 'workspace.name']);
+      .addSelect(['workspace.id', 'workspace.name', 'workspace.single']);
 
     this._filter.predicateAddress &&
       this._filter.predicateAddress.length > 0 &&
