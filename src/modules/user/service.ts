@@ -2,7 +2,11 @@ import axios from 'axios';
 import { Brackets } from 'typeorm';
 
 import { User } from '@src/models';
-import { PermissionRoles, defaultPermissions } from '@src/models/Workspace';
+import {
+  PermissionRoles,
+  Workspace,
+  defaultPermissions,
+} from '@src/models/Workspace';
 import { ErrorTypes, NotFound } from '@src/utils/error';
 import GeneralError from '@src/utils/error/GeneralError';
 import Internal from '@src/utils/error/Internal';
@@ -165,5 +169,34 @@ export class UserService implements IUserService {
     const avatars = avatars_json.values;
     const random = Math.floor(Math.random() * avatars.length);
     return `${url}/${avatars[random]}`;
+  }
+
+  async workspacesByUser(workspace: Workspace, user: User) {
+    const workspaceList = [workspace.id];
+    const singleWorkspace = await new WorkspaceService()
+      .filter({
+        user: user.id,
+        single: true,
+      })
+      .list()
+      .then((response: Workspace[]) => response[0]);
+    const hasSingle = singleWorkspace.id === workspace.id;
+
+    if (hasSingle) {
+      await new WorkspaceService()
+        .filter({
+          user: user.id,
+          single: false,
+        })
+        .list()
+        .then((response: Workspace[]) =>
+          response.map(w => workspaceList.push(w.id)),
+        );
+    }
+
+    return {
+      workspaceList,
+      hasSingle,
+    };
   }
 }

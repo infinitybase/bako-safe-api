@@ -3,6 +3,7 @@ import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 import { AuthValidatedRequest } from '@src/middlewares/auth/types';
 import { Languages, User } from '@src/models';
 import Role from '@src/models/Role';
+import { Workspace } from '@src/models/Workspace';
 import { IOrdination } from '@src/utils/ordination';
 import { IPagination, PaginationParams } from '@src/utils/pagination';
 
@@ -73,4 +74,11 @@ export interface IUserService {
   randomAvatar(): Promise<string>;
   update(id: string, payload: IUserPayload): Promise<User>;
   delete(id: string): Promise<boolean>;
+  workspacesByUser(
+    worksapce: Workspace,
+    user: User,
+  ): Promise<{
+    workspaceList: string[];
+    hasSingle: boolean;
+  }>;
 }

@@ -30,6 +30,7 @@ import { IAddressBookService } from '../addressBook/types';
 import { IAssetService } from '../asset/types';
 import { INotificationService } from '../notification/types';
 import { PredicateService } from '../predicate/services';
+import { UserService } from '../user/service';
 import { WorkspaceService } from '../workspace/services';
 import { TransactionService } from './services';
 import {
@@ -71,21 +72,27 @@ export class TransactionController {
 
   async pending(req: IListRequest) {
     try {
-      const { user, workspace } = req;
-      const result = await this.transactionService
+      const { workspace, user } = req;
+      const { workspaceList, hasSingle } = await new UserService().workspacesByUser(
+        workspace,
+        user,
+      );
+
+      const result = await new TransactionService()
         .filter({
           status: [TransactionStatus.AWAIT_REQUIREMENTS],
-          workspaceId: [workspace.id],
+          signer: hasSingle ? user.address : undefined,
+          workspaceId: workspaceList,
         })
         .list()
-        .then((result: Transaction[]) =>
-          result.filter(transaction =>
+        .then((result: Transaction[]) => {
+          return result.filter(transaction =>
             transaction.witnesses.find(
               w =>
                 w.account === user.address && w.status === WitnessesStatus.PENDING,
             ),
-          ),
-        );
+          );
+        });
       return successful(result.length ?? 0, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);

@@ -1,18 +1,11 @@
-import { Predicate } from '@src/models';
-import {
-  PermissionRoles,
-  Workspace,
-  defaultPermissions,
-} from '@src/models/Workspace';
 import { bindMethods } from '@src/utils/bindMethods';
-import { IPagination } from '@src/utils/pagination';
 
 import { error } from '@utils/error';
 import { Responses, successful } from '@utils/index';
 
 import { PredicateService } from '../predicate/services';
 import { TransactionService } from '../transaction/services';
-import { WorkspaceService } from '../workspace/services';
+import { UserService } from './service';
 import {
   ICreateRequest,
   IDeleteRequest,
@@ -51,27 +44,10 @@ export class UserController {
     try {
       //list all 8 last vaults of user
       const { workspace, user } = req;
-      const workspaceList = [workspace.id];
-      const singleWorkspace = await new WorkspaceService()
-        .filter({
-          user: user.id,
-          single: true,
-        })
-        .list()
-        .then((response: Workspace[]) => response[0]);
-      const hasSingle = singleWorkspace.id === workspace.id;
-
-      if (hasSingle) {
-        await new WorkspaceService()
-          .filter({
-            user: user.id,
-            single: false,
-          })
-          .list()
-          .then((response: Workspace[]) =>
-            response.map(w => workspaceList.push(w.id)),
-          );
-      }
+      const { workspaceList, hasSingle } = await new UserService().workspacesByUser(
+        workspace,
+        user,
+      );
 
       const predicates = await new PredicateService()
         .filter({
