@@ -13,10 +13,10 @@ services:
     environment:
       - NODE_ENV=production
       # DATABASE
-      - DATABASE_HOST=containers-us-west-108.railway.app
-      - DATABASE_PORT=6487
+      - DATABASE_HOST=roundhouse.proxy.rlwy.net
+      - DATABASE_PORT=31750
       - DATABASE_USERNAME=postgres
-      - DATABASE_PASSWORD=eQsH8Awd8CETZTIQCx6P
+      - DATABASE_PASSWORD=f14bEaAF4baEa1cfE26GAa3EEEdaAgBe
       - DATABASE_NAME=railway
       # APP
       - API_PORT=3333
