@@ -73,6 +73,7 @@ export class TransactionController {
   async pending(req: IListRequest) {
     try {
       const { workspace, user } = req;
+      const { predicateId } = req.query;
       const { workspaceList, hasSingle } = await new UserService().workspacesByUser(
         workspace,
         user,
@@ -83,6 +84,7 @@ export class TransactionController {
           status: [TransactionStatus.AWAIT_REQUIREMENTS],
           signer: hasSingle ? user.address : undefined,
           workspaceId: workspaceList,
+          predicateId,
         })
         .list()
         .then((result: Transaction[]) => {
