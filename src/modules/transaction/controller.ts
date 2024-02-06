@@ -1,5 +1,5 @@
 import { ITransactionResume, TransactionStatus } from 'bsafe';
-import { Provider } from 'fuels';
+import { Provider, Signer, hashMessage } from 'fuels';
 
 import AddressBook from '@src/models/AddressBook';
 import { PermissionRoles, Workspace } from '@src/models/Workspace';
@@ -23,7 +23,7 @@ import {
 import { IPredicateService } from '@modules/predicate/types';
 import { IWitnessService } from '@modules/witness/types';
 
-import { ErrorTypes, error } from '@utils/error';
+import { ErrorTypes, NotFound, error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
 
 import { IAddressBookService } from '../addressBook/types';
@@ -226,11 +226,41 @@ export class TransactionController {
   }: ISignByIdRequest) {
     try {
       const transaction = await this.transactionService.findById(id);
-
-      const { witnesses, resume, predicate, name, id: transactionId } = transaction;
+      //console.log('[ASSINATURA] --------->');
+      const {
+        witnesses,
+        resume,
+        predicate,
+        name,
+        id: transactionId,
+        hash,
+      } = transaction;
       const _resume = resume;
 
       const witness = witnesses.find(w => w.account === account);
+
+      // console.log(
+      //   '[VALIDACAO DE ASSINATURA]: ',
+      //   Signer.recoverAddress(hashMessage(hash), signer).toString(),
+      // );
+      //validate signature
+      const acc_signed =
+        Signer.recoverAddress(hashMessage(hash), signer).toString() == user.address;
+
+      // console.log(
+      //   '[VALIDACAO DE ASSINATURA]: ',
+      //   acc_signed,
+      //   Signer.recoverAddress(hashMessage(hash), signer).toString(),
+      // );
+
+      if (!acc_signed) {
+        throw new NotFound({
+          type: ErrorTypes.NotFound,
+          title: UnauthorizedErrorTitles.INVALID_SIGNATURE,
+          detail:
+            'Your signature is invalid or does not match the transaction hash',
+        });
+      }
 
       if (witness) {
         await this.witnessService.update(witness.id, {

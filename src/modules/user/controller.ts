@@ -64,7 +64,7 @@ export class UserController {
           signer: hasSingle ? user.address : undefined,
         })
         .paginate({ page: '0', perPage: '6' })
-        .ordination({ orderBy: 'updatedAt', sort: 'DESC' })
+        .ordination({ orderBy: 'createdAt', sort: 'DESC' })
         .list();
 
       return successful(
