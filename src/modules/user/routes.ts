@@ -18,7 +18,7 @@ router.use(authMiddleware);
 
 router.get('/me', handleResponse(userController.me));
 router.get('/', handleResponse(userController.find));
-router.get('/me', handleResponse(userController.me));
+router.get('/info', handleResponse(userController.info));
 router.get('/:id', handleResponse(userController.findOne));
 router.put('/:id', PayloadUpdateUserSchema, handleResponse(userController.update));
 router.delete('/:id', handleResponse(userController.delete));
