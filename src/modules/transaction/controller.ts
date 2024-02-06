@@ -244,22 +244,24 @@ export class TransactionController {
       //   Signer.recoverAddress(hashMessage(hash), signer).toString(),
       // );
       //validate signature
-      const acc_signed =
-        Signer.recoverAddress(hashMessage(hash), signer).toString() == user.address;
 
       // console.log(
       //   '[VALIDACAO DE ASSINATURA]: ',
       //   acc_signed,
       //   Signer.recoverAddress(hashMessage(hash), signer).toString(),
       // );
-
-      if (!acc_signed) {
-        throw new NotFound({
-          type: ErrorTypes.NotFound,
-          title: UnauthorizedErrorTitles.INVALID_SIGNATURE,
-          detail:
-            'Your signature is invalid or does not match the transaction hash',
-        });
+      if (signer && confirm) {
+        const acc_signed =
+          Signer.recoverAddress(hashMessage(hash), signer).toString() ==
+          user.address;
+        if (!acc_signed) {
+          throw new NotFound({
+            type: ErrorTypes.NotFound,
+            title: UnauthorizedErrorTitles.INVALID_SIGNATURE,
+            detail:
+              'Your signature is invalid or does not match the transaction hash',
+          });
+        }
       }
 
       if (witness) {
@@ -269,7 +271,6 @@ export class TransactionController {
         }),
           _resume.witnesses.push(signer);
 
-        //console.log('[SIGNER_BY_ID_VALIDATE]: ', transaction.status);
         const statusField = await this.transactionService.validateStatus(id);
 
         const result = await this.transactionService.update(id, {
