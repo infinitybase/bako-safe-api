@@ -1,6 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 import { generateInitialUsers } from '@src/mocks/initialSeeds/initialUsers';
+import { User } from '@src/models/User';
 
 const queryInsert = (table: string, keys: string[], values: any[]) => {
   const format = (string: string) => {
@@ -20,25 +21,17 @@ export class addInitialUsers1707333539558 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     const users = await generateInitialUsers();
     for (const user of users) {
-      // Insere o usuário
-      const { query, values } = queryInsert(
-        'users',
-        Object.keys(user),
-        Object.values(user),
-      );
-      await queryRunner.query(query, values);
+      await User.create(user).save();
     }
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Array de nomes dos usuários a serem removidos
-    const user_id = await generateInitialUsers(); // Exemplo, substitua pelos nomes reais
+    // eslint-disable-next-line
+    const { name }: any = await generateInitialUsers(); // Exemplo, substitua pelos nomes reais
 
-    // Converter o array de nomes para uma string para uso em SQL
-    const usersToRemove = user_id.map(u => `'${u.name}'`).join(',');
-
-    if (usersToRemove.length > 0) {
-      await queryRunner.query(`DELETE FROM users WHERE name IN (${usersToRemove})`);
-    }
+    await User.delete({
+      name,
+    });
   }
 }

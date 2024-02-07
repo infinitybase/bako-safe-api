@@ -32,6 +32,10 @@ export class createTableAssets1694545394302 implements MigrationInterface {
             type: 'varchar',
           },
           {
+            name: 'utxo',
+            type: 'varchar',
+          },
+          {
             name: 'created_at',
             type: 'timestamp',
           },
