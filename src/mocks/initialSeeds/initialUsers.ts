@@ -16,6 +16,7 @@ export const generateInitialUsers = async (): Promise<Partial<User>[]> => {
     address: accounts['STORE'].address,
     language: Languages.PORTUGUESE,
     avatar: await userService.randomAvatar(),
+    createdAt: new Date(),
   };
 
   const user2: Partial<User> = {
@@ -27,6 +28,7 @@ export const generateInitialUsers = async (): Promise<Partial<User>[]> => {
     provider: networks['local'],
     address: accounts['USER_1'].address,
     avatar: await userService.randomAvatar(),
+    createdAt: new Date(),
   };
 
   const user3: Partial<User> = {
@@ -38,6 +40,7 @@ export const generateInitialUsers = async (): Promise<Partial<User>[]> => {
     provider: networks['local'],
     address: accounts['USER_2'].address,
     avatar: await userService.randomAvatar(),
+    createdAt: new Date(),
   };
 
   const user4: Partial<User> = {
@@ -49,6 +52,7 @@ export const generateInitialUsers = async (): Promise<Partial<User>[]> => {
     provider: networks['local'],
     address: accounts['USER_3'].address,
     avatar: await userService.randomAvatar(),
+    createdAt: new Date(),
   };
 
   return [user1, user2, user3, user4];

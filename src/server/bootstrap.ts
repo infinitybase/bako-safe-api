@@ -14,15 +14,8 @@ class Bootstrap {
   }
 
   static async start() {
-    const { NODE_ENV } = process.env;
-
     this.startEnv();
     await this.connectDatabase();
-    const isTest = NODE_ENV === 'test';
-
-    isTest && (await getConnection().runMigrations());
-
-    !isTest && (await this.runSeeders());
   }
 
   static async clearAllEntities() {
@@ -38,11 +31,6 @@ class Bootstrap {
       const repository = await getConnection().getRepository(entity.name); // Get repository
       await repository.clear();
     }
-  }
-
-  static async runSeeders() {
-    console.log('[RUN_SEEDERS]');
-    await runSeeders();
   }
 }
 

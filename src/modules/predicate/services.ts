@@ -30,7 +30,7 @@ export class PredicateService implements IPredicateService {
     'p.deletedAt',
     'p.updatedAt',
     'p.name',
-    'p.predicateAddress',
+    'p.predicate_address',
     'p.description',
     'p.minSigners',
     'p.owner',
@@ -168,7 +168,7 @@ export class PredicateService implements IPredicateService {
      */
 
     this._filter.address &&
-      queryBuilder.andWhere('p.predicateAddress = :predicateAddress', {
+      queryBuilder.andWhere('p.predicate_address = :predicateAddress', {
         predicateAddress: this._filter.address,
       });
 

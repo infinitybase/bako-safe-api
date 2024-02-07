@@ -24,7 +24,7 @@ class Predicate extends Base {
   @Column()
   name: string;
 
-  @Column()
+  @Column({ name: 'predicate_address' })
   predicateAddress: string;
 
   @Column({ nullable: true })
