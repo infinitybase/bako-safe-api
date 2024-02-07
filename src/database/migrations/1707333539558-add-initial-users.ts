@@ -32,13 +32,13 @@ export class addInitialUsers1707333539558 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Array de nomes dos usuários a serem removidos
-    const user_id = (await generateInitialUsers()).map(item => item.id); // Exemplo, substitua pelos nomes reais
+    const user_id = await generateInitialUsers(); // Exemplo, substitua pelos nomes reais
 
     // Converter o array de nomes para uma string para uso em SQL
-    const usersToRemove = user_id.map(id => `'${id}'`).join(',');
+    const usersToRemove = user_id.map(u => `'${u.name}'`).join(',');
 
     if (usersToRemove.length > 0) {
-      await queryRunner.query(`DELETE FROM user WHERE id IN (${usersToRemove})`);
+      await queryRunner.query(`DELETE FROM users WHERE name IN (${usersToRemove})`);
     }
   }
 }

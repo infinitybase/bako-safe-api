@@ -32,10 +32,10 @@ export class PredicateService implements IPredicateService {
     'p.name',
     'p.predicate_address',
     'p.description',
-    'p.minSigners',
+    'p.min_signers',
     'p.owner',
     'p.provider',
-    'p.chainId',
+    'p.chain_id',
     'p.configurable',
   ];
 

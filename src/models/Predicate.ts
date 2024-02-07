@@ -30,7 +30,7 @@ class Predicate extends Base {
   @Column({ nullable: true })
   description?: string;
 
-  @Column()
+  @Column({ name: 'min_signers' })
   minSigners: number;
 
   @Column()
@@ -45,7 +45,7 @@ class Predicate extends Base {
   @Column()
   provider: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, name: 'chain_id' })
   chainId?: number;
 
   @JoinColumn({ name: 'owner_id' })
