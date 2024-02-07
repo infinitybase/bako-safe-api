@@ -40,6 +40,21 @@ export class UserController {
     }
   }
 
+  async info(req: IListRequest) {
+    const { user } = req;
+
+    return successful(
+      {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        first_login: user.first_login,
+        notify: user.notify,
+      },
+      Responses.Ok,
+    );
+  }
+
   async me(req: IMeRequest) {
     try {
       //list all 8 last vaults of user
