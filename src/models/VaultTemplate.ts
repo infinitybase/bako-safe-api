@@ -19,7 +19,7 @@ class VaultTemplate extends Base {
   @Column()
   description: string;
 
-  @Column()
+  @Column({ name: 'min_signers' })
   minSigners: number;
 
   @JoinColumn({ name: 'created_by' })
