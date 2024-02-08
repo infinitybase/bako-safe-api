@@ -33,10 +33,10 @@ export class DAppsService implements IDAppsService {
   async findBySessionID(sessionID: string, origin: string) {
     return await DApp.createQueryBuilder('d')
       .innerJoin('d.vaults', 'vaults')
-      .addSelect(['vaults.predicate_address', 'vaults.id'])
+      .addSelect(['vaults.predicateAddress', 'vaults.id'])
       .innerJoin('d.currentVault', 'currentVault')
       .addSelect([
-        'currentVault.predicate_address',
+        'currentVault.predicateAddress',
         'currentVault.id',
         'currentVault.provider',
       ])
@@ -61,7 +61,7 @@ export class DAppsService implements IDAppsService {
     return await DApp.createQueryBuilder('d')
       .select()
       .innerJoin('d.currentVault', 'currentVault')
-      .addSelect(['currentVault.predicate_address', 'currentVault.id'])
+      .addSelect(['currentVault.predicateAddress', 'currentVault.id'])
       .where('d.session_id = :sessionID', { sessionID })
       .getOne()
       .then(data => data?.currentVault.id ?? undefined)

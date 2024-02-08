@@ -136,8 +136,8 @@ export class TransactionService implements ITransactionService {
       .addSelect([
         'predicate.name',
         'predicate.id',
-        'predicate.min_signers',
-        'predicate.predicate_address',
+        'predicate.minSigners',
+        'predicate.predicateAddress',
         'witnesses.id',
         'witnesses.account',
         'witnesses.signature',
@@ -150,7 +150,7 @@ export class TransactionService implements ITransactionService {
 
     this._filter.predicateAddress &&
       this._filter.predicateAddress.length > 0 &&
-      queryBuilder.andWhere('t.predicate.predicate_address IN (:...address)', {
+      queryBuilder.andWhere('t.predicate.predicateAddress IN (:...address)', {
         address: this._filter.predicateAddress,
       });
 

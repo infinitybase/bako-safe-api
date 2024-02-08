@@ -1,6 +1,6 @@
-import { TableColumn, MigrationInterface, QueryRunner } from 'typeorm';
+import { MigrationInterface, QueryRunner, TableColumn } from 'typeorm';
 
-export class removeColumnUtxoInAssetTable1707342831500
+export class removeColumnUtxoOfColumnAssets1707395773868
   implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.dropColumn('assets', 'utxo');

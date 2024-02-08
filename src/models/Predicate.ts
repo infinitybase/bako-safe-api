@@ -24,13 +24,13 @@ class Predicate extends Base {
   @Column()
   name: string;
 
-  @Column({ name: 'predicate_address' })
+  @Column()
   predicateAddress: string;
 
   @Column({ nullable: true })
   description?: string;
 
-  @Column({ name: 'min_signers' })
+  @Column()
   minSigners: number;
 
   @Column()
@@ -45,7 +45,7 @@ class Predicate extends Base {
   @Column()
   provider: string;
 
-  @Column({ nullable: true, name: 'chain_id' })
+  @Column({ nullable: true })
   chainId?: number;
 
   @JoinColumn({ name: 'owner_id' })
