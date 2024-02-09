@@ -88,20 +88,30 @@ export class TransactionController {
         })
         .list()
         .then((result: Transaction[]) => {
-          return result.filter(transaction =>
-            transaction.witnesses.find(
-              w =>
-                w.account === user.address && w.status === WitnessesStatus.PENDING,
-            ),
-          );
+          return {
+            ofUser:
+              result.filter(transaction =>
+                transaction.witnesses.find(
+                  w =>
+                    w.account === user.address &&
+                    w.status === WitnessesStatus.PENDING,
+                ),
+              ).length ?? 0,
+            transactionsBlocked:
+              result.filter(transaction =>
+                transaction.witnesses.find(
+                  w => w.status === WitnessesStatus.PENDING,
+                ),
+              ).length > 0 ?? false,
+          };
         });
-      return successful(result.length ?? 0, Responses.Ok);
+      return successful(result, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }
   }
 
-  async create({ body: transaction, user }: ICreateTransactionRequest) {
+  async create({ body: transaction, user, workspace }: ICreateTransactionRequest) {
     const { predicateAddress, summary } = transaction;
 
     try {
@@ -112,7 +122,16 @@ export class TransactionController {
 
       // if possible move this next part to a middleware, but we dont have access to body of request
       // ========================================================================================================
-      if (!predicate.members.find(member => member.id === user.id)) {
+      const hasPermission = validatePermissionGeneral(workspace, user.id, [
+        PermissionRoles.OWNER,
+        PermissionRoles.ADMIN,
+        PermissionRoles.MANAGER,
+      ]);
+      const isMemberOfPredicate = predicate.members.find(
+        member => member.id === user.id,
+      );
+
+      if (!isMemberOfPredicate && !hasPermission) {
         throw new Unauthorized({
           type: ErrorTypes.Unauthorized,
           title: UnauthorizedErrorTitles.MISSING_PERMISSION,
