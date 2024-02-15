@@ -1,8 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 
-import { Predicate } from '@src/models';
 import { PermissionRoles } from '@src/models/Workspace';
-import { PredicateService } from '@src/modules/predicate/services';
 import { validatePermissionGeneral } from '@src/utils/permissionValidate';
 
 import { signOutPath } from '@modules/auth/routes';

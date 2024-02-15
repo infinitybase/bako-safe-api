@@ -107,6 +107,7 @@ export class WorkspaceController {
         {
           balance: balance.format().toString(),
           balanceUSD: balanceUSD.toFixed(2),
+          workspaceId: workspace.id,
         },
         Responses.Ok,
       );
