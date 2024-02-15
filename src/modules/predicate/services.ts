@@ -148,6 +148,7 @@ export class PredicateService implements IPredicateService {
         'workspace.name',
         'workspace.permissions',
         'workspace.single',
+        'workspace.avatar',
       ]);
 
     const handleInternalError = e => {
