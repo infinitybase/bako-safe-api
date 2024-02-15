@@ -99,7 +99,7 @@ export class WorkspaceController {
         .then(({ data }) => {
           return data.USD;
         })
-        .catch(() => 0);
+        .catch(() => 0.0);
 
       const balanceUSD = parseFloat(balance.format().toString()) * priceUSD;
 

@@ -19,7 +19,7 @@ export const validatePermissionGeneral = (
   const permissions = !!workspace.permissions[user_id];
 
   const validate =
-    permission.filter(p => workspace.permissions[user_id][p].includes('*')).length >
-    0;
+    permission.filter(p => workspace.permissions[user_id][p]?.includes('*'))
+      .length > 0;
   return validate && permissions;
 };
