@@ -467,6 +467,13 @@ export class TransactionController {
         .list()
         .then((response: Workspace[]) => response[0]);
 
+      const allWk = await new WorkspaceService()
+        .filter({
+          user: user.id,
+        })
+        .list()
+        .then((response: Workspace[]) => response.map(wk => wk.id));
+
       const hasSingle = singleWorkspace.id === workspace.id;
 
       const result = await new TransactionService()
@@ -475,8 +482,8 @@ export class TransactionController {
           status: status ?? undefined,
           createdBy,
           name,
-          workspaceId: [workspace.id],
-          signer: hasSingle ? user.address : undefined,
+          workspaceId: hasSingle ? allWk : [workspace.id],
+          //signer: hasSingle ? user.address : undefined,
           predicateId: predicateId ?? undefined,
         })
         .ordination({ orderBy, sort })

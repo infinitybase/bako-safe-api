@@ -212,6 +212,13 @@ export class PredicateController {
         .list()
         .then((response: Workspace[]) => response[0]);
 
+      const allWk = await new WorkspaceService()
+        .filter({
+          user: user.id,
+        })
+        .list()
+        .then((response: Workspace[]) => response.map(wk => wk.id));
+
       const hasSingle = singleWorkspace.id === workspace.id;
 
       const response = await this.predicateService
@@ -220,7 +227,7 @@ export class PredicateController {
           provider,
           owner,
           q,
-          workspace: [workspace.id],
+          workspace: hasSingle ? allWk : [workspace.id],
           signer: hasSingle ? user.address : undefined,
         })
         .ordination({ orderBy, sort })
