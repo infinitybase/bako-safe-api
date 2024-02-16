@@ -483,7 +483,7 @@ export class TransactionController {
           createdBy,
           name,
           workspaceId: hasSingle ? allWk : [workspace.id],
-          //signer: hasSingle ? user.address : undefined,
+          signer: hasSingle ? user.address : undefined,
           predicateId: predicateId ?? undefined,
         })
         .ordination({ orderBy, sort })

@@ -90,8 +90,6 @@ export class AuthController {
     try {
       const { workspace: workspaceId, user } = req.body;
 
-      //console.log('[WORKSPACE_ID]: ', workspace_id, user);
-
       const workspace = await new WorkspaceService()
         .filter({ id: workspaceId })
         .list()
@@ -106,19 +104,21 @@ export class AuthController {
 
       const isUserMember = workspace.members.find(m => m.id === user);
 
-      if (!isUserMember) {
-        throw new Unauthorized({
-          type: ErrorTypes.NotFound,
-          title: UnauthorizedErrorTitles.INVALID_PERMISSION,
-          detail: `User not found`,
-        });
-      }
+      // if (!isUserMember) {
+      //   throw new Unauthorized({
+      //     type: ErrorTypes.NotFound,
+      //     title: UnauthorizedErrorTitles.INVALID_PERMISSION,
+      //     detail: `User not found`,
+      //   });
+      // }
 
       const token = await this.authService.findToken({
         userId: user,
       });
 
-      token.workspace = workspace;
+      if (isUserMember) {
+        token.workspace = workspace;
+      }
 
       const response = await token.save();
       const result = {
