@@ -1,6 +1,6 @@
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 
-import VaultTemplate from '@src/models/VaultTemplate';
+import { VaultTemplate } from '@src/models/VaultTemplate';
 
 import { User } from '@models/index';
 
@@ -24,7 +24,7 @@ export interface ICreatePayload {
   name: string;
   description: string;
   minSigners: number;
-  addresses: User[] | string[];
+  addresses: User[];
   createdBy: User;
 }
 
@@ -40,8 +40,12 @@ export interface IFilterParams {
   user?: User;
 }
 
+type ICreatePayloadBody = Omit<ICreatePayload, 'addresses'>;
+
 interface ICreateVaultTemplate extends ValidatedRequestSchema {
-  [ContainerTypes.Body]: ICreatePayload;
+  [ContainerTypes.Body]: ICreatePayloadBody & {
+    addresses: string[];
+  };
 }
 
 interface IUpdateVaultTemplate extends ValidatedRequestSchema {
@@ -65,6 +69,10 @@ interface IFindByIdVaultTemplate extends ValidatedRequestSchema {
   };
 }
 
+interface IReturnVaultTemplate extends Omit<VaultTemplate, 'addresses'> {
+  addresses: string[];
+}
+
 export type ICreateVaultTemplateRequest = AuthValidatedRequest<ICreateVaultTemplate>;
 export type IUpdateVaultTemplateRequest = AuthValidatedRequest<IUpdateVaultTemplate>;
 export type ILisVaultTemplatetRequest = AuthValidatedRequest<IListVaultTemplate>;
@@ -75,7 +83,7 @@ export interface IVaultTemplateService {
   paginate(pagination?: PaginationParams): this;
   filter(filter: IFilterParams): this;
 
-  create: () => Promise<VaultTemplate>;
+  create: (payload: ICreatePayload) => Promise<VaultTemplate>;
   update: (id: string, payload: IUpdatePayload) => Promise<VaultTemplate>;
   list: () => Promise<IPagination<VaultTemplate> | VaultTemplate[]>;
   findById: (id: string) => Promise<VaultTemplate>;

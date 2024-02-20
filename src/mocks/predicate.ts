@@ -9,13 +9,16 @@ import { defaultConfigurable } from '../utils/configurable';
 export class PredicateMock {
   public BSAFEVaultconfigurable: IConfVault;
   public predicatePayload: Omit<IPredicatePayload, 'user'>;
+  public vault: Vault;
 
   protected constructor(
     BSAFEVaultConfigurable: IConfVault,
     predicatePayload: Omit<IPredicatePayload, 'user'>,
+    vault: Vault,
   ) {
     this.BSAFEVaultconfigurable = BSAFEVaultConfigurable;
     this.predicatePayload = predicatePayload;
+    this.vault = vault;
   }
 
   public static async create(
@@ -43,10 +46,10 @@ export class PredicateMock {
       minSigners: min,
       bytes: vault.getBin(),
       abi: JSON.stringify(vault.getAbi()),
-      configurable: JSON.stringify(_BSAFEVaultconfigurable),
+      configurable: JSON.stringify({ ...vault.getConfigurable() }),
       addresses: _BSAFEVaultconfigurable.SIGNERS.map(signer => signer),
     };
 
-    return new PredicateMock(_BSAFEVaultconfigurable, predicatePayload);
+    return new PredicateMock(_BSAFEVaultconfigurable, predicatePayload, vault);
   }
 }

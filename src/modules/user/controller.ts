@@ -3,11 +3,15 @@ import { bindMethods } from '@src/utils/bindMethods';
 import { error } from '@utils/error';
 import { Responses, successful } from '@utils/index';
 
+import { PredicateService } from '../predicate/services';
+import { TransactionService } from '../transaction/services';
+import { UserService } from './service';
 import {
   ICreateRequest,
   IDeleteRequest,
   IFindOneRequest,
   IListRequest,
+  IMeRequest,
   IUpdateRequest,
   IUserService,
 } from './types';
@@ -36,30 +40,76 @@ export class UserController {
     }
   }
 
+  async info(req: IListRequest) {
+    const { user } = req;
+
+    return successful(
+      {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        first_login: user.first_login,
+        notify: user.notify,
+      },
+      Responses.Ok,
+    );
+  }
+
+  async me(req: IMeRequest) {
+    try {
+      //list all 8 last vaults of user
+      const { workspace, user } = req;
+      const { workspaceList, hasSingle } = await new UserService().workspacesByUser(
+        workspace,
+        user,
+      );
+
+      const predicates = await new PredicateService()
+        .filter({
+          workspace: workspaceList,
+          signer: hasSingle ? user.address : undefined,
+        })
+        .paginate({ page: '0', perPage: '8' })
+        .ordination({ orderBy: 'updatedAt', sort: 'DESC' })
+        .list();
+
+      const transactions = await new TransactionService()
+        .filter({
+          workspaceId: workspaceList,
+          signer: hasSingle ? user.address : undefined,
+        })
+        .paginate({ page: '0', perPage: '6' })
+        .ordination({ orderBy: 'createdAt', sort: 'DESC' })
+        .list();
+
+      return successful(
+        {
+          workspace: {
+            id: workspace.id,
+            name: workspace.name,
+            avatar: workspace.avatar,
+            owner: workspace.owner,
+            description: workspace.description,
+          },
+          predicates,
+          transactions,
+        },
+        Responses.Ok,
+      );
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
   async create(req: ICreateRequest) {
     try {
-      const {
-        name,
-        email,
-        password,
-        active,
-        language,
-        role,
-        address,
-        provider,
-      } = req.body;
+      const { address } = req.body;
       const existingUser = await this.userService.findByAddress(address);
 
       if (existingUser) return successful(existingUser, Responses.Created);
 
       const response = await this.userService.create({
-        name,
-        email,
-        password,
-        active,
-        language,
-        address,
-        provider,
+        ...req.body,
         avatar: await this.userService.randomAvatar(),
       });
 

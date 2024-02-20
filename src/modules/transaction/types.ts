@@ -65,6 +65,8 @@ export type ICloseTransactionPayload = {
 export interface ITransactionFilterParams {
   predicateId?: string[];
   predicateAddress?: string;
+  signer?: string; // address of logged user
+  workspaceId?: string[];
   to?: string;
   hash?: string;
   status?: TransactionStatus[];
@@ -136,7 +138,7 @@ interface IListRequestSchema extends ValidatedRequestSchema {
     status: TransactionStatus[];
     name: string;
     allOfUser: boolean;
-    predicateId: string[] | string;
+    predicateId: string[];
     to: string;
     startDate: string;
     endDate: string;

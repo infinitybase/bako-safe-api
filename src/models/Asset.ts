@@ -14,9 +14,6 @@ class Asset extends Base {
   @Column()
   amount: string;
 
-  @Column()
-  utxo: string;
-
   @Column({ name: 'transaction_id' })
   transactionId: string;
 

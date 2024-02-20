@@ -1,5 +1,5 @@
 import { User } from '@src/models';
-import VaultTemplate from '@src/models/VaultTemplate';
+import { VaultTemplate } from '@src/models/VaultTemplate';
 
 import { accounts } from '../accounts';
 

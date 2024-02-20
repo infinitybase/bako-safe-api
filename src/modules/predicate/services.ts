@@ -68,50 +68,67 @@ export class PredicateService implements IPredicateService {
   }
 
   async findById(id: string, signer?: string): Promise<Predicate> {
-    return Predicate.createQueryBuilder('p')
-      .where({ id })
-      .leftJoinAndSelect('p.members', 'members')
-      .leftJoinAndSelect('p.owner', 'owner')
-      .select([
-        ...this.predicateFieldsSelection,
-        'p.configurable',
-        'members.id',
-        'members.avatar',
-        'members.address',
-        'owner.id',
-        'owner.address',
-      ])
-      .getOne()
+    return (
+      Predicate.createQueryBuilder('p')
+        .where({ id })
+        .leftJoinAndSelect('p.members', 'members')
+        .leftJoinAndSelect('p.owner', 'owner')
+        .leftJoin('p.workspace', 'workspace')
+        .leftJoin('workspace.addressBook', 'addressBook')
+        .leftJoin('addressBook.user', 'adb_workspace')
+        .select([
+          ...this.predicateFieldsSelection,
+          'p.configurable',
+          'members.id',
+          'members.avatar',
+          'members.address',
+          'owner.id',
+          'owner.address',
+          'workspace.id',
+          'workspace.name',
+          'addressBook.nickname',
+          'addressBook.id',
+          'addressBook.user_id',
+          'adb_workspace.id',
+        ])
+        //.addSelect(['workspace.id', 'workspace.address_book'])
+        //.innerJoin('workspace.address_book', 'address_book')
+        // .innerJoin('address_book.user', 'address_book_user')
+        // .addSelect(['workspace.id', 'address_book.nickname', 'address_book_user.id'])
+        .getOne()
 
-      .then(predicate => {
-        const isNotMember = !predicate.members.map(m => m.address).includes(signer);
+        .then(predicate => {
+          const isNotMember = !predicate.members
+            .map(m => m.address)
+            .includes(signer);
 
-        // if (isNotMember) {
-        //   throw new Unauthorized({
-        //     type: ErrorTypes.Unauthorized,
-        //     title: UnauthorizedErrorTitles.INVALID_PERMISSION,
-        //     detail: `You are not authorized to access requested predicate.`,
-        //   });
-        // }
+          // if (isNotMember) {
+          //   throw new Unauthorized({
+          //     type: ErrorTypes.Unauthorized,
+          //     title: UnauthorizedErrorTitles.INVALID_PERMISSION,
+          //     detail: `You are not authorized to access requested predicate.`,
+          //   });
+          // }
 
-        if (!predicate) {
-          throw new NotFound({
-            type: ErrorTypes.NotFound,
-            title: 'Predicate not found',
-            detail: `Predicate with id ${id} not found`,
+          if (!predicate) {
+            throw new NotFound({
+              type: ErrorTypes.NotFound,
+              title: 'Predicate not found',
+              detail: `Predicate with id ${id} not found`,
+            });
+          }
+          return predicate;
+        })
+        .catch(e => {
+          if (e instanceof GeneralError) throw e;
+
+          throw new Internal({
+            type: ErrorTypes.Internal,
+            title: 'Error on predicate findById',
+            detail: e,
           });
-        }
-        return predicate;
-      })
-      .catch(e => {
-        if (e instanceof GeneralError) throw e;
-
-        throw new Internal({
-          type: ErrorTypes.Internal,
-          title: 'Error on predicate findById',
-          detail: e,
-        });
-      });
+        })
+    );
   }
 
   async list(): Promise<IPagination<Predicate> | Predicate[]> {
@@ -120,12 +137,18 @@ export class PredicateService implements IPredicateService {
       .select(this.predicateFieldsSelection)
       .innerJoin('p.members', 'members')
       .innerJoin('p.owner', 'owner')
+      .innerJoin('p.workspace', 'workspace')
       .addSelect([
         'members.id',
         'members.address',
         'members.avatar',
         'owner.id',
         'owner.address',
+        'workspace.id',
+        'workspace.name',
+        'workspace.permissions',
+        'workspace.single',
+        'workspace.avatar',
       ]);
 
     const handleInternalError = e => {
@@ -146,7 +169,7 @@ export class PredicateService implements IPredicateService {
      */
 
     this._filter.address &&
-      queryBuilder.andWhere('p.predicateAddress =:predicateAddress', {
+      queryBuilder.andWhere('p.predicateAddress = :predicateAddress', {
         predicateAddress: this._filter.address,
       });
 
@@ -155,26 +178,65 @@ export class PredicateService implements IPredicateService {
         provider: `${this._filter.provider}`,
       });
 
-    this._filter.owner &&
-      queryBuilder.andWhere('LOWER(p.owner.address) = LOWER(:owner)', {
-        owner: `${this._filter.owner}`,
-      });
+    // =============== specific for workspace ===============
+    this._filter.workspace &&
+      !this._filter.signer &&
+      queryBuilder.andWhere(
+        new Brackets(qb => {
+          if (this._filter.workspace) {
+            qb.orWhere('workspace.id IN (:...workspace)', {
+              workspace: this._filter.workspace,
+            });
+          }
+        }),
+      );
+    // =============== specific for workspace ===============
+    //console.log('[PREDICATE_FILTER]: ', this._filter);
+    // =============== specific for home ===============
+    (this._filter.workspace || this._filter.signer) &&
+      queryBuilder.andWhere(
+        new Brackets(qb => {
+          if (this._filter.workspace) {
+            qb.orWhere('workspace.id IN (:...workspace)', {
+              workspace: this._filter.workspace,
+            });
+          }
+          // Se o filtro signer existe
+          if (this._filter.signer) {
+            qb.orWhere(subQb => {
+              const subQuery = subQb
+                .subQuery()
+                .select('1')
+                .from('predicate_members', 'pm')
+                .where('pm.predicate_id = p.id')
+                .andWhere(
+                  '(pm.user_id = (SELECT u.id FROM users u WHERE u.address = :signer))',
+                  { signer: this._filter.signer },
+                )
+                .getQuery();
 
-    this._filter.signer &&
-      queryBuilder.andWhere(qb => {
-        const subQuery = qb
-          .subQuery()
-          .select('1')
-          .from('predicate_members', 'pm')
-          .where('pm.predicate_id = p.id')
-          .andWhere(
-            '(pm.user_id = (SELECT u.id FROM users u WHERE u.address = :signer))',
-            { signer: this._filter.signer },
-          )
-          .getQuery();
+              return `EXISTS ${subQuery}`;
+            });
+          }
+        }),
+      );
+    // =============== specific for home ===============
 
-        return `EXISTS ${subQuery}`;
-      });
+    // this._filter.signer &&
+    //   queryBuilder.andWhere(qb => {
+    //     const subQuery = qb
+    //       .subQuery()
+    //       .select('1')
+    //       .from('predicate_members', 'pm')
+    //       .where('pm.predicate_id = p.id')
+    //       .andWhere(
+    //         '(pm.user_id = (SELECT u.id FROM users u WHERE u.address = :signer))',
+    //         { signer: this._filter.signer },
+    //       )
+    //       .getQuery();
+
+    //     return `EXISTS ${subQuery}`;
+    //   });
 
     this._filter.q &&
       queryBuilder.andWhere(
@@ -202,8 +264,14 @@ export class PredicateService implements IPredicateService {
           .catch(handleInternalError);
   }
 
-  async update(id: string, payload: IPredicatePayload): Promise<Predicate> {
-    return Predicate.update({ id }, payload)
+  async update(id: string, payload?: IPredicatePayload): Promise<Predicate> {
+    return Predicate.update(
+      { id },
+      {
+        ...payload,
+        updatedAt: new Date(),
+      },
+    )
       .then(() => this.findById(id))
       .catch(e => {
         throw new Internal({
@@ -228,7 +296,12 @@ export class PredicateService implements IPredicateService {
 
   async instancePredicate(predicateId: string): Promise<Vault> {
     const predicate = await this.findById(predicateId);
-    const configurable: IConfVault = JSON.parse(predicate.configurable);
+
+    const configurable: IConfVault = {
+      ...JSON.parse(predicate.configurable),
+      abi: predicate.abi,
+      bytecode: predicate.bytes,
+    };
     const provider = await Provider.create(predicate.provider);
 
     return Vault.create({

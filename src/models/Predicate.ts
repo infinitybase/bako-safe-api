@@ -4,6 +4,7 @@ import {
   JoinColumn,
   JoinTable,
   ManyToMany,
+  ManyToOne,
   OneToMany,
   OneToOne,
 } from 'typeorm';
@@ -11,6 +12,7 @@ import {
 import { Base } from './Base';
 import { Transaction } from './Transaction';
 import { User } from './User';
+import { Workspace } from './Workspace';
 
 export interface PredicateMember {
   avatar: string;
@@ -46,12 +48,16 @@ class Predicate extends Base {
   @Column({ nullable: true })
   chainId?: number;
 
-  @OneToMany(() => Transaction, transaction => transaction.predicate)
-  transactions: Transaction[];
-
   @JoinColumn({ name: 'owner_id' })
   @OneToOne(() => User)
   owner: User;
+
+  @JoinColumn({ name: 'workspace_id' })
+  @ManyToOne(() => Workspace, workspace => workspace.predicates)
+  workspace: Workspace;
+
+  @OneToMany(() => Transaction, transaction => transaction.predicate)
+  transactions: Transaction[];
 
   @ManyToMany(() => User)
   @JoinTable({

@@ -55,28 +55,22 @@ export class AddressBookService implements IAddressBookService {
     const queryBuilder = AddressBook.createQueryBuilder('ab')
       .select(['ab.id', 'ab.nickname'])
       .innerJoin('ab.user', 'user')
-      .innerJoin('ab.createdBy', 'createdBy')
-      .addSelect([
-        'user.id',
-        'user.address',
-        'user.avatar',
-        'createdBy.id',
-        'createdBy.address',
-      ]);
+      .innerJoin('ab.owner', 'owner')
+      .addSelect(['user.id', 'user.address', 'user.avatar', 'owner.id']);
 
     const handleInternalError = e => {
       if (e instanceof GeneralError) throw e;
 
       throw new Internal({
         type: ErrorTypes.Internal,
-        title: 'Error on predicate list',
+        title: 'Error on book contact list',
         detail: e,
       });
     };
 
-    this._filter.createdBy &&
-      queryBuilder.andWhere('ab.created_by = :createdBy', {
-        createdBy: `${this._filter.createdBy}`,
+    this._filter.owner &&
+      queryBuilder.andWhere('ab.owner IN (:...owner)', {
+        owner: this._filter.owner,
       });
 
     this._filter.contactAddress &&

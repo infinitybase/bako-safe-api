@@ -2,12 +2,18 @@ import axios from 'axios';
 import { Brackets } from 'typeorm';
 
 import { User } from '@src/models';
+import {
+  PermissionRoles,
+  Workspace,
+  defaultPermissions,
+} from '@src/models/Workspace';
 import { ErrorTypes, NotFound } from '@src/utils/error';
 import GeneralError from '@src/utils/error/GeneralError';
 import Internal from '@src/utils/error/Internal';
 import { IOrdination, setOrdination } from '@src/utils/ordination';
 import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination';
 
+import { WorkspaceService } from '../workspace/services';
 import { IFilterParams, IUserService, IUserPayload } from './types';
 
 const { UI_URL } = process.env;
@@ -75,7 +81,17 @@ export class UserService implements IUserService {
   async create(payload: IUserPayload): Promise<User> {
     return await User.create(payload)
       .save()
-      .then(data => {
+      .then(async data => {
+        await new WorkspaceService().create({
+          name: `singleWorkspace[${data.id}]`,
+          owner: data,
+          members: [data],
+          avatar: await this.randomAvatar(),
+          permissions: {
+            [data.id]: defaultPermissions[PermissionRoles.OWNER],
+          },
+          single: true,
+        });
         delete data.password;
         return data;
       })
@@ -153,5 +169,34 @@ export class UserService implements IUserService {
     const avatars = avatars_json.values;
     const random = Math.floor(Math.random() * avatars.length);
     return `${url}/${avatars[random]}`;
+  }
+
+  async workspacesByUser(workspace: Workspace, user: User) {
+    const workspaceList = [workspace.id];
+    const singleWorkspace = await new WorkspaceService()
+      .filter({
+        user: user.id,
+        single: true,
+      })
+      .list()
+      .then((response: Workspace[]) => response[0]);
+    const hasSingle = singleWorkspace.id === workspace.id;
+
+    if (hasSingle) {
+      await new WorkspaceService()
+        .filter({
+          user: user.id,
+          single: false,
+        })
+        .list()
+        .then((response: Workspace[]) =>
+          response.map(w => workspaceList.push(w.id)),
+        );
+    }
+
+    return {
+      workspaceList,
+      hasSingle,
+    };
   }
 }

@@ -17,6 +17,10 @@ export const sendPredicateCoins = async (
     rootWallet,
     await Provider.create(defaultConfigurable.provider),
   );
+  // console.log(
+  //   '[ROOT_BALANCE]: ',
+  //   (await wallet.getBalance(assets[asset])).toString(),
+  // );
   const deposit = await wallet.transfer(
     predicate.address,
     amount,

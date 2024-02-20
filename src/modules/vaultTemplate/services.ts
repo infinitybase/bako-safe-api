@@ -1,4 +1,4 @@
-import VaultTemplate from '@src/models/VaultTemplate';
+import { VaultTemplate } from '@src/models/VaultTemplate';
 
 import { NotFound } from '@utils/error';
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
@@ -35,18 +35,17 @@ export class VaultTemplateService implements IVaultTemplateService {
     return this;
   }
 
-  async create(): Promise<VaultTemplate> {
-    return new VaultTemplate();
-    // return await VaultTemplate.create(payload)
-    //   .save()
-    //   .then(template => template)
-    //   .catch(e => {
-    //     throw new Internal({
-    //       type: ErrorTypes.Internal,
-    //       title: 'Error on vault template creation',
-    //       detail: e,
-    //     });
-    //   });
+  async create(payload: ICreatePayload): Promise<VaultTemplate> {
+    return await VaultTemplate.create(payload)
+      .save()
+      .then(template => template)
+      .catch(e => {
+        throw new Internal({
+          type: ErrorTypes.Internal,
+          title: 'Error on vault template creation',
+          detail: e,
+        });
+      });
   }
 
   async update(id: string, payload?: IUpdatePayload): Promise<VaultTemplate> {
