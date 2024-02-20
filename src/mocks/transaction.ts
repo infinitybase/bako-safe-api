@@ -1,5 +1,5 @@
 import { TransactionStatus, Vault } from 'bsafe';
-import { bn, Address } from 'fuels';
+import { bn, Address, ZeroBytes32 } from 'fuels';
 
 import { accounts } from '@src/mocks/accounts';
 import { assets } from '@src/mocks/assets';
@@ -12,6 +12,7 @@ export const transaction = {
       amount: bn(1_0).format(),
       assetId: assets['ETH'],
       to: accounts['STORE'].address,
+      utxo: ZeroBytes32,
     },
   ],
   witnesses: [],

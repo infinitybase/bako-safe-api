@@ -1,5 +1,4 @@
-import { accounts } from 'bsafe/dist/cjs/mocks/accounts';
-import e from 'express';
+import { accounts } from 'bsafe';
 import { Address } from 'fuels';
 
 import { providers } from '@src/mocks/networks';

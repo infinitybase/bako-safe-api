@@ -1,4 +1,3 @@
-import { defaultConfigurable } from 'bsafe';
 import { Brackets } from 'typeorm';
 
 import { User } from '@src/models';
@@ -13,6 +12,8 @@ import GeneralError from '@src/utils/error/GeneralError';
 import Internal from '@src/utils/error/Internal';
 import { IOrdination, setOrdination } from '@src/utils/ordination';
 import { PaginationParams, IPagination, Pagination } from '@src/utils/pagination';
+
+import { defaultConfigurable } from '@utils/configurable';
 
 import { UserService } from '../user/service';
 import { IFilterParams, IWorkspaceService } from './types';

@@ -1,10 +1,10 @@
-import { IConfVault, IPayloadVault, Vault } from 'bsafe';
+import { IConfVault, Vault } from 'bsafe';
 import crypto from 'crypto';
 import { Provider } from 'fuels';
 
 import { IPredicatePayload } from '@src/modules/predicate/types';
 
-import { defaultConfigurable } from '../utils/configurable';
+import { defaultConfigurable } from '@utils/configurable';
 
 export class PredicateMock {
   public BSAFEVaultconfigurable: IConfVault;
@@ -25,16 +25,18 @@ export class PredicateMock {
     min: number,
     SIGNERS: string[],
   ): Promise<PredicateMock> {
+    const provider = await Provider.create(defaultConfigurable.provider);
+
     const _BSAFEVaultconfigurable = {
       SIGNATURES_COUNT: min,
       SIGNERS,
-      network: defaultConfigurable['network'],
-      chainId: defaultConfigurable['chainId'],
+      network: provider.url,
+      chainId: provider.getChainId(),
     };
 
     const vault = await Vault.create({
       configurable: _BSAFEVaultconfigurable,
-      provider: await Provider.create(defaultConfigurable['provider']),
+      provider,
     });
 
     const predicatePayload = {

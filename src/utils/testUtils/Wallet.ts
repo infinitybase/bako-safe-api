@@ -1,7 +1,9 @@
-import { defaultConfigurable, Vault } from 'bsafe';
+import { Vault } from 'bsafe';
 import { BN, Wallet, Provider } from 'fuels';
 
 import { assets } from '@src/mocks/assets';
+
+import { defaultConfigurable } from '@utils/configurable';
 
 export const txParams = {
   gasPrice: defaultConfigurable.gasPrice,

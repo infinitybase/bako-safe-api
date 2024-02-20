@@ -1,4 +1,4 @@
-import { BSafe } from 'bsafe';
+import { BSafe, defaultConfig } from 'bsafe';
 
 import { DiscordUtils } from '@src/utils';
 
@@ -12,8 +12,8 @@ const start = async () => {
 };
 
 BSafe.setup({
-  api_url: process.env.API_URL,
-  bsafe_url: process.env.UI_URL,
+  API_URL: process.env.API_URL,
+  BSAFE_URL: process.env.UI_URL,
 });
 
 if (process.env.NODE_ENV === 'production') {

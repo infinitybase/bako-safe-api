@@ -17,14 +17,13 @@
     "database:test": "make -C ./docker/database start env_file=.env.test",
     "database:dev": "make -C ./docker/database start env_file=.env.dev",
     "database:stop": "make -C ./docker/database start",
-    "database:start": "make -C ./docker/database start",
-    "postinstall": "patch-package --use-yarn"
+    "database:start": "make -C ./docker/database start"
   },
   "dependencies": {
     "axios": "1.5.1",
     "bcrypt": "5.1.0",
     "body-parser": "1.20.2",
-    "bsafe": "0.0.35",
+    "bsafe": "/Users/luisburigo/Documents/dev/infinity/bsafe/bsafe/packages/sdk/bsafe-0.0.37-8.tgz",
     "cheerio": "1.0.0-rc.12",
     "class-validator": "0.14.0",
     "cookie-parser": "1.4.6",
@@ -34,6 +33,7 @@
     "dotenv": "8.2.0",
     "express": "4.17.1",
     "express-joi-validation": "5.0.0",
+    "fuels": "0.74.0",
     "joi": "17.4.0",
     "jsonwebtoken": "9.0.1",
     "morgan": "1.10.0",

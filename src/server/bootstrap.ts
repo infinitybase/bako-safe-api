@@ -1,3 +1,4 @@
+import { BSafe } from 'bsafe';
 import dotenv from 'dotenv';
 import { getConnection } from 'typeorm';
 

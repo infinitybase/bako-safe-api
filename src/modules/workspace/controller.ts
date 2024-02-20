@@ -1,7 +1,5 @@
 import axios from 'axios';
-import { Vault, defaultConfigurable } from 'bsafe';
-import { BN, Provider, bn } from 'fuels';
-import { parse } from 'path';
+import { BN, bn } from 'fuels';
 
 import { Predicate, User } from '@src/models';
 import {
@@ -15,6 +13,7 @@ import {
   UnauthorizedErrorTitles,
 } from '@src/utils/error/Unauthorized';
 
+import { defaultConfigurable } from '@utils/configurable';
 import { ErrorTypes, error } from '@utils/error';
 import { Responses, successful } from '@utils/index';
 
