@@ -5,8 +5,10 @@ yarn.lock
 package-lock.json
 .editorconfig
 bsafe/
+
 #env
-.env
+.env.staging
+.env.prod
 
 # Mac OS
 .DS_Store

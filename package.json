@@ -18,7 +18,9 @@
     "database:dev": "make -C ./docker/database start env_file=.env.dev",
     "database:stop": "make -C ./docker/database start",
     "database:start": "make -C ./docker/database start",
-    "postinstall": "patch-package --use-yarn"
+    "postinstall": "patch-package --use-yarn",
+    "run:prod": "make -C ./ prod env_file=.env.prod",
+    "run:stg": "make -C ./ stg env_file=.env.staging"
   },
   "dependencies": {
     "axios": "1.5.1",
