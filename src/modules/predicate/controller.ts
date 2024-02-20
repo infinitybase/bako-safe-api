@@ -1,7 +1,10 @@
 import { TransactionStatus } from 'bsafe';
+import { bn } from 'fuels';
 
 import AddressBook from '@src/models/AddressBook';
 import { Predicate } from '@src/models/Predicate';
+import { Workspace } from '@src/models/Workspace';
+import { sendMail, EmailTemplateType } from '@src/utils/EmailSender';
 
 import { Asset, NotificationTitle, Transaction, User } from '@models/index';
 
@@ -9,9 +12,10 @@ import { error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
 
 import { IAddressBookService } from '../addressBook/types';
-import { IUserService } from '../configs/user/types';
 import { INotificationService } from '../notification/types';
 import { ITransactionService } from '../transaction/types';
+import { IUserService } from '../user/types';
+import { WorkspaceService } from '../workspace/services';
 import {
   ICreatePredicateRequest,
   IDeletePredicateRequest,
@@ -43,9 +47,10 @@ export class PredicateController {
     bindMethods(this);
   }
 
-  async create({ body: payload, user }: ICreatePredicateRequest) {
+  async create({ body: payload, user, workspace }: ICreatePredicateRequest) {
     try {
       const members: User[] = [];
+
       for await (const member of payload.addresses) {
         let user = await this.userService.findByAddress(member);
 
@@ -64,9 +69,18 @@ export class PredicateController {
         ...payload,
         owner: user,
         members,
+        workspace,
       });
 
+      // include signer permission to vault on workspace
+      await new WorkspaceService().includeSigner(
+        members.map(member => member.id),
+        newPredicate.id,
+        workspace.id,
+      );
+
       const { id, name, members: predicateMembers } = newPredicate;
+      const summary = { vaultId: id, vaultName: name };
       const membersWithoutLoggedUser = predicateMembers.filter(
         member => member.id !== user.id,
       );
@@ -75,11 +89,22 @@ export class PredicateController {
         await this.notificationService.create({
           title: NotificationTitle.NEW_VAULT_CREATED,
           user_id: member.id,
-          summary: { vaultId: id, vaultName: name },
+          summary,
         });
+
+        if (member.notify) {
+          await sendMail(EmailTemplateType.VAULT_CREATED, {
+            to: member.email,
+            data: { summary: { ...summary, name: member?.name ?? '' } },
+          });
+        }
       }
 
-      return successful(newPredicate, Responses.Ok);
+      const result = await this.predicateService
+        .filter(undefined)
+        .findById(newPredicate.id);
+
+      return successful(result, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }
@@ -95,12 +120,12 @@ export class PredicateController {
     }
   }
 
-  async findById({ params: { id }, user }: IFindByIdRequest) {
+  async findById({ params: { id }, user, workspace }: IFindByIdRequest) {
     try {
       const predicate = await this.predicateService.findById(id, user.address);
       const membersIds = predicate.members.map(member => member.id);
       const favorites = (await this.addressBookService
-        .filter({ createdBy: user.id, userIds: membersIds })
+        .filter({ owner: [workspace.id], userIds: membersIds })
         .list()) as AddressBook[];
       const response = {
         ...predicate,
@@ -135,30 +160,30 @@ export class PredicateController {
 
   async hasReservedCoins({ params: { address } }: IFindByHashRequest) {
     try {
+      //console.log('[HAS_RESERVED_COINS]: ', address);
       const response = await this.transactionService
         .filter({
-          predicateAddress: address,
+          predicateId: [address],
         })
         .list()
         .then((data: Transaction[]) => {
-          const a: string[] = [];
-          data
+          return data
             .filter(
               (transaction: Transaction) =>
-                transaction.status == TransactionStatus.AWAIT_REQUIREMENTS ||
-                transaction.status == TransactionStatus.PENDING_SENDER,
+                transaction.status === TransactionStatus.AWAIT_REQUIREMENTS ||
+                transaction.status === TransactionStatus.PENDING_SENDER,
             )
-            .map((_filteredTransactions: Transaction) => {
-              _filteredTransactions.assets.map((_assets: Asset) =>
-                a.push(_assets.utxo),
+            .reduce((accumulator, transaction: Transaction) => {
+              return accumulator.add(
+                transaction.assets.reduce((assetAccumulator, asset: Asset) => {
+                  return assetAccumulator.add(bn.parseUnits(asset.amount));
+                }, bn.parseUnits('0')),
               );
-            });
-          return a;
+            }, bn.parseUnits('0'));
         })
-        .catch(() => {
-          return [];
+        .catch(e => {
+          return bn.parseUnits('0');
         });
-
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
@@ -176,11 +201,35 @@ export class PredicateController {
       perPage,
       q,
     } = req.query;
-    const { address } = req.user;
+    const { workspace, user } = req;
 
     try {
+      const singleWorkspace = await new WorkspaceService()
+        .filter({
+          user: user.id,
+          single: true,
+        })
+        .list()
+        .then((response: Workspace[]) => response[0]);
+
+      const allWk = await new WorkspaceService()
+        .filter({
+          user: user.id,
+        })
+        .list()
+        .then((response: Workspace[]) => response.map(wk => wk.id));
+
+      const hasSingle = singleWorkspace.id === workspace.id;
+
       const response = await this.predicateService
-        .filter({ address: predicateAddress, signer: address, provider, owner, q })
+        .filter({
+          address: predicateAddress,
+          provider,
+          owner,
+          q,
+          workspace: hasSingle ? allWk : [workspace.id],
+          signer: hasSingle ? user.address : undefined,
+        })
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })
         .list();

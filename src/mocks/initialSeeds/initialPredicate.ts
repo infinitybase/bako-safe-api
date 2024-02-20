@@ -1,36 +1,40 @@
+import { Vault } from 'bsafe';
 import { Address, Provider } from 'fuels';
+import { In } from 'typeorm';
 
 import { User } from '@src/models';
 import { Predicate } from '@src/models/Predicate';
 
-import { accounts } from '../accounts';
-import { networks } from '../networks';
+import { PredicateMock } from '../predicate';
+import { generateInitialUsers } from './initialUsers';
 
 export const generateInitialPredicate = async (): Promise<Partial<Predicate>> => {
-  const pr = await Provider.create(networks['beta4']);
-  const owner = await User.findOne({
-    where: { address: accounts['USER_1'].address },
-  });
+  const users = (await generateInitialUsers()).map(u => u.name);
 
+  const owner = await User.findOne({
+    where: { name: users[0] },
+  });
+  const { predicatePayload } = await PredicateMock.create(1, [owner.address]);
   const members = await User.find({
     take: 3,
-    order: {
-      createdAt: 'ASC',
+    where: {
+      name: In(users),
     },
   });
 
   const predicate1: Partial<Predicate> = {
-    name: 'fake_name',
+    name: `fake_name: ${members[0].name}`,
     predicateAddress: Address.fromRandom().toString(),
-    description: 'fake_description',
-    minSigners: 2,
-    bytes: 'fake_bytes',
-    abi: 'fake_abi',
-    configurable: 'fake_configurable',
-    provider: pr.url,
-    chainId: pr.getChainId(),
+    description: `fake_description: ${new Date().getTime()}`,
+    minSigners: 1,
+    bytes: predicatePayload.bytes,
+    abi: predicatePayload.abi,
+    configurable: predicatePayload.configurable,
+    provider: predicatePayload.provider,
+    chainId: predicatePayload.chainId,
     owner,
     members,
+    createdAt: new Date(),
   };
 
   return predicate1;

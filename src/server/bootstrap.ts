@@ -4,6 +4,8 @@ import { getConnection } from 'typeorm';
 import startConnection from '@database/connection';
 import runSeeders from '@database/seeders';
 
+import config from '../config/database';
+
 class Bootstrap {
   static async connectDatabase() {
     return await startConnection();
@@ -14,15 +16,7 @@ class Bootstrap {
   }
 
   static async start() {
-    const {
-      DATABASE_HOST,
-      DATABASE_PORT,
-      DATABASE_USERNAME,
-      DATABASE_PASSWORD,
-      DATABASE_NAME,
-      NODE_ENV,
-      DATABASE_PORT_TEST,
-    } = process.env;
+    const { NODE_ENV } = process.env;
 
     this.startEnv();
     await this.connectDatabase();
@@ -49,7 +43,6 @@ class Bootstrap {
   }
 
   static async runSeeders() {
-    console.log('[RUN_SEEDERS]');
     await runSeeders();
   }
 }

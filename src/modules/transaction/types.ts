@@ -1,4 +1,10 @@
-import { ITransactionResume, TransactionStatus, Transfer, Vault } from 'bsafe';
+import {
+  ITransactionResume,
+  TransactionStatus,
+  Transfer,
+  Vault,
+  ITransactionSummary,
+} from 'bsafe';
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 import { Provider, TransactionRequest } from 'fuels';
 
@@ -37,6 +43,7 @@ export interface ICreateTransactionPayload {
   sendTime?: Date;
   gasUsed?: string;
   predicateID?: string;
+  summary?: ITransactionSummary;
 }
 
 export interface IUpdateTransactionPayload {
@@ -58,6 +65,8 @@ export type ICloseTransactionPayload = {
 export interface ITransactionFilterParams {
   predicateId?: string[];
   predicateAddress?: string;
+  signer?: string; // address of logged user
+  workspaceId?: string[];
   to?: string;
   hash?: string;
   status?: TransactionStatus[];
@@ -129,7 +138,7 @@ interface IListRequestSchema extends ValidatedRequestSchema {
     status: TransactionStatus[];
     name: string;
     allOfUser: boolean;
-    predicateId: string[] | string;
+    predicateId: string[];
     to: string;
     startDate: string;
     endDate: string;
@@ -176,10 +185,7 @@ export interface ITransactionService {
     api_transaction: Transaction,
     provider: Provider,
   ) => Promise<ITransactionResume>;
-  sendToChain: (
-    bsafe_transaction: TransactionRequest,
-    provider: Provider,
-  ) => Promise<string>;
+  sendToChain: (transactionId: string) => Promise<ITransactionResume>;
   create: (payload: ITCreateService) => Promise<Transaction>;
   update: (id: string, payload: IUpdateTransactionPayload) => Promise<Transaction>;
   list: () => Promise<IPagination<Transaction> | Transaction[]>;

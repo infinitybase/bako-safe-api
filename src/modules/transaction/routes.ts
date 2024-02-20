@@ -10,6 +10,7 @@ import { handleResponse } from '@utils/index';
 import { AddressBookService } from '../addressBook/services';
 import { AssetService } from '../asset/services';
 import { NotificationService } from '../notification/services';
+import { UserService } from '../user/service';
 import { TransactionController } from './controller';
 import { TransactionService } from './services';
 import {
@@ -25,15 +26,17 @@ const witnessService = new WitnessService();
 const addressBookService = new AddressBookService();
 const assetService = new AssetService();
 const notificationService = new NotificationService();
+const userService = new UserService();
 
 const {
-  create,
-  signByID,
   list,
-  findById,
-  close,
-  findByHash,
   send,
+  close,
+  create,
+  pending,
+  findById,
+  signByID,
+  findByHash,
   verifyOnChain,
 } = new TransactionController(
   transactionService,
@@ -48,6 +51,7 @@ router.use(authMiddleware);
 
 router.post('/', validateAddTransactionPayload, handleResponse(create));
 router.get('/', handleResponse(list));
+router.get('/pending', handleResponse(pending));
 router.get('/:id', handleResponse(findById));
 router.get('/by-hash/:hash', handleResponse(findByHash));
 router.put('/close/:id', validateCloseTransactionPayload, handleResponse(close));

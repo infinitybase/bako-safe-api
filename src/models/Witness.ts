@@ -1,6 +1,4 @@
-import { BeforeUpdate, Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
-
-import { TransactionService } from '@src/modules/transaction/services';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 import { Base } from './Base';
 import { Transaction } from './Transaction';

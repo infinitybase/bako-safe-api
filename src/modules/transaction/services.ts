@@ -1,18 +1,27 @@
 import {
-  Transfer,
-  Vault,
+  ITransactionResume,
   TransactionProcessStatus,
   TransactionStatus,
+  Transfer,
+  Vault,
 } from 'bsafe';
 import {
+  hexlify,
   Provider,
   TransactionRequest,
-  TransactionResponse,
-  hexlify,
   transactionRequestify,
+  TransactionResponse,
 } from 'fuels';
+import { Brackets } from 'typeorm';
 
-import { Transaction, Witness, WitnessesStatus } from '@models/index';
+import { sendMail, EmailTemplateType } from '@src/utils/EmailSender';
+
+import {
+  NotificationTitle,
+  Transaction,
+  Witness,
+  WitnessesStatus,
+} from '@models/index';
 
 import { NotFound } from '@utils/error';
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
@@ -20,6 +29,7 @@ import Internal from '@utils/error/Internal';
 import { IOrdination, setOrdination } from '@utils/ordination';
 import { IPagination, Pagination, PaginationParams } from '@utils/pagination';
 
+import { NotificationService } from '../notification/services';
 import {
   ICreateTransactionPayload,
   ITransactionFilterParams,
@@ -105,25 +115,79 @@ export class TransactionService implements ITransactionService {
 
   async list(): Promise<IPagination<Transaction> | Transaction[]> {
     const hasPagination = this._pagination?.page && this._pagination?.perPage;
-    const queryBuilder = Transaction.createQueryBuilder('t').select([
-      't.createdAt',
-      't.gasUsed',
-      't.hash',
-      't.createdAt',
-      't.id',
-      't.name',
-      't.predicateId',
-      't.resume',
-      't.sendTime',
-      't.status',
-      't.updatedAt',
-    ]);
+    const queryBuilder = Transaction.createQueryBuilder('t')
+      .select([
+        't.createdAt',
+        't.gasUsed',
+        't.hash',
+        't.createdAt',
+        't.id',
+        't.name',
+        't.predicateId',
+        't.resume',
+        't.sendTime',
+        't.status',
+        't.summary',
+        't.updatedAt',
+      ])
+      .leftJoinAndSelect('t.assets', 'assets')
+      .innerJoin('t.witnesses', 'witnesses')
+      .innerJoin('t.predicate', 'predicate')
+      .addSelect([
+        'predicate.name',
+        'predicate.id',
+        'predicate.minSigners',
+        'predicate.predicateAddress',
+        'witnesses.id',
+        'witnesses.account',
+        'witnesses.signature',
+        'witnesses.status',
+      ])
+      .innerJoin('predicate.members', 'members')
+      .addSelect(['members.id', 'members.avatar', 'members.address'])
+      .innerJoin('predicate.workspace', 'workspace')
+      .addSelect(['workspace.id', 'workspace.name', 'workspace.single']);
 
     this._filter.predicateAddress &&
       this._filter.predicateAddress.length > 0 &&
       queryBuilder.andWhere('t.predicate.predicateAddress IN (:...address)', {
         address: this._filter.predicateAddress,
       });
+
+    // =============== specific for workspace ===============
+    this._filter.workspaceId &&
+      !this._filter.signer &&
+      queryBuilder.andWhere(
+        new Brackets(qb => {
+          if (this._filter.workspaceId) {
+            qb.orWhere('workspace.id IN (:...workspace)', {
+              workspace: this._filter.workspaceId,
+            });
+          }
+        }),
+      );
+    // =============== specific for workspace ===============
+    //console.log('[transaction_FILTER]: ', this._filter);
+
+    // =============== specific for home ===============
+    (this._filter.workspaceId || this._filter.signer) &&
+      queryBuilder.andWhere(
+        new Brackets(qb => {
+          if (this._filter.workspaceId) {
+            qb.orWhere('workspace.id IN (:...workspace)', {
+              workspace: this._filter.workspaceId,
+            });
+          }
+          if (this._filter.signer) {
+            qb.orWhere(subQb => {
+              subQb.where('witnesses.account = :signer', {
+                signer: this._filter.signer,
+              });
+            });
+          }
+        }),
+      );
+    // =============== specific for home ===============
 
     this._filter.to &&
       queryBuilder
@@ -170,21 +234,14 @@ export class TransactionService implements ITransactionService {
         id: this._filter.id,
       });
 
-    this._filter.limit && !hasPagination && queryBuilder.limit(this._filter.limit);
+    /* *
+     * TODO: Not best solution for performance, "take" dont limit this method
+     *       just find all and create an array with length. The best way is use
+     *       distinct select.
+     *  */
+    this._filter.limit && !hasPagination && queryBuilder.take(this._filter.limit);
 
-    queryBuilder
-      .leftJoinAndSelect('t.assets', 'assets')
-      .leftJoinAndSelect('t.witnesses', 'witnesses')
-      .innerJoin('t.predicate', 'predicate')
-      .addSelect([
-        'predicate.name',
-        'predicate.id',
-        'predicate.minSigners',
-        'predicate.predicateAddress',
-      ])
-      .innerJoin('predicate.members', 'members')
-      .addSelect(['members.id', 'members.avatar', 'members.address'])
-      .orderBy(`t.${this._ordination.orderBy}`, this._ordination.sort);
+    queryBuilder.orderBy(`t.${this._ordination.orderBy}`, this._ordination.sort);
 
     const handleInternalError = e => {
       if (e instanceof GeneralError) throw e;
@@ -240,6 +297,14 @@ export class TransactionService implements ITransactionService {
           witness[WitnessesStatus.REJECTED] +
           witness[WitnessesStatus.PENDING];
 
+        if (
+          transaction.status === TransactionStatus.SUCCESS ||
+          transaction.status === TransactionStatus.FAILED ||
+          transaction.status === TransactionStatus.PROCESS_ON_CHAIN
+        ) {
+          return transaction.status;
+        }
+
         if (witness[WitnessesStatus.DONE] >= transaction.predicate.minSigners) {
           return TransactionStatus.PENDING_SENDER;
         }
@@ -277,8 +342,7 @@ export class TransactionService implements ITransactionService {
     const invalidConditions =
       !api_transaction ||
       api_transaction.status === TransactionStatus.AWAIT_REQUIREMENTS ||
-      api_transaction.status === TransactionStatus.SUCCESS ||
-      api_transaction.status === TransactionStatus.FAILED;
+      api_transaction.status === TransactionStatus.SUCCESS;
 
     if (invalidConditions) {
       throw new NotFound({
@@ -289,29 +353,83 @@ export class TransactionService implements ITransactionService {
     }
   }
 
-  async sendToChain(bsafe_transaction: TransactionRequest, provider: Provider) {
-    const tx = transactionRequestify(bsafe_transaction);
+  async sendToChain(bsafe_txid: string) {
+    const api_transaction = await this.findById(bsafe_txid);
+    const { predicate, txData, witnesses } = api_transaction;
+    const provider = await Provider.create(predicate.provider);
+    const _witnesses = witnesses
+      .filter(w => !!w.signature)
+      .map(witness => witness.signature);
+    txData.witnesses = witnesses.map(witness => witness.signature).filter(w => !!w);
+
+    const tx = transactionRequestify({
+      ...txData,
+      witnesses: _witnesses,
+    });
+
+    this.checkInvalidConditions(api_transaction);
 
     const tx_est = await provider.estimatePredicates(tx);
-    const encodedTransaction = hexlify(tx_est.toTransactionBytes());
-    const {
-      submit: { id: transactionId },
-    } = await provider.operations.submit({ encodedTransaction });
+    const coast = await provider.getTransactionCost(tx_est);
 
-    return transactionId;
+    const encodedTransaction = hexlify(tx_est.toTransactionBytes());
+    return await provider.operations
+      .submit({ encodedTransaction })
+      .then(({ submit: { id: transactionId } }) => {
+        const resume: ITransactionResume = {
+          ...api_transaction.resume,
+          witnesses: _witnesses,
+          hash: transactionId.substring(2),
+          // max_fee * gasUsed
+          gasUsed: (
+            parseFloat(coast.maxFee.format({ precision: 12 })) *
+            parseFloat(coast.gasPrice.format({ precision: 12 }))
+          )
+            .toFixed(12)
+            .toString(),
+          status: TransactionStatus.PROCESS_ON_CHAIN,
+        };
+        return resume;
+      })
+      .catch(e => {
+        throw new Internal({
+          type: ErrorTypes.Internal,
+          title: 'Error on transaction sendToChain',
+          detail: 'Error on transaction sendToChain',
+        });
+      });
   }
 
   async verifyOnChain(api_transaction: Transaction, provider: Provider) {
     const idOnChain = `0x${api_transaction.hash}`;
     const sender = new TransactionResponse(idOnChain, provider);
-
     const result = await sender.fetch();
+
+    // console.log('[VERIFY_ON_CHAIN] result:', result.status.type);
+    // console.log('[LÓGICAS]: ', {
+    //   enviado:
+    //     result.status.type === TransactionProcessStatus.SUCCESS ||
+    //     result.status.type === TransactionProcessStatus.FAILED,
+    // });
+
     if (result.status.type === TransactionProcessStatus.SUBMITED) {
       return api_transaction.resume;
     } else if (
       result.status.type === TransactionProcessStatus.SUCCESS ||
       result.status.type === TransactionProcessStatus.FAILED
     ) {
+      const transactionCoast = (
+        parseFloat(api_transaction.resume.gasUsed) *
+        parseFloat(result.gasPrice) *
+        result.receipts
+          .map(item =>
+            item.receiptType === 'SCRIPT_RESULT' ? parseFloat(item.gasUsed) : 0,
+          )
+          .reduce((a, b) => a + b, 0)
+      )
+        .toFixed(9)
+        .toString();
+
       const resume = {
         ...api_transaction.resume,
         status:
@@ -320,17 +438,48 @@ export class TransactionService implements ITransactionService {
             : TransactionStatus.FAILED,
       };
       const _api_transaction: IUpdateTransactionPayload = {
-        status:
-          result.status.type === TransactionProcessStatus.SUCCESS
-            ? TransactionStatus.SUCCESS
-            : TransactionStatus.FAILED,
+        status: resume.status,
         sendTime: new Date(),
-        gasUsed: result.gasPrice,
+        gasUsed: transactionCoast,
+        resume: {
+          ...resume,
+          gasUsed: transactionCoast,
+        },
       };
 
       await this.update(api_transaction.id, _api_transaction);
+
+      // NOTIFY MEMBERS ON TRANSACTIONS SUCCESS
+      const notificationService = new NotificationService();
+
+      const summary = {
+        vaultId: api_transaction.predicate.id,
+        vaultName: api_transaction.predicate.name,
+        transactionId: api_transaction.id,
+        transactionName: api_transaction.name,
+      };
+
+      if (result.status.type === TransactionProcessStatus.SUCCESS) {
+        for await (const member of api_transaction.predicate.members) {
+          await notificationService.create({
+            title: NotificationTitle.TRANSACTION_COMPLETED,
+            summary,
+            user_id: member.id,
+          });
+
+          if (member.notify) {
+            await sendMail(EmailTemplateType.TRANSACTION_COMPLETED, {
+              to: member.email,
+              data: { summary: { ...summary, name: member?.name ?? '' } },
+            });
+          }
+        }
+      }
+
+      //console.log('[DENTRO_ELSE_IF]', _api_transaction, resume, a);
       return resume;
     }
+
     return api_transaction.resume;
   }
 }

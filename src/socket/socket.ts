@@ -1,8 +1,9 @@
+import { BSAFEConnectorEvents } from 'bsafe';
 import { Socket, Server, ServerOptions } from 'socket.io';
 
 import { popAuth } from '@src/socket/calbacks';
 
-import { UserTypes, ISocketEvent, SocketEvents } from './types';
+import { UserTypes, ISocketEvent } from './types';
 
 class SocketIOServer extends Server {
   //todo: upgrade this type
@@ -36,18 +37,20 @@ class SocketIOServer extends Server {
 
       next();
     });
-    this.io.on(SocketEvents.CONNECTION, (socket: Socket) => {
+    this.io.on(BSAFEConnectorEvents.CONNECTION, (socket: Socket) => {
       const { origin, sessionId } = socket.handshake.auth;
 
       const room = `${sessionId}:${origin}`;
+      console.log('[USER_CONNECTED]: ', room);
       socket.join(room);
     });
 
-    this.io.on(SocketEvents.CONNECTION, socket => {
+    this.io.on(BSAFEConnectorEvents.CONNECTION, socket => {
       const { origin, sessionId, username } = socket.handshake.auth;
       const room = `${sessionId}:${origin}`;
 
-      socket.to(room).emit(SocketEvents.DEFAULT, {
+      console.log(BSAFEConnectorEvents.CONNECTION, room, `${username}_connected`);
+      socket.to(room).emit(BSAFEConnectorEvents.DEFAULT, {
         type: `${username}_connected`,
         data: [true],
       });
@@ -57,18 +60,23 @@ class SocketIOServer extends Server {
         - envia o tx hash da transacao criada na BSAFEAPI
       */
       socket.on(
-        SocketEvents.TRANSACTION_CREATED,
+        BSAFEConnectorEvents.TRANSACTION_CREATED,
         async ({ content, to }: ISocketEvent) => {
-          popAuth[SocketEvents.TRANSACTION_CREATED](socket, { content, to });
+          console.log(BSAFEConnectorEvents.TRANSACTION_CREATED, content, to);
+          popAuth[BSAFEConnectorEvents.TRANSACTION_CREATED](socket, {
+            content,
+            to,
+          });
         },
       );
       /* 
         [REPASSA TRANSACAO PARA A POPUP: DAPP -> POPUP_TRANSFER]
       */
       socket.on(
-        SocketEvents.TRANSACTION_SEND,
+        BSAFEConnectorEvents.TRANSACTION_SEND,
         async ({ content, to }: ISocketEvent) => {
-          popAuth[SocketEvents.TRANSACTION_SEND](socket, { content, to });
+          console.log(BSAFEConnectorEvents.TRANSACTION_SEND, content, to);
+          popAuth[BSAFEConnectorEvents.TRANSACTION_SEND](socket, { content, to });
         },
       );
 
@@ -78,9 +86,10 @@ class SocketIOServer extends Server {
         - setta o vault escolhido para current vault
       */
       socket.on(
-        SocketEvents.AUTH_CONFIRMED,
+        BSAFEConnectorEvents.AUTH_CONFIRMED,
         async ({ content, to }: ISocketEvent) => {
-          popAuth[SocketEvents.AUTH_CONFIRMED](socket, { content, to });
+          console.log(BSAFEConnectorEvents.AUTH_CONFIRMED, content, to);
+          popAuth[BSAFEConnectorEvents.AUTH_CONFIRMED](socket, { content, to });
         },
       );
 
@@ -93,19 +102,24 @@ class SocketIOServer extends Server {
           - currentAccount
       */
       socket.on(
-        SocketEvents.AUTH_DISCONECT_DAPP,
+        BSAFEConnectorEvents.AUTH_DISCONECT_DAPP,
         async ({ content, to }: ISocketEvent) => {
-          popAuth[SocketEvents.AUTH_DISCONECT_DAPP](socket, { content, to });
+          console.log(BSAFEConnectorEvents.AUTH_DISCONECT_DAPP, content, to);
+          popAuth[BSAFEConnectorEvents.AUTH_DISCONECT_DAPP](socket, {
+            content,
+            to,
+          });
         },
       );
     });
 
-    this.io.on(SocketEvents.DISCONNECT, socket => {
-      socket.broadcast.emit('user disconnected', {
-        userID: socket.id,
-        username: socket.username,
-      });
-    });
+    //todo: implementar, atualmente esse evento não é disparado
+    // this.io.on(BSAFEConnectorEvents.DISCONNECT, socket => {
+    //   socket.broadcast.emit('user disconnected', {
+    //     userID: socket.id,
+    //     username: socket.username,
+    //   });
+    // });
   }
 }
 

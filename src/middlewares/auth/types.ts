@@ -2,6 +2,8 @@ import { Request } from 'express';
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 import { ParsedQs } from 'qs';
 
+import { Workspace } from '@src/models/Workspace';
+
 import UserToken from '@models/UserToken';
 import { User } from '@models/index';
 
@@ -14,6 +16,7 @@ export interface AuthValidatedRequest<T extends ValidatedRequestSchema>
   accessToken?: string;
   user?: User;
   userToken?: UserToken;
+  workspace?: Workspace;
 }
 
 export type IAuthRequest = AuthValidatedRequest<ValidatedRequestSchema>;

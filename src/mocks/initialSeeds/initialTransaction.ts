@@ -9,7 +9,7 @@ import { generateInitialWitness } from './initialWitness';
 
 export interface TTI extends Partial<Omit<Transaction, 'assets' | 'witnesses'>> {
   assets: Partial<Asset>[];
-  witnesses: Partial<Witness>[];
+  //witnesses: Partial<Witness>[];
 }
 export const generateInitialTransaction = async (): Promise<TTI> => {
   const user = await User.findOne({
@@ -24,9 +24,9 @@ export const generateInitialTransaction = async (): Promise<TTI> => {
   });
 
   const assets = await generateInitialAssets();
-  const witnesses = await generateInitialWitness();
+  //const witnesses = await generateInitialWitness();
   const transaction1: TTI = {
-    name: 'fake_name',
+    name: `fake_name ${accounts['USER_1'].address} ${TransactionStatus.AWAIT_REQUIREMENTS}`,
     hash: 'fake_hash',
     txData: JSON.parse(txData),
     status: TransactionStatus.AWAIT_REQUIREMENTS,
@@ -46,7 +46,7 @@ export const generateInitialTransaction = async (): Promise<TTI> => {
     createdBy: user,
     predicate,
     assets,
-    witnesses,
+    //witnesses,
   };
 
   return transaction1;

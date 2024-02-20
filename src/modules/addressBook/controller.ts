@@ -1,11 +1,14 @@
 import AddressBook from '@src/models/AddressBook';
 import Role from '@src/models/Role';
+import { Workspace } from '@src/models/Workspace';
 import Internal from '@src/utils/error/Internal';
 
 import { ErrorTypes, error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
 
-import { IUserService } from '../configs/user/types';
+import { IUserService } from '../user/types';
+import { WorkspaceService } from '../workspace/services';
+import { AddressBookService } from './services';
 import {
   IAddressBookService,
   ICreateAddressBookRequest,
@@ -23,36 +26,35 @@ export class AddressBookController {
     bindMethods(this);
   }
 
-  async create({ body, user }: ICreateAddressBookRequest) {
+  async create(req: ICreateAddressBookRequest) {
     try {
-      const { address, nickname } = body;
+      const { address, nickname } = req.body;
+      const { workspace, user } = req;
 
-      const duplicatedNickname = await this.addressBookService
+      const duplicatedNickname = await new AddressBookService()
         .filter({
-          createdBy: user.id,
+          owner: [workspace.id],
           nickname,
         })
-        .paginate(undefined)
-        .list();
+        .list()
+        .then((response: AddressBook[]) => response.length > 0);
 
-      const duplicatedAddress = await this.addressBookService
+      const duplicatedAddress = await new AddressBookService()
         .filter({
-          createdBy: user.id,
+          owner: [workspace.id],
           contactAddress: address,
         })
         .paginate(undefined)
-        .list();
-      const hasDuplicate =
-        (duplicatedNickname as AddressBook[]).length ||
-        (duplicatedAddress as AddressBook[]).length;
+        .list()
+        .then((response: AddressBook[]) => response.length > 0);
+
+      const hasDuplicate = duplicatedNickname || duplicatedAddress;
 
       if (hasDuplicate) {
         throw new Internal({
           type: ErrorTypes.Internal,
           title: 'Error on contact creation',
-          detail: `Duplicated ${
-            (duplicatedNickname as AddressBook[]).length ? 'label' : 'address'
-          }`,
+          detail: `Duplicated ${duplicatedNickname ? 'nickname' : 'address'}`,
         });
       }
 
@@ -68,9 +70,9 @@ export class AddressBookController {
       }
 
       const newContact = await this.addressBookService.create({
-        ...body,
-        user_id: savedUser.id,
-        createdBy: user,
+        ...req.body,
+        user: savedUser,
+        owner: workspace,
       });
 
       return successful(newContact, Responses.Ok);
@@ -83,14 +85,14 @@ export class AddressBookController {
     try {
       const duplicatedNickname = await this.addressBookService
         .filter({
-          createdBy: user.id,
+          owner: [user.id],
           nickname: body.nickname,
         })
         .list();
 
       const duplicatedAddress = await this.addressBookService
         .filter({
-          createdBy: user.id,
+          owner: [user.id],
           contactAddress: body.address,
         })
         .list();
@@ -112,7 +114,6 @@ export class AddressBookController {
       let savedUser = await this.userService.findByAddress(body.address);
 
       if (!savedUser) {
-        const roles = await Role.find({ where: [{ name: 'Administrador' }] });
         savedUser = await this.userService.create({
           address: body.address,
           provider: user.provider,
@@ -125,7 +126,7 @@ export class AddressBookController {
 
       const updatedContact = await this.addressBookService.update(params.id, {
         ...rest,
-        user_id: savedUser.id,
+        user: savedUser,
       });
       return successful(updatedContact, Responses.Ok);
     } catch (e) {
@@ -142,13 +143,23 @@ export class AddressBookController {
     }
   }
 
-  async list({ query, user }: IListAddressBookRequest) {
-    const { id } = user;
-    const { orderBy, sort, page, perPage, q } = query;
+  async list(req: IListAddressBookRequest) {
+    const { workspace, user } = req;
+    const { orderBy, sort, page, perPage, q, includePersonal } = req.query;
 
     try {
+      const owner = [workspace.id];
+      if (includePersonal) {
+        await new WorkspaceService()
+          .filter({
+            user: user.id,
+            single: true,
+          })
+          .list()
+          .then((response: Workspace[]) => owner.push(response[0].id));
+      }
       const response = await this.addressBookService
-        .filter({ createdBy: id, q })
+        .filter({ owner, q })
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })
         .list();

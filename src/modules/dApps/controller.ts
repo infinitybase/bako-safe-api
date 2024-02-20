@@ -34,6 +34,18 @@ export class DappController {
     }
   }
 
+  async currentNetwork({ params, headers }: IDappRequest) {
+    try {
+      const a = await this._dappService.findBySessionID(
+        params.sessionId,
+        headers.origin || headers.Origin,
+      );
+      return successful(a.currentVault.provider, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
   async accounts({ params, headers }: IDappRequest) {
     try {
       return successful(

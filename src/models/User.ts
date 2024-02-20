@@ -1,16 +1,8 @@
-import {
-  BeforeInsert,
-  BeforeUpdate,
-  Column,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-} from 'typeorm';
+import { BeforeInsert, BeforeUpdate, Column, Entity } from 'typeorm';
 
 import { EncryptUtils } from '@utils/index';
 
 import { Base } from './Base';
-import Role from './Role';
 
 export enum Languages {
   ENGLISH = 'English',
@@ -21,6 +13,12 @@ export enum Languages {
 class User extends Base {
   @Column()
   name?: string;
+
+  @Column({ default: true })
+  first_login: boolean;
+
+  @Column({ default: false })
+  notify: boolean;
 
   @Column({ default: true })
   active: boolean;

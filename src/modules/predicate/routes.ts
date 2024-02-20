@@ -1,13 +1,14 @@
 import { Router } from 'express';
 
-import { authMiddleware } from '@src/middlewares';
+import { authMiddleware, authPermissionMiddleware } from '@src/middlewares';
+import { PermissionRoles } from '@src/models/Workspace';
 
 import { handleResponse } from '@utils/index';
 
 import { AddressBookService } from '../addressBook/services';
-import { UserService } from '../configs/user/service';
 import { NotificationService } from '../notification/services';
 import { TransactionService } from '../transaction/services';
+import { UserService } from '../user/service';
 import { PredicateController } from './controller';
 import { PredicateService } from './services';
 import { validateAddPredicatePayload } from './validations';
@@ -24,6 +25,7 @@ const {
   list,
   findByAddress,
   delete: deleteService,
+  hasReservedCoins,
 } = new PredicateController(
   userService,
   predicateService,
@@ -34,10 +36,19 @@ const {
 
 router.use(authMiddleware);
 
-router.post('/', validateAddPredicatePayload, handleResponse(create));
+router.post(
+  '/',
+  validateAddPredicatePayload,
+  authPermissionMiddleware([
+    PermissionRoles.OWNER,
+    PermissionRoles.ADMIN,
+    PermissionRoles.MANAGER,
+  ]),
+  handleResponse(create),
+);
 router.get('/', handleResponse(list));
 router.get('/:id', handleResponse(findById));
-//router.get('/reserved-coins/:address', handleResponse(hasReservedCoins));
+router.get('/reserved-coins/:address', handleResponse(hasReservedCoins));
 router.get('/by-address/:address', handleResponse(findByAddress));
 //router.delete('/:id', handleResponse(deleteService));
 

@@ -1,10 +1,11 @@
 import { Router } from 'express';
 
-import { authMiddleware } from '@src/middlewares';
+import { authMiddleware, authPermissionMiddleware } from '@src/middlewares';
+import { PermissionRoles } from '@src/models/Workspace';
 
 import { handleResponse } from '@utils/index';
 
-import { UserService } from '../configs/user/service';
+import { UserService } from '../user/service';
 import { AddressBookController } from './controller';
 import { AddressBookService } from './services';
 import {
@@ -22,8 +23,26 @@ const { create, update, list, delete: deleteContact } = new AddressBookControlle
 
 router.use(authMiddleware);
 
-router.post('/', validateCreateAddressBookPayload, handleResponse(create));
-router.put('/:id', validateUpdateAddressBookPayload, handleResponse(update));
+router.post(
+  '/',
+  validateCreateAddressBookPayload,
+  authPermissionMiddleware([
+    PermissionRoles.OWNER,
+    PermissionRoles.ADMIN,
+    PermissionRoles.MANAGER,
+  ]),
+  handleResponse(create),
+);
+router.put(
+  '/:id',
+  authPermissionMiddleware([
+    PermissionRoles.OWNER,
+    PermissionRoles.ADMIN,
+    PermissionRoles.MANAGER,
+  ]),
+  validateUpdateAddressBookPayload,
+  handleResponse(update),
+);
 router.delete('/:id', handleResponse(deleteContact));
 router.get('/', handleResponse(list));
 

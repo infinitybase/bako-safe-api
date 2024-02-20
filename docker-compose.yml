@@ -1,0 +1,37 @@
+version: '3'
+services:
+  api:
+    container_name: ${API_NAME}
+    ports:
+      - '${API_PORT}:${API_PORT}'
+    build:
+      dockerfile: ${API_DOCKERFILE}
+      context: .
+    working_dir: /api
+    volumes:
+      - ./uploads:/api/uploads
+    environment:
+      - NODE_ENV=${API_ENVIRONMENT}
+      # DATABASE
+      - DATABASE_HOST=${DATABASE_HOST}
+      - DATABASE_PORT=${DATABASE_PORT}
+      - DATABASE_USERNAME=${DATABASE_USERNAME}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_NAME=${DATABASE_NAME}
+      # APP
+      - API_PORT=${API_PORT}
+      - APP_NAME=${API_NAME}
+      # ADMIN USER
+      - APP_ADMIN_EMAIL=${APP_ADMIN_EMAIL}
+      - APP_ADMIN_PASSWORD=${APP_ADMIN_PASSWORD}
+      # TOKENS
+      - ACCESS_TOKEN_SECRET=${ACCESS_TOKEN_SECRET}
+      - REFRESH_TOKEN_SECRET=${REFRESH_TOKEN_SECRET}
+      # AWS
+      - UI_URL=${UI_URL}
+      - API_URL=${API_URL}
+      - AWS_SMTP_USER=${AWS_SMTP_USER}
+      - AWS_SMTP_PASS=${AWS_SMTP_PASS}
+      # EMAIL
+      - EMAIL_FROM=${EMAIL_FROM}
+      - MAIL_TESTING_NOTIFICATIONS=${MAIL_TESTING_NOTIFICATIONS}

@@ -1,6 +1,7 @@
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 
 import AddressBook from '@src/models/AddressBook';
+import { Workspace } from '@src/models/Workspace';
 
 import { User } from '@models/index';
 
@@ -23,20 +24,20 @@ export enum Sort {
 export interface ICreateAddressBookPayload {
   nickname: string;
   address: string;
-  user_id?: string;
-  createdBy: User;
+  user: User;
+  owner: Workspace;
 }
 
 export type IUpdateAddressBookPayload = Omit<
   ICreateAddressBookPayload,
-  'createdBy' | 'address'
+  'owner' | 'address'
 >;
 
-export type IUpdateAddressBookBody = Omit<ICreateAddressBookPayload, 'createdBy'>;
+export type IUpdateAddressBookBody = Omit<ICreateAddressBookPayload, 'owner'>;
 
 export interface IFilterAddressBookParams {
   q?: string;
-  createdBy?: string;
+  owner?: string[];
   contactAddress?: string;
   nickname?: string;
   userIds?: string[];
@@ -59,11 +60,12 @@ interface IDeleteAddressBookRequestSchema extends ValidatedRequestSchema {
 interface IListAddressBookRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Query]: {
     q: string;
-    createdBy: string;
+    owner: string[];
     orderBy: OrderBy;
     sort: Sort;
     page: string;
     perPage: string;
+    includePersonal: boolean;
   };
 }
 

@@ -25,7 +25,7 @@ export class addTableVaultTemplate1696881120692 implements MigrationInterface {
             isNullable: true,
           },
           {
-            name: 'min_signers',
+            name: 'minSigners',
             type: 'integer',
           },
           {
