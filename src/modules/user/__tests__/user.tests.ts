@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { Address } from 'fuels';
 
+import { generateInitialUsers } from '@src/mocks/initialSeeds/initialUsers';
 import { networks, providers } from '@src/mocks/networks';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
 
@@ -55,5 +56,18 @@ describe('[USER]', () => {
       });
     },
     2 * 1000,
+  );
+
+  // if recives true, the name is already in use
+  test(
+    'validate existing name',
+    async () => {
+      const [user1] = await generateInitialUsers();
+      await api.get(`/user/nickaname/${user1.name}`).then(({ data, status }) => {
+        expect(status).toBe(200);
+        expect(data).toBe(true);
+      });
+    },
+    3 * 1000,
   );
 });

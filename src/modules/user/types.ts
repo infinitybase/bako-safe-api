@@ -6,6 +6,8 @@ import { Workspace } from '@src/models/Workspace';
 import { IOrdination } from '@src/utils/ordination';
 import { IPagination, PaginationParams } from '@src/utils/pagination';
 
+import { UnloggedRequest } from '@middlewares/auth/types';
+
 export interface IUserPayload {
   name?: string;
   email?: string;
@@ -17,8 +19,9 @@ export interface IUserPayload {
 }
 
 export interface IFilterParams {
-  user: string;
-  active: boolean;
+  user?: string;
+  active?: boolean;
+  nickname?: string;
 }
 
 interface ICreateRequestSchema extends ValidatedRequestSchema {
@@ -49,6 +52,12 @@ interface IUpdateRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Body]: IUserPayload;
 }
 
+interface ICheckNickname extends ValidatedRequestSchema {
+  [ContainerTypes.Params]: {
+    nickname: string;
+  };
+}
+
 export type ICreateRequest = AuthValidatedRequest<ICreateRequestSchema>;
 
 export type IListRequest = AuthValidatedRequest<IListRequestSchema>;
@@ -60,6 +69,8 @@ export type IUpdateRequest = AuthValidatedRequest<IUpdateRequestSchema>;
 export type IDeleteRequest = AuthValidatedRequest<IFindOneRequestSchema>;
 
 export type IMeRequest = AuthValidatedRequest<IListRequestSchema>;
+
+export type ICheckNicknameRequest = UnloggedRequest<ICheckNickname>;
 
 export interface IUserService {
   filter(filter: IFilterParams): this;

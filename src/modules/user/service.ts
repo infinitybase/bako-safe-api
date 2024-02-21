@@ -64,6 +64,11 @@ export class UserService implements IUserService {
       this._filter.active &&
         qb.andWhere('u.active = :active', { active: this._filter.active });
 
+      this._filter.nickname &&
+        qb.andWhere('u.name = :nickname', {
+          nickname: `%${this._filter.nickname}%`,
+        });
+
       qb.orderBy(`u.${this._ordination.orderBy}`, this._ordination.sort);
 
       return hasPagination
@@ -92,7 +97,6 @@ export class UserService implements IUserService {
           },
           single: true,
         });
-        delete data.password;
         return data;
       })
       .catch(error => {

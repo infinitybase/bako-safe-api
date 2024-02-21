@@ -3,9 +3,9 @@ import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 import { IPermissions, Workspace } from '@src/models/Workspace';
 
 import UserToken, { Encoder } from '@models/UserToken';
-import { User } from '@models/index';
+import { RecoverCodeType, User } from '@models/index';
 
-import { AuthValidatedRequest } from '@middlewares/auth/types';
+import { AuthValidatedRequest, UnloggedRequest } from '@middlewares/auth/types';
 
 export interface ICreateUserTokenPayload {
   token: string;
@@ -85,6 +85,12 @@ export interface ISignInResponse {
   };
 }
 
+export interface ICreateRecoverCode extends ValidatedRequestSchema {
+  [ContainerTypes.Params]: {
+    type: RecoverCodeType;
+  };
+}
+
 export interface IUpgradeWorkspace extends ValidatedRequestSchema {
   [ContainerTypes.Body]: {
     workspace: string;
@@ -98,6 +104,7 @@ export type IFindDappRequest = AuthValidatedRequest<IFindDappRequestSchema>;
 export type IActiveSession = AuthValidatedRequest<IActiveSessionRequestSchema>;
 export type IChangeWorkspaceRequest = AuthValidatedRequest<IUpgradeWorkspace>;
 export type IAuthorizeDappRequest = AuthValidatedRequest<IAuthorizeDappRequestSchema>;
+export type ICreateRecoverCodeRequest = UnloggedRequest<ICreateRecoverCode>;
 
 export interface IAuthService {
   signIn(payload: ICreateUserTokenPayload): Promise<ISignInResponse>;

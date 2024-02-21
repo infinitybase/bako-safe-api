@@ -14,13 +14,18 @@ const userController = new UserController(userService);
 
 router.post('/', PayloadCreateUserSchema, handleResponse(userController.create));
 
-router.use(authMiddleware);
+router.get('/nickaname/:nickname', handleResponse(userController.validateName));
+router.get('/me', authMiddleware, handleResponse(userController.me));
+router.get('/', authMiddleware, handleResponse(userController.find));
+router.get('/:id', authMiddleware, handleResponse(userController.findOne));
+router.put(
+  '/:id',
+  authMiddleware,
+  PayloadUpdateUserSchema,
+  handleResponse(userController.update),
+);
 
-router.get('/me', handleResponse(userController.me));
-router.get('/', handleResponse(userController.find));
-router.get('/info', handleResponse(userController.info));
-router.get('/:id', handleResponse(userController.findOne));
-router.put('/:id', PayloadUpdateUserSchema, handleResponse(userController.update));
-router.delete('/:id', handleResponse(userController.delete));
+// router.get('/:nickname', handleResponse(userController.validateName));
+router.delete('/:id', authMiddleware, handleResponse(userController.delete));
 
 export default router;
