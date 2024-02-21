@@ -1,4 +1,4 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, BeforeUpdate, BeforeInsert } from 'typeorm';
 
 import { Base } from './Base';
 
@@ -19,6 +19,12 @@ class RecoverCode extends Base {
 
   @Column()
   validAt: Date;
+
+  @BeforeInsert()
+  @BeforeUpdate()
+  insertCreatedAtAndUpdatedAt() {
+    this.code = crypto.randomUUID();
+  }
 }
 
 export { RecoverCode };

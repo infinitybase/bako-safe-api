@@ -4,7 +4,6 @@ import {
   JoinColumn,
   JoinTable,
   ManyToMany,
-  OneToMany,
   OneToOne,
 } from 'typeorm';
 

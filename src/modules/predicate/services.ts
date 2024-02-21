@@ -144,6 +144,7 @@ export class PredicateService implements IPredicateService {
         'members.avatar',
         'owner.id',
         'owner.address',
+        'owner.avatar',
         'workspace.id',
         'workspace.name',
         'workspace.permissions',

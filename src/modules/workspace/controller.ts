@@ -1,7 +1,6 @@
 import axios from 'axios';
-import { Vault, defaultConfigurable } from 'bsafe';
-import { BN, Provider, bn } from 'fuels';
-import { parse } from 'path';
+import { defaultConfig } from 'bsafe';
+import { BN, bn } from 'fuels';
 
 import { Predicate, User } from '@src/models';
 import {
@@ -97,7 +96,7 @@ export class WorkspaceController {
           'https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=BTC,USD,EUR',
         )
         .then(({ data }) => {
-          return data.USD;
+          return parseFloat(data.USD);
         })
         .catch(() => 0.0);
 
@@ -218,7 +217,7 @@ export class WorkspaceController {
                 if (!data) {
                   return await new UserService().create({
                     address: member,
-                    provider: defaultConfigurable['provider'],
+                    provider: defaultConfig['PROVIDER'],
                     avatar: await new UserService().randomAvatar(),
                   });
                 }

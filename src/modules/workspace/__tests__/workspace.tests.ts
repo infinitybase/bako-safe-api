@@ -267,8 +267,8 @@ describe('[WORKSPACE]', () => {
   });
 
   // get balance of workspace
-  test.only(
-    'ATUAL',
+  test(
+    'get balance of workspace',
     async () => {
       await api.axios.get(`/workspace/balance`).then(({ data, status }) => {
         expect(status).toBe(200);
