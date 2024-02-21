@@ -1,9 +1,10 @@
 import axios from 'axios';
-import { accounts } from 'bsafe/dist/cjs/mocks/accounts';
 import { Address } from 'fuels';
 
 import { networks, providers } from '@src/mocks/networks';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
+
+import { accounts } from '../../../mocks/accounts';
 
 describe('[USER]', () => {
   let api = beforeAll(() => {

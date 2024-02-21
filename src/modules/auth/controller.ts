@@ -3,10 +3,6 @@ import { add, addMinutes } from 'date-fns';
 import { Encoder } from '@src/models';
 import { Workspace } from '@src/models/Workspace';
 import GeneralError, { ErrorTypes } from '@src/utils/error/GeneralError';
-import {
-  Unauthorized,
-  UnauthorizedErrorTitles,
-} from '@src/utils/error/Unauthorized';
 
 import { IAuthRequest } from '@middlewares/auth/types';
 

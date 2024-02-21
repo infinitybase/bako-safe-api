@@ -101,6 +101,18 @@ export class UserController {
     }
   }
 
+  /*
+   * - request a code to endpoint /auth/webauthn/code -> no required middleware
+   *    - add this code on database, with validAt equal now + 5 minutes
+   *    - return this code on request
+   */
+  async createWebAuthCode(req: IListRequest) {
+    try {
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
   //todo: CREATE FLOW
   /**
    * - request a code to endpoint /auth/webauthn/code -> no required middleware
