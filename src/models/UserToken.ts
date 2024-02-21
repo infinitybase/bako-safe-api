@@ -5,8 +5,9 @@ import { User } from './User';
 import { Workspace } from './Workspace';
 
 export enum Encoder {
-  fuel = 'fuel',
-  metamask = 'metamask',
+  FUEL = 'FUEL',
+  METAMASK = 'FUEL',
+  WEB_AUTHN = 'WEB_AUTHN',
 }
 
 @Entity('user_tokens')

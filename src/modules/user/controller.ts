@@ -101,6 +101,45 @@ export class UserController {
     }
   }
 
+  //todo: CREATE FLOW
+  /**
+   * - request a code to endpoint /auth/webauthn/code -> no required middleware
+   *    - add this code on database, with validAt equal now + 5 minutes
+   *    - return this code on request
+   *
+   *
+   * - request a create user to endpoint /auth/webauthn
+   *    - code(challange)
+   *    - webauthn -> {
+   *                        id,
+   *                        privateKey
+   *                   }
+   *    - address -> hexadecimal da fuel -> 0x..., convert using Address.fromB256(address)
+   *    - name -> unique
+   *
+   * - add new request veryfi name disponibility /user/name:name
+   *      - returns true if exists or false if not
+   */
+
+  //todo: AUTH FLOW
+  /**
+   *    - change auth typings to use webauthn
+   *        -
+   *
+   *
+   *
+   *
+   *
+   *    - request a endpoint /auth/webauthn
+   *          -
+   *
+   *
+   *
+   *
+   *
+   *
+   */
+
   async create(req: ICreateRequest) {
     try {
       const { address } = req.body;

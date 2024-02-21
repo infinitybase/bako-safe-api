@@ -1,8 +1,7 @@
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 
 import { AuthValidatedRequest } from '@src/middlewares/auth/types';
-import { Languages, User } from '@src/models';
-import Role from '@src/models/Role';
+import { User } from '@src/models';
 import { Workspace } from '@src/models/Workspace';
 import { IOrdination } from '@src/utils/ordination';
 import { IPagination, PaginationParams } from '@src/utils/pagination';
@@ -12,7 +11,6 @@ export interface IUserPayload {
   email?: string;
   password?: string;
   active?: boolean;
-  language?: Languages;
   address: string;
   provider: string;
   avatar: string;
