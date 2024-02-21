@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { accounts } from 'bsafe/dist/cjs/mocks/accounts';
+import { accounts } from 'bsafe';
 import { Address } from 'fuels';
 
 import { networks, providers } from '@src/mocks/networks';

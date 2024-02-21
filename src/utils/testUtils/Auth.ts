@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import { IBSAFEAuth } from 'bsafe';
-import { IDefaultAccount } from 'bsafe/dist/cjs/mocks/accounts';
+import { IDefaultAccount } from 'bsafe';
 import { createHash } from 'crypto';
 import { Provider, Wallet } from 'fuels';
 
