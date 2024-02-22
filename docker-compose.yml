@@ -13,11 +13,11 @@ services:
     environment:
       - NODE_ENV=${API_ENVIRONMENT}
       # DATABASE
-      - DATABASE_HOST=viaduct.proxy.rlwy.net
-      - DATABASE_PORT=10417
-      - DATABASE_USERNAME=postgres
-      - DATABASE_PASSWORD=B5gFeEfECab55DdAg56e3BaF1G12Dccb
-      - DATABASE_NAME=railway
+      - DATABASE_HOST=${DATABASE_HOST}
+      - DATABASE_PORT=${DATABASE_PORT}
+      - DATABASE_USERNAME=${DATABASE_USERNAME}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_NAME=${DATABASE_NAME}
       # APP
       - API_PORT=${API_PORT}
       - APP_NAME=${API_NAME}
