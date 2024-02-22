@@ -205,6 +205,7 @@ export class PredicateService implements IPredicateService {
           if (this._filter.signer) {
             qb.orWhere(subQb => {
               const subQuery = subQb
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                 //@ts-ignore
                 .subQuery()
                 .select('1')
