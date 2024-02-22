@@ -3,10 +3,6 @@ import { add, addMinutes } from 'date-fns';
 import { Encoder } from '@src/models';
 import { Workspace } from '@src/models/Workspace';
 import GeneralError, { ErrorTypes } from '@src/utils/error/GeneralError';
-import {
-  Unauthorized,
-  UnauthorizedErrorTitles,
-} from '@src/utils/error/Unauthorized';
 
 import { IAuthRequest } from '@middlewares/auth/types';
 
@@ -15,12 +11,7 @@ import { Responses, successful, bindMethods, Web3Utils } from '@utils/index';
 
 import { IUserService } from '../user/types';
 import { WorkspaceService } from '../workspace/services';
-import {
-  IAuthService,
-  IChangeWorkspaceRequest,
-  IGoToSingleWorkspaceRequest,
-  ISignInRequest,
-} from './types';
+import { IAuthService, IChangeWorkspaceRequest, ISignInRequest } from './types';
 
 export class AuthController {
   private authService: IAuthService;

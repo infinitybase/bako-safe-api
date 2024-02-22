@@ -98,11 +98,8 @@ export class TransactionController {
                 ),
               ).length ?? 0,
             transactionsBlocked:
-              result.filter(transaction =>
-                transaction.witnesses.find(
-                  w => w.status === WitnessesStatus.PENDING,
-                ),
-              ).length > 0 ?? false,
+              result.filter(t => t.status === TransactionStatus.AWAIT_REQUIREMENTS)
+                .length > 0 ?? false,
           };
         });
       return successful(result, Responses.Ok);
