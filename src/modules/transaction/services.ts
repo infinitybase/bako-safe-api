@@ -179,8 +179,6 @@ export class TransactionService implements ITransactionService {
             });
           }
           if (this._filter.signer) {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            //@ts-expect-error
             qb.orWhere(subQb => {
               subQb.where('witnesses.account = :signer', {
                 signer: this._filter.signer,
