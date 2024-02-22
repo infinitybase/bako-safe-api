@@ -120,24 +120,11 @@ export class PredicateController {
     }
   }
 
-  async findById({ params: { id }, user, workspace }: IFindByIdRequest) {
+  async findById({ params: { id }, user }: IFindByIdRequest) {
     try {
       const predicate = await this.predicateService.findById(id, user.address);
-      const membersIds = predicate.members.map(member => member.id);
-      const favorites = (await this.addressBookService
-        .filter({ owner: [workspace.id], userIds: membersIds })
-        .list()) as AddressBook[];
-      const response = {
-        ...predicate,
-        members: predicate.members.map(member => ({
-          ...member,
-          nickname:
-            favorites?.find(({ user }) => user.id === member.id)?.nickname ??
-            undefined,
-        })),
-      };
 
-      return successful(response, Responses.Ok);
+      return successful(predicate, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }

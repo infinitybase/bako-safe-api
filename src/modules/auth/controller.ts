@@ -15,7 +15,12 @@ import { Responses, successful, bindMethods, Web3Utils } from '@utils/index';
 
 import { IUserService } from '../user/types';
 import { WorkspaceService } from '../workspace/services';
-import { IAuthService, IChangeWorkspaceRequest, ISignInRequest } from './types';
+import {
+  IAuthService,
+  IChangeWorkspaceRequest,
+  IGoToSingleWorkspaceRequest,
+  ISignInRequest,
+} from './types';
 
 export class AuthController {
   private authService: IAuthService;
@@ -89,7 +94,6 @@ export class AuthController {
   async updateWorkspace(req: IChangeWorkspaceRequest) {
     try {
       const { workspace: workspaceId, user } = req.body;
-
       const workspace = await new WorkspaceService()
         .filter({ id: workspaceId })
         .list()
@@ -103,14 +107,6 @@ export class AuthController {
         });
 
       const isUserMember = workspace.members.find(m => m.id === user);
-
-      // if (!isUserMember) {
-      //   throw new Unauthorized({
-      //     type: ErrorTypes.NotFound,
-      //     title: UnauthorizedErrorTitles.INVALID_PERMISSION,
-      //     detail: `User not found`,
-      //   });
-      // }
 
       const token = await this.authService.findToken({
         userId: user,

@@ -205,6 +205,7 @@ export class PredicateService implements IPredicateService {
           if (this._filter.signer) {
             qb.orWhere(subQb => {
               const subQuery = subQb
+                //@ts-ignore
                 .subQuery()
                 .select('1')
                 .from('predicate_members', 'pm')

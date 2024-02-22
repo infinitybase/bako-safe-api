@@ -56,7 +56,13 @@ export class AddressBookService implements IAddressBookService {
       .select(['ab.id', 'ab.nickname'])
       .innerJoin('ab.user', 'user')
       .innerJoin('ab.owner', 'owner')
-      .addSelect(['user.id', 'user.address', 'user.avatar', 'owner.id']);
+      .addSelect([
+        'user.id',
+        'user.address',
+        'user.avatar',
+        'user.address',
+        'owner.id',
+      ]);
 
     const handleInternalError = e => {
       if (e instanceof GeneralError) throw e;
