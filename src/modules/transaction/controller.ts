@@ -266,7 +266,7 @@ export class TransactionController {
       //   acc_signed,
       //   Signer.recoverAddress(hashMessage(hash), signer).toString(),
       // );
-      if (signer && confirm) {
+      if (signer && confirm === 'true') {
         const acc_signed =
           Signer.recoverAddress(hashMessage(hash), signer).toString() ==
           user.address;
