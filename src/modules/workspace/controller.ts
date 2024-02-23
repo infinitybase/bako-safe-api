@@ -96,6 +96,11 @@ export class WorkspaceController {
       const priceUSD: number = await axios
         .get(`https://economia.awesomeapi.com.br/last/${convert}`)
         .then(({ data }) => {
+          console.log(
+            data,
+            data[convert.replace('-', '')].bid ?? 0.0,
+            balance.format().toString(),
+          );
           return data[convert.replace('-', '')].bid ?? 0.0;
         })
         .catch(e => {
@@ -106,12 +111,15 @@ export class WorkspaceController {
       return successful(
         {
           balance: balance.format().toString(),
-          balanceUSD: balance.mul(bn(priceUSD)).format().toString(),
+          balanceUSD: (parseFloat(balance.format().toString()) * priceUSD).toFixed(
+            2,
+          ),
           workspaceId: workspace.id,
         },
         Responses.Ok,
       );
     } catch (e) {
+      console.log(e);
       return error(e.error, e.statusCode);
     }
   }
