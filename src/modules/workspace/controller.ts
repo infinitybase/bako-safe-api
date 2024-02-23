@@ -91,26 +91,35 @@ export class WorkspaceController {
         return _balance;
       });
 
-      const priceUSD = await axios
-        .get(
-          'https://min-api.cryptocompare.com/data/price?fsym=ETH&tsyms=BTC,USD,EUR',
-        )
-        .then(({ data }) => {
-          return data.USD;
-        })
-        .catch(() => 0.0);
+      const convert = `ETH-USD`;
 
-      const balanceUSD = parseFloat(balance.format().toString()) * priceUSD;
+      const priceUSD: number = await axios
+        .get(`https://economia.awesomeapi.com.br/last/${convert}`)
+        .then(({ data }) => {
+          console.log(
+            data,
+            data[convert.replace('-', '')].bid ?? 0.0,
+            balance.format().toString(),
+          );
+          return data[convert.replace('-', '')].bid ?? 0.0;
+        })
+        .catch(e => {
+          console.log('[WORKSPACE_REQUEST_BALANCE_ERROR]: ', e);
+          return 0.0;
+        });
 
       return successful(
         {
           balance: balance.format().toString(),
-          balanceUSD: balanceUSD.toFixed(2),
+          balanceUSD: (parseFloat(balance.format().toString()) * priceUSD).toFixed(
+            2,
+          ),
           workspaceId: workspace.id,
         },
         Responses.Ok,
       );
     } catch (e) {
+      console.log(e);
       return error(e.error, e.statusCode);
     }
   }
