@@ -1,10 +1,10 @@
 import { defaultConfig, Vault } from 'bsafe';
-import { BN, Wallet, Provider } from 'fuels';
+import { BN, Wallet, Provider, bn } from 'fuels';
 
 import { assets } from '@src/mocks/assets';
 
 export const txParams = {
-  gasPrice: defaultConfig.GAS_PRICE,
+  gasPrice: bn(defaultConfig['GAS_PRICE']),
 };
 
 export const sendPredicateCoins = async (
@@ -15,7 +15,7 @@ export const sendPredicateCoins = async (
 ) => {
   const wallet = Wallet.fromPrivateKey(
     rootWallet,
-    await Provider.create(defaultConfig.PROVIDER),
+    await Provider.create(defaultConfig['PROVIDER']),
   );
   // console.log(
   //   '[ROOT_BALANCE]: ',
@@ -31,7 +31,7 @@ export const sendPredicateCoins = async (
 };
 
 export const signBypK = async (message: string, privateKey: string) => {
-  const provider = await Provider.create(defaultConfig.PROVIDER);
+  const provider = await Provider.create(defaultConfig['PROVIDER']);
   const signer = Wallet.fromPrivateKey(privateKey, provider);
   return signer.signMessage(message);
 };

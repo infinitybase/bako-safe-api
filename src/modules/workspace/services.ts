@@ -162,7 +162,7 @@ export class WorkspaceService implements IWorkspaceService {
                 if (!data) {
                   return await new UserService().create({
                     address: member,
-                    provider: defaultConfig['provider'],
+                    provider: defaultConfig['PROVIDER'],
                     avatar: await new UserService().randomAvatar(),
                   });
                 }
