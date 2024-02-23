@@ -8,6 +8,7 @@ bsafe/
 pnpm-lock.yaml
 
 #env
+.env
 .env.staging
 .env.prod
 
