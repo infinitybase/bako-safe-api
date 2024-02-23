@@ -1,4 +1,4 @@
-import { defaultConfigurable } from 'bsafe';
+import { defaultConfig } from 'bsafe';
 import { Brackets } from 'typeorm';
 
 import { User } from '@src/models';
@@ -162,7 +162,7 @@ export class WorkspaceService implements IWorkspaceService {
                 if (!data) {
                   return await new UserService().create({
                     address: member,
-                    provider: defaultConfigurable['provider'],
+                    provider: defaultConfig['provider'],
                     avatar: await new UserService().randomAvatar(),
                   });
                 }

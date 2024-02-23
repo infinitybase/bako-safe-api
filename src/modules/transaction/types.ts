@@ -88,7 +88,7 @@ export type ICloseTransactionBody = {
 export interface ISignByIdPayload {
   signer: string;
   account: string;
-  confirm: boolean;
+  confirm: string;
 }
 
 interface ICreateTransactionRequestSchema extends ValidatedRequestSchema {

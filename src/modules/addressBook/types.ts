@@ -65,7 +65,7 @@ interface IListAddressBookRequestSchema extends ValidatedRequestSchema {
     sort: Sort;
     page: string;
     perPage: string;
-    includePersonal: boolean;
+    includePersonal: string;
   };
 }
 

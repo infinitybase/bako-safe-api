@@ -3,10 +3,6 @@ import { add, addMinutes } from 'date-fns';
 import { Encoder } from '@src/models';
 import { Workspace } from '@src/models/Workspace';
 import GeneralError, { ErrorTypes } from '@src/utils/error/GeneralError';
-import {
-  Unauthorized,
-  UnauthorizedErrorTitles,
-} from '@src/utils/error/Unauthorized';
 
 import { IAuthRequest } from '@middlewares/auth/types';
 
@@ -89,7 +85,6 @@ export class AuthController {
   async updateWorkspace(req: IChangeWorkspaceRequest) {
     try {
       const { workspace: workspaceId, user } = req.body;
-
       const workspace = await new WorkspaceService()
         .filter({ id: workspaceId })
         .list()
@@ -103,14 +98,6 @@ export class AuthController {
         });
 
       const isUserMember = workspace.members.find(m => m.id === user);
-
-      // if (!isUserMember) {
-      //   throw new Unauthorized({
-      //     type: ErrorTypes.NotFound,
-      //     title: UnauthorizedErrorTitles.INVALID_PERMISSION,
-      //     detail: `User not found`,
-      //   });
-      // }
 
       const token = await this.authService.findToken({
         userId: user,

@@ -4,8 +4,6 @@ import { getConnection } from 'typeorm';
 import startConnection from '@database/connection';
 import runSeeders from '@database/seeders';
 
-import config from '../config/database';
-
 class Bootstrap {
   static async connectDatabase() {
     return await startConnection();

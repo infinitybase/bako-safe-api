@@ -1,8 +1,8 @@
-import { defaultConfigurable as conf } from 'bsafe';
+import { defaultConfig as conf } from 'bsafe';
 
 export const defaultConfigurable = {
-  provider: conf['provider'],
-  gasPrice: conf['gasPrice'],
-  gasLimit: conf['gasLimit'],
+  provider: conf['PROVIDER'],
+  gasPrice: conf['GAS_PRICE'],
+  gasLimit: conf['GAS_LIMIT'],
   chainId: conf['chainId'],
 };

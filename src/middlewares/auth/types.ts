@@ -19,4 +19,10 @@ export interface AuthValidatedRequest<T extends ValidatedRequestSchema>
   workspace?: Workspace;
 }
 
+export interface UnloggedRequest<T extends ValidatedRequestSchema> extends Request {
+  body: T[ContainerTypes.Body];
+  headers: T[ContainerTypes.Headers];
+}
+
 export type IAuthRequest = AuthValidatedRequest<ValidatedRequestSchema>;
+export type IChangeWorkspaceRequest = AuthValidatedRequest<ValidatedRequestSchema>;
