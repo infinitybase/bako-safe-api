@@ -1,7 +1,6 @@
 import axios from 'axios';
-import { Vault, defaultConfig } from 'bsafe';
-import { BN, Provider, bn } from 'fuels';
-import { parse } from 'path';
+import { defaultConfig } from 'bsafe';
+import { BN, bn } from 'fuels';
 
 import { Predicate, User } from '@src/models';
 import {
@@ -218,7 +217,7 @@ export class WorkspaceController {
                 if (!data) {
                   return await new UserService().create({
                     address: member,
-                    provider: defaultConfig['provider'],
+                    provider: defaultConfig['PROVIDER'],
                     avatar: await new UserService().randomAvatar(),
                   });
                 }
