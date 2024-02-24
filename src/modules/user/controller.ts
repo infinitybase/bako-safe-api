@@ -1,3 +1,4 @@
+import { User } from '@src/models/User';
 import { bindMethods } from '@src/utils/bindMethods';
 
 import { error } from '@utils/error';
@@ -109,13 +110,13 @@ export class UserController {
   async validateName(req: ICheckNicknameRequest) {
     try {
       const { nickname } = req.params;
-      const response = await new UserService()
-        .filter({ nickname })
-        .find()
-        .then(response => {
-          !!response[0];
-        })
-        .catch(() => true);
+      const response = await User.find({
+        where: { name: nickname },
+      })
+        .then(response => !!response[0])
+        .catch(e => {
+          return true;
+        });
 
       return successful(response, Responses.Ok);
     } catch (e) {

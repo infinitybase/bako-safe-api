@@ -1,4 +1,5 @@
 import axios from 'axios';
+import crypto from 'crypto';
 import { Address } from 'fuels';
 
 import { generateInitialUsers } from '@src/mocks/initialSeeds/initialUsers';
@@ -60,13 +61,25 @@ describe('[USER]', () => {
 
   // if recives true, the name is already in use
   test(
-    'validate existing name',
+    //'validate existing name',
+    'ATUAL',
     async () => {
       const [user1] = await generateInitialUsers();
+      //verify existing name
       await api.get(`/user/nickaname/${user1.name}`).then(({ data, status }) => {
+        console.log('[EXPET_TRUE]', data);
         expect(status).toBe(200);
         expect(data).toBe(true);
       });
+
+      //verify not existing name
+      await api
+        .get(`/user/nickaname/${crypto.randomUUID()}`)
+        .then(({ data, status }) => {
+          console.log('[EXPET_FALSE]', data);
+          expect(status).toBe(200);
+          expect(data).toBe(false);
+        });
     },
     3 * 1000,
   );

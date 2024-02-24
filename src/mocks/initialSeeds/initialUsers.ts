@@ -8,7 +8,7 @@ export const generateInitialUsers = async (): Promise<Partial<User>[]> => {
   const userService = new UserService();
 
   const user1: Partial<User> = {
-    name: `[${accounts['STORE'].privateKey}`,
+    name: `${accounts['STORE'].privateKey}`,
     active: true,
     email: process.env.APP_ADMIN_EMAIL || '',
     provider: networks['local'],
@@ -18,7 +18,7 @@ export const generateInitialUsers = async (): Promise<Partial<User>[]> => {
   };
 
   const user2: Partial<User> = {
-    name: `[ ${accounts['USER_1'].privateKey}`,
+    name: `${accounts['USER_1'].privateKey}`,
     active: true,
     email: process.env.APP_ADMIN_EMAIL || '',
     provider: networks['local'],
@@ -28,7 +28,7 @@ export const generateInitialUsers = async (): Promise<Partial<User>[]> => {
   };
 
   const user3: Partial<User> = {
-    name: `[${accounts['USER_2'].privateKey}`,
+    name: `${accounts['USER_2'].privateKey}`,
     active: true,
     email: process.env.APP_ADMIN_EMAIL || '',
     provider: networks['local'],
@@ -38,7 +38,7 @@ export const generateInitialUsers = async (): Promise<Partial<User>[]> => {
   };
 
   const user4: Partial<User> = {
-    name: `[${accounts['USER_3'].privateKey}`,
+    name: `${accounts['USER_3'].privateKey}`,
     active: true,
     email: process.env.APP_ADMIN_EMAIL || '',
     provider: networks['local'],
