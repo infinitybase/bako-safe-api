@@ -88,7 +88,8 @@ describe('[PREDICATE]', () => {
     );
   });
 
-  test('List predicates', async () => {
+  test.only('ATUAL', async () => {
+    //'List predicates',
     const auth = new AuthValidations(networks['local'], accounts['USER_1']);
     await auth.create();
     await auth.createSession();

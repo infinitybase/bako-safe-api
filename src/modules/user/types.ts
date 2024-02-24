@@ -1,12 +1,9 @@
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 
-import { AuthValidatedRequest } from '@src/middlewares/auth/types';
+import { AuthValidatedRequest, UnloggedRequest } from '@src/middlewares/auth/types';
 import { User } from '@src/models';
-import { Workspace } from '@src/models/Workspace';
-import { IOrdination } from '@src/utils/ordination';
+import { IDefaultOrdination, IOrdination } from '@src/utils/ordination';
 import { IPagination, PaginationParams } from '@src/utils/pagination';
-
-import { UnloggedRequest } from '@middlewares/auth/types';
 
 export interface IUserPayload {
   name?: string;
@@ -35,7 +32,7 @@ interface IListRequestSchema extends ValidatedRequestSchema {
     page: string;
     perPage: string;
     sort: 'ASC' | 'DESC';
-    orderBy: 'name' | 'createdAt';
+    orderBy: 'name' | IDefaultOrdination;
   };
 }
 
@@ -45,17 +42,17 @@ interface IFindOneRequestSchema extends ValidatedRequestSchema {
   };
 }
 
+interface ICheckNickname extends ValidatedRequestSchema {
+  [ContainerTypes.Params]: {
+    nickname: string;
+  };
+}
+
 interface IUpdateRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Params]: {
     id: string;
   };
   [ContainerTypes.Body]: IUserPayload;
-}
-
-interface ICheckNickname extends ValidatedRequestSchema {
-  [ContainerTypes.Params]: {
-    nickname: string;
-  };
 }
 
 export type ICreateRequest = AuthValidatedRequest<ICreateRequestSchema>;
@@ -83,11 +80,4 @@ export interface IUserService {
   randomAvatar(): Promise<string>;
   update(id: string, payload: IUserPayload): Promise<User>;
   delete(id: string): Promise<boolean>;
-  workspacesByUser(
-    worksapce: Workspace,
-    user: User,
-  ): Promise<{
-    workspaceList: string[];
-    hasSingle: boolean;
-  }>;
 }

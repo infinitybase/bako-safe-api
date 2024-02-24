@@ -17,12 +17,11 @@ describe('[AUTH]', () => {
         expect(auth.authToken);
       });
     },
-    40 * 1000,
+    10 * 1000,
   );
 
-  test.only(
-    //'Sign in with personal workspace and select other workspace',
-    'ATUAL',
+  test(
+    'Sign in with personal workspace and select other workspace',
     async () => {
       //crate a session
       const _auth = new AuthValidations(networks['local'], accounts['USER_1']);
@@ -41,6 +40,6 @@ describe('[AUTH]', () => {
         expect(_auth.authToken).toHaveProperty('token');
       });
     },
-    40 * 1000,
+    10 * 1000,
   );
 });

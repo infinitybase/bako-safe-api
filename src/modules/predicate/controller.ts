@@ -1,7 +1,6 @@
 import { TransactionStatus } from 'bsafe';
 import { bn } from 'fuels';
 
-import AddressBook from '@src/models/AddressBook';
 import { Predicate } from '@src/models/Predicate';
 import { Workspace } from '@src/models/Workspace';
 import { sendMail, EmailTemplateType } from '@src/utils/EmailSender';
@@ -223,6 +222,7 @@ export class PredicateController {
 
       return successful(response, Responses.Ok);
     } catch (e) {
+      console.log(e);
       return error(e.error, e.statusCode);
     }
   }

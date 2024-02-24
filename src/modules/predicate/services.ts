@@ -3,7 +3,11 @@ import { Provider } from 'fuels';
 import { Brackets } from 'typeorm';
 
 import { NotFound } from '@src/utils/error';
-import { IOrdination, setOrdination } from '@src/utils/ordination';
+import {
+  IDefaultOrdination,
+  IOrdination,
+  setOrdination,
+} from '@src/utils/ordination';
 import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination';
 
 import { Predicate } from '@models/index';
@@ -133,6 +137,7 @@ export class PredicateService implements IPredicateService {
 
   async list(): Promise<IPagination<Predicate> | Predicate[]> {
     const hasPagination = this._pagination?.page && this._pagination?.perPage;
+    const hasOrdination = this._ordination?.orderBy && this._ordination?.sort;
     const queryBuilder = Predicate.createQueryBuilder('p')
       .select(this.predicateFieldsSelection)
       .innerJoin('p.members', 'members')
@@ -153,6 +158,7 @@ export class PredicateService implements IPredicateService {
       ]);
 
     const handleInternalError = e => {
+      console.log(e);
       if (e instanceof GeneralError) throw e;
 
       throw new Internal({
@@ -254,7 +260,8 @@ export class PredicateService implements IPredicateService {
         ),
       );
 
-    queryBuilder.orderBy(`p.${this._ordination.orderBy}`, this._ordination.sort);
+    hasOrdination &&
+      queryBuilder.orderBy(`p.${this._ordination.orderBy}`, this._ordination.sort);
 
     return hasPagination
       ? Pagination.create(queryBuilder)
