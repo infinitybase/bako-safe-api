@@ -185,12 +185,15 @@ export class WorkspaceController {
             });
           }
 
+          delete permissions[PermissionRoles.SIGNER];
+
           // update user permissions exepct signer objet
           workspace.permissions = {
             ...workspace.permissions,
             [member]: {
-              ...workspace.permissions[member][PermissionRoles.SIGNER],
               ...permissions,
+              [PermissionRoles.SIGNER]:
+                workspace.permissions[member][PermissionRoles.SIGNER],
             },
           };
 

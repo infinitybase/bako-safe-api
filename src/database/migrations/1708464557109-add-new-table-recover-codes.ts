@@ -42,6 +42,7 @@ export class addNewTableRecoverCodes1708464557109 implements MigrationInterface 
           {
             name: 'deleted_at',
             type: 'timestamp',
+            isNullable: true,
           },
         ],
       }),

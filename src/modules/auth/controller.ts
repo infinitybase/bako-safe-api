@@ -146,15 +146,15 @@ export class AuthController {
     try {
       const { origin } = req.headers;
       const { type } = req.params;
-
       const response = await new RecoverCodeService().create({
         type: RecoverCodeType[type],
-        origin,
+        origin: origin ?? process.env.UI_URL,
         validAt: add(new Date(), { minutes: 5 }),
       });
 
       return successful(response, Responses.Created);
     } catch (e) {
+      console.log(e);
       return error(e.error, e.statusCode);
     }
   }

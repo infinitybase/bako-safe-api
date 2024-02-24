@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { Column, Entity, BeforeUpdate, BeforeInsert } from 'typeorm';
 
 import { Base } from './Base';
@@ -17,7 +18,7 @@ class RecoverCode extends Base {
   @Column()
   code: string;
 
-  @Column()
+  @Column({ name: 'valid_at' })
   validAt: Date;
 
   @BeforeInsert()
