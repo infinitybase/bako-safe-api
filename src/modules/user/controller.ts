@@ -1,7 +1,11 @@
+import { th } from 'date-fns/locale';
+import { Address } from 'fuels';
+
 import { User } from '@src/models/User';
 import { bindMethods } from '@src/utils/bindMethods';
+import Internal from '@src/utils/error/Internal';
 
-import { error } from '@utils/error';
+import { ErrorTypes, error } from '@utils/error';
 import { Responses, successful } from '@utils/index';
 
 import { PredicateService } from '../predicate/services';
@@ -160,20 +164,35 @@ export class UserController {
    *
    */
 
+  //verify used name
   async create(req: ICreateRequest) {
     try {
-      const { address } = req.body;
-      const existingUser = await this.userService.findByAddress(address);
+      const { address, name } = req.body;
 
+      //verify user exists
+      const existingUser = await this.userService.findByAddress(address);
       if (existingUser) return successful(existingUser, Responses.Created);
 
+      //verify name exists
+      const existingName = await User.findOne({ name });
+      if (existingName) {
+        throw new Internal({
+          type: ErrorTypes.Create,
+          title: 'Error on user create',
+          detail: `User with name ${name} already exists`,
+        });
+      }
+
+      //create
       const response = await this.userService.create({
         ...req.body,
+        address: Address.fromB256(address).toString(),
         avatar: await this.userService.randomAvatar(),
       });
 
       return successful(response, Responses.Created);
     } catch (e) {
+      console.log(e);
       return error(e.error, e.statusCode);
     }
   }

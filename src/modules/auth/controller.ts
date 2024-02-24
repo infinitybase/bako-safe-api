@@ -1,6 +1,6 @@
 import { add, addMinutes } from 'date-fns';
 
-import { Encoder, RecoverCodeType } from '@src/models';
+import { Encoder } from '@src/models';
 import UserToken from '@src/models/UserToken';
 import { Workspace } from '@src/models/Workspace';
 import GeneralError, { ErrorTypes } from '@src/utils/error/GeneralError';
@@ -10,15 +10,9 @@ import { IAuthRequest } from '@middlewares/auth/types';
 import { NotFound, error } from '@utils/error';
 import { Responses, successful, bindMethods, Web3Utils } from '@utils/index';
 
-import { RecoverCodeService } from '../recoverCode/services';
 import { IUserService } from '../user/types';
 import { WorkspaceService } from '../workspace/services';
-import {
-  IAuthService,
-  IChangeWorkspaceRequest,
-  ISignInRequest,
-  ICreateRecoverCodeRequest,
-} from './types';
+import { IAuthService, IChangeWorkspaceRequest, ISignInRequest } from './types';
 
 export class AuthController {
   private authService: IAuthService;
@@ -133,28 +127,6 @@ export class AuthController {
         Responses.Ok,
       );
     } catch (e) {
-      return error(e.error, e.statusCode);
-    }
-  }
-
-  /* todo: validated
-   * - request a code to endpoint /auth/webauthn/code -> no required middleware
-   *    - add this code on database, with validAt equal now + 5 minutes
-   *    - return this code on request
-   */
-  async createWebAuthCode(req: ICreateRecoverCodeRequest) {
-    try {
-      const { origin } = req.headers;
-      const { type } = req.params;
-      const response = await new RecoverCodeService().create({
-        type: RecoverCodeType[type],
-        origin: origin ?? process.env.UI_URL,
-        validAt: add(new Date(), { minutes: 5 }),
-      });
-
-      return successful(response, Responses.Created);
-    } catch (e) {
-      console.log(e);
       return error(e.error, e.statusCode);
     }
   }

@@ -11,6 +11,7 @@ export const PayloadCreateUserSchema = validator.body(
     role: Joi.string().uuid(),
     address: Joi.string().required(),
     provider: Joi.string().required(),
+    webauthn: Joi.object().optional(), //todo: type corretly this
   }),
 );
 

@@ -7,6 +7,7 @@ const { API_DEFAULT_PROVIDER } = process.env;
 export type WebAuthn = {
   id: string;
   publicKey: string;
+  origin: string;
 };
 
 @Entity('users')

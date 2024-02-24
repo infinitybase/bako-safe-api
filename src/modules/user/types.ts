@@ -5,11 +5,18 @@ import { User } from '@src/models';
 import { IDefaultOrdination, IOrdination } from '@src/utils/ordination';
 import { IPagination, PaginationParams } from '@src/utils/pagination';
 
+export interface IWebAuthnSignUp {
+  id: string;
+  publicKey: string;
+  origin: string;
+}
+
 export interface IUserPayload {
   name?: string;
   email?: string;
   password?: string;
   active?: boolean;
+  webauthn?: IWebAuthnSignUp;
   address: string;
   provider: string;
   avatar: string;
