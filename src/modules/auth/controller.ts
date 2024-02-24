@@ -1,6 +1,7 @@
 import { add, addMinutes } from 'date-fns';
 
 import { Encoder, RecoverCodeType } from '@src/models';
+import UserToken from '@src/models/UserToken';
 import { Workspace } from '@src/models/Workspace';
 import GeneralError, { ErrorTypes } from '@src/utils/error/GeneralError';
 
@@ -91,7 +92,6 @@ export class AuthController {
   async updateWorkspace(req: IChangeWorkspaceRequest) {
     try {
       const { workspace: workspaceId, user } = req.body;
-
       const workspace = await new WorkspaceService()
         .filter({ id: workspaceId })
         .list()
@@ -105,38 +105,33 @@ export class AuthController {
         });
 
       const isUserMember = workspace.members.find(m => m.id === user);
-
-      // if (!isUserMember) {
-      //   throw new Unauthorized({
-      //     type: ErrorTypes.NotFound,
-      //     title: UnauthorizedErrorTitles.INVALID_PERMISSION,
-      //     detail: `User not found`,
-      //   });
-      // }
+      const hasPermission = !!workspace.permissions[user];
 
       const token = await this.authService.findToken({
         userId: user,
       });
 
-      if (isUserMember) {
+      if (isUserMember || hasPermission) {
         token.workspace = workspace;
       }
 
-      const response = await token.save();
-      const result = {
-        workspace: {
-          id: response.workspace.id,
-          name: response.workspace.name,
-          avatar: response.workspace.avatar,
-          permissions: response.workspace.permissions[response.user.id],
-          single: response.workspace.single,
-        },
-        token: response.token,
-        avatar: response.user.avatar,
-        address: response.user.address,
-      };
-
-      return successful(result, Responses.Ok);
+      return successful(
+        await token.save().then(({ workspace, token, user }: UserToken) => {
+          return {
+            workspace: {
+              id: workspace.id,
+              name: workspace.name,
+              avatar: workspace.avatar,
+              permissions: workspace.permissions[user.id],
+              single: workspace.single,
+            },
+            token: token,
+            avatar: user.avatar,
+            address: user.address,
+          };
+        }),
+        Responses.Ok,
+      );
     } catch (e) {
       return error(e.error, e.statusCode);
     }

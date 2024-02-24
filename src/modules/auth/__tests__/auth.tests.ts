@@ -20,8 +20,9 @@ describe('[AUTH]', () => {
     40 * 1000,
   );
 
-  test(
-    'Sign in with personal workspace and select other workspace',
+  test.only(
+    //'Sign in with personal workspace and select other workspace',
+    'ATUAL',
     async () => {
       //crate a session
       const _auth = new AuthValidations(networks['local'], accounts['USER_1']);

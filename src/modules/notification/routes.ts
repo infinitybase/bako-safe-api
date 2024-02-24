@@ -11,10 +11,11 @@ import { NotificationService } from './services';
 const router = Router();
 const notificationService = new NotificationService();
 const { readAll, list } = new NotificationController(notificationService);
+const { MAIL_TESTING_NOTIFICATIONS } = process.env;
 
 // ENDPOINT TO VALIDATE EMAIL SENDING
 router.get('/mail', async (_, res) => {
-  const to = 'guilherme@infinitybase.com';
+  const to = MAIL_TESTING_NOTIFICATIONS;
   const data = {
     summary: {
       vaultName: 'Vault Name',

@@ -149,20 +149,46 @@ export class AddressBookController {
 
     try {
       const owner = [workspace.id];
-      if (includePersonal) {
-        await new WorkspaceService()
-          .filter({
-            user: user.id,
-            single: true,
-          })
-          .list()
-          .then((response: Workspace[]) => owner.push(response[0].id));
+      const singleWk = await new WorkspaceService()
+        .filter({
+          user: user.id,
+          single: true,
+        })
+        .list()
+        .then((response: Workspace[]) => response[0].id);
+
+      if (includePersonal === 'true') {
+        owner.push(singleWk);
       }
+
       const response = await this.addressBookService
         .filter({ owner, q })
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })
-        .list();
+        .list()
+        .then((res: AddressBook[]) => {
+          return res.reduce((acc, currentItem) => {
+            const existingItem = acc.find(
+              item => item.user.id === currentItem.user.id,
+            );
+
+            if (!existingItem) {
+              acc.push(currentItem);
+              return acc;
+            }
+            // Se já existe, retornar de preferencia o que tem o wk igual ao single
+            if (
+              currentItem.owner.id === (includePersonal ? singleWk : workspace.id)
+            ) {
+              const existingIndex = acc.findIndex(
+                item => item.user.id === currentItem.user.id,
+              );
+              acc[existingIndex] = currentItem;
+            }
+
+            return acc;
+          }, []);
+        });
 
       return successful(response, Responses.Ok);
     } catch (e) {
