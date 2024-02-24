@@ -7,6 +7,12 @@ import { bindMethods } from '@utils/bindMethods';
 import { ErrorTypes } from '@utils/error';
 import { Unauthorized, UnauthorizedErrorTitles } from '@utils/error/Unauthorized';
 
+/**
+ *  todo: recebe dois outros valores alem da assinatura [response.authenticatorData, response.clientDataJSON]
+ *
+ *
+ */
+
 interface Web3UtilsParams {
   signature: string;
   userToken?: UserToken;
@@ -26,6 +32,7 @@ export class Web3Utils {
   }
 
   verifySignature() {
+    //todo: verify type of signature and decode it
     const decodedAddress = Signer.recoverAddress(
       hashMessage(this.message ?? this.userToken.payload),
       this.signature,

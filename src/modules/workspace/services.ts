@@ -1,5 +1,4 @@
 import { defaultConfig } from 'bsafe';
-import { Brackets } from 'typeorm';
 
 import { User } from '@src/models';
 import {
