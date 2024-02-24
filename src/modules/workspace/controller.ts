@@ -186,9 +186,13 @@ export class WorkspaceController {
             });
           }
 
+          // update user permissions exepct signer objet
           workspace.permissions = {
             ...workspace.permissions,
-            [member]: permissions,
+            [member]: {
+              ...workspace.permissions[member][PermissionRoles.SIGNER],
+              ...permissions,
+            },
           };
 
           return await workspace.save();

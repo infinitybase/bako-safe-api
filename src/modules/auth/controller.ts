@@ -1,6 +1,7 @@
 import { add, addMinutes } from 'date-fns';
 
 import { Encoder } from '@src/models';
+import UserToken from '@src/models/UserToken';
 import { Workspace } from '@src/models/Workspace';
 import GeneralError, { ErrorTypes } from '@src/utils/error/GeneralError';
 
@@ -107,21 +108,23 @@ export class AuthController {
         token.workspace = workspace;
       }
 
-      const response = await token.save();
-      const result = {
-        workspace: {
-          id: response.workspace.id,
-          name: response.workspace.name,
-          avatar: response.workspace.avatar,
-          permissions: response.workspace.permissions[response.user.id],
-          single: response.workspace.single,
-        },
-        token: response.token,
-        avatar: response.user.avatar,
-        address: response.user.address,
-      };
-
-      return successful(result, Responses.Ok);
+      return successful(
+        await token.save().then(({ workspace, token, user }: UserToken) => {
+          return {
+            workspace: {
+              id: workspace.id,
+              name: workspace.name,
+              avatar: workspace.avatar,
+              permissions: workspace.permissions[user.id],
+              single: workspace.single,
+            },
+            token: token,
+            avatar: user.avatar,
+            address: user.address,
+          };
+        }),
+        Responses.Ok,
+      );
     } catch (e) {
       return error(e.error, e.statusCode);
     }
