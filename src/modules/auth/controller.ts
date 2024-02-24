@@ -99,12 +99,13 @@ export class AuthController {
         });
 
       const isUserMember = workspace.members.find(m => m.id === user);
+      const hasPermission = !!workspace.permissions[user];
 
       const token = await this.authService.findToken({
         userId: user,
       });
 
-      if (isUserMember) {
+      if (isUserMember || hasPermission) {
         token.workspace = workspace;
       }
 
