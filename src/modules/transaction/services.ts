@@ -370,23 +370,21 @@ export class TransactionService implements ITransactionService {
     this.checkInvalidConditions(api_transaction);
 
     const tx_est = await provider.estimatePredicates(tx);
-    const coast = await provider.getTransactionCost(tx_est);
 
     const encodedTransaction = hexlify(tx_est.toTransactionBytes());
     return await provider.operations
       .submit({ encodedTransaction })
-      .then(({ submit: { id: transactionId } }) => {
+      .then(async ({ submit: { id: transactionId } }) => {
+        const transaction = await new TransactionResponse(
+          transactionId,
+          provider,
+        ).waitForResult();
         const resume: ITransactionResume = {
           ...api_transaction.resume,
           witnesses: _witnesses,
           hash: transactionId.substring(2),
           // max_fee * gasUsed
-          gasUsed: (
-            parseFloat(coast.maxFee.format({ precision: 12 })) *
-            parseFloat(coast.gasPrice.format({ precision: 12 }))
-          )
-            .toFixed(12)
-            .toString(),
+          gasUsed: transaction.fee.format({ precision: 9 }),
           status: TransactionStatus.PROCESS_ON_CHAIN,
         };
         return resume;
@@ -418,17 +416,8 @@ export class TransactionService implements ITransactionService {
       result.status.type === TransactionProcessStatus.SUCCESS ||
       result.status.type === TransactionProcessStatus.FAILED
     ) {
-      const transactionCoast = (
-        parseFloat(api_transaction.resume.gasUsed) *
-        parseFloat(result.gasPrice) *
-        result.receipts
-          .map(item =>
-            item.receiptType === 'SCRIPT_RESULT' ? parseFloat(item.gasUsed) : 0,
-          )
-          .reduce((a, b) => a + b, 0)
-      )
-        .toFixed(9)
-        .toString();
+      const { fee } = await sender.waitForResult();
+      const gasUsed = fee.format({ precision: 9 });
 
       const resume = {
         ...api_transaction.resume,
@@ -440,10 +429,10 @@ export class TransactionService implements ITransactionService {
       const _api_transaction: IUpdateTransactionPayload = {
         status: resume.status,
         sendTime: new Date(),
-        gasUsed: transactionCoast,
+        gasUsed,
         resume: {
           ...resume,
-          gasUsed: transactionCoast,
+          gasUsed,
         },
       };
 
