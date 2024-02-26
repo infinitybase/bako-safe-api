@@ -1,4 +1,4 @@
-import { User } from '@src/models';
+import { TypeUser, User } from '@src/models';
 import { UserService } from '@src/modules/user/service';
 
 import { accounts } from '../accounts';
@@ -15,6 +15,7 @@ export const generateInitialUsers = async (): Promise<Partial<User>[]> => {
     address: accounts['STORE'].address,
     avatar: await userService.randomAvatar(),
     createdAt: new Date(),
+    type: TypeUser.FUEL,
   };
 
   const user2: Partial<User> = {
@@ -25,6 +26,7 @@ export const generateInitialUsers = async (): Promise<Partial<User>[]> => {
     address: accounts['USER_1'].address,
     avatar: await userService.randomAvatar(),
     createdAt: new Date(),
+    type: TypeUser.FUEL,
   };
 
   const user3: Partial<User> = {
@@ -35,6 +37,7 @@ export const generateInitialUsers = async (): Promise<Partial<User>[]> => {
     address: accounts['USER_2'].address,
     avatar: await userService.randomAvatar(),
     createdAt: new Date(),
+    type: TypeUser.FUEL,
   };
 
   const user4: Partial<User> = {
@@ -45,6 +48,7 @@ export const generateInitialUsers = async (): Promise<Partial<User>[]> => {
     address: accounts['USER_3'].address,
     avatar: await userService.randomAvatar(),
     createdAt: new Date(),
+    type: TypeUser.FUEL,
   };
 
   return [user1, user2, user3, user4];

@@ -1,9 +1,11 @@
 import axios from 'axios';
+import { defaultConfig } from 'bsafe';
 import crypto from 'crypto';
 import { Address } from 'fuels';
 
 import { generateInitialUsers } from '@src/mocks/initialSeeds/initialUsers';
-import { networks, providers } from '@src/mocks/networks';
+import { networks } from '@src/mocks/networks';
+import { RecoverCodeType, TypeUser } from '@src/models';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
 
 import { accounts } from '../../../mocks/accounts';
@@ -15,17 +17,25 @@ describe('[USER]', () => {
     });
   });
 
-  test(
-    'Create user',
+  test.only(
+    //'Create user',
+    'ATUAL',
     async () => {
+      const code_length = 66;
       await api
         .post('/user/', {
-          address: Address.fromRandom().toAddress(),
-          provider: providers['local'].name,
           name: `${new Date()} - Create user test`,
+          type: TypeUser.FUEL,
+          address: Address.fromRandom().toAddress(),
+          provider: defaultConfig['PROVIDER'],
         })
         .then(({ data, status }) => {
           expect(status).toBe(201);
+          expect(data).toHaveProperty('id');
+          expect(data).toHaveProperty('type', RecoverCodeType.AUTH);
+          expect(data).toHaveProperty('origin', 'https://app.bsafe.pro');
+          expect(data).toHaveProperty('code');
+          expect(data.code.length).toBe(code_length);
         });
     },
     40 * 1000,
@@ -61,24 +71,24 @@ describe('[USER]', () => {
 
   // if recives true, the name is already in use
   test(
-    //'validate existing name',
-    'ATUAL',
+    'validate existing name',
     async () => {
       const [user1] = await generateInitialUsers();
       //verify existing name
       await api.get(`/user/nickaname/${user1.name}`).then(({ data, status }) => {
-        console.log('[EXPET_TRUE]', data);
         expect(status).toBe(200);
-        expect(data).toBe(true);
+        expect(data).toHaveProperty('address', user1.address);
+        expect(data).toHaveProperty('name', user1.name);
+        expect(data).toHaveProperty('provider', user1.provider);
+        expect(data).toHaveProperty('type', user1.type);
       });
 
       //verify not existing name
       await api
         .get(`/user/nickaname/${crypto.randomUUID()}`)
         .then(({ data, status }) => {
-          console.log('[EXPET_FALSE]', data);
           expect(status).toBe(200);
-          expect(data).toBe(false);
+          expect(data).toStrictEqual({});
         });
     },
     3 * 1000,

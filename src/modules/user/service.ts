@@ -84,7 +84,6 @@ export class UserService implements IUserService {
   }
 
   async create(payload: IUserPayload): Promise<User> {
-    console.log('[CREATE_PAYLOAD]: ', payload);
     return await User.create(payload)
       .save()
       .then(async data => {

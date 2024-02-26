@@ -10,6 +10,20 @@ export type WebAuthn = {
   origin: string;
 };
 
+export enum TypeUser {
+  FUEL = 'FUEL',
+  WEB_AUTHN = 'WEB_AUTHN',
+}
+
+export const notFoundUser = {
+  address: undefined,
+  name: undefined,
+  provider: undefined,
+  avatar: undefined,
+  type: undefined,
+  webauthn: undefined,
+};
+
 @Entity('users')
 class User extends Base {
   @Column()
@@ -34,6 +48,12 @@ class User extends Base {
 
   @Column({ type: 'jsonb' })
   webauthn: WebAuthn;
+
+  @Column({
+    default: TypeUser.FUEL,
+    nullable: false,
+  })
+  type: TypeUser;
 
   @Column()
   address: string;

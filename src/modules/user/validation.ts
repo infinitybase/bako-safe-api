@@ -8,7 +8,7 @@ export const PayloadCreateUserSchema = validator.body(
     email: Joi.string().email(),
     password: Joi.string(),
     active: Joi.boolean(),
-    role: Joi.string().uuid(),
+    type: Joi.string().required(),
     address: Joi.string().required(),
     provider: Joi.string().required(),
     webauthn: Joi.object().optional(), //todo: type corretly this

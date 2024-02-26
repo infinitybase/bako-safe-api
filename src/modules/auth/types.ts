@@ -19,13 +19,9 @@ export interface ICreateUserTokenPayload {
 
 export interface ISignInPayload {
   address: string;
-  hash: string;
-  createdAt: Date;
   encoder: Encoder;
-  provider: string;
   signature: string;
-  user_id: string;
-  workspace_id?: string;
+  digest: string;
 }
 
 interface IActiveSessionRequestSchema extends ValidatedRequestSchema {
@@ -99,6 +95,7 @@ export type IFindDappRequest = AuthValidatedRequest<IFindDappRequestSchema>;
 export type IActiveSession = AuthValidatedRequest<IActiveSessionRequestSchema>;
 export type IChangeWorkspaceRequest = AuthValidatedRequest<IUpgradeWorkspace>;
 export type IAuthorizeDappRequest = AuthValidatedRequest<IAuthorizeDappRequestSchema>;
+export type ICreateRecoverCodeRequest = UnloggedRequest<ValidatedRequestSchema>;
 
 export interface IAuthService {
   signIn(payload: ICreateUserTokenPayload): Promise<ISignInResponse>;

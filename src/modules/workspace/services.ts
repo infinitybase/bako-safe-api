@@ -1,6 +1,6 @@
 import { defaultConfig } from 'bsafe';
 
-import { User } from '@src/models';
+import { TypeUser, User } from '@src/models';
 import {
   IPermissions,
   PermissionRoles,
@@ -161,8 +161,10 @@ export class WorkspaceService implements IWorkspaceService {
                 if (!data) {
                   return await new UserService().create({
                     address: member,
+                    name: member,
                     provider: defaultConfig['PROVIDER'],
                     avatar: await new UserService().randomAvatar(),
+                    type: TypeUser.FUEL,
                   });
                 }
                 return data;

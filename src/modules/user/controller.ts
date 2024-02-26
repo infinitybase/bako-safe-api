@@ -1,7 +1,9 @@
+import { addMinutes } from 'date-fns';
 import { th } from 'date-fns/locale';
 import { Address } from 'fuels';
 
-import { User } from '@src/models/User';
+import { RecoverCode, RecoverCodeType } from '@src/models';
+import { User, notFoundUser } from '@src/models/User';
 import { bindMethods } from '@src/utils/bindMethods';
 import Internal from '@src/utils/error/Internal';
 
@@ -9,6 +11,7 @@ import { ErrorTypes, error } from '@utils/error';
 import { Responses, successful } from '@utils/index';
 
 import { PredicateService } from '../predicate/services';
+import { RecoverCodeService } from '../recoverCode/services';
 import { TransactionService } from '../transaction/services';
 import { UserService } from './service';
 import {
@@ -114,12 +117,15 @@ export class UserController {
   async validateName(req: ICheckNicknameRequest) {
     try {
       const { nickname } = req.params;
-      const response = await User.find({
+      const response = await User.findOne({
         where: { name: nickname },
       })
-        .then(response => !!response[0])
+        .then(response => {
+          const { first_login, notify, active, email, ...rest } = response;
+          return rest;
+        })
         .catch(e => {
-          return true;
+          return {};
         });
 
       return successful(response, Responses.Ok);
@@ -164,33 +170,54 @@ export class UserController {
    *
    */
 
+  /**
+   * to sign:
+   *    recives infos to create account
+   *    return a code to validate the user
+   *
+   */
+
   //verify used name
   async create(req: ICreateRequest) {
     try {
       const { address, name } = req.body;
 
       //verify user exists
-      const existingUser = await this.userService.findByAddress(address);
-      if (existingUser) return successful(existingUser, Responses.Created);
+      let existingUser = await this.userService.findByAddress(address);
+      //if (existingUser) return successful(existingUser, Responses.Created);
 
-      //verify name exists
-      const existingName = await User.findOne({ name });
-      if (existingName) {
-        throw new Internal({
-          type: ErrorTypes.Create,
-          title: 'Error on user create',
-          detail: `User with name ${name} already exists`,
+      if (!existingUser) {
+        //verify name exists
+        const existingName = await User.findOne({ name });
+        if (existingName) {
+          throw new Internal({
+            type: ErrorTypes.Create,
+            title: 'Error on user create',
+            detail: `User with name ${name} already exists`,
+          });
+        }
+
+        //create
+        existingUser = await this.userService.create({
+          ...req.body,
+          name: name ?? address,
+          avatar: await this.userService.randomAvatar(),
         });
       }
 
-      //create
-      const response = await this.userService.create({
-        ...req.body,
-        address: Address.fromB256(address).toString(),
-        avatar: await this.userService.randomAvatar(),
-      });
+      const code = await new RecoverCodeService()
+        .create({
+          owner: existingUser,
+          type: RecoverCodeType.AUTH,
+          origin: req.headers.origin ?? process.env.UI_URL,
+          validAt: addMinutes(new Date(), 5), //todo: change this number to dynamic
+        })
+        .then((data: RecoverCode) => {
+          const { owner, ...rest } = data;
+          return rest;
+        });
 
-      return successful(response, Responses.Created);
+      return successful(code, Responses.Created);
     } catch (e) {
       console.log(e);
       return error(e.error, e.statusCode);

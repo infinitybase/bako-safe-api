@@ -15,19 +15,19 @@ import { Unauthorized, UnauthorizedErrorTitles } from '@utils/error/Unauthorized
 
 interface Web3UtilsParams {
   signature: string;
-  userToken?: UserToken;
   message?: string;
-  signerAddress: string;
+  address: string;
+  userToken?: UserToken;
 }
 
 export class Web3Utils {
   private signature: string;
   private userToken?: UserToken;
   private message?: string;
-  private signerAddress: string;
+  private address: string;
 
-  constructor({ signature, userToken, message, signerAddress }: Web3UtilsParams) {
-    Object.assign(this, { signature, userToken, message, signerAddress });
+  constructor({ signature, userToken, message, address }: Web3UtilsParams) {
+    Object.assign(this, { signature, userToken, message, address });
     bindMethods(this);
   }
 
@@ -38,7 +38,7 @@ export class Web3Utils {
       this.signature,
     ).bech32Address;
 
-    const addressMatches = decodedAddress === this?.signerAddress;
+    const addressMatches = decodedAddress === this?.address;
 
     if (!addressMatches) {
       throw new Unauthorized({

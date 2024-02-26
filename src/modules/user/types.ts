@@ -1,7 +1,7 @@
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 
 import { AuthValidatedRequest, UnloggedRequest } from '@src/middlewares/auth/types';
-import { User } from '@src/models';
+import { TypeUser, User } from '@src/models';
 import { IDefaultOrdination, IOrdination } from '@src/utils/ordination';
 import { IPagination, PaginationParams } from '@src/utils/pagination';
 
@@ -12,14 +12,13 @@ export interface IWebAuthnSignUp {
 }
 
 export interface IUserPayload {
-  name?: string;
-  email?: string;
-  password?: string;
-  active?: boolean;
-  webauthn?: IWebAuthnSignUp;
+  name: string;
+  type: TypeUser;
   address: string;
   provider: string;
-  avatar: string;
+
+  avatar?: string;
+  webauthn?: IWebAuthnSignUp;
 }
 
 export interface IFilterParams {

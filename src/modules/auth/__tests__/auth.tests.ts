@@ -2,6 +2,7 @@ import axios from 'axios';
 
 import { accounts } from '@src/mocks/accounts';
 import { networks } from '@src/mocks/networks';
+import { RecoverCodeType } from '@src/models';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
 
 describe('[AUTH]', () => {
@@ -44,4 +45,17 @@ describe('[AUTH]', () => {
     },
     10 * 1000,
   );
+
+  test('generate a code with register user', async () => {
+    const api = axios.create({
+      baseURL: 'http://localhost:3333',
+    });
+
+    const { data } = await api.post(`/auth/code`);
+
+    expect(data).toHaveProperty('code');
+    expect(data).toHaveProperty('type', RecoverCodeType.AUTH);
+    expect(data).toHaveProperty('validAt');
+    expect(new Date(data.validAt).getTime()).toBeGreaterThan(new Date().getTime());
+  });
 });

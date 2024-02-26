@@ -9,3 +9,4 @@ export * from './DApp';
 export * from './Notification';
 export * from './AddressBook';
 export * from './Workspace';
+export * from './RecoverCode';
