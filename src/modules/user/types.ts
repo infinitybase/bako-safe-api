@@ -25,6 +25,7 @@ export interface IFilterParams {
   user?: string;
   active?: boolean;
   nickname?: string;
+  address?: string;
 }
 
 interface ICreateRequestSchema extends ValidatedRequestSchema {

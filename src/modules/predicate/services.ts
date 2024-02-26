@@ -158,7 +158,6 @@ export class PredicateService implements IPredicateService {
       ]);
 
     const handleInternalError = e => {
-      console.log(e);
       if (e instanceof GeneralError) throw e;
 
       throw new Internal({

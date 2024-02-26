@@ -33,10 +33,13 @@ class RecoverCode extends Base {
   @Column({ name: 'valid_at' })
   validAt: Date;
 
+  @Column()
+  used: boolean;
+
   @BeforeInsert()
-  @BeforeUpdate()
   insertCreatedAtAndUpdatedAt() {
     this.code = Address.fromRandom().toHexString();
+    this.used = false;
   }
 }
 

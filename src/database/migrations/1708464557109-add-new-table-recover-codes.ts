@@ -31,6 +31,10 @@ export class addNewTableRecoverCodes1708464557109 implements MigrationInterface 
             isNullable: false,
           },
           {
+            name: 'used',
+            type: 'boolean',
+          },
+          {
             name: 'valid_at',
             type: 'timestamp',
           },

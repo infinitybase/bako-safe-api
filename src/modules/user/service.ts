@@ -40,10 +40,9 @@ export class UserService implements IUserService {
 
   async find(): Promise<IPagination<User> | User[]> {
     try {
-      const hasPagination = this._pagination.page && this._pagination.perPage;
-      const qb = User.createQueryBuilder('u')
-        .select()
-        .innerJoinAndSelect('u.role', 'role');
+      const hasPagination = this._pagination?.page && this._pagination?.perPage;
+      const hasOrdination = this._ordination?.orderBy && this._ordination?.sort;
+      const qb = User.createQueryBuilder('u').select();
 
       qb.andWhere(
         new Brackets(subQuery => {
@@ -54,12 +53,14 @@ export class UserService implements IUserService {
               })
               .orWhere('LOWER(u.email) LIKE LOWER(:email)', {
                 email: `%${this._filter.user}%`,
-              })
-              .orWhere('LOWER(role.name) LIKE LOWER(:role)', {
-                role: `%${this._filter.user}%`,
               });
         }),
       );
+
+      this._filter.address &&
+        qb.andWhere('u.address = :address', {
+          address: this._filter.address,
+        });
 
       this._filter.active &&
         qb.andWhere('u.active = :active', { active: this._filter.active });
@@ -69,7 +70,8 @@ export class UserService implements IUserService {
           nickname: `%${this._filter.nickname}%`,
         });
 
-      qb.orderBy(`u.${this._ordination.orderBy}`, this._ordination.sort);
+      hasOrdination &&
+        qb.orderBy(`u.${this._ordination.orderBy}`, this._ordination.sort);
 
       return hasPagination
         ? await Pagination.create(qb).paginate(this._pagination)

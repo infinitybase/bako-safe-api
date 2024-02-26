@@ -222,7 +222,6 @@ export class PredicateController {
 
       return successful(response, Responses.Ok);
     } catch (e) {
-      console.log(e);
       return error(e.error, e.statusCode);
     }
   }

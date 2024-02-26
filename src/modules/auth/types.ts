@@ -18,7 +18,6 @@ export interface ICreateUserTokenPayload {
 }
 
 export interface ISignInPayload {
-  address: string;
   encoder: Encoder;
   signature: string;
   digest: string;
