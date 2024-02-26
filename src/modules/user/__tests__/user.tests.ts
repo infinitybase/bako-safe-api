@@ -17,9 +17,9 @@ describe('[USER]', () => {
     });
   });
 
-  test.only(
-    //'Create user',
-    'ATUAL',
+  test(
+    'Create user',
+    //'ATUAL',
     async () => {
       const code_length = 66;
       await api
@@ -75,7 +75,7 @@ describe('[USER]', () => {
     async () => {
       const [user1] = await generateInitialUsers();
       //verify existing name
-      await api.get(`/user/nickaname/${user1.name}`).then(({ data, status }) => {
+      await api.get(`/user/nickname/${user1.name}`).then(({ data, status }) => {
         expect(status).toBe(200);
         expect(data).toHaveProperty('address', user1.address);
         expect(data).toHaveProperty('name', user1.name);

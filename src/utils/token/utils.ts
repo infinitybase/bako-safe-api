@@ -58,7 +58,7 @@ export class TokenUtils {
         return response[0] ?? undefined;
       });
 
-    console.log(address);
+    //console.log(address);
 
     if (!user) {
       throw new Unauthorized({
@@ -73,6 +73,7 @@ export class TokenUtils {
   static async invalidateRecoverCode(user: string, type) {
     const recoverCode = await RecoverCode.findOne({
       where: { owner: user, type },
+      order: { createdAt: 'DESC' },
     });
 
     if (!recoverCode) {
@@ -159,7 +160,7 @@ export class TokenUtils {
       encoder,
     });
 
-    console.log('[RETURN_VERIFY]: ', address);
+    //console.log('[RETURN_VERIFY]: ', address);
 
     if (!address)
       throw new Unauthorized({
@@ -173,7 +174,7 @@ export class TokenUtils {
     await TokenUtils.invalidateRecoverCode(user.id, RecoverCodeType.AUTH);
 
     const workspace = await TokenUtils.findSingleWorkspace(user.id);
-    await TokenUtils.revokeToken(user);
+    await TokenUtils.revokeToken(user); // todo: verify if it's necessary
 
     return await new AuthService().signIn({
       token: signature,

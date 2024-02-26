@@ -8,6 +8,7 @@ export type WebAuthn = {
   id: string;
   publicKey: string;
   origin: string;
+  hardware: string;
 };
 
 export enum TypeUser {

@@ -23,6 +23,7 @@ import {
   IUpdateRequest,
   IUserService,
   ICheckNicknameRequest,
+  ICheckHardwareRequest,
 } from './types';
 
 export class UserController {
@@ -218,6 +219,21 @@ export class UserController {
         });
 
       return successful(code, Responses.Created);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async getByHardware(req: ICheckHardwareRequest) {
+    try {
+      const { hardware } = req.params;
+
+      const result = await User.query(
+        `SELECT * FROM "users" WHERE webauthn->>'hardware' = $1`,
+        [hardware],
+      );
+
+      return successful(result, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }

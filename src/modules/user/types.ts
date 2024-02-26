@@ -9,6 +9,7 @@ export interface IWebAuthnSignUp {
   id: string;
   publicKey: string;
   origin: string;
+  hardware: string;
 }
 
 export interface IUserPayload {
@@ -55,6 +56,12 @@ interface ICheckNickname extends ValidatedRequestSchema {
   };
 }
 
+interface ICheckHardware extends ValidatedRequestSchema {
+  [ContainerTypes.Params]: {
+    hardware: string;
+  };
+}
+
 interface IUpdateRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Params]: {
     id: string;
@@ -75,6 +82,8 @@ export type IDeleteRequest = AuthValidatedRequest<IFindOneRequestSchema>;
 export type IMeRequest = AuthValidatedRequest<IListRequestSchema>;
 
 export type ICheckNicknameRequest = UnloggedRequest<ICheckNickname>;
+
+export type ICheckHardwareRequest = UnloggedRequest<ICheckHardware>;
 
 export interface IUserService {
   filter(filter: IFilterParams): this;
