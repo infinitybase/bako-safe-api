@@ -1,7 +1,6 @@
 import { add, addMinutes, isPast } from 'date-fns';
-import { Signer, hashMessage } from 'fuels';
 
-import { Workspace } from '@src/models';
+import { RecoverCode, RecoverCodeType, User, Workspace } from '@src/models';
 import { AuthService } from '@src/modules/auth/services';
 import { RecoverCodeService } from '@src/modules/recoverCode/services';
 import { UserService } from '@src/modules/user/service';
@@ -9,17 +8,10 @@ import { WorkspaceService } from '@src/modules/workspace/services';
 
 import UserToken, { Encoder } from '@models/UserToken';
 
-import { bindMethods } from '@utils/bindMethods';
 import { ErrorTypes } from '@utils/error';
 import { Unauthorized, UnauthorizedErrorTitles } from '@utils/error/Unauthorized';
 
-import { recoverFuelSignature } from './web3';
-
-/**
- *  todo: recebe dois outros valores alem da assinatura [response.authenticatorData, response.clientDataJSON]
- *
- *
- */
+import { recoverFuelSignature, recoverWebAuthnSignature } from './web3';
 
 export class TokenUtils {
   static async verifySignature({ signature, digest, encoder }) {
@@ -29,9 +21,10 @@ export class TokenUtils {
       case Encoder.FUEL:
         address = await recoverFuelSignature(digest, signature);
         break;
-      // case Encoder.WEB_AUTHN:
-      //   this.verifyWebAuthnSignature();
-      //   break;
+      case Encoder.WEB_AUTHN:
+        address = await recoverWebAuthnSignature(digest, signature);
+
+        break;
       default:
         throw new Unauthorized({
           type: ErrorTypes.Unauthorized,
@@ -65,6 +58,8 @@ export class TokenUtils {
         return response[0] ?? undefined;
       });
 
+    console.log(address);
+
     if (!user) {
       throw new Unauthorized({
         type: ErrorTypes.Unauthorized,
@@ -75,8 +70,10 @@ export class TokenUtils {
     return user;
   }
 
-  static async invalidateRecoverCode(code: string) {
-    const recoverCode = await new RecoverCodeService().findByCode(code);
+  static async invalidateRecoverCode(user: string, type) {
+    const recoverCode = await RecoverCode.findOne({
+      where: { owner: user, type },
+    });
 
     if (!recoverCode) {
       throw new Unauthorized({
@@ -161,10 +158,22 @@ export class TokenUtils {
       digest,
       encoder,
     });
-    await TokenUtils.invalidateRecoverCode(digest);
+
+    console.log('[RETURN_VERIFY]: ', address);
+
+    if (!address)
+      throw new Unauthorized({
+        type: ErrorTypes.Unauthorized,
+        title: UnauthorizedErrorTitles.INVALID_SIGNATURE,
+        detail: `User not found`,
+      });
+
     const user = await TokenUtils.checkUserExists(address);
+
+    await TokenUtils.invalidateRecoverCode(user.id, RecoverCodeType.AUTH);
+
     const workspace = await TokenUtils.findSingleWorkspace(user.id);
-    await TokenUtils.revokeToken(user.id);
+    //await TokenUtils.revokeToken(user);
 
     return await new AuthService().signIn({
       token: signature,
@@ -177,7 +186,7 @@ export class TokenUtils {
     });
   }
 
-  static async revokeToken(userId: string) {
-    return await UserToken.delete({ user_id: userId });
+  static async revokeToken(user: User) {
+    return await UserToken.delete({ user });
   }
 }
