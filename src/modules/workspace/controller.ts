@@ -2,7 +2,7 @@ import axios from 'axios';
 import { defaultConfig } from 'bsafe';
 import { BN, bn } from 'fuels';
 
-import { Predicate, User } from '@src/models';
+import { Predicate, TypeUser, User } from '@src/models';
 import {
   PermissionRoles,
   Workspace,
@@ -232,8 +232,10 @@ export class WorkspaceController {
                 if (!data) {
                   return await new UserService().create({
                     address: member,
+                    name: member,
                     provider: defaultConfig['PROVIDER'],
                     avatar: await new UserService().randomAvatar(),
+                    type: TypeUser.FUEL,
                   });
                 }
                 return data;
