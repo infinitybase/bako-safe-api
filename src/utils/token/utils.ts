@@ -173,7 +173,7 @@ export class TokenUtils {
     await TokenUtils.invalidateRecoverCode(user.id, RecoverCodeType.AUTH);
 
     const workspace = await TokenUtils.findSingleWorkspace(user.id);
-    //await TokenUtils.revokeToken(user);
+    await TokenUtils.revokeToken(user);
 
     return await new AuthService().signIn({
       token: signature,
