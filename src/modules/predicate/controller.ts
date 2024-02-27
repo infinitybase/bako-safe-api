@@ -4,6 +4,7 @@ import { bn } from 'fuels';
 import AddressBook from '@src/models/AddressBook';
 import { Predicate } from '@src/models/Predicate';
 import { Workspace } from '@src/models/Workspace';
+import { UserTypes } from '@src/socket/types';
 import { sendMail, EmailTemplateType } from '@src/utils/EmailSender';
 
 import { Asset, NotificationTitle, Transaction, User } from '@models/index';

@@ -186,13 +186,14 @@ export class WorkspaceController {
             });
           }
 
+          const signer_permissions =
+            workspace.permissions[member][PermissionRoles.SIGNER];
+          permissions[PermissionRoles.SIGNER] = signer_permissions;
+
           // update user permissions exepct signer objet
           workspace.permissions = {
             ...workspace.permissions,
-            [member]: {
-              ...workspace.permissions[member][PermissionRoles.SIGNER],
-              ...permissions,
-            },
+            [member]: permissions,
           };
 
           return await workspace.save();
@@ -239,8 +240,6 @@ export class WorkspaceController {
 
       if (!workspace.members.find(m => m.id === _member.id)) {
         workspace.members = [...workspace.members, _member];
-        workspace.permissions[_member.id] =
-          defaultPermissions[PermissionRoles.VIEWER];
       }
 
       return successful(await workspace.save(), Responses.Ok);
