@@ -1,5 +1,4 @@
 import { User } from '@src/models';
-import Role from '@src/models/Role';
 
 import { error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
