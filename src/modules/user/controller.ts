@@ -1,13 +1,10 @@
 import { addMinutes } from 'date-fns';
-import { th } from 'date-fns/locale';
-import { Address } from 'fuels';
 
 import { RecoverCode, RecoverCodeType } from '@src/models';
-import { User, notFoundUser } from '@src/models/User';
+import { User } from '@src/models/User';
 import { bindMethods } from '@src/utils/bindMethods';
-import Internal from '@src/utils/error/Internal';
 
-import { ErrorTypes, error } from '@utils/error';
+import { BadRequest, ErrorTypes, error } from '@utils/error';
 import { Responses, successful } from '@utils/index';
 
 import { PredicateService } from '../predicate/services';
@@ -15,6 +12,8 @@ import { RecoverCodeService } from '../recoverCode/services';
 import { TransactionService } from '../transaction/services';
 import { UserService } from './service';
 import {
+  ICheckHardwareRequest,
+  ICheckNicknameRequest,
   ICreateRequest,
   IDeleteRequest,
   IFindOneRequest,
@@ -22,8 +21,6 @@ import {
   IMeRequest,
   IUpdateRequest,
   IUserService,
-  ICheckNicknameRequest,
-  ICheckHardwareRequest,
 } from './types';
 
 export class UserController {
@@ -191,7 +188,7 @@ export class UserController {
         //verify name exists
         const existingName = await User.findOne({ name });
         if (existingName) {
-          throw new Internal({
+          throw new BadRequest({
             type: ErrorTypes.Create,
             title: 'Error on user create',
             detail: `User with name ${name} already exists`,

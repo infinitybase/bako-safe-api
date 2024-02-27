@@ -23,5 +23,6 @@ export class addColumnWebauthn1708453146421 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.dropColumn('users', 'webauthn');
+    await queryRunner.dropColumn('users', 'type');
   }
 }
