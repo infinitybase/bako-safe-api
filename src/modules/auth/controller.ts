@@ -1,3 +1,6 @@
+import { addMinutes } from 'date-fns';
+
+import { RecoverCodeType, User } from '@src/models';
 import UserToken from '@src/models/UserToken';
 import { Workspace } from '@src/models/Workspace';
 import GeneralError, { ErrorTypes } from '@src/utils/error/GeneralError';
@@ -7,8 +10,14 @@ import { IAuthRequest } from '@middlewares/auth/types';
 import { NotFound, error } from '@utils/error';
 import { Responses, successful, bindMethods, TokenUtils } from '@utils/index';
 
+import { RecoverCodeService } from '../recoverCode/services';
 import { WorkspaceService } from '../workspace/services';
-import { IAuthService, IChangeWorkspaceRequest, ISignInRequest } from './types';
+import {
+  IAuthService,
+  IChangeWorkspaceRequest,
+  ICreateRecoverCodeRequest,
+  ISignInRequest,
+} from './types';
 
 export class AuthController {
   private authService: IAuthService;
@@ -39,6 +48,25 @@ export class AuthController {
   async signOut(req: IAuthRequest) {
     try {
       const response = await this.authService.signOut(req.user);
+
+      return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error[0], e.statusCode);
+    }
+  }
+
+  async generateSignCode(req: ICreateRecoverCodeRequest) {
+    try {
+      const { address } = req.params;
+      const { origin } = req.headers;
+      const owner = await User.findOne({ address: address });
+
+      const response = await new RecoverCodeService().create({
+        owner,
+        type: RecoverCodeType.AUTH,
+        origin: origin ?? process.env.UI_URL,
+        validAt: addMinutes(new Date(), 5),
+      });
 
       return successful(response, Responses.Ok);
     } catch (e) {

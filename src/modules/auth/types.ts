@@ -87,6 +87,12 @@ export interface IUpgradeWorkspace extends ValidatedRequestSchema {
   };
 }
 
+export interface ICreateRecoverCodeRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Params]: {
+    address: string;
+  };
+}
+
 export type IListRequest = AuthValidatedRequest<IListRequestSchema>;
 export type ISignInRequest = UnloggedRequest<ISignInRequestSchema>;
 export type IGoToSingleWorkspaceRequest = AuthValidatedRequest<ValidatedRequestSchema>;
@@ -94,7 +100,7 @@ export type IFindDappRequest = AuthValidatedRequest<IFindDappRequestSchema>;
 export type IActiveSession = AuthValidatedRequest<IActiveSessionRequestSchema>;
 export type IChangeWorkspaceRequest = AuthValidatedRequest<IUpgradeWorkspace>;
 export type IAuthorizeDappRequest = AuthValidatedRequest<IAuthorizeDappRequestSchema>;
-export type ICreateRecoverCodeRequest = UnloggedRequest<ValidatedRequestSchema>;
+export type ICreateRecoverCodeRequest = UnloggedRequest<ICreateRecoverCodeRequestSchema>;
 
 export interface IAuthService {
   signIn(payload: ICreateUserTokenPayload): Promise<ISignInResponse>;
