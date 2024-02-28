@@ -14,6 +14,7 @@ const userController = new UserController(userService);
 
 router.post('/', PayloadCreateUserSchema, handleResponse(userController.create));
 
+router.get('/info', authMiddleware, handleResponse(userController.info));
 router.get('/nickaname/:nickname', handleResponse(userController.validateName));
 router.get('/me', authMiddleware, handleResponse(userController.me));
 router.get('/', authMiddleware, handleResponse(userController.find));
