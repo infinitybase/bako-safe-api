@@ -16,6 +16,7 @@ import {
   IUserService,
   ICheckNicknameRequest,
 } from './types';
+import { IconUtils } from '@utils/icons';
 
 export class UserController {
   private userService: IUserService;
@@ -168,7 +169,7 @@ export class UserController {
 
       const response = await this.userService.create({
         ...req.body,
-        avatar: await this.userService.randomAvatar(),
+        avatar: IconUtils.user(),
       });
 
       return successful(response, Responses.Created);

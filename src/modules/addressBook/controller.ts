@@ -15,6 +15,7 @@ import {
   IListAddressBookRequest,
   IUpdateAddressBookRequest,
 } from './types';
+import { IconUtils } from '@utils/icons';
 
 export class AddressBookController {
   private addressBookService: IAddressBookService;
@@ -63,7 +64,7 @@ export class AddressBookController {
         savedUser = await this.userService.create({
           address,
           provider: user.provider,
-          avatar: await this.userService.randomAvatar(),
+          avatar: IconUtils.user(),
           active: true,
         });
       }
@@ -116,7 +117,7 @@ export class AddressBookController {
         savedUser = await this.userService.create({
           address: body.address,
           provider: user.provider,
-          avatar: await this.userService.randomAvatar(),
+          avatar: IconUtils.user(),
           active: true,
         });
       }

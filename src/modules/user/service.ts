@@ -15,6 +15,7 @@ import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination
 
 import { WorkspaceService } from '../workspace/services';
 import { IFilterParams, IUserService, IUserPayload } from './types';
+import { IconUtils } from '@utils/icons';
 
 const { UI_URL } = process.env;
 
@@ -91,7 +92,7 @@ export class UserService implements IUserService {
           name: `singleWorkspace[${data.id}]`,
           owner: data,
           members: [data],
-          avatar: await this.randomAvatar(),
+          avatar: IconUtils.user(),
           permissions: {
             [data.id]: defaultPermissions[PermissionRoles.OWNER],
           },

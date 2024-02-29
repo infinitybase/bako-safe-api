@@ -11,6 +11,7 @@ import {
   IUpdateVaultTemplateRequest,
   IFindByIdRequest,
 } from './types';
+import { IconUtils } from '@utils/icons';
 
 export class VaultTemplateController {
   private vaultTemplateService: IVaultTemplateService;
@@ -34,7 +35,7 @@ export class VaultTemplateController {
           user = await this.userService.create({
             address,
             provider: user.provider,
-            avatar: await this.userService.randomAvatar(),
+            avatar: IconUtils.user(),
           });
         }
 

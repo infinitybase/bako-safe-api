@@ -28,6 +28,7 @@ import {
   IUpdatePermissionsRequest,
   IUpdateRequest,
 } from './types';
+import { IconUtils } from '@utils/icons';
 
 export class WorkspaceController {
   async listByUser(req: IListByUserRequest) {
@@ -63,7 +64,7 @@ export class WorkspaceController {
         members: _members,
         permissions: _permissions,
         single: false,
-        avatar: await new UserService().randomAvatar(),
+        avatar: IconUtils.workspace(),
       });
 
       return successful(response, Responses.Created);
@@ -234,7 +235,7 @@ export class WorkspaceController {
                   return await new UserService().create({
                     address: member,
                     provider: defaultConfig['PROVIDER'],
-                    avatar: await new UserService().randomAvatar(),
+                    avatar: IconUtils.user(),
                   });
                 }
                 return data;

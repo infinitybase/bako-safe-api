@@ -15,6 +15,7 @@ import { PaginationParams, IPagination, Pagination } from '@src/utils/pagination
 
 import { UserService } from '../user/service';
 import { IFilterParams, IWorkspaceService } from './types';
+import { IconUtils } from '@utils/icons';
 
 export class WorkspaceService implements IWorkspaceService {
   private _ordination: IOrdination<Workspace> = {
@@ -162,7 +163,7 @@ export class WorkspaceService implements IWorkspaceService {
                   return await new UserService().create({
                     address: member,
                     provider: defaultConfig['PROVIDER'],
-                    avatar: await new UserService().randomAvatar(),
+                    avatar: IconUtils.user(),
                   });
                 }
                 return data;

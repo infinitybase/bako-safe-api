@@ -25,6 +25,7 @@ import {
   IListRequest,
   IPredicateService,
 } from './types';
+import { IconUtils } from '@utils/icons';
 
 export class PredicateController {
   private userService: IUserService;
@@ -59,7 +60,7 @@ export class PredicateController {
           user = await this.userService.create({
             address: member,
             provider: payload.provider,
-            avatar: await this.userService.randomAvatar(),
+            avatar: IconUtils.user(),
           });
         }
 
