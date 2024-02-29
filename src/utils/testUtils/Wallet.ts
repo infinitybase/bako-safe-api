@@ -5,6 +5,7 @@ import { assets } from '@src/mocks/assets';
 
 export const txParams = {
   gasPrice: bn(defaultConfig['GAS_PRICE']),
+  gasLimit: bn(defaultConfig['GAS_LIMIT']),
 };
 
 export const sendPredicateCoins = async (

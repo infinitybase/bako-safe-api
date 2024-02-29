@@ -7,13 +7,11 @@ import { User } from '@models/index';
 
 import { AuthValidatedRequest } from '@middlewares/auth/types';
 
-import { IOrdination } from '@utils/ordination';
+import { IDefaultOrdination, IOrdination } from '@utils/ordination';
 import { IPagination, PaginationParams } from '@utils/pagination';
 
 export enum OrderBy {
   nickname = 'nickname',
-  creation = 'createdAt',
-  update = 'updatedAt',
 }
 
 export enum Sort {
@@ -61,7 +59,7 @@ interface IListAddressBookRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Query]: {
     q: string;
     owner: string[];
-    orderBy: OrderBy;
+    orderBy: OrderBy | IDefaultOrdination;
     sort: Sort;
     page: string;
     perPage: string;

@@ -1,6 +1,7 @@
 import AddressBook from '@src/models/AddressBook';
 import { Workspace } from '@src/models/Workspace';
 import Internal from '@src/utils/error/Internal';
+import { IPagination } from '@src/utils/pagination';
 
 import { ErrorTypes, error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
@@ -155,8 +156,8 @@ export class AddressBookController {
         })
         .list()
         .then((response: Workspace[]) => response[0].id);
-
-      if (includePersonal === 'true') {
+      const hasIncludePersonal = includePersonal === 'true';
+      if (hasIncludePersonal) {
         owner.push(singleWk);
       }
 
@@ -165,28 +166,25 @@ export class AddressBookController {
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })
         .list()
-        .then((res: AddressBook[]) => {
-          return res.reduce((acc, currentItem) => {
-            const existingItem = acc.find(
-              item => item.user.id === currentItem.user.id,
+        .then((response: AddressBook[] | IPagination<AddressBook>) => {
+          if (response instanceof Array) {
+            return AddressBookService.formattDuplicatedAddress(
+              response,
+              singleWk,
+              hasIncludePersonal,
+              workspace.id,
             );
+          }
 
-            if (!existingItem) {
-              acc.push(currentItem);
-              return acc;
-            }
-            // Se já existe, retornar de preferencia o que tem o wk igual ao single
-            if (
-              currentItem.owner.id === (includePersonal ? singleWk : workspace.id)
-            ) {
-              const existingIndex = acc.findIndex(
-                item => item.user.id === currentItem.user.id,
-              );
-              acc[existingIndex] = currentItem;
-            }
-
-            return acc;
-          }, []);
+          return {
+            ...response,
+            data: AddressBookService.formattDuplicatedAddress(
+              response.data,
+              singleWk,
+              hasIncludePersonal,
+              workspace.id,
+            ),
+          };
         });
 
       return successful(response, Responses.Ok);

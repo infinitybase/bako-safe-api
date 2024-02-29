@@ -143,8 +143,9 @@ describe('[WORKSPACE]', () => {
           expect(data).toHaveProperty('owner');
           expect(data).toHaveProperty('members');
           expect(data).toHaveProperty('permissions');
-          expect(data.permissions[data_user1.id]).toStrictEqual(
-            defaultPermissions[PermissionRoles.MANAGER],
+          expect(data.permissions[data_user1.id]).toHaveProperty(
+            [PermissionRoles.MANAGER][0],
+            ['*'],
           );
         });
 

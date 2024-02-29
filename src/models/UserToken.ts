@@ -10,6 +10,23 @@ export enum Encoder {
   WEB_AUTHN = 'WEB_AUTHN',
 }
 
+export interface IFuelTokenPayload {
+  address: string;
+  hash: string;
+  createdAt: string;
+  encoder: Encoder.FUEL;
+  provider: string;
+  user_id: string;
+}
+
+export interface IWebAuthnTokenPayload {
+  id: string;
+  publicKey: string;
+  encoder: Encoder.WEB_AUTHN;
+  provider: string;
+  user_id: string;
+}
+
 @Entity('user_tokens')
 class UserToken extends Base {
   @Column()
@@ -21,7 +38,7 @@ class UserToken extends Base {
   @Column()
   provider: string;
 
-  @Column()
+  @Column({ type: 'jsonb' })
   payload: string;
 
   @Column()

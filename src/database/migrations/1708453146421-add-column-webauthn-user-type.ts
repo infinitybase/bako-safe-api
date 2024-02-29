@@ -10,9 +10,19 @@ export class addColumnWebauthn1708453146421 implements MigrationInterface {
         isNullable: true,
       }),
     );
+
+    await queryRunner.addColumn(
+      'users',
+      new TableColumn({
+        name: 'type',
+        type: 'varchar',
+        isNullable: false,
+      }),
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.dropColumn('users', 'webauthn');
+    await queryRunner.dropColumn('users', 'type');
   }
 }

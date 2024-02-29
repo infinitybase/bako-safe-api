@@ -1,12 +1,19 @@
+import { addMinutes } from 'date-fns';
+
+import { RecoverCode, RecoverCodeType } from '@src/models';
+import { User } from '@src/models/User';
 import { bindMethods } from '@src/utils/bindMethods';
 
-import { error } from '@utils/error';
+import { BadRequest, ErrorTypes, error } from '@utils/error';
 import { Responses, successful } from '@utils/index';
 
 import { PredicateService } from '../predicate/services';
+import { RecoverCodeService } from '../recoverCode/services';
 import { TransactionService } from '../transaction/services';
 import { UserService } from './service';
 import {
+  ICheckHardwareRequest,
+  ICheckNicknameRequest,
   ICreateRequest,
   IDeleteRequest,
   IFindOneRequest,
@@ -14,7 +21,6 @@ import {
   IMeRequest,
   IUpdateRequest,
   IUserService,
-  ICheckNicknameRequest,
 } from './types';
 
 export class UserController {
@@ -109,13 +115,16 @@ export class UserController {
   async validateName(req: ICheckNicknameRequest) {
     try {
       const { nickname } = req.params;
-      const response = await new UserService()
-        .filter({ nickname })
-        .find()
+      const response = await User.findOne({
+        where: { name: nickname },
+      })
         .then(response => {
-          !!response[0];
+          const { first_login, notify, active, email, ...rest } = response;
+          return rest;
         })
-        .catch(() => true);
+        .catch(e => {
+          return {};
+        });
 
       return successful(response, Responses.Ok);
     } catch (e) {
@@ -159,19 +168,69 @@ export class UserController {
    *
    */
 
+  /**
+   * to sign:
+   *    recives infos to create account
+   *    return a code to validate the user
+   *
+   */
+
+  //verify used name
   async create(req: ICreateRequest) {
     try {
-      const { address } = req.body;
-      const existingUser = await this.userService.findByAddress(address);
+      const { address, name } = req.body;
 
-      if (existingUser) return successful(existingUser, Responses.Created);
+      //verify user exists
+      let existingUser = await this.userService.findByAddress(address);
+      //if (existingUser) return successful(existingUser, Responses.Created);
 
-      const response = await this.userService.create({
-        ...req.body,
-        avatar: await this.userService.randomAvatar(),
-      });
+      if (!existingUser) {
+        //verify name exists
+        const existingName = await User.findOne({ name });
+        if (existingName) {
+          throw new BadRequest({
+            type: ErrorTypes.Create,
+            title: 'Error on user create',
+            detail: `User with name ${name} already exists`,
+          });
+        }
 
-      return successful(response, Responses.Created);
+        //create
+        existingUser = await this.userService.create({
+          ...req.body,
+          name: name ?? address,
+          avatar: await this.userService.randomAvatar(),
+        });
+      }
+
+      const code = await new RecoverCodeService()
+        .create({
+          owner: existingUser,
+          type: RecoverCodeType.AUTH,
+          origin: req.headers.origin ?? process.env.UI_URL,
+          validAt: addMinutes(new Date(), 5), //todo: change this number to dynamic
+        })
+        .then((data: RecoverCode) => {
+          const { owner, ...rest } = data;
+          return rest;
+        });
+
+      return successful(code, Responses.Created);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async getByHardware(req: ICheckHardwareRequest) {
+    try {
+      const { hardware } = req.params;
+
+      const result = await User.query(
+        `SELECT * FROM "users" WHERE webauthn->>'hardware' = $1`,
+        [hardware],
+      );
+
+      return successful(result, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }

@@ -7,13 +7,8 @@ import {
   NotificationTitle,
 } from '@src/models/index';
 
-import { IOrdination } from '@utils/ordination';
+import { IDefaultOrdination, IOrdination } from '@utils/ordination';
 import { IPagination, PaginationParams } from '@utils/pagination';
-
-export enum OrderBy {
-  creation = 'createdAt',
-  update = 'updatedAt',
-}
 
 export enum Sort {
   asc = 'ASC',
@@ -36,7 +31,7 @@ export interface IFilterNotificationParams {
 
 interface IListNotificationsRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Query]: {
-    orderBy: OrderBy;
+    orderBy: IDefaultOrdination;
     sort: Sort;
     page: string;
     perPage: string;
