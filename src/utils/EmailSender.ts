@@ -6,7 +6,7 @@ import path from 'path';
 
 const { AWS_SMTP_USER, AWS_SMTP_PASS, EMAIL_FROM, UI_URL } = process.env;
 const YEAR = new Date().getFullYear();
-const LOGO = 'https://besafe-asset.s3.amazonaws.com/BakoSafeLogo.svg';
+const LOGO = 'https://besafe-asset.s3.amazonaws.com/BAKO_SAFE_EMAIL.png';
 
 export interface EmailParams {
   [value: string]: unknown;
