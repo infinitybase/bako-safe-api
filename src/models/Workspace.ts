@@ -32,42 +32,47 @@ export enum PermissionRoles {
   VIEWER = 'VIEWER',
 }
 
+export enum PermissionAccess {
+  ALL = '*',
+  NONE = '',
+}
+
 //todo: change to specific permissions of each role depends the complete flow
 export const defaultPermissions = {
   [PermissionRoles.OWNER]: {
-    OWNER: ['*'],
-    ADMIN: [''],
-    MANAGER: [''],
-    SIGNER: [''],
-    VIEWER: [''],
+    OWNER: [PermissionAccess.ALL],
+    ADMIN: [PermissionAccess.NONE],
+    MANAGER: [PermissionAccess.NONE],
+    SIGNER: [PermissionAccess.NONE],
+    VIEWER: [PermissionAccess.NONE],
   },
   [PermissionRoles.ADMIN]: {
-    OWNER: [''],
-    ADMIN: ['*'],
-    MANAGER: [''],
-    SIGNER: [''],
-    VIEWER: [''],
+    OWNER: [PermissionAccess.NONE],
+    ADMIN: [PermissionAccess.ALL],
+    MANAGER: [PermissionAccess.NONE],
+    SIGNER: [PermissionAccess.NONE],
+    VIEWER: [PermissionAccess.NONE],
   },
   [PermissionRoles.MANAGER]: {
-    OWNER: [''],
-    ADMIN: [''],
-    MANAGER: ['*'],
-    SIGNER: [''],
-    VIEWER: [''],
+    OWNER: [PermissionAccess.NONE],
+    ADMIN: [PermissionAccess.NONE],
+    MANAGER: [PermissionAccess.ALL],
+    SIGNER: [PermissionAccess.NONE],
+    VIEWER: [PermissionAccess.NONE],
   },
   [PermissionRoles.SIGNER]: {
-    OWNER: [''],
-    ADMIN: [''],
-    MANAGER: [''],
-    SIGNER: [''],
-    VIEWER: [''],
+    OWNER: [PermissionAccess.NONE],
+    ADMIN: [PermissionAccess.NONE],
+    MANAGER: [PermissionAccess.NONE],
+    SIGNER: [PermissionAccess.NONE],
+    VIEWER: [PermissionAccess.NONE],
   },
   [PermissionRoles.VIEWER]: {
-    OWNER: [''],
-    ADMIN: [''],
-    MANAGER: [''],
-    SIGNER: [''],
-    VIEWER: ['*'],
+    OWNER: [PermissionAccess.NONE],
+    ADMIN: [PermissionAccess.NONE],
+    MANAGER: [PermissionAccess.NONE],
+    SIGNER: [PermissionAccess.NONE],
+    VIEWER: [PermissionAccess.ALL],
   },
 };
 
