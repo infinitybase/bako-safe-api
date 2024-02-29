@@ -47,8 +47,7 @@ describe('[AUTH]', () => {
     10 * 1000,
   );
 
-  //test('generate a code with register user', async () => {
-  test.only('ATUAL', async () => {
+  test('generate a code with register user', async () => {
     const api = axios.create({
       baseURL: 'http://localhost:3333',
     });

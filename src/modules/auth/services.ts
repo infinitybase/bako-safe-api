@@ -29,6 +29,9 @@ export class AuthService implements IAuthService {
             single: data.workspace.single,
             permissions: data.workspace.permissions,
           },
+          ...(data.user.type === 'WEB_AUTHN'
+            ? { webAuthn: data.user.webauthn }
+            : {}),
         };
       })
       .catch(e => {
