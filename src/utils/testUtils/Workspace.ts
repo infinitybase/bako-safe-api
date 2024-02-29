@@ -1,9 +1,8 @@
-import { accounts } from 'bsafe';
-import e from 'express';
 import { Address } from 'fuels';
 
 import { providers } from '@src/mocks/networks';
 
+import { accounts } from '../../mocks/accounts';
 import { AuthValidations } from './Auth';
 
 const generateWorkspacePayload = async (api: AuthValidations) => {

@@ -1,6 +1,7 @@
 import { add, addMinutes } from 'date-fns';
 
-import { Encoder } from '@src/models';
+import { Encoder, RecoverCodeType } from '@src/models';
+import UserToken from '@src/models/UserToken';
 import { Workspace } from '@src/models/Workspace';
 import GeneralError, { ErrorTypes } from '@src/utils/error/GeneralError';
 
@@ -9,9 +10,15 @@ import { IAuthRequest } from '@middlewares/auth/types';
 import { NotFound, error } from '@utils/error';
 import { Responses, successful, bindMethods, Web3Utils } from '@utils/index';
 
+import { RecoverCodeService } from '../recoverCode/services';
 import { IUserService } from '../user/types';
 import { WorkspaceService } from '../workspace/services';
-import { IAuthService, IChangeWorkspaceRequest, ISignInRequest } from './types';
+import {
+  IAuthService,
+  IChangeWorkspaceRequest,
+  ISignInRequest,
+  ICreateRecoverCodeRequest,
+} from './types';
 
 export class AuthController {
   private authService: IAuthService;
@@ -107,21 +114,45 @@ export class AuthController {
         token.workspace = workspace;
       }
 
-      const response = await token.save();
-      const result = {
-        workspace: {
-          id: response.workspace.id,
-          name: response.workspace.name,
-          avatar: response.workspace.avatar,
-          permissions: response.workspace.permissions[response.user.id],
-          single: response.workspace.single,
-        },
-        token: response.token,
-        avatar: response.user.avatar,
-        address: response.user.address,
-      };
+      return successful(
+        await token.save().then(({ workspace, token, user }: UserToken) => {
+          return {
+            workspace: {
+              id: workspace.id,
+              name: workspace.name,
+              avatar: workspace.avatar,
+              permissions: workspace.permissions[user.id],
+              single: workspace.single,
+            },
+            token: token,
+            avatar: user.avatar,
+            address: user.address,
+          };
+        }),
+        Responses.Ok,
+      );
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
 
-      return successful(result, Responses.Ok);
+  /* todo: validated
+   * - request a code to endpoint /auth/webauthn/code -> no required middleware
+   *    - add this code on database, with validAt equal now + 5 minutes
+   *    - return this code on request
+   */
+  async createWebAuthCode(req: ICreateRecoverCodeRequest) {
+    try {
+      const { origin } = req.headers;
+      const { type } = req.params;
+
+      const response = await new RecoverCodeService().create({
+        type: RecoverCodeType[type],
+        origin,
+        validAt: add(new Date(), { minutes: 5 }),
+      });
+
+      return successful(response, Responses.Created);
     } catch (e) {
       return error(e.error, e.statusCode);
     }

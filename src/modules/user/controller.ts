@@ -14,6 +14,7 @@ import {
   IMeRequest,
   IUpdateRequest,
   IUserService,
+  ICheckNicknameRequest,
 } from './types';
 
 export class UserController {
@@ -100,6 +101,63 @@ export class UserController {
       return error(e.error, e.statusCode);
     }
   }
+
+  /* - add new request veryfi name disponibility /user/name:name
+   *      - returns true if exists or false if not
+   */
+
+  async validateName(req: ICheckNicknameRequest) {
+    try {
+      const { nickname } = req.params;
+      const response = await new UserService()
+        .filter({ nickname })
+        .find()
+        .then(response => {
+          !!response[0];
+        })
+        .catch(() => true);
+
+      return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error[0], e.statusCode);
+    }
+  }
+
+  //todo: CREATE FLOW
+  /**
+   * - request a code to endpoint /auth/webauthn/code -> no required middleware
+   *    - add this code on database, with validAt equal now + 5 minutes
+   *    - return this code on request
+   *
+   *
+   * - request a create user to endpoint /auth/webauthn
+   *    - code(challange)
+   *    - webauthn -> {
+   *                        id,
+   *                        privateKey
+   *                   }
+   *    - address -> hexadecimal da fuel -> 0x..., convert using Address.fromB256(address)
+   *    - name -> unique
+   */
+
+  //todo: AUTH FLOW
+  /**
+   *    - change auth typings to use webauthn
+   *        -
+   *
+   *
+   *
+   *
+   *
+   *    - request a endpoint /auth/webauthn
+   *          -
+   *
+   *
+   *
+   *
+   *
+   *
+   */
 
   async create(req: ICreateRequest) {
     try {

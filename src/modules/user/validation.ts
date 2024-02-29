@@ -1,7 +1,5 @@
 import Joi from 'joi';
 
-import { Languages } from '@src/models';
-
 import { validator } from '@utils/index';
 
 export const PayloadCreateUserSchema = validator.body(
@@ -10,7 +8,6 @@ export const PayloadCreateUserSchema = validator.body(
     email: Joi.string().email(),
     password: Joi.string(),
     active: Joi.boolean(),
-    language: Joi.string().valid(...Object.values(Languages)),
     role: Joi.string().uuid(),
     address: Joi.string().required(),
     provider: Joi.string().required(),

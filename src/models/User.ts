@@ -1,13 +1,13 @@
-import { BeforeInsert, BeforeUpdate, Column, Entity } from 'typeorm';
-
-import { EncryptUtils } from '@utils/index';
+import { Column, Entity } from 'typeorm';
 
 import { Base } from './Base';
 
-export enum Languages {
-  ENGLISH = 'English',
-  PORTUGUESE = 'Portuguese',
-}
+const { API_DEFAULT_PROVIDER } = process.env;
+
+export type WebAuthn = {
+  id: string;
+  publicKey: string;
+};
 
 @Entity('users')
 class User extends Base {
@@ -26,28 +26,19 @@ class User extends Base {
   @Column()
   email?: string;
 
-  @Column({ select: false })
-  password?: string;
-
-  @Column()
+  @Column({
+    default: API_DEFAULT_PROVIDER,
+  })
   provider: string;
+
+  @Column({ type: 'jsonb' })
+  webauthn: WebAuthn;
 
   @Column()
   address: string;
 
-  @Column({ enum: Languages })
-  language?: Languages;
-
   @Column()
   avatar: string;
-
-  @BeforeInsert()
-  @BeforeUpdate()
-  async encryptPassword() {
-    if (this.password) {
-      this.password = await EncryptUtils.encrypt(this.password);
-    }
-  }
 }
 
 export { User };

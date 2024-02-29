@@ -1,5 +1,4 @@
 import AddressBook from '@src/models/AddressBook';
-import Role from '@src/models/Role';
 import { Workspace } from '@src/models/Workspace';
 import Internal from '@src/utils/error/Internal';
 

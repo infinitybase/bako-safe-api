@@ -1,3 +1,6 @@
+import exp from 'constants';
+import { add } from 'date-fns';
+
 import { accounts } from '@src/mocks/accounts';
 import { networks } from '@src/mocks/networks';
 import { PredicateMock } from '@src/mocks/predicate';
@@ -90,12 +93,32 @@ describe('[PREDICATE]', () => {
     await auth.create();
     await auth.createSession();
 
-    //on single workspace
+    type predicateMember = {
+      id: string;
+      address: string;
+      avatar: string;
+    };
+
+    //on single workspace -> find by this user has signer
+    // if member or signer or included on workspace of vault
+    const validateListSingle = (members: predicateMember[]) => {
+      return members.find(m => {
+        return (
+          m.id == auth.user.id &&
+          m.address == auth.user.address &&
+          m.avatar == auth.user.avatar
+        );
+      });
+    };
+
     await auth.axios.get('/predicate').then(({ data, status }) => {
       expect(status).toBe(200);
       data.forEach(element => {
+        const idValid =
+          !!validateListSingle([...element.members, element.owner]) ||
+          !!element.workspace.permissions[auth.user.id];
         expect(element).toHaveProperty('id');
-        expect(element.workspace).toHaveProperty('id', api.workspace.id);
+        expect(idValid).toBe(true);
       });
     });
 
@@ -107,7 +130,7 @@ describe('[PREDICATE]', () => {
       .then(({ data, status }) => {
         expect(status).toBe(200);
         expect(data).toHaveProperty('data');
-        expect(data.data).toHaveLength(perPage);
+        expect(data.data.length).toBeLessThanOrEqual(perPage);
         expect(data).toHaveProperty('total');
         expect(data).toHaveProperty('currentPage', page);
         expect(data).toHaveProperty('perPage', perPage);

@@ -1,7 +1,6 @@
 import { defaultConfig } from 'bsafe';
-import { Brackets } from 'typeorm';
 
-import { User } from '@src/models';
+import { PermissionAccess, User } from '@src/models';
 import {
   IPermissions,
   PermissionRoles,
@@ -226,7 +225,9 @@ export class WorkspaceService implements IWorkspaceService {
         signers.map(s => {
           if (p[s]) {
             p[s][PermissionRoles.SIGNER] = [
-              ...p[s][PermissionRoles.SIGNER].filter(i => i != '*'),
+              ...p[s][PermissionRoles.SIGNER].filter(
+                i => i != PermissionAccess.ALL && i !== PermissionAccess.NONE,
+              ),
               predicate,
             ];
           } else {

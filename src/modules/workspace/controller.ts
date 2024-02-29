@@ -2,7 +2,7 @@ import axios from 'axios';
 import { defaultConfig } from 'bsafe';
 import { BN, bn } from 'fuels';
 
-import { Predicate, User } from '@src/models';
+import { PermissionAccess, Predicate, User } from '@src/models';
 import {
   PermissionRoles,
   Workspace,
@@ -186,9 +186,16 @@ export class WorkspaceController {
             });
           }
 
+          const memberPermission = workspace.permissions[member];
+          const signerPermission = memberPermission?.[PermissionRoles.SIGNER];
+
+          // update user permissions expect signer object
           workspace.permissions = {
             ...workspace.permissions,
-            [member]: permissions,
+            [member]: {
+              ...permissions,
+              SIGNER: signerPermission ?? [PermissionAccess.NONE],
+            },
           };
 
           return await workspace.save();
@@ -235,8 +242,6 @@ export class WorkspaceController {
 
       if (!workspace.members.find(m => m.id === _member.id)) {
         workspace.members = [...workspace.members, _member];
-        workspace.permissions[_member.id] =
-          defaultPermissions[PermissionRoles.VIEWER];
       }
 
       return successful(await workspace.save(), Responses.Ok);

@@ -1,5 +1,4 @@
 export * from './Base';
-export * from './Role';
 export * from './User';
 export * from './UserToken';
 export * from './Predicate';
@@ -9,3 +8,5 @@ export * from './Witness';
 export * from './DApp';
 export * from './Notification';
 export * from './AddressBook';
+export * from './Workspace';
+export * from './RecoverCode';
