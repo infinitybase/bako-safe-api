@@ -1,9 +1,18 @@
-import { Column, Entity, BeforeUpdate, BeforeInsert } from 'typeorm';
+import { Address } from 'fuels';
+import {
+  Column,
+  Entity,
+  BeforeUpdate,
+  BeforeInsert,
+  JoinColumn,
+  OneToOne,
+} from 'typeorm';
 
 import { Base } from './Base';
+import { User } from './User';
 
 export enum RecoverCodeType {
-  WEB_AUTHN_CREATE = 'WEB_AUTHN_CREATE',
+  AUTH = 'AUTH',
 }
 
 @Entity('recover_codes')
@@ -11,19 +20,26 @@ class RecoverCode extends Base {
   @Column()
   origin: string;
 
+  @JoinColumn({ name: 'owner' })
+  @OneToOne(() => User)
+  owner: User;
+
   @Column()
   type: RecoverCodeType;
 
   @Column()
   code: string;
 
-  @Column()
+  @Column({ name: 'valid_at' })
   validAt: Date;
 
+  @Column()
+  used: boolean;
+
   @BeforeInsert()
-  @BeforeUpdate()
   insertCreatedAtAndUpdatedAt() {
-    this.code = crypto.randomUUID();
+    this.code = Address.fromRandom().toHexString();
+    this.used = false;
   }
 }
 

@@ -1,13 +1,17 @@
 import { TransactionStatus } from 'bsafe';
 import { bn } from 'fuels';
 
-import AddressBook from '@src/models/AddressBook';
 import { Predicate } from '@src/models/Predicate';
 import { Workspace } from '@src/models/Workspace';
-import { UserTypes } from '@src/socket/types';
-import { sendMail, EmailTemplateType } from '@src/utils/EmailSender';
+import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
 
-import { Asset, NotificationTitle, Transaction, User } from '@models/index';
+import {
+  Asset,
+  NotificationTitle,
+  Transaction,
+  TypeUser,
+  User,
+} from '@models/index';
 
 import { error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
@@ -61,6 +65,7 @@ export class PredicateController {
             address: member,
             provider: payload.provider,
             avatar: IconUtils.user(),
+            type: TypeUser.FUEL,
           });
         }
 

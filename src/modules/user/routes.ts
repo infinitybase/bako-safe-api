@@ -12,8 +12,11 @@ const router = Router();
 const userService = new UserService();
 const userController = new UserController(userService);
 
+router.get('/nickname/:nickname', handleResponse(userController.validateName));
 router.post('/', PayloadCreateUserSchema, handleResponse(userController.create));
 
+
+router.get('/by-hardware/:hardware', handleResponse(userController.getByHardware));
 router.get('/info', authMiddleware, handleResponse(userController.info));
 router.get('/nickaname/:nickname', handleResponse(userController.validateName));
 router.get('/me', authMiddleware, handleResponse(userController.me));
@@ -26,7 +29,6 @@ router.put(
   handleResponse(userController.update),
 );
 
-// router.get('/:nickname', handleResponse(userController.validateName));
 router.delete('/:id', authMiddleware, handleResponse(userController.delete));
 
 export default router;

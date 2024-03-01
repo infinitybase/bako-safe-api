@@ -16,10 +16,7 @@ import {
 } from './types';
 
 export class AddressBookService implements IAddressBookService {
-  private _ordination: IOrdination<AddressBook> = {
-    orderBy: 'updatedAt',
-    sort: 'DESC',
-  };
+  private _ordination: IOrdination<AddressBook>;
   private _pagination: PaginationParams;
   private _filter: IFilterAddressBookParams;
   filter(filter: IFilterAddressBookParams) {
@@ -52,6 +49,7 @@ export class AddressBookService implements IAddressBookService {
 
   async list(): Promise<IPagination<AddressBook> | AddressBook[]> {
     const hasPagination = this._pagination?.page && this._pagination?.perPage;
+    const hasOrdination = this._ordination?.orderBy && this._ordination?.sort;
     const queryBuilder = AddressBook.createQueryBuilder('ab')
       .select(['ab.id', 'ab.nickname'])
       .innerJoin('ab.user', 'user')
@@ -114,7 +112,10 @@ export class AddressBookService implements IAddressBookService {
         ),
       );
 
-    queryBuilder.orderBy(`ab.${this._ordination.orderBy}`, this._ordination.sort);
+    //todo: add new subquery to order by, because the select is required distinct mode
+    // console.log('this._filter', this._filter, this._ordination);
+    // hasOrdination &&
+    //   queryBuilder.orderBy(`ab.${this._ordination.orderBy}`, this._ordination.sort);
 
     return hasPagination
       ? Pagination.create(queryBuilder)
@@ -125,6 +126,31 @@ export class AddressBookService implements IAddressBookService {
           .getMany()
           .then(predicates => predicates)
           .catch(handleInternalError);
+  }
+
+  static formattDuplicatedAddress(
+    res: AddressBook[],
+    singleWk: string,
+    includePersonal: boolean,
+    groupWorkspace: string,
+  ): AddressBook[] {
+    return res.reduce((acc, currentItem) => {
+      const existingItem = acc.find(item => item.user.id === currentItem.user.id);
+
+      if (!existingItem) {
+        acc.push(currentItem);
+        return acc;
+      }
+      // Se já existe, retornar de preferencia o que tem o wk igual ao single
+      if (currentItem.owner.id === (includePersonal ? singleWk : groupWorkspace)) {
+        const existingIndex = acc.findIndex(
+          item => item.user.id === currentItem.user.id,
+        );
+        acc[existingIndex] = currentItem;
+      }
+
+      return acc;
+    }, []);
   }
 
   async findById(id: string): Promise<AddressBook> {

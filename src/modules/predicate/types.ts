@@ -2,15 +2,13 @@ import { Vault } from 'bsafe';
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 
 import { AuthValidatedRequest } from '@src/middlewares/auth/types';
-import { IOrdination } from '@src/utils/ordination';
+import { IDefaultOrdination, IOrdination } from '@src/utils/ordination';
 import { IPagination, PaginationParams } from '@src/utils/pagination';
 
 import { Predicate, User } from '@models/index';
 
 export enum OrderBy {
   name = 'name',
-  creation = 'createdAt',
-  update = 'updatedAt',
 }
 
 export enum Sort {
@@ -74,7 +72,7 @@ interface IListRequestSchema extends ValidatedRequestSchema {
     signer: string;
     provider: string;
     owner: string;
-    orderBy: OrderBy;
+    orderBy: IDefaultOrdination | OrderBy;
     sort: Sort;
     page: string;
     perPage: string;

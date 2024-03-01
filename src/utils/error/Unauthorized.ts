@@ -21,6 +21,7 @@ export enum UnauthorizedErrorTitles {
   INVALID_PERMISSION = 'Invalid permission',
   MISSING_PERMISSION = 'Missing permission',
   INVALID_SIGNATURE = 'Invalid signature',
+  INVALID_ENCODER = 'Invalid encoder',
 }
 
 export interface UnauthorizedError extends Omit<Error, 'title'> {

@@ -3,7 +3,7 @@ import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 import { IPermissions, Workspace } from '@src/models/Workspace';
 
 import UserToken, { Encoder } from '@models/UserToken';
-import { RecoverCodeType, User } from '@models/index';
+import { User } from '@models/index';
 
 import { AuthValidatedRequest, UnloggedRequest } from '@middlewares/auth/types';
 
@@ -18,14 +18,9 @@ export interface ICreateUserTokenPayload {
 }
 
 export interface ISignInPayload {
-  address: string;
-  hash: string;
-  createdAt: Date;
   encoder: Encoder;
-  provider: string;
   signature: string;
-  user_id: string;
-  workspace_id?: string;
+  digest: string;
 }
 
 interface IActiveSessionRequestSchema extends ValidatedRequestSchema {
@@ -85,16 +80,16 @@ export interface ISignInResponse {
   };
 }
 
-export interface ICreateRecoverCode extends ValidatedRequestSchema {
-  [ContainerTypes.Params]: {
-    type: RecoverCodeType;
-  };
-}
-
 export interface IUpgradeWorkspace extends ValidatedRequestSchema {
   [ContainerTypes.Body]: {
     workspace: string;
     user: string;
+  };
+}
+
+export interface ICreateRecoverCodeRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Params]: {
+    address: string;
   };
 }
 
@@ -105,7 +100,7 @@ export type IFindDappRequest = AuthValidatedRequest<IFindDappRequestSchema>;
 export type IActiveSession = AuthValidatedRequest<IActiveSessionRequestSchema>;
 export type IChangeWorkspaceRequest = AuthValidatedRequest<IUpgradeWorkspace>;
 export type IAuthorizeDappRequest = AuthValidatedRequest<IAuthorizeDappRequestSchema>;
-export type ICreateRecoverCodeRequest = UnloggedRequest<ICreateRecoverCode>;
+export type ICreateRecoverCodeRequest = UnloggedRequest<ICreateRecoverCodeRequestSchema>;
 
 export interface IAuthService {
   signIn(payload: ICreateUserTokenPayload): Promise<ISignInResponse>;

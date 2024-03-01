@@ -7,6 +7,22 @@ const { API_DEFAULT_PROVIDER } = process.env;
 export type WebAuthn = {
   id: string;
   publicKey: string;
+  origin: string;
+  hardware: string;
+};
+
+export enum TypeUser {
+  FUEL = 'FUEL',
+  WEB_AUTHN = 'WEB_AUTHN',
+}
+
+export const notFoundUser = {
+  address: undefined,
+  name: undefined,
+  provider: undefined,
+  avatar: undefined,
+  type: undefined,
+  webauthn: undefined,
 };
 
 @Entity('users')
@@ -33,6 +49,12 @@ class User extends Base {
 
   @Column({ type: 'jsonb' })
   webauthn: WebAuthn;
+
+  @Column({
+    default: TypeUser.FUEL,
+    nullable: false,
+  })
+  type: TypeUser;
 
   @Column()
   address: string;

@@ -18,8 +18,6 @@ import { IPagination, PaginationParams } from '@utils/pagination';
 export enum OrderBy {
   name = 'name',
   status = 'name',
-  creation = 'createdAt',
-  update = 'updatedAt',
 }
 
 export enum Sort {
