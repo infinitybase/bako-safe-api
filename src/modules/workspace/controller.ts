@@ -2,7 +2,9 @@ import axios from 'axios';
 import { defaultConfig } from 'bsafe';
 import { BN, bn } from 'fuels';
 
-import { PermissionAccess, Predicate, User } from '@src/models';
+
+import { Predicate, TypeUser, User, PermissionAccess } from '@src/models';
+
 import {
   PermissionRoles,
   Workspace,
@@ -119,7 +121,6 @@ export class WorkspaceController {
         Responses.Ok,
       );
     } catch (e) {
-      console.log(e);
       return error(e.error, e.statusCode);
     }
   }
@@ -186,6 +187,7 @@ export class WorkspaceController {
             });
           }
 
+
           const memberPermission = workspace.permissions[member];
           const signerPermission = memberPermission?.[PermissionRoles.SIGNER];
 
@@ -194,6 +196,8 @@ export class WorkspaceController {
             ...workspace.permissions,
             [member]: {
               ...permissions,
+              [PermissionRoles.SIGNER]:
+                workspace.permissions[member][PermissionRoles.SIGNER],
               SIGNER: signerPermission ?? [PermissionAccess.NONE],
             },
           };
@@ -233,8 +237,10 @@ export class WorkspaceController {
                 if (!data) {
                   return await new UserService().create({
                     address: member,
+                    name: member,
                     provider: defaultConfig['PROVIDER'],
                     avatar: await new UserService().randomAvatar(),
+                    type: TypeUser.FUEL,
                   });
                 }
                 return data;

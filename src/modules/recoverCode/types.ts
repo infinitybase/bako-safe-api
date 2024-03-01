@@ -1,6 +1,7 @@
-import { RecoverCode, RecoverCodeType } from '@src/models';
+import { RecoverCode, RecoverCodeType, User } from '@src/models';
 
 export interface ICreateRecoverCodePayload {
+  owner: User;
   type: RecoverCodeType;
   origin: string;
   validAt: Date;

@@ -1,7 +1,6 @@
 import { TransactionStatus } from 'bsafe';
 import { bn } from 'fuels';
 
-import AddressBook from '@src/models/AddressBook';
 import { Predicate } from '@src/models/Predicate';
 import { Workspace } from '@src/models/Workspace';
 import { UserTypes } from '@src/socket/types';

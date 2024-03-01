@@ -1,6 +1,6 @@
-import { add, addMinutes } from 'date-fns';
+import { addMinutes } from 'date-fns';
 
-import { Encoder, RecoverCodeType } from '@src/models';
+import { RecoverCodeType, User } from '@src/models';
 import UserToken from '@src/models/UserToken';
 import { Workspace } from '@src/models/Workspace';
 import GeneralError, { ErrorTypes } from '@src/utils/error/GeneralError';
@@ -8,68 +8,34 @@ import GeneralError, { ErrorTypes } from '@src/utils/error/GeneralError';
 import { IAuthRequest } from '@middlewares/auth/types';
 
 import { NotFound, error } from '@utils/error';
-import { Responses, successful, bindMethods, Web3Utils } from '@utils/index';
+import { Responses, successful, bindMethods, TokenUtils } from '@utils/index';
 
 import { RecoverCodeService } from '../recoverCode/services';
-import { IUserService } from '../user/types';
 import { WorkspaceService } from '../workspace/services';
 import {
   IAuthService,
   IChangeWorkspaceRequest,
-  ISignInRequest,
   ICreateRecoverCodeRequest,
+  ISignInRequest,
 } from './types';
 
 export class AuthController {
   private authService: IAuthService;
-  private userService: IUserService;
 
-  constructor(authService: IAuthService, userService: IUserService) {
+  constructor(authService: IAuthService) {
     this.authService = authService;
-    this.userService = userService;
     bindMethods(this);
   }
 
   async signIn(req: ISignInRequest) {
     try {
-      const { signature, workspace_id, ...payloadWithoutSignature } = req.body;
-      const expiresIn = process.env.TOKEN_EXPIRATION_TIME ?? '15';
+      const { digest, encoder, signature } = req.body;
 
-      new Web3Utils({
+      const userToken = await TokenUtils.createAuthToken(
         signature,
-        message: JSON.stringify(payloadWithoutSignature),
-        signerAddress: req.body.address,
-      }).verifySignature();
-
-      const existingToken = await this.authService.findToken({
-        userId: req.body.user_id,
-      });
-
-      if (existingToken) {
-        await this.authService.signOut(existingToken.user);
-      }
-
-      const workspace = await new WorkspaceService()
-        .filter(
-          workspace_id
-            ? { id: workspace_id }
-            : {
-                owner: req.body.user_id,
-                single: true,
-              },
-        )
-        .list()
-        .then((response: Workspace[]) => response[0]);
-
-      const userToken = await this.authService.signIn({
-        token: req.body.signature,
-        encoder: Encoder[req.body.encoder],
-        provider: req.body.provider,
-        expired_at: addMinutes(req.body.createdAt, Number(expiresIn)),
-        payload: JSON.stringify(payloadWithoutSignature),
-        user: await this.userService.findOne(req.body.user_id),
-        workspace,
-      });
+        digest,
+        encoder,
+      );
 
       return successful(userToken, Responses.Ok);
     } catch (e) {
@@ -82,6 +48,25 @@ export class AuthController {
   async signOut(req: IAuthRequest) {
     try {
       const response = await this.authService.signOut(req.user);
+
+      return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error[0], e.statusCode);
+    }
+  }
+
+  async generateSignCode(req: ICreateRecoverCodeRequest) {
+    try {
+      const { address } = req.params;
+      const { origin } = req.headers;
+      const owner = await User.findOne({ address: address });
+
+      const response = await new RecoverCodeService().create({
+        owner,
+        type: RecoverCodeType.AUTH,
+        origin: origin ?? process.env.UI_URL,
+        validAt: addMinutes(new Date(), 5),
+      });
 
       return successful(response, Responses.Ok);
     } catch (e) {
@@ -131,28 +116,6 @@ export class AuthController {
         }),
         Responses.Ok,
       );
-    } catch (e) {
-      return error(e.error, e.statusCode);
-    }
-  }
-
-  /* todo: validated
-   * - request a code to endpoint /auth/webauthn/code -> no required middleware
-   *    - add this code on database, with validAt equal now + 5 minutes
-   *    - return this code on request
-   */
-  async createWebAuthCode(req: ICreateRecoverCodeRequest) {
-    try {
-      const { origin } = req.headers;
-      const { type } = req.params;
-
-      const response = await new RecoverCodeService().create({
-        type: RecoverCodeType[type],
-        origin,
-        validAt: add(new Date(), { minutes: 5 }),
-      });
-
-      return successful(response, Responses.Created);
     } catch (e) {
       return error(e.error, e.statusCode);
     }

@@ -1,27 +1,32 @@
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 
-import { AuthValidatedRequest } from '@src/middlewares/auth/types';
-import { User } from '@src/models';
-import { Workspace } from '@src/models/Workspace';
-import { IOrdination } from '@src/utils/ordination';
+import { AuthValidatedRequest, UnloggedRequest } from '@src/middlewares/auth/types';
+import { TypeUser, User } from '@src/models';
+import { IDefaultOrdination, IOrdination } from '@src/utils/ordination';
 import { IPagination, PaginationParams } from '@src/utils/pagination';
 
-import { UnloggedRequest } from '@middlewares/auth/types';
+export interface IWebAuthnSignUp {
+  id: string;
+  publicKey: string;
+  origin: string;
+  hardware: string;
+}
 
 export interface IUserPayload {
-  name?: string;
-  email?: string;
-  password?: string;
-  active?: boolean;
+  name: string;
+  type: TypeUser;
   address: string;
   provider: string;
-  avatar: string;
+
+  avatar?: string;
+  webauthn?: IWebAuthnSignUp;
 }
 
 export interface IFilterParams {
   user?: string;
   active?: boolean;
   nickname?: string;
+  address?: string;
 }
 
 interface ICreateRequestSchema extends ValidatedRequestSchema {
@@ -35,7 +40,7 @@ interface IListRequestSchema extends ValidatedRequestSchema {
     page: string;
     perPage: string;
     sort: 'ASC' | 'DESC';
-    orderBy: 'name' | 'createdAt';
+    orderBy: 'name' | IDefaultOrdination;
   };
 }
 
@@ -45,17 +50,23 @@ interface IFindOneRequestSchema extends ValidatedRequestSchema {
   };
 }
 
+interface ICheckNickname extends ValidatedRequestSchema {
+  [ContainerTypes.Params]: {
+    nickname: string;
+  };
+}
+
+interface ICheckHardware extends ValidatedRequestSchema {
+  [ContainerTypes.Params]: {
+    hardware: string;
+  };
+}
+
 interface IUpdateRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Params]: {
     id: string;
   };
   [ContainerTypes.Body]: IUserPayload;
-}
-
-interface ICheckNickname extends ValidatedRequestSchema {
-  [ContainerTypes.Params]: {
-    nickname: string;
-  };
 }
 
 export type ICreateRequest = AuthValidatedRequest<ICreateRequestSchema>;
@@ -72,6 +83,8 @@ export type IMeRequest = AuthValidatedRequest<IListRequestSchema>;
 
 export type ICheckNicknameRequest = UnloggedRequest<ICheckNickname>;
 
+export type ICheckHardwareRequest = UnloggedRequest<ICheckHardware>;
+
 export interface IUserService {
   filter(filter: IFilterParams): this;
   paginate(pagination: PaginationParams): this;
@@ -83,11 +96,4 @@ export interface IUserService {
   randomAvatar(): Promise<string>;
   update(id: string, payload: IUserPayload): Promise<User>;
   delete(id: string): Promise<boolean>;
-  workspacesByUser(
-    worksapce: Workspace,
-    user: User,
-  ): Promise<{
-    workspaceList: string[];
-    hasSingle: boolean;
-  }>;
 }

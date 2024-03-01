@@ -21,9 +21,18 @@ export class addNewTableRecoverCodes1708464557109 implements MigrationInterface 
             type: 'varchar',
           },
           {
-            name: 'code',
+            name: 'owner',
             type: 'uuid',
-            default: 'uuid_generate_v4()',
+            isNullable: false,
+          },
+          {
+            name: 'code',
+            type: 'varchar',
+            isNullable: false,
+          },
+          {
+            name: 'used',
+            type: 'boolean',
           },
           {
             name: 'valid_at',
@@ -42,6 +51,16 @@ export class addNewTableRecoverCodes1708464557109 implements MigrationInterface 
           {
             name: 'deleted_at',
             type: 'timestamp',
+            isNullable: true,
+          },
+        ],
+        foreignKeys: [
+          {
+            name: 'FK-recover_codes-users',
+            columnNames: ['owner'],
+            referencedColumnNames: ['id'],
+            referencedTableName: 'users',
+            onDelete: 'CASCADE',
           },
         ],
       }),
