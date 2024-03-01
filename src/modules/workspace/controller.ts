@@ -97,11 +97,11 @@ export class WorkspaceController {
       const priceUSD: number = await axios
         .get(`https://economia.awesomeapi.com.br/last/${convert}`)
         .then(({ data }) => {
-          console.log(
-            data,
-            data[convert.replace('-', '')].bid ?? 0.0,
-            balance.format().toString(),
-          );
+          // console.log(
+          //   data,
+          //   data[convert.replace('-', '')].bid ?? 0.0,
+          //   balance.format().toString(),
+          // );
           return data[convert.replace('-', '')].bid ?? 0.0;
         })
         .catch(e => {
