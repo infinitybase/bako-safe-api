@@ -3,17 +3,16 @@ import { UserService } from '@src/modules/user/service';
 
 import { accounts } from '../accounts';
 import { networks } from '../networks';
+import { IconUtils } from '@utils/icons';
 
 export const generateInitialUsers = async (): Promise<Partial<User>[]> => {
-  const userService = new UserService();
-
   const user1: Partial<User> = {
     name: `${accounts['STORE'].privateKey}`,
     active: true,
     email: process.env.APP_ADMIN_EMAIL || '',
     provider: networks['local'],
     address: accounts['STORE'].address,
-    avatar: await userService.randomAvatar(),
+    avatar: IconUtils.user(),
     createdAt: new Date(),
     type: TypeUser.FUEL,
   };
@@ -24,7 +23,7 @@ export const generateInitialUsers = async (): Promise<Partial<User>[]> => {
     email: process.env.APP_ADMIN_EMAIL || '',
     provider: networks['local'],
     address: accounts['USER_1'].address,
-    avatar: await userService.randomAvatar(),
+    avatar: IconUtils.user(),
     createdAt: new Date(),
     type: TypeUser.FUEL,
   };
@@ -35,7 +34,7 @@ export const generateInitialUsers = async (): Promise<Partial<User>[]> => {
     email: process.env.APP_ADMIN_EMAIL || '',
     provider: networks['local'],
     address: accounts['USER_2'].address,
-    avatar: await userService.randomAvatar(),
+    avatar: IconUtils.user(),
     createdAt: new Date(),
     type: TypeUser.FUEL,
   };
@@ -46,7 +45,7 @@ export const generateInitialUsers = async (): Promise<Partial<User>[]> => {
     email: process.env.APP_ADMIN_EMAIL || '',
     provider: networks['local'],
     address: accounts['USER_3'].address,
-    avatar: await userService.randomAvatar(),
+    avatar: IconUtils.user(),
     createdAt: new Date(),
     type: TypeUser.FUEL,
   };

@@ -9,6 +9,7 @@ import {
 import { UserService } from '@src/modules/user/service';
 
 import { accounts } from '../accounts';
+import { IconUtils } from '@utils/icons';
 
 export const generateInitialWorkspace = async (): Promise<Workspace> => {
   const members = await User.find({
@@ -20,7 +21,7 @@ export const generateInitialWorkspace = async (): Promise<Workspace> => {
   return Workspace.create({
     name: randomBytes(10).toString('hex'),
     description: `Description ${randomBytes(10).toString('hex')}`,
-    avatar: await new UserService().randomAvatar(),
+    avatar: IconUtils.workspace(),
     members,
     owner: members[0],
     permissions: {
@@ -61,7 +62,7 @@ export const generateInitialAuxWorkspace = async (): Promise<Workspace> => {
   return Workspace.create({
     name: `[INITIAL]${randomBytes(10).toString('hex')}`,
     description: `Description ${randomBytes(10).toString('hex')}`,
-    avatar: await new UserService().randomAvatar(),
+    avatar: IconUtils.workspace(),
     members,
     owner: members[0],
     permissions: {

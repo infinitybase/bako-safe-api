@@ -22,6 +22,7 @@ import {
   IUpdateRequest,
   IUserService,
 } from './types';
+import { IconUtils } from '@utils/icons';
 
 export class UserController {
   private userService: IUserService;
@@ -199,7 +200,7 @@ export class UserController {
         existingUser = await this.userService.create({
           ...req.body,
           name: name ?? address,
-          avatar: await this.userService.randomAvatar(),
+        avatar: IconUtils.user(),
         });
       }
 
