@@ -2,9 +2,7 @@ import axios from 'axios';
 import { defaultConfig } from 'bsafe';
 import { BN, bn } from 'fuels';
 
-
 import { Predicate, TypeUser, User, PermissionAccess } from '@src/models';
-
 import {
   PermissionRoles,
   Workspace,
@@ -187,7 +185,6 @@ export class WorkspaceController {
             });
           }
 
-
           const memberPermission = workspace.permissions[member];
           const signerPermission = memberPermission?.[PermissionRoles.SIGNER];
 
@@ -196,9 +193,7 @@ export class WorkspaceController {
             ...workspace.permissions,
             [member]: {
               ...permissions,
-              [PermissionRoles.SIGNER]:
-                workspace.permissions[member][PermissionRoles.SIGNER],
-              SIGNER: signerPermission ?? [PermissionAccess.NONE],
+              [PermissionRoles.SIGNER]: signerPermission ?? [PermissionAccess.NONE],
             },
           };
 
