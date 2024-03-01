@@ -52,7 +52,6 @@ class User extends Base {
 
   @Column({
     default: TypeUser.FUEL,
-    nullable: false,
   })
   type: TypeUser;
 
