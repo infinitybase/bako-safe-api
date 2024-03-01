@@ -13,7 +13,6 @@ export const validateSignInPayload = validator.body(
       .required(),
     signature: Joi.string().required(),
     digest: Joi.string().required(),
-    type: Joi.string().required(),
   }),
 );
 
