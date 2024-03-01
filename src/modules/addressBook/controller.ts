@@ -6,6 +6,7 @@ import { IPagination } from '@src/utils/pagination';
 import { ErrorTypes, error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
 
+import { TypeUser } from '@src/models';
 import { IUserService } from '../user/types';
 import { WorkspaceService } from '../workspace/services';
 import { AddressBookService } from './services';
@@ -64,6 +65,7 @@ export class AddressBookController {
         savedUser = await this.userService.create({
           address,
           provider: user.provider,
+          type: TypeUser.FUEL,
           avatar: await this.userService.randomAvatar(),
           active: true,
         });
@@ -77,6 +79,7 @@ export class AddressBookController {
 
       return successful(newContact, Responses.Ok);
     } catch (e) {
+      console.log(e);
       return error(e.error, e.statusCode);
     }
   }
@@ -117,6 +120,7 @@ export class AddressBookController {
         savedUser = await this.userService.create({
           address: body.address,
           provider: user.provider,
+          type: TypeUser.FUEL,
           avatar: await this.userService.randomAvatar(),
           active: true,
         });
