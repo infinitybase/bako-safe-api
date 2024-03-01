@@ -2,7 +2,7 @@ import axios from 'axios';
 import { defaultConfig } from 'bsafe';
 import { BN, bn } from 'fuels';
 
-import { PermissionAccess, Predicate, User } from '@src/models';
+import { Predicate, TypeUser, User, PermissionAccess } from '@src/models';
 import {
   PermissionRoles,
   Workspace,
@@ -13,6 +13,7 @@ import {
   Unauthorized,
   UnauthorizedErrorTitles,
 } from '@src/utils/error/Unauthorized';
+import { IconUtils } from '@src/utils/icons';
 
 import { ErrorTypes, error } from '@utils/error';
 import { Responses, successful } from '@utils/index';
@@ -63,7 +64,7 @@ export class WorkspaceController {
         members: _members,
         permissions: _permissions,
         single: false,
-        avatar: await new UserService().randomAvatar(),
+        avatar: IconUtils.workspace(),
       });
 
       return successful(response, Responses.Created);
@@ -96,11 +97,11 @@ export class WorkspaceController {
       const priceUSD: number = await axios
         .get(`https://economia.awesomeapi.com.br/last/${convert}`)
         .then(({ data }) => {
-          console.log(
-            data,
-            data[convert.replace('-', '')].bid ?? 0.0,
-            balance.format().toString(),
-          );
+          // console.log(
+          //   data,
+          //   data[convert.replace('-', '')].bid ?? 0.0,
+          //   balance.format().toString(),
+          // );
           return data[convert.replace('-', '')].bid ?? 0.0;
         })
         .catch(e => {
@@ -119,7 +120,6 @@ export class WorkspaceController {
         Responses.Ok,
       );
     } catch (e) {
-      console.log(e);
       return error(e.error, e.statusCode);
     }
   }
@@ -194,7 +194,7 @@ export class WorkspaceController {
             ...workspace.permissions,
             [member]: {
               ...permissions,
-              SIGNER: signerPermission ?? [PermissionAccess.NONE],
+              [PermissionRoles.SIGNER]: signerPermission ?? [PermissionAccess.NONE],
             },
           };
 
@@ -233,8 +233,10 @@ export class WorkspaceController {
                 if (!data) {
                   return await new UserService().create({
                     address: member,
+                    name: member,
                     provider: defaultConfig['PROVIDER'],
-                    avatar: await new UserService().randomAvatar(),
+                    avatar: IconUtils.user(),
+                    type: TypeUser.FUEL,
                   });
                 }
                 return data;

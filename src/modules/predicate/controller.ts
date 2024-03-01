@@ -1,13 +1,17 @@
 import { TransactionStatus } from 'bsafe';
 import { bn } from 'fuels';
 
-import AddressBook from '@src/models/AddressBook';
 import { Predicate } from '@src/models/Predicate';
 import { Workspace } from '@src/models/Workspace';
-import { UserTypes } from '@src/socket/types';
-import { sendMail, EmailTemplateType } from '@src/utils/EmailSender';
+import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
 
-import { Asset, NotificationTitle, Transaction, User } from '@models/index';
+import {
+  Asset,
+  NotificationTitle,
+  Transaction,
+  TypeUser,
+  User,
+} from '@models/index';
 
 import { error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
@@ -25,6 +29,8 @@ import {
   IListRequest,
   IPredicateService,
 } from './types';
+import { IconUtils } from '@utils/icons';
+import axios from 'axios';
 
 export class PredicateController {
   private userService: IUserService;
@@ -59,7 +65,8 @@ export class PredicateController {
           user = await this.userService.create({
             address: member,
             provider: payload.provider,
-            avatar: await this.userService.randomAvatar(),
+            avatar: IconUtils.user(),
+            type: TypeUser.FUEL,
           });
         }
 
@@ -148,6 +155,7 @@ export class PredicateController {
 
   async hasReservedCoins({ params: { address } }: IFindByHashRequest) {
     try {
+      console.log('[HAS_RESERVED_COINS]: ');
       //console.log('[HAS_RESERVED_COINS]: ', address);
       const response = await this.transactionService
         .filter({
@@ -172,8 +180,43 @@ export class PredicateController {
         .catch(e => {
           return bn.parseUnits('0');
         });
-      return successful(response, Responses.Ok);
+
+      const predicate = await this.predicateService.findById(address, undefined);
+      console.log(predicate);
+
+      const instance = await this.predicateService.instancePredicate(predicate.id);
+      const balance = await instance.getBalance();
+
+      //todo: move this calc logic
+      const convert = `ETH-USD`;
+
+      const priceUSD: number = await axios
+        .get(`https://economia.awesomeapi.com.br/last/${convert}`)
+        .then(({ data }) => {
+          // console.log(
+          //   data,
+          //   data[convert.replace('-', '')].bid ?? 0.0,
+          //   balance.format().toString(),
+          // );
+          return data[convert.replace('-', '')].bid ?? 0.0;
+        })
+        .catch(e => {
+          console.log('[WORKSPACE_REQUEST_BALANCE_ERROR]: ', e);
+          return 0.0;
+        });
+
+      return successful(
+        {
+          balance: balance.format().toString(),
+          balanceUSD: (parseFloat(balance.format().toString()) * priceUSD).toFixed(
+            2,
+          ),
+          reservedCoins: response,
+        },
+        Responses.Ok,
+      );
     } catch (e) {
+      console.log(e);
       return error(e.error, e.statusCode);
     }
   }

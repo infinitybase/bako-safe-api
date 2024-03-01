@@ -1,16 +1,17 @@
-import { User } from '@src/models';
+import { TypeUser, User } from '@src/models';
 
 import { error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
 
 import { IUserService } from '../user/types';
 import {
-  IVaultTemplateService,
   ICreateVaultTemplateRequest,
+  IFindByIdRequest,
   ILisVaultTemplatetRequest,
   IUpdateVaultTemplateRequest,
-  IFindByIdRequest,
+  IVaultTemplateService,
 } from './types';
+import { IconUtils } from '@utils/icons';
 
 export class VaultTemplateController {
   private vaultTemplateService: IVaultTemplateService;
@@ -34,7 +35,8 @@ export class VaultTemplateController {
           user = await this.userService.create({
             address,
             provider: user.provider,
-            avatar: await this.userService.randomAvatar(),
+            avatar: IconUtils.user(),
+            type: TypeUser.FUEL,
           });
         }
 

@@ -1,6 +1,8 @@
 import { defaultConfig } from 'bsafe';
 
-import { PermissionAccess, User } from '@src/models';
+
+import { TypeUser, User, PermissionAccess } from '@src/models';
+
 import {
   IPermissions,
   PermissionRoles,
@@ -15,6 +17,7 @@ import { PaginationParams, IPagination, Pagination } from '@src/utils/pagination
 
 import { UserService } from '../user/service';
 import { IFilterParams, IWorkspaceService } from './types';
+import { IconUtils } from '@utils/icons';
 
 export class WorkspaceService implements IWorkspaceService {
   private _ordination: IOrdination<Workspace> = {
@@ -161,8 +164,11 @@ export class WorkspaceService implements IWorkspaceService {
                 if (!data) {
                   return await new UserService().create({
                     address: member,
+                    name: member,
                     provider: defaultConfig['PROVIDER'],
-                    avatar: await new UserService().randomAvatar(),
+                    avatar: IconUtils.user(),
+                    type: TypeUser.FUEL,
+
                   });
                 }
                 return data;

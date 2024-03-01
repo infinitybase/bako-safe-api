@@ -7,6 +7,7 @@ import {
 import { UserService } from '@src/modules/user/service';
 
 import { User } from '@models/index';
+import { IconUtils } from '@utils/icons';
 
 export default async function () {
   const users = await generateInitialUsers();
@@ -20,7 +21,7 @@ export default async function () {
         [_user.id]: defaultPermissions[PermissionRoles.OWNER],
       },
       members: [_user],
-      avatar: await new UserService().randomAvatar(),
+      avatar: IconUtils.workspace(),
       single: true,
     }).save();
   }

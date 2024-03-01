@@ -1,10 +1,12 @@
 import AddressBook from '@src/models/AddressBook';
 import { Workspace } from '@src/models/Workspace';
 import Internal from '@src/utils/error/Internal';
+import { IPagination } from '@src/utils/pagination';
 
 import { ErrorTypes, error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
 
+import { TypeUser } from '@src/models';
 import { IUserService } from '../user/types';
 import { WorkspaceService } from '../workspace/services';
 import { AddressBookService } from './services';
@@ -15,6 +17,7 @@ import {
   IListAddressBookRequest,
   IUpdateAddressBookRequest,
 } from './types';
+import { IconUtils } from '@utils/icons';
 
 export class AddressBookController {
   private addressBookService: IAddressBookService;
@@ -63,7 +66,9 @@ export class AddressBookController {
         savedUser = await this.userService.create({
           address,
           provider: user.provider,
-          avatar: await this.userService.randomAvatar(),
+          avatar: IconUtils.user(),
+          type: TypeUser.FUEL,
+
           active: true,
         });
       }
@@ -76,6 +81,7 @@ export class AddressBookController {
 
       return successful(newContact, Responses.Ok);
     } catch (e) {
+      console.log(e);
       return error(e.error, e.statusCode);
     }
   }
@@ -116,7 +122,9 @@ export class AddressBookController {
         savedUser = await this.userService.create({
           address: body.address,
           provider: user.provider,
-          avatar: await this.userService.randomAvatar(),
+          avatar: IconUtils.user(),
+          type: TypeUser.FUEL,
+
           active: true,
         });
       }
@@ -155,8 +163,8 @@ export class AddressBookController {
         })
         .list()
         .then((response: Workspace[]) => response[0].id);
-
-      if (includePersonal === 'true') {
+      const hasIncludePersonal = includePersonal === 'true';
+      if (hasIncludePersonal) {
         owner.push(singleWk);
       }
 
@@ -165,28 +173,25 @@ export class AddressBookController {
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })
         .list()
-        .then((res: AddressBook[]) => {
-          return res.reduce((acc, currentItem) => {
-            const existingItem = acc.find(
-              item => item.user.id === currentItem.user.id,
+        .then((response: AddressBook[] | IPagination<AddressBook>) => {
+          if (response instanceof Array) {
+            return AddressBookService.formattDuplicatedAddress(
+              response,
+              singleWk,
+              hasIncludePersonal,
+              workspace.id,
             );
+          }
 
-            if (!existingItem) {
-              acc.push(currentItem);
-              return acc;
-            }
-            // Se já existe, retornar de preferencia o que tem o wk igual ao single
-            if (
-              currentItem.owner.id === (includePersonal ? singleWk : workspace.id)
-            ) {
-              const existingIndex = acc.findIndex(
-                item => item.user.id === currentItem.user.id,
-              );
-              acc[existingIndex] = currentItem;
-            }
-
-            return acc;
-          }, []);
+          return {
+            ...response,
+            data: AddressBookService.formattDuplicatedAddress(
+              response.data,
+              singleWk,
+              hasIncludePersonal,
+              workspace.id,
+            ),
+          };
         });
 
       return successful(response, Responses.Ok);

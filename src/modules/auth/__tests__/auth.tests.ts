@@ -1,5 +1,9 @@
+import axios from 'axios';
+
 import { accounts } from '@src/mocks/accounts';
+import { generateInitialUsers } from '@src/mocks/initialSeeds/initialUsers';
 import { networks } from '@src/mocks/networks';
+import { RecoverCodeType } from '@src/models';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
 
 describe('[AUTH]', () => {
@@ -17,12 +21,11 @@ describe('[AUTH]', () => {
         expect(auth.authToken);
       });
     },
-    40 * 1000,
+    10 * 1000,
   );
 
-  test.only(
-    //'Sign in with personal workspace and select other workspace',
-    'ATUAL',
+  test(
+    'Sign in with personal workspace and select other workspace',
     async () => {
       //crate a session
       const _auth = new AuthValidations(networks['local'], accounts['USER_1']);
@@ -41,6 +44,21 @@ describe('[AUTH]', () => {
         expect(_auth.authToken).toHaveProperty('token');
       });
     },
-    40 * 1000,
+    10 * 1000,
   );
+
+  test('generate a code with register user', async () => {
+    const api = axios.create({
+      baseURL: 'http://localhost:3333',
+    });
+
+    const [user1] = await generateInitialUsers();
+
+    const { data } = await api.post(`/auth/code/${user1.address}`);
+
+    expect(data).toHaveProperty('code');
+    expect(data).toHaveProperty('type', RecoverCodeType.AUTH);
+    expect(data).toHaveProperty('validAt');
+    expect(new Date(data.validAt).getTime()).toBeGreaterThan(new Date().getTime());
+  });
 });
