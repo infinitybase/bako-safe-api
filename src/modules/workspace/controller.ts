@@ -13,6 +13,7 @@ import {
   Unauthorized,
   UnauthorizedErrorTitles,
 } from '@src/utils/error/Unauthorized';
+import { IconUtils } from '@src/utils/icons';
 
 import { ErrorTypes, error } from '@utils/error';
 import { Responses, successful } from '@utils/index';
@@ -28,7 +29,6 @@ import {
   IUpdatePermissionsRequest,
   IUpdateRequest,
 } from './types';
-import { IconUtils } from '@utils/icons';
 
 export class WorkspaceController {
   async listByUser(req: IListByUserRequest) {
