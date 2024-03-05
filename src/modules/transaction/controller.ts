@@ -255,7 +255,6 @@ export class TransactionController {
       return new Date(a.date).getTime() - new Date(b.date).getTime();
     });
 
-    console.log(results);
     return results;
   }
 
