@@ -1,9 +1,9 @@
 import {
   ITransactionResume,
+  ITransactionSummary,
   TransactionStatus,
   Transfer,
   Vault,
-  ITransactionSummary,
 } from 'bsafe';
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 import { Provider, TransactionRequest } from 'fuels';
@@ -23,6 +23,14 @@ export enum OrderBy {
 export enum Sort {
   asc = 'ASC',
   desc = 'DESC',
+}
+
+export enum TransactionHistory {
+  CREATED = 'CREATED',
+  SIGN = 'SIGNATURE',
+  DECLINE = 'DECLINE',
+  CANCEL = 'CANCEL',
+  SEND = 'SEND',
 }
 
 export interface ICreateTransactionPayload {
@@ -93,6 +101,10 @@ interface ICreateTransactionRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Body]: ICreateTransactionPayload;
 }
 
+interface ICreateTransactionHistoryRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Params]: { id: string };
+}
+
 interface IUpdateTransactionRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Body]: Omit<IUpdateTransactionPayload, 'hash'>;
   [ContainerTypes.Params]: { id: string };
@@ -156,6 +168,7 @@ export interface ITCreateService
 }
 
 export type ICreateTransactionRequest = AuthValidatedRequest<ICreateTransactionRequestSchema>;
+export type ICreateTransactionHistoryRequest = AuthValidatedRequest<ICreateTransactionHistoryRequestSchema>;
 export type IUpdateTransactionRequest = AuthValidatedRequest<IUpdateTransactionRequestSchema>;
 export type IDeleteTransactionRequest = AuthValidatedRequest<IDeleteTransactionRequestSchema>;
 export type ICloseTransactionRequest = AuthValidatedRequest<ICloseTransactionRequestSchema>;

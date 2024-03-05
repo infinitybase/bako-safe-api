@@ -1,17 +1,12 @@
 import { ITransactionResume, TransactionStatus } from 'bsafe';
 import { Provider, Signer, hashMessage } from 'fuels';
 
-import AddressBook from '@src/models/AddressBook';
 import { PermissionRoles, Workspace } from '@src/models/Workspace';
 import {
   Unauthorized,
   UnauthorizedErrorTitles,
 } from '@src/utils/error/Unauthorized';
-import { IPagination } from '@src/utils/pagination';
-import {
-  validatePermissionVault,
-  validatePermissionGeneral,
-} from '@src/utils/permissionValidate';
+import { validatePermissionGeneral } from '@src/utils/permissionValidate';
 
 import {
   NotificationTitle,
@@ -35,6 +30,7 @@ import { WorkspaceService } from '../workspace/services';
 import { TransactionService } from './services';
 import {
   ICloseTransactionRequest,
+  ICreateTransactionHistoryRequest,
   ICreateTransactionRequest,
   IFindTransactionByHashRequest,
   IFindTransactionByIdRequest,
@@ -42,6 +38,7 @@ import {
   ISendTransactionRequest,
   ISignByIdRequest,
   ITransactionService,
+  TransactionHistory,
 } from './types';
 
 export class TransactionController {
@@ -192,6 +189,74 @@ export class TransactionController {
     } catch (e) {
       return error(e.error, e.statusCode);
     }
+  }
+
+  async createHistory({ params: { id } }: ICreateTransactionHistoryRequest) {
+    try {
+      const response = await this.transactionService
+        .findById(id)
+        .then(async (data: Transaction) => {
+          return TransactionController.formatTransactionsHistory(data);
+        });
+      return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  static async formatTransactionsHistory(data: Transaction) {
+    const userService = new UserService();
+    const results = [];
+    const _witnesses = data.witnesses.filter(
+      witness =>
+        witness.status === WitnessesStatus.DONE ||
+        witness.status === WitnessesStatus.REJECTED,
+    );
+
+    results.push({
+      type: TransactionHistory.CREATED,
+      date: data.createdAt,
+      owner: {
+        id: data.createdBy.id,
+        avatar: data.createdBy.avatar,
+        address: data.createdBy.address,
+      },
+    });
+
+    for await (const witness of _witnesses) {
+      const { avatar, id, address } = await userService.findByAddress(
+        witness.account,
+      );
+
+      results.push({
+        type: TransactionHistory.SIGN,
+        date: data.updatedAt,
+        owner: {
+          id,
+          avatar,
+          address,
+        },
+      });
+    }
+
+    if (data.status === TransactionStatus.SUCCESS) {
+      results.push({
+        type: TransactionHistory.SEND,
+        date: data.sendTime,
+        owner: {
+          id: data.createdBy.id,
+          avatar: data.createdBy.avatar,
+          address: data.createdBy.address,
+        },
+      });
+    }
+
+    results.sort((a, b) => {
+      return new Date(a.date).getTime() - new Date(b.date).getTime();
+    });
+
+    console.log(results);
+    return results;
   }
 
   async findById({ params: { id } }: IFindTransactionByIdRequest) {
