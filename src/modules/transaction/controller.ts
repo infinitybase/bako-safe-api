@@ -270,6 +270,18 @@ export class TransactionController {
       });
     }
 
+    if (data.status === TransactionStatus.FAILED) {
+      results.push({
+        type: TransactionHistory.FAILED,
+        date: data.updatedAt,
+        owner: {
+          id: data.createdBy.id,
+          avatar: data.createdBy.avatar,
+          address: data.createdBy.address,
+        },
+      });
+    }
+
     // results.sort((a, b) => {
     //   return new Date(a.date).getTime() - new Date(b.date).getTime();
     // });

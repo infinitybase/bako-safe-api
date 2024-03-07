@@ -26,6 +26,7 @@ export enum Sort {
 }
 
 export enum TransactionHistory {
+  FAILED = 'FAILED',
   CREATED = 'CREATED',
   SIGN = 'SIGNATURE',
   DECLINE = 'DECLINE',
