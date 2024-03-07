@@ -2,7 +2,6 @@ import { BSafe } from 'bsafe';
 
 import App from './app';
 import Bootstrap from './bootstrap';
-import { IconUtils } from '@utils/icons';
 
 const start = async () => {
   const app = new App();
