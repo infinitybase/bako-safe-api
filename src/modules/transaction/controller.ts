@@ -213,6 +213,10 @@ export class TransactionController {
         witness.status === WitnessesStatus.REJECTED,
     );
 
+    const witnessRejected = data.witnesses.filter(
+      witness => witness.status === WitnessesStatus.REJECTED,
+    );
+
     results.push({
       type: TransactionHistory.CREATED,
       date: data.createdAt,
@@ -229,7 +233,10 @@ export class TransactionController {
       );
 
       results.push({
-        type: TransactionHistory.SIGN,
+        type:
+          witness.status === WitnessesStatus.REJECTED
+            ? TransactionHistory.DECLINE
+            : TransactionHistory.SIGN,
         date: data.updatedAt,
         owner: {
           id,
@@ -251,9 +258,21 @@ export class TransactionController {
       });
     }
 
-    results.sort((a, b) => {
-      return new Date(a.date).getTime() - new Date(b.date).getTime();
-    });
+    if (data.status === TransactionStatus.DECLINED && !witnessRejected) {
+      results.push({
+        type: TransactionHistory.DECLINE,
+        date: data.updatedAt,
+        owner: {
+          id: data.createdBy.id,
+          avatar: data.createdBy.avatar,
+          address: data.createdBy.address,
+        },
+      });
+    }
+
+    // results.sort((a, b) => {
+    //   return new Date(a.date).getTime() - new Date(b.date).getTime();
+    // });
 
     return results;
   }
