@@ -6,15 +6,15 @@ import {
   Vault,
 } from 'bsafe';
 import {
-  hexlify,
   Provider,
   TransactionRequest,
-  transactionRequestify,
   TransactionResponse,
+  hexlify,
+  transactionRequestify,
 } from 'fuels';
 import { Brackets } from 'typeorm';
 
-import { sendMail, EmailTemplateType } from '@src/utils/EmailSender';
+import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
 
 import {
   NotificationTitle,
@@ -91,7 +91,13 @@ export class TransactionService implements ITransactionService {
   async findById(id: string): Promise<Transaction> {
     return await Transaction.findOne({
       where: { id },
-      relations: ['assets', 'witnesses', 'predicate', 'predicate.members'],
+      relations: [
+        'assets',
+        'witnesses',
+        'predicate',
+        'predicate.members',
+        'createdBy',
+      ],
     })
       .then(transaction => {
         if (!transaction) {
