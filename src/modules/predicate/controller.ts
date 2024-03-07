@@ -182,7 +182,6 @@ export class PredicateController {
         });
 
       const predicate = await this.predicateService.findById(address, undefined);
-      console.log(predicate);
 
       const instance = await this.predicateService.instancePredicate(predicate.id);
       const balance = await instance.getBalance();
