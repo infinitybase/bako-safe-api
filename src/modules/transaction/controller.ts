@@ -237,7 +237,7 @@ export class TransactionController {
           witness.status === WitnessesStatus.REJECTED
             ? TransactionHistory.DECLINE
             : TransactionHistory.SIGN,
-        date: data.updatedAt,
+        date: witness.updatedAt,
         owner: {
           id,
           avatar,
