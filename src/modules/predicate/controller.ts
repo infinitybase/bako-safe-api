@@ -147,7 +147,13 @@ export class PredicateController {
         .paginate(undefined)
         .list()
         .then((data: Predicate[]) => data[0]);
-      return successful(response, Responses.Ok);
+
+      const _response = await this.predicateService.findById(
+        response.id,
+        undefined,
+      );
+
+      return successful(_response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }
@@ -182,7 +188,6 @@ export class PredicateController {
         });
 
       const predicate = await this.predicateService.findById(address, undefined);
-      console.log(predicate);
 
       const instance = await this.predicateService.instancePredicate(predicate.id);
       const balance = await instance.getBalance();

@@ -67,7 +67,13 @@ export class WitnessService implements IWitnessService {
   }
 
   async update(id: string, payload: IUpdateWitnessPayload): Promise<Witness> {
-    return await Witness.update({ id }, payload)
+    return await Witness.update(
+      { id },
+      {
+        ...payload,
+        updatedAt: new Date(),
+      },
+    )
       .then(async () => {
         return await this.findById(id);
       })
