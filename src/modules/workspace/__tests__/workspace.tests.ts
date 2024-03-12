@@ -187,7 +187,7 @@ describe('[WORKSPACE]', () => {
     const { data: data_user_aux } = await api.axios.post('/user/', {
       address: Address.fromRandom().toAddress(),
       provider: providers['local'].name,
-      name: `${new Date()}_2 - Create user test`,
+      name: `${new Date().getTime()}_2 - Create user test`,
     });
 
     const { data: workspace } = await api.axios.get(`/workspace/${data.id}`);

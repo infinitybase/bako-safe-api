@@ -48,12 +48,12 @@ describe('[ADDRESS_BOOK]', () => {
       const { data: data_user1 } = await api.axios.post('/user/', {
         address: Address.fromRandom().toAddress(),
         provider: providers['local'].name,
-        name: `${new Date()} - Create user test`,
+        name: `${new Date().getTime()} - Create user test`,
       });
       const { data: data_user2 } = await api.axios.post('/user/', {
         address: Address.fromRandom().toAddress(),
         provider: providers['local'].name,
-        name: `${new Date()} - Create user test`,
+        name: `${new Date().getTime()} - Create user test`,
       });
 
       const { data: _data, status } = await api.axios.post(`/workspace/`, {

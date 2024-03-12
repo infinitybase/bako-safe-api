@@ -26,6 +26,7 @@ describe('[TRANSACTION]', () => {
       await api.axios.post('/predicate', predicatePayload);
 
       const { tx, payload_transfer } = await transactionMock(vault);
+      console.log(payload_transfer);
       const { data: data_transaction } = await api.axios.post(
         '/transaction',
         payload_transfer,

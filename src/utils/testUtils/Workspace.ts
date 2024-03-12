@@ -1,27 +1,32 @@
 import { Address } from 'fuels';
 
 import { providers } from '@src/mocks/networks';
+import { TypeUser } from '@src/models';
 
 import { accounts } from '../../mocks/accounts';
 import { AuthValidations } from './Auth';
 
-const generateWorkspacePayload = async (api: AuthValidations) => {
-  const { data: data_user1 } = await api.axios.post('/user/', {
-    address: Address.fromRandom().toAddress(),
+const generateUser = async (api: AuthValidations) => {
+  const addRandom = Address.fromRandom().toAddress();
+  const { data } = await api.axios.post('/user/', {
+    address: addRandom,
     provider: providers['local'].name,
-    name: `${new Date()}_1 - Create user test`,
-  });
-  const { data: data_user2 } = await api.axios.post('/user/', {
-    address: Address.fromRandom().toAddress(),
-    provider: providers['local'].name,
-    name: `${new Date()}_2 - Create user test`,
+    name: `${new Date().getTime()} - Create user test`,
+    type: TypeUser.FUEL,
   });
 
-  const { data: USER_5 } = await api.axios.post('/user/', {
-    address: accounts['USER_5'].address,
-    provider: providers['local'].name,
-    name: `${new Date()}_3 - Create user test`,
-  });
+  return {
+    id: data.userId,
+    address: addRandom,
+    name: data.name,
+    type: TypeUser.FUEL,
+  };
+};
+
+const generateWorkspacePayload = async (api: AuthValidations) => {
+  const data_user1 = await generateUser(api);
+  const data_user2 = await generateUser(api);
+  const USER_5 = await generateUser(api);
 
   const { data, status } = await api.axios.post(`/workspace/`, {
     name: `[GENERATED] Workspace 1 ${new Date()}`,

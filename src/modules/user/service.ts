@@ -13,9 +13,10 @@ import Internal from '@src/utils/error/Internal';
 import { IOrdination, setOrdination } from '@src/utils/ordination';
 import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination';
 
+import { IconUtils } from '@utils/icons';
+
 import { WorkspaceService } from '../workspace/services';
 import { IFilterParams, IUserService, IUserPayload } from './types';
-import { IconUtils } from '@utils/icons';
 
 const { UI_URL } = process.env;
 
@@ -169,7 +170,7 @@ export class UserService implements IUserService {
   }
 
   async randomAvatar() {
-    const url = UI_URL || 'https://app.bsafe.pro';
+    const url = UI_URL || 'https://safe.bako.global';
     const avatars_json = await axios
       .get(`${url}/icons/icons.json`)
       .then(({ data }) => data);

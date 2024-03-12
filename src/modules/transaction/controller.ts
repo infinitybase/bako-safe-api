@@ -43,9 +43,7 @@ import {
 
 export class TransactionController {
   private transactionService: ITransactionService;
-  private predicateService: IPredicateService;
   private witnessService: IWitnessService;
-  private addressBookService: IAddressBookService;
   private notificationService: INotificationService;
 
   constructor(
@@ -187,6 +185,7 @@ export class TransactionController {
 
       return successful(newTransaction, Responses.Ok);
     } catch (e) {
+      console.log(e);
       return error(e.error, e.statusCode);
     }
   }

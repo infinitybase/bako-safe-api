@@ -24,7 +24,7 @@ describe('[USER]', () => {
       const code_length = 66;
       await api
         .post('/user/', {
-          name: `${new Date()} - Create user test`,
+          name: `${new Date().getTime()} - Create user test`,
           type: TypeUser.FUEL,
           address: Address.fromRandom().toAddress(),
           provider: defaultConfig['PROVIDER'],
@@ -33,7 +33,7 @@ describe('[USER]', () => {
           expect(status).toBe(201);
           expect(data).toHaveProperty('id');
           expect(data).toHaveProperty('type', RecoverCodeType.AUTH);
-          expect(data).toHaveProperty('origin', 'https://app.bsafe.pro');
+          expect(data).toHaveProperty('origin', 'https://safe.bako.global');
           expect(data).toHaveProperty('code');
           expect(data.code.length).toBe(code_length);
         });

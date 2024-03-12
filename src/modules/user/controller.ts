@@ -5,6 +5,7 @@ import { User } from '@src/models/User';
 import { bindMethods } from '@src/utils/bindMethods';
 
 import { BadRequest, ErrorTypes, error } from '@utils/error';
+import { IconUtils } from '@utils/icons';
 import { Responses, successful } from '@utils/index';
 
 import { PredicateService } from '../predicate/services';
@@ -22,7 +23,6 @@ import {
   IUpdateRequest,
   IUserService,
 } from './types';
-import { IconUtils } from '@utils/icons';
 
 export class UserController {
   private userService: IUserService;
@@ -133,49 +133,6 @@ export class UserController {
     }
   }
 
-  //todo: CREATE FLOW
-  /**
-   * - request a code to endpoint /auth/webauthn/code -> no required middleware
-   *    - add this code on database, with validAt equal now + 5 minutes
-   *    - return this code on request
-   *
-   *
-   * - request a create user to endpoint /auth/webauthn
-   *    - code(challange)
-   *    - webauthn -> {
-   *                        id,
-   *                        privateKey
-   *                   }
-   *    - address -> hexadecimal da fuel -> 0x..., convert using Address.fromB256(address)
-   *    - name -> unique
-   */
-
-  //todo: AUTH FLOW
-  /**
-   *    - change auth typings to use webauthn
-   *        -
-   *
-   *
-   *
-   *
-   *
-   *    - request a endpoint /auth/webauthn
-   *          -
-   *
-   *
-   *
-   *
-   *
-   *
-   */
-
-  /**
-   * to sign:
-   *    recives infos to create account
-   *    return a code to validate the user
-   *
-   */
-
   //verify used name
   async create(req: ICreateRequest) {
     try {
@@ -200,7 +157,7 @@ export class UserController {
         existingUser = await this.userService.create({
           ...req.body,
           name: name ?? address,
-        avatar: IconUtils.user(),
+          avatar: IconUtils.user(),
         });
       }
 
@@ -213,11 +170,15 @@ export class UserController {
         })
         .then((data: RecoverCode) => {
           const { owner, ...rest } = data;
-          return rest;
+          return {
+            ...rest,
+            userId: owner.id,
+          };
         });
 
       return successful(code, Responses.Created);
     } catch (e) {
+      console.log(e);
       return error(e.error, e.statusCode);
     }
   }

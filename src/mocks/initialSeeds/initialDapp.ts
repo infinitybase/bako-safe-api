@@ -11,7 +11,7 @@ export const generateInitialDapp = async (): Promise<Partial<DApp>> => {
 
   const t1: Partial<DApp> = {
     sessionId: crypto.randomUUID(),
-    origin: 'https://app.bsafe.pro',
+    origin: 'https://safe.bako.global',
     name: 'BSAFE - multsig',
     vaults: [predicate],
     currentVault: predicate,

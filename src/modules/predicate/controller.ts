@@ -1,9 +1,11 @@
+import axios from 'axios';
 import { TransactionStatus } from 'bsafe';
 import { bn } from 'fuels';
 
 import { Predicate } from '@src/models/Predicate';
 import { Workspace } from '@src/models/Workspace';
 import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
+import { IconUtils } from '@src/utils/icons';
 
 import {
   Asset,
@@ -29,8 +31,6 @@ import {
   IListRequest,
   IPredicateService,
 } from './types';
-import { IconUtils } from '@utils/icons';
-import axios from 'axios';
 
 export class PredicateController {
   private userService: IUserService;

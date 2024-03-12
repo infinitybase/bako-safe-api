@@ -1,15 +1,20 @@
 import axios, { AxiosInstance } from 'axios';
 import { IBSAFEAuth } from 'bsafe';
-import { createHash } from 'crypto';
 import { Provider, Wallet } from 'fuels';
 
-import { User, Encoder } from '@src/models';
+import { User, TypeUser } from '@src/models';
 
 import { IDefaultAccount } from '../../mocks/accounts';
 
+export type IUserAuth = {
+  id: string;
+  avatar: string;
+  address: string;
+};
+
 //todo: repply this class on SDK to user autentication resource
 export class AuthValidations {
-  public user: User;
+  public user: IUserAuth;
   public authToken: IBSAFEAuth;
   public axios: AxiosInstance;
   public workspace: {
@@ -17,6 +22,7 @@ export class AuthValidations {
     name: string;
     avatar: string;
   };
+  public code: string;
 
   constructor(
     private readonly provider: string,
@@ -30,39 +36,35 @@ export class AuthValidations {
     const { data } = await this.axios.post('/user', {
       address: this.account.address,
       provider: this.provider,
+      type: TypeUser.FUEL,
     });
 
-    this.user = data;
-
-    return data;
+    this.code = data.code;
   }
 
   async createSession() {
-    const { address, provider, id } = this.user;
-    const message = {
-      address,
-      hash: createHash('sha256').toString(),
-      createdAt: new Date().toISOString(),
-      encoder: Encoder.FUEL,
-      provider,
-      user_id: id,
-    };
-
-    const tx = await this.signer(JSON.stringify(message));
+    const tx = await this.signer(this.code);
 
     const { data } = await this.axios.post('/auth/sign-in', {
-      ...message,
+      digest: this.code,
+      encoder: TypeUser.FUEL,
       signature: tx,
     });
 
     this.axios.defaults.headers.common['Authorization'] = data.accessToken;
-    this.axios.defaults.headers.common['Signeraddress'] = this.account.address;
+    this.axios.defaults.headers.common['Signeraddress'] = data.address;
     this.authToken = {
-      address,
+      address: data.address,
       token: data.accessToken,
     };
+
+    this.user = {
+      id: data.user_id,
+      address: data.address,
+      avatar: data.avatar,
+    };
+
     this.workspace = data.workspace;
-    return data;
   }
 
   async selectWorkspace(workspaceId: string) {
