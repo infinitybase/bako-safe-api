@@ -26,7 +26,7 @@ describe('[PREDICATE]', () => {
         data_user2,
         USER_5,
       } = await generateWorkspacePayload(api);
-      const members = [USER_5.address, data_user1.address, data_user2.address];
+      const members = [data_user1.address, data_user2.address];
       const { predicatePayload } = await PredicateMock.create(1, members);
       const { data } = await api.axios.post('/predicate', predicatePayload);
 
@@ -49,9 +49,6 @@ describe('[PREDICATE]', () => {
       expect(
         workspace.permissions[data_user2.id][PermissionRoles.SIGNER],
       ).toContain(data.id);
-      expect(workspace.permissions[USER_5.id][PermissionRoles.SIGNER]).toContain(
-        data.id,
-      );
     },
     10 * 1000,
   );

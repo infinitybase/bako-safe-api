@@ -52,13 +52,9 @@ describe('[TRANSACTION]', () => {
       const auth = new AuthValidations(networks['local'], accounts['USER_3']);
       await auth.create();
       await auth.createSession();
-      const {
-        data,
-        status,
-        data_user1,
-        data_user2,
-        USER_5,
-      } = await generateWorkspacePayload(auth);
+      const { data_user1, data_user2, USER_5 } = await generateWorkspacePayload(
+        auth,
+      );
 
       //gerar um predicate
       const members = [data_user1.address, data_user2.address, USER_5.address];
@@ -71,7 +67,7 @@ describe('[TRANSACTION]', () => {
       const {
         status: status_transaction,
         data: data_transaction,
-      } = await auth.axios.post('/transaction', payload_transfer).catch(e => {
+      } = await api.axios.post('/transaction', payload_transfer).catch(e => {
         return e.response;
       });
 

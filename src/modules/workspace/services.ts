@@ -1,8 +1,6 @@
 import { defaultConfig } from 'bsafe';
 
-
 import { TypeUser, User, PermissionAccess } from '@src/models';
-
 import {
   IPermissions,
   PermissionRoles,
@@ -15,9 +13,10 @@ import Internal from '@src/utils/error/Internal';
 import { IOrdination, setOrdination } from '@src/utils/ordination';
 import { PaginationParams, IPagination, Pagination } from '@src/utils/pagination';
 
+import { IconUtils } from '@utils/icons';
+
 import { UserService } from '../user/service';
 import { IFilterParams, IWorkspaceService } from './types';
-import { IconUtils } from '@utils/icons';
 
 export class WorkspaceService implements IWorkspaceService {
   private _ordination: IOrdination<Workspace> = {
@@ -168,7 +167,6 @@ export class WorkspaceService implements IWorkspaceService {
                     provider: defaultConfig['PROVIDER'],
                     avatar: IconUtils.user(),
                     type: TypeUser.FUEL,
-
                   });
                 }
                 return data;

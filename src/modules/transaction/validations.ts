@@ -19,12 +19,11 @@ export const validateAddTransactionPayload = validator.body(
         assetId: Joi.string().required(),
         to: Joi.string().required(),
         amount: Joi.string().required(),
-        utxo: Joi.string().allow('').required(),
       })
       .required(),
-    sendTime: Joi.string(),
-    gasUsed: Joi.string(),
-    resume: Joi.string(),
+    sendTime: Joi.string().optional(),
+    gasUsed: Joi.string().optional(),
+    resume: Joi.string().optional(),
   }),
 );
 

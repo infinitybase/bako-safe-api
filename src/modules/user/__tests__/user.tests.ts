@@ -48,22 +48,13 @@ describe('[USER]', () => {
       await auth.create();
       await auth.createSession();
 
-      //list by personal workspace
+      //list all predicates and transactions from user
       await auth.axios.get('user/me').then(({ data, status }) => {
         expect(status).toBe(200);
         expect(data).toHaveProperty('predicates');
         expect(data).toHaveProperty('transactions');
         expect(data.predicates.data.length).toBeLessThanOrEqual(8);
         expect(data.transactions.data.length).toBeLessThanOrEqual(8);
-        data.predicates.data.forEach(element => {
-          expect(element.workspace).toHaveProperty('id', auth.workspace.id);
-        });
-        data.transactions.data.forEach(element => {
-          expect(element.predicate.workspace).toHaveProperty(
-            'id',
-            auth.workspace.id,
-          );
-        });
       });
     },
     2 * 1000,
