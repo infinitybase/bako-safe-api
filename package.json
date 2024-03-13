@@ -18,8 +18,8 @@
     "database:stop": "make -C ./ database-down env_file=.env",
     "database:test": "make -C ./ database-init env_file=.env.test",
     "chain:start": "make -C ./docker/chain up",
-    "run:prod": "make -C ./ prod env_file=.env.prod",
-    "run:stg": "make -C ./ stg env_file=.env.staging",
+    "run:prod": "make -C ./ deploy-prod env_file=.env.prod",
+    "run:stg": "make -C ./ deploy-stg env_file=.env.staging",
     "run:test": "make -C ./ deploy-test env_file=.env.test"
   },
   "dependencies": {
