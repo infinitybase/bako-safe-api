@@ -55,7 +55,7 @@ const development: ConnectionOptions = {
 const test: ConnectionOptions = {
   type: 'postgres',
   host: DATABASE_HOST,
-  port: Number(process.env.DATABASE_PORT_TEST),
+  port: Number(process.env.DATABASE_PORT),
   username: DATABASE_USERNAME,
   password: DATABASE_PASSWORD,
   database: DATABASE_NAME,

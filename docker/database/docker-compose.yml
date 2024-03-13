@@ -8,6 +8,8 @@ services:
       POSTGRES_USER: ${DATABASE_USERNAME}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
     volumes:
-      - ./postgresql:/var/lib/postgresql/data
+      - ./postgresql${DATABASE_ENVIRONMENT}:/var/lib/postgresql/data
     ports:
       - "${DATABASE_PORT}:${DATABASE_PORT}"
+    labels:
+      - environment=${DATABASE_ENVIRONMENT}

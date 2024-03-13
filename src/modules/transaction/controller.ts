@@ -281,10 +281,6 @@ export class TransactionController {
       });
     }
 
-    // results.sort((a, b) => {
-    //   return new Date(a.date).getTime() - new Date(b.date).getTime();
-    // });
-
     return results;
   }
 
@@ -336,7 +332,6 @@ export class TransactionController {
   }: ISignByIdRequest) {
     try {
       const transaction = await this.transactionService.findById(id);
-      //console.log('[ASSINATURA] --------->');
       const {
         witnesses,
         resume,
@@ -349,17 +344,6 @@ export class TransactionController {
 
       const witness = witnesses.find(w => w.account === account);
 
-      // console.log(
-      //   '[VALIDACAO DE ASSINATURA]: ',
-      //   Signer.recoverAddress(hashMessage(hash), signer).toString(),
-      // );
-      //validate signature
-
-      // console.log(
-      //   '[VALIDACAO DE ASSINATURA]: ',
-      //   acc_signed,
-      //   Signer.recoverAddress(hashMessage(hash), signer).toString(),
-      // );
       if (signer && confirm === 'true') {
         const acc_signed =
           Signer.recoverAddress(hashMessage(hash), signer).toString() ==
@@ -449,91 +433,6 @@ export class TransactionController {
       return error(e.error, e.statusCode);
     }
   }
-
-  // async list(req: IListRequest) {
-  //   const {
-  //     predicateId,
-  //     to,
-  //     status,
-  //     orderBy,
-  //     sort,
-  //     page,
-  //     perPage,
-  //     limit,
-  //     endDate,
-  //     startDate,
-  //     createdBy,
-  //     name,
-  //     allOfUser,
-  //     id,
-  //   } = req.query;
-  //   const { user } = req;
-
-  //   const _predicateId =
-  //     typeof predicateId == 'string' ? [predicateId] : predicateId;
-  //   const hasPagination = !!page && !!perPage;
-
-  //   try {
-  //     const predicateIds: string[] = allOfUser
-  //       ? await this.predicateService
-  //           .filter({ signer: user.address })
-  //           .paginate(undefined)
-  //           .list()
-  //           .then((data: Predicate[]) => {
-  //             return data.map(predicate => predicate.id);
-  //           })
-  //       : predicateId
-  //       ? _predicateId
-  //       : undefined;
-
-  //     if (predicateIds && predicateIds.length === 0)
-  //       return successful([], Responses.Ok);
-
-  //     let response = await this.transactionService
-  //       .filter({
-  //         predicateId: predicateIds,
-  //         to,
-  //         status,
-  //         endDate,
-  //         startDate,
-  //         createdBy,
-  //         name,
-  //         limit,
-  //         id,
-  //       })
-  //       .ordination({ orderBy, sort })
-  //       .paginate({ page, perPage })
-  //       .list();
-
-  //     let data = hasPagination
-  //       ? (response as IPagination<Transaction>).data
-  //       : (response as Transaction[]);
-
-  //     const assets = data.map(i => i.assets);
-  //     const recipientAddresses = assets.flat().map(i => i.to);
-  //     const favorites = (await this.addressBookService
-  //       .filter({ owner: [user.id], contactAddresses: recipientAddresses })
-  //       .list()) as AddressBook[];
-
-  //     if (favorites.length > 0) {
-  //       data = (data.map(transaction => ({
-  //         ...transaction,
-  //         assets: transaction.assets.map(asset => ({
-  //           ...asset,
-  //           recipientNickname:
-  //             favorites?.find(favorite => favorite.user.address === asset.to)
-  //               ?.nickname ?? undefined,
-  //         })),
-  //       })) as unknown) as Transaction[];
-  //     }
-
-  //     response = hasPagination ? { ...response, data } : data;
-
-  //     return successful(response, Responses.Ok);
-  //   } catch (e) {
-  //     return error(e.error, e.statusCode);
-  //   }
-  // }
 
   async list(req: IListRequest) {
     try {
@@ -631,7 +530,6 @@ export class TransactionController {
 
   async verifyOnChain({ params: { id } }: ISendTransactionRequest) {
     try {
-      //console.log('[VERIFY_ON_CHAIN_CONTROLLER]');
       const api_transaction = await this.transactionService.findById(id);
       const { predicate, name, id: transactionId } = api_transaction;
       const provider = await Provider.create(predicate.provider);
@@ -642,23 +540,6 @@ export class TransactionController {
         api_transaction,
         provider,
       );
-
-      //console.log('[CONTROLLER]: ', result);
-      // NOTIFY MEMBERS ON TRANSACTIONS SUCCESS (first solution, now is on the service)
-      // if (result.status === TransactionStatus.SUCCESS) {
-      //   for await (const member of predicate.members) {
-      //     await this.notificationService.create({
-      //       title: NotificationTitle.TRANSACTION_COMPLETED,
-      //       summary: {
-      //         vaultId: predicate.id,
-      //         vaultName: predicate.name,
-      //         transactionId: transactionId,
-      //         transactionName: name,
-      //       },
-      //       user_id: member.id,
-      //     });
-      //   }
-      // }
 
       return successful(result, Responses.Ok);
     } catch (e) {
