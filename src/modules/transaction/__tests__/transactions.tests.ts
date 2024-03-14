@@ -4,7 +4,7 @@ import { Address } from 'fuels';
 import { accounts } from '@src/mocks/accounts';
 import { networks } from '@src/mocks/networks';
 import { PredicateMock } from '@src/mocks/predicate';
-import { transaction, transactionMock } from '@src/mocks/transaction';
+import { transactionMock } from '@src/mocks/transaction';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
 import { generateWorkspacePayload } from '@src/utils/testUtils/Workspace';
 
@@ -126,7 +126,7 @@ describe('[TRANSACTION]', () => {
   );
 
   test('List transactions', async () => {
-    const auth = new AuthValidations(networks['local'], accounts['USER_1']);
+    const auth = new AuthValidations(networks['local'], accounts['USER_5']);
     await auth.create();
     await auth.createSession();
 
@@ -157,6 +157,7 @@ describe('[TRANSACTION]', () => {
     await auth.axios
       .get(`/transaction?page=${page}&perPage=${perPage}`)
       .then(({ data, status }) => {
+        console.log('[TRANSACTION]: ', data);
         expect(status).toBe(200);
         expect(data).toHaveProperty('data');
         expect(data.data.length).toBeLessThanOrEqual(perPage);
