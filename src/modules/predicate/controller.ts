@@ -161,7 +161,7 @@ export class PredicateController {
 
   async hasReservedCoins({ params: { address } }: IFindByHashRequest) {
     try {
-      console.log('[HAS_RESERVED_COINS]: ');
+      // console.log('[HAS_RESERVED_COINS]: ');
       //console.log('[HAS_RESERVED_COINS]: ', address);
       const response = await this.transactionService
         .filter({

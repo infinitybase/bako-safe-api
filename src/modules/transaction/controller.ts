@@ -446,6 +446,7 @@ export class TransactionController {
         createdBy,
         predicateId,
         name,
+        id,
       } = req.query;
       const { workspace, user } = req;
 
@@ -468,6 +469,7 @@ export class TransactionController {
 
       const result = await new TransactionService()
         .filter({
+          id,
           to,
           status: status ?? undefined,
           createdBy,
