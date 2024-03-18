@@ -11,9 +11,12 @@ cleanup() {
   
   # Encerra todos os containers Docker ativos
   echo "Parando todos os containers Docker ativos..."
-  docker stop $(docker ps -q)
-  docker container prune --filter "label=environment=test"
-  docker image prune -a --filter "label=environment=test"
+  docker stop $(docker ps --filter "label=environment=test" -q)
+  # Para remover todos os containers Docker parados automaticamente
+  yes | docker container prune --filter "label=environment=test"
+
+  # Para remover todas as imagens Docker não utilizadas automaticamente
+  yes | docker image prune -a --filter "label=environment=test" 
   rm -r ./docker/database/postgresqltest
 
   # Adicione comandos adicionais de limpeza, se necessário
@@ -29,11 +32,10 @@ yarn chain:start
 # Aguarda um momento para assegurar que o banco de dados está pronto
 sleep 10
 
-# Executa as migrações do banco de dados ou outra preparação necessária
+# Se a porta estiver disponível, executa o servidor de desenvolvimento
 yarn dev &
 # Salva o PID do processo de desenvolvimento
 DEV_PID=$!
-
 # Espera um momento para garantir que a aplicação está rodando
 sleep 20
 
@@ -45,3 +47,8 @@ cleanup
 
 # Sai do script
 exit 0
+
+#todo:
+  # - adicionar o comando yarn dev para receber um arquivo dinamico de variaveis de ambiente
+  # - permitir que seja possível executar um banco de testes e um banco de dev ao mesmo tempo
+  # - criar um script que execute o teste.only, como parametro deve receber apenas o nome do teste
