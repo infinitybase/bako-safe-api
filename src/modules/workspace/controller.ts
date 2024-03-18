@@ -65,7 +65,6 @@ export class WorkspaceController {
 
       return successful(response, Responses.Created);
     } catch (e) {
-      console.log(e);
       return error(e.error, e.statusCode);
     }
   }

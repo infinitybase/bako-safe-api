@@ -157,7 +157,6 @@ describe('[TRANSACTION]', () => {
     await auth.axios
       .get(`/transaction?page=${page}&perPage=${perPage}`)
       .then(({ data, status }) => {
-        console.log('[TRANSACTION]: ', data);
         expect(status).toBe(200);
         expect(data).toHaveProperty('data');
         expect(data.data.length).toBeLessThanOrEqual(perPage);
