@@ -22,6 +22,7 @@ const notificationService = new NotificationService();
 const {
   create,
   findById,
+  findByName,
   list,
   findByAddress,
   delete: deleteService,
@@ -50,6 +51,7 @@ router.get('/', handleResponse(list));
 router.get('/:id', handleResponse(findById));
 router.get('/reserved-coins/:address', handleResponse(hasReservedCoins));
 router.get('/by-address/:address', handleResponse(findByAddress));
+router.get('/by-name/:workspaceId', handleResponse(findByName));
 //router.delete('/:id', handleResponse(deleteService));
 
 export default router;

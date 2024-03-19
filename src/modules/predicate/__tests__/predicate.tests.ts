@@ -1,6 +1,3 @@
-import exp from 'constants';
-import { add } from 'date-fns';
-
 import { accounts } from '@src/mocks/accounts';
 import { networks } from '@src/mocks/networks';
 import { PredicateMock } from '@src/mocks/predicate';
@@ -202,5 +199,21 @@ describe('[PREDICATE]', () => {
         //validate vault
         expect(id).toBe(data_predicate.id);
       });
+  });
+
+  test('Find predicate by name and verify if exists in workspace', async () => {
+    const auth = new AuthValidations(networks['local'], accounts['USER_1']);
+    await auth.create();
+    await auth.createSession();
+
+    const { data: data_workspace } = await generateWorkspacePayload(auth);
+    await auth.selectWorkspace(data_workspace.id);
+
+    //find predicate by workspaceId
+    const { data: predicate } = await auth.axios.get<boolean>(
+      `/predicate/by-name/${api.workspace.id}&name=teste`,
+    );
+
+    expect(predicate).toBeTruthy();
   });
 });
