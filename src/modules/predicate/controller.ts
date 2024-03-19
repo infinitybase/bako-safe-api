@@ -161,15 +161,14 @@ export class PredicateController {
   }
 
   async findByName(req: IFindByNameRequest) {
-    const { params, query } = req;
-    const { workspaceId } = params;
-    const { name } = query;
+    const { params, workspace } = req;
+    const { name } = params;
 
     try {
       const response = await this.predicateService
         .filter({
           name,
-          workspace: [workspaceId],
+          workspace: [workspace.id],
         })
         .paginate(undefined)
         .list()

@@ -49,9 +49,8 @@ router.post(
 );
 router.get('/', handleResponse(list));
 router.get('/:id', handleResponse(findById));
+router.get('/by-name/:name', handleResponse(findByName));
 router.get('/reserved-coins/:address', handleResponse(hasReservedCoins));
 router.get('/by-address/:address', handleResponse(findByAddress));
-router.get('/by-name/:workspaceId', handleResponse(findByName));
-//router.delete('/:id', handleResponse(deleteService));
 
 export default router;

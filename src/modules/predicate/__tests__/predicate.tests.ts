@@ -1,3 +1,5 @@
+import crypto from 'crypto';
+
 import { accounts } from '@src/mocks/accounts';
 import { networks } from '@src/mocks/networks';
 import { PredicateMock } from '@src/mocks/predicate';
@@ -206,14 +208,42 @@ describe('[PREDICATE]', () => {
     await auth.create();
     await auth.createSession();
 
-    const { data: data_workspace } = await generateWorkspacePayload(auth);
-    await auth.selectWorkspace(data_workspace.id);
+    const {
+      data_user1,
+      data_user2,
+      data: workspace,
+    } = await generateWorkspacePayload(auth);
+    const members = [data_user1.address, data_user2.address];
+    const { predicatePayload } = await PredicateMock.create(1, members);
 
-    //find predicate by workspaceId
-    const { data: predicate } = await auth.axios.get<boolean>(
-      `/predicate/by-name/${api.workspace.id}&name=teste`,
+    const { data: predicate } = await auth.axios.post(
+      '/predicate',
+      predicatePayload,
     );
 
-    expect(predicate).toBeTruthy();
+    //find a used name
+    await auth
+      .axios(`/predicate/by-name/${predicate.name}`)
+      .then(({ data, status }) => {
+        expect(status).toBe(200);
+        expect(data).toBe(true);
+      });
+
+    //find a unused name
+    await auth
+      .axios(`/predicate/by-name/${crypto.randomUUID()}`)
+      .then(({ data, status }) => {
+        expect(status).toBe(200);
+        expect(data).toBe(false);
+      });
+
+    //find a used name in annother workspace
+    await auth.selectWorkspace(workspace.id);
+    await auth
+      .axios(`/predicate/by-name/${predicate.name}`)
+      .then(({ data, status }) => {
+        expect(status).toBe(200);
+        expect(data).toBe(false);
+      });
   });
 });

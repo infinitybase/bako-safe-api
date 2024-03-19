@@ -195,23 +195,10 @@ export class PredicateService implements IPredicateService {
         }),
       );
 
-    // =============== specific for workspace ===============
-    this._filter.workspace &&
-      this._filter.name &&
-      queryBuilder.andWhere(
-        new Brackets(qb => {
-          if (this._filter.workspace) {
-            qb.andWhere('workspace.id IN (:...workspace)', {
-              workspace: this._filter.workspace,
-            });
-          }
-          qb.andWhere('LOWER(p.name) LIKE LOWER(:name)', {
-            name: `%${this._filter.name}%`,
-          });
-        }),
-      );
-    // =============== specific for workspace ===============
-    //console.log('[PREDICATE_FILTER]: ', this._filter);
+    queryBuilder.andWhere('p.name = :name', {
+      name: this._filter.name,
+    });
+
     // =============== specific for home ===============
     (this._filter.workspace || this._filter.signer) &&
       queryBuilder.andWhere(

@@ -68,8 +68,7 @@ interface IFindByHashRequestSchema extends ValidatedRequestSchema {
 }
 
 interface IFindByNameRequestSchema extends ValidatedRequestSchema {
-  [ContainerTypes.Params]: { workspaceId: string };
-  [ContainerTypes.Query]: {
+  [ContainerTypes.Params]: {
     name: string;
   };
 }
