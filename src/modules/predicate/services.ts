@@ -3,11 +3,7 @@ import { Provider } from 'fuels';
 import { Brackets } from 'typeorm';
 
 import { NotFound } from '@src/utils/error';
-import {
-  IDefaultOrdination,
-  IOrdination,
-  setOrdination,
-} from '@src/utils/ordination';
+import { IOrdination, setOrdination } from '@src/utils/ordination';
 import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination';
 
 import { Predicate } from '@models/index';
@@ -196,6 +192,22 @@ export class PredicateService implements IPredicateService {
               workspace: this._filter.workspace,
             });
           }
+        }),
+      );
+
+    // =============== specific for workspace ===============
+    this._filter.workspace &&
+      this._filter.name &&
+      queryBuilder.andWhere(
+        new Brackets(qb => {
+          if (this._filter.workspace) {
+            qb.andWhere('workspace.id IN (:...workspace)', {
+              workspace: this._filter.workspace,
+            });
+          }
+          qb.andWhere('LOWER(p.name) LIKE LOWER(:name)', {
+            name: `%${this._filter.name}%`,
+          });
         }),
       );
     // =============== specific for workspace ===============

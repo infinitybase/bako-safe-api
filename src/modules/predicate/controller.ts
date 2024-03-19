@@ -28,6 +28,7 @@ import {
   IDeletePredicateRequest,
   IFindByHashRequest,
   IFindByIdRequest,
+  IFindByNameRequest,
   IListRequest,
   IPredicateService,
 } from './types';
@@ -154,6 +155,27 @@ export class PredicateController {
       );
 
       return successful(_response, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async findByName(req: IFindByNameRequest) {
+    const { params, query } = req;
+    const { workspaceId } = params;
+    const { name } = query;
+
+    try {
+      const response = await this.predicateService
+        .filter({
+          name,
+          workspace: [workspaceId],
+        })
+        .paginate(undefined)
+        .list()
+        .then((data: Predicate[]) => data[0]);
+
+      return successful(!!response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }

@@ -39,6 +39,7 @@ export interface IPredicateMemberPayload {
 
 export interface IPredicateFilterParams {
   q?: string;
+  name?: string;
   address?: string;
   signer?: string;
   provider?: string;
@@ -65,6 +66,14 @@ interface IFindByIdRequestSchema extends ValidatedRequestSchema {
 interface IFindByHashRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Params]: { address: string };
 }
+
+interface IFindByNameRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Params]: { workspaceId: string };
+  [ContainerTypes.Query]: {
+    name: string;
+  };
+}
+
 interface IListRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Query]: {
     q: string;
@@ -85,6 +94,7 @@ export type IDeletePredicateRequest = AuthValidatedRequest<IDeletePredicateReque
 export type IFindByIdRequest = AuthValidatedRequest<IFindByIdRequestSchema>;
 export type IFindByHashRequest = AuthValidatedRequest<IFindByHashRequestSchema>;
 export type IListRequest = AuthValidatedRequest<IListRequestSchema>;
+export type IFindByNameRequest = AuthValidatedRequest<IFindByNameRequestSchema>;
 
 export interface IPredicateService {
   ordination(ordination?: IOrdination<Predicate>): this;
