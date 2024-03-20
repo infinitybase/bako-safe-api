@@ -195,9 +195,10 @@ export class PredicateService implements IPredicateService {
         }),
       );
 
-    queryBuilder.andWhere('p.name = :name', {
-      name: this._filter.name,
-    });
+    this._filter.name &&
+      queryBuilder.andWhere('p.name = :name', {
+        name: this._filter.name,
+      });
 
     // =============== specific for home ===============
     (this._filter.workspace || this._filter.signer) &&
