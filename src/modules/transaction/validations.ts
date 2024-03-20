@@ -19,6 +19,7 @@ export const validateAddTransactionPayload = validator.body(
         assetId: Joi.string().required(),
         to: Joi.string().required(),
         amount: Joi.string().required(),
+        utxo: Joi.string().optional(),
       })
       .required(),
     sendTime: Joi.string().optional(),
