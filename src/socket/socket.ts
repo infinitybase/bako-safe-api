@@ -1,4 +1,4 @@
-import { BSAFEConnectorEvents } from 'bsafe';
+import { BakoSafeConnectors } from 'bsafe';
 import { Socket, Server, ServerOptions } from 'socket.io';
 
 import { popAuth } from '@src/socket/calbacks';
@@ -37,7 +37,7 @@ class SocketIOServer extends Server {
 
       next();
     });
-    this.io.on(BSAFEConnectorEvents.CONNECTION, (socket: Socket) => {
+    this.io.on(BakoSafeConnectors.CONNECTION, (socket: Socket) => {
       const { origin, sessionId } = socket.handshake.auth;
 
       const room = `${sessionId}:${origin}`;
@@ -45,12 +45,12 @@ class SocketIOServer extends Server {
       socket.join(room);
     });
 
-    this.io.on(BSAFEConnectorEvents.CONNECTION, socket => {
+    this.io.on(BakoSafeConnectors.CONNECTION, socket => {
       const { origin, sessionId, username } = socket.handshake.auth;
       const room = `${sessionId}:${origin}`;
 
-      console.log(BSAFEConnectorEvents.CONNECTION, room, `${username}_connected`);
-      socket.to(room).emit(BSAFEConnectorEvents.DEFAULT, {
+      console.log(BakoSafeConnectors.CONNECTION, room, `${username}_connected`);
+      socket.to(room).emit(BakoSafeConnectors.DEFAULT, {
         type: `${username}_connected`,
         data: [true],
       });
@@ -60,10 +60,10 @@ class SocketIOServer extends Server {
         - envia o tx hash da transacao criada na BSAFEAPI
       */
       socket.on(
-        BSAFEConnectorEvents.TRANSACTION_CREATED,
+        BakoSafeConnectors.TRANSACTION_CREATED,
         async ({ content, to }: ISocketEvent) => {
-          console.log(BSAFEConnectorEvents.TRANSACTION_CREATED, content, to);
-          popAuth[BSAFEConnectorEvents.TRANSACTION_CREATED](socket, {
+          console.log(BakoSafeConnectors.TRANSACTION_CREATED, content, to);
+          popAuth[BakoSafeConnectors.TRANSACTION_CREATED](socket, {
             content,
             to,
           });
@@ -73,10 +73,10 @@ class SocketIOServer extends Server {
         [REPASSA TRANSACAO PARA A POPUP: DAPP -> POPUP_TRANSFER]
       */
       socket.on(
-        BSAFEConnectorEvents.TRANSACTION_SEND,
+        BakoSafeConnectors.TRANSACTION_SEND,
         async ({ content, to }: ISocketEvent) => {
-          console.log(BSAFEConnectorEvents.TRANSACTION_SEND, content, to);
-          popAuth[BSAFEConnectorEvents.TRANSACTION_SEND](socket, { content, to });
+          console.log(BakoSafeConnectors.TRANSACTION_SEND, content, to);
+          popAuth[BakoSafeConnectors.TRANSACTION_SEND](socket, { content, to });
         },
       );
 
@@ -86,10 +86,10 @@ class SocketIOServer extends Server {
         - setta o vault escolhido para current vault
       */
       socket.on(
-        BSAFEConnectorEvents.AUTH_CONFIRMED,
+        BakoSafeConnectors.AUTH_CONFIRMED,
         async ({ content, to }: ISocketEvent) => {
-          console.log(BSAFEConnectorEvents.AUTH_CONFIRMED, content, to);
-          popAuth[BSAFEConnectorEvents.AUTH_CONFIRMED](socket, { content, to });
+          console.log(BakoSafeConnectors.AUTH_CONFIRMED, content, to);
+          popAuth[BakoSafeConnectors.AUTH_CONFIRMED](socket, { content, to });
         },
       );
 
@@ -102,10 +102,10 @@ class SocketIOServer extends Server {
           - currentAccount
       */
       socket.on(
-        BSAFEConnectorEvents.AUTH_DISCONECT_DAPP,
+        BakoSafeConnectors.AUTH_DISCONECT_DAPP,
         async ({ content, to }: ISocketEvent) => {
-          console.log(BSAFEConnectorEvents.AUTH_DISCONECT_DAPP, content, to);
-          popAuth[BSAFEConnectorEvents.AUTH_DISCONECT_DAPP](socket, {
+          console.log(BakoSafeConnectors.AUTH_DISCONECT_DAPP, content, to);
+          popAuth[BakoSafeConnectors.AUTH_DISCONECT_DAPP](socket, {
             content,
             to,
           });
@@ -114,7 +114,7 @@ class SocketIOServer extends Server {
     });
 
     //todo: implementar, atualmente esse evento não é disparado
-    // this.io.on(BSAFEConnectorEvents.DISCONNECT, socket => {
+    // this.io.on(BakoSafeConnectors.DISCONNECT, socket => {
     //   socket.broadcast.emit('user disconnected', {
     //     userID: socket.id,
     //     username: socket.username,
