@@ -1,4 +1,4 @@
-import { IConfVault, Vault } from 'bsafe';
+import { IConfVault, Vault } from 'bako-safe';
 import { Provider } from 'fuels';
 import { Brackets } from 'typeorm';
 

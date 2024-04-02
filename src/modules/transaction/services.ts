@@ -4,7 +4,7 @@ import {
   TransactionStatus,
   Transfer,
   Vault,
-} from 'bsafe';
+} from 'bako-safe';
 import {
   Provider,
   TransactionRequest,

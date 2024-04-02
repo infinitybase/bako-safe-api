@@ -1,4 +1,4 @@
-import { BSafe } from 'bsafe';
+import { BSafe } from 'bako-safe';
 
 import App from './app';
 import Bootstrap from './bootstrap';

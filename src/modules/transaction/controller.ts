@@ -1,4 +1,4 @@
-import { ITransactionResume, TransactionStatus } from 'bsafe';
+import { ITransactionResume, TransactionStatus } from 'bako-safe';
 import { Provider, Signer, hashMessage } from 'fuels';
 
 import { PermissionRoles, Workspace } from '@src/models/Workspace';

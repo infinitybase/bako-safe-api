@@ -4,7 +4,7 @@ import {
   TransactionStatus,
   Transfer,
   Vault,
-} from 'bsafe';
+} from 'bako-safe';
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 import { Provider, TransactionRequest } from 'fuels';
 

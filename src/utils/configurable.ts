@@ -1,4 +1,4 @@
-import { defaultConfig as conf } from 'bsafe';
+import { defaultConfig as conf } from 'bako-safe';
 
 export const defaultConfigurable = {
   provider: conf['PROVIDER'],

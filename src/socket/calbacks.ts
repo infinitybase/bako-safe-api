@@ -1,4 +1,4 @@
-import { BakoSafeConnectors } from 'bsafe';
+import { BakoSafeConnectors } from 'bako-safe';
 
 import { Transaction } from '@src/models';
 import { DAppsService } from '@src/modules/dApps';

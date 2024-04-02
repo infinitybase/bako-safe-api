@@ -1,4 +1,4 @@
-import { defaultConfig } from 'bsafe';
+import { defaultConfig } from 'bako-safe';
 
 import { TypeUser, User, PermissionAccess } from '@src/models';
 import {

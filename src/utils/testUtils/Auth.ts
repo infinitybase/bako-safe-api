@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
-import { IBSAFEAuth } from 'bsafe';
+import { IBSAFEAuth } from 'bako-safe';
 import { Provider, Wallet } from 'fuels';
 
 import { User, TypeUser } from '@src/models';

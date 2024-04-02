@@ -1,4 +1,4 @@
-import { BakoSafeConnectors } from 'bsafe';
+import { BakoSafeConnectors } from 'bako-safe';
 import { Socket, Server, ServerOptions } from 'socket.io';
 
 import { popAuth } from '@src/socket/calbacks';
@@ -37,6 +37,7 @@ class SocketIOServer extends Server {
 
       next();
     });
+
     this.io.on(BakoSafeConnectors.CONNECTION, (socket: Socket) => {
       const { origin, sessionId } = socket.handshake.auth;
 
