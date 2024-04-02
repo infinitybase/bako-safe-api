@@ -4,7 +4,7 @@ import {
   TransactionStatus,
   Transfer,
   Vault,
-} from 'bako-safe';
+} from 'bakosafe';
 import {
   Provider,
   TransactionRequest,
@@ -338,7 +338,7 @@ export class TransactionService implements ITransactionService {
     vault: Vault,
     witnesses: string[],
   ): Promise<Transfer> {
-    return await vault.BSAFEIncludeTransaction({
+    return await vault.BakoSafeIncludeTransaction({
       ...tx_data,
       witnesses,
     });

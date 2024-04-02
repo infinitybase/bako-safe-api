@@ -1,4 +1,4 @@
-import { TransactionStatus } from 'bako-safe';
+import { TransactionStatus } from 'bakosafe';
 import Joi from 'joi';
 
 import { validator } from '@utils/index';

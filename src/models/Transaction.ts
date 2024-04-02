@@ -2,7 +2,7 @@ import {
   TransactionStatus,
   ITransactionResume,
   ITransactionSummary,
-} from 'bako-safe';
+} from 'bakosafe';
 import { TransactionRequest } from 'fuels';
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 

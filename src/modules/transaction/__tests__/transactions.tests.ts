@@ -1,4 +1,4 @@
-import { TransactionStatus } from 'bako-safe';
+import { TransactionStatus } from 'bakosafe';
 import { Address } from 'fuels';
 
 import { accounts } from '@src/mocks/accounts';

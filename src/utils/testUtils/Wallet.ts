@@ -1,4 +1,4 @@
-import { defaultConfig, Vault } from 'bako-safe';
+import { defaultConfig, Vault } from 'bakosafe';
 import { BN, Wallet, Provider, bn } from 'fuels';
 
 import { assets } from '@src/mocks/assets';

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { TransactionStatus } from 'bako-safe';
+import { TransactionStatus } from 'bakosafe';
 import { bn } from 'fuels';
 
 import { Predicate } from '@src/models/Predicate';

@@ -9,7 +9,6 @@ const YEAR = new Date().getFullYear();
 
 const LOGO = 'https://besafe-asset.s3.amazonaws.com/BAKO_SAFE.png';
 
-
 export interface EmailParams {
   [value: string]: unknown;
 }

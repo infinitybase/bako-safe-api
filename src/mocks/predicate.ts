@@ -1,5 +1,5 @@
-import { IConfVault, Vault } from 'bako-safe';
-import { defaultConfig } from 'bako-safe';
+import { IConfVault, Vault } from 'bakosafe';
+import { defaultConfig } from 'bakosafe';
 import crypto from 'crypto';
 import { Provider } from 'fuels';
 

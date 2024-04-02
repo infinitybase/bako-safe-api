@@ -1,4 +1,4 @@
-import { TransactionStatus } from 'bako-safe';
+import { TransactionStatus } from 'bakosafe';
 
 import { Predicate, Transaction, User, Asset, Witness } from '@src/models';
 

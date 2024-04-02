@@ -1,4 +1,4 @@
-import { BakoSafeConnectors } from 'bako-safe';
+import { BakoSafeConnectors } from 'bakosafe';
 import { Socket, Server, ServerOptions } from 'socket.io';
 
 import { popAuth } from '@src/socket/calbacks';

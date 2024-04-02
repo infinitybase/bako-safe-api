@@ -1,4 +1,4 @@
-import { BSafe } from 'bako-safe';
+import { BakoSafe } from 'bakosafe';
 
 import App from './app';
 import Bootstrap from './bootstrap';
@@ -9,9 +9,9 @@ const start = async () => {
   app.init();
 };
 
-BSafe.setup({
-  API_URL: process.env.API_URL,
-  BSAFE_URL: process.env.UI_URL,
+BakoSafe.setup({
+  SERVER_URL: process.env.API_URL,
+  CLIENT_URL: process.env.UI_URL,
 });
 
 try {
