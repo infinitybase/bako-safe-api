@@ -24,7 +24,9 @@ export const recoverWebAuthnSignature = async (
         [addr],
       ).then(response => !!response[0] && response[0].address);
 
-      return user;
+      if (user) {
+        return user;
+      }
     } catch (e) {
       continue;
     }

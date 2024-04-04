@@ -3,11 +3,7 @@ import { Provider } from 'fuels';
 import { Brackets } from 'typeorm';
 
 import { NotFound } from '@src/utils/error';
-import {
-  IDefaultOrdination,
-  IOrdination,
-  setOrdination,
-} from '@src/utils/ordination';
+import { IOrdination, setOrdination } from '@src/utils/ordination';
 import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination';
 
 import { Predicate } from '@models/index';
@@ -198,8 +194,12 @@ export class PredicateService implements IPredicateService {
           }
         }),
       );
-    // =============== specific for workspace ===============
-    //console.log('[PREDICATE_FILTER]: ', this._filter);
+
+    this._filter.name &&
+      queryBuilder.andWhere('p.name = :name', {
+        name: this._filter.name,
+      });
+
     // =============== specific for home ===============
     (this._filter.workspace || this._filter.signer) &&
       queryBuilder.andWhere(

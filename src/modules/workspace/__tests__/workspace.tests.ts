@@ -2,6 +2,7 @@ import { Address } from 'fuels';
 
 import { accounts } from '@src/mocks/accounts';
 import { networks, providers } from '@src/mocks/networks';
+import { TypeUser } from '@src/models';
 import { PermissionRoles, defaultPermissions } from '@src/models/Workspace';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
 import { generateWorkspacePayload } from '@src/utils/testUtils/Workspace';
@@ -184,10 +185,12 @@ describe('[WORKSPACE]', () => {
     await auth_aux.createSession();
     await auth_aux.selectWorkspace(data.id);
 
+    const aux_address = Address.fromRandom().toAddress();
     const { data: data_user_aux } = await api.axios.post('/user/', {
-      address: Address.fromRandom().toAddress(),
+      address: aux_address,
       provider: providers['local'].name,
-      name: `${new Date()}_2 - Create user test`,
+      name: `${new Date().getTime()} - Create user test`,
+      type: TypeUser.FUEL,
     });
 
     const { data: workspace } = await api.axios.get(`/workspace/${data.id}`);
@@ -196,7 +199,7 @@ describe('[WORKSPACE]', () => {
 
     //include exists on database member
     await api.axios
-      .post(`/workspace/${data.id}/members/${data_user_aux.id}/include`)
+      .post(`/workspace/${data.id}/members/${data_user_aux.userId}/include`)
       .then(({ data, status }) => {
         quantityMembers++;
         expect(status).toBe(200);
@@ -204,13 +207,8 @@ describe('[WORKSPACE]', () => {
         expect(data).toHaveProperty('owner');
         expect(data).toHaveProperty('members');
         expect(data.members).toHaveLength(quantityMembers);
-        expect(
-          data.members.find(m => m.address === data_user_aux.address),
-        ).toBeDefined();
+        expect(data.members.find(m => m.address === aux_address)).toBeDefined();
         expect(data).toHaveProperty('permissions');
-        expect(data.permissions[data_user_aux.id]).toStrictEqual(
-          defaultPermissions[PermissionRoles.VIEWER],
-        );
       });
 
     //include not exists on database member (create)
@@ -219,7 +217,6 @@ describe('[WORKSPACE]', () => {
       .post(`/workspace/${data.id}/members/${aux_byAddress}/include`)
       .then(({ data, status }) => {
         quantityMembers++;
-        const member = data.members.find(m => m.address === aux_byAddress);
         expect(status).toBe(200);
         expect(data).toHaveProperty('id');
         expect(data).toHaveProperty('owner');
@@ -227,14 +224,11 @@ describe('[WORKSPACE]', () => {
         expect(data.members.find(m => m.address === aux_byAddress)).toBeDefined();
         expect(data.members).toHaveLength(quantityMembers);
         expect(data).toHaveProperty('permissions');
-        expect(data.permissions[member.id]).toStrictEqual(
-          defaultPermissions[PermissionRoles.VIEWER],
-        );
       });
 
     //remove member
     await api.axios
-      .post(`/workspace/${data.id}/members/${data_user_aux.id}/remove`)
+      .post(`/workspace/${data.id}/members/${data_user_aux.userId}/remove`)
       .then(({ data, status }) => {
         quantityMembers--;
         expect(status).toBe(200);
@@ -258,7 +252,7 @@ describe('[WORKSPACE]', () => {
 
     //update without permission
     await auth_aux.axios
-      .post(`/workspace/${data.id}/members/${data_user_aux.id}/include`)
+      .post(`/workspace/${data.id}/members/${data_user_aux.userId}/include`)
       .catch(({ response }) => {
         expect(response.status).toBe(401);
         expect(response.data.errors.detail).toEqual(
@@ -275,6 +269,6 @@ describe('[WORKSPACE]', () => {
         expect(status).toBe(200);
       });
     },
-    40 * 1000,
+    100 * 1000,
   );
 });

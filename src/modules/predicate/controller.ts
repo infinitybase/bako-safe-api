@@ -1,9 +1,11 @@
+import axios from 'axios';
 import { TransactionStatus } from 'bsafe';
 import { bn } from 'fuels';
 
 import { Predicate } from '@src/models/Predicate';
 import { Workspace } from '@src/models/Workspace';
 import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
+import { IconUtils } from '@src/utils/icons';
 
 import {
   Asset,
@@ -26,11 +28,10 @@ import {
   IDeletePredicateRequest,
   IFindByHashRequest,
   IFindByIdRequest,
+  IFindByNameRequest,
   IListRequest,
   IPredicateService,
 } from './types';
-import { IconUtils } from '@utils/icons';
-import axios from 'axios';
 
 export class PredicateController {
   private userService: IUserService;
@@ -159,9 +160,29 @@ export class PredicateController {
     }
   }
 
+  async findByName(req: IFindByNameRequest) {
+    const { params, workspace } = req;
+    const { name } = params;
+
+    try {
+      const response = await this.predicateService
+        .filter({
+          name,
+          workspace: [workspace.id],
+        })
+        .paginate(undefined)
+        .list()
+        .then((data: Predicate[]) => data[0]);
+
+      return successful(!!response, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
   async hasReservedCoins({ params: { address } }: IFindByHashRequest) {
     try {
-      console.log('[HAS_RESERVED_COINS]: ');
+      // console.log('[HAS_RESERVED_COINS]: ');
       //console.log('[HAS_RESERVED_COINS]: ', address);
       const response = await this.transactionService
         .filter({
@@ -221,7 +242,6 @@ export class PredicateController {
         Responses.Ok,
       );
     } catch (e) {
-      console.log(e);
       return error(e.error, e.statusCode);
     }
   }

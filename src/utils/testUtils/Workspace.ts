@@ -1,27 +1,33 @@
 import { Address } from 'fuels';
 
 import { providers } from '@src/mocks/networks';
+import { TypeUser } from '@src/models';
 
-import { accounts } from '../../mocks/accounts';
+import { IAccountKeys, accounts } from '../../mocks/accounts';
 import { AuthValidations } from './Auth';
 
-const generateWorkspacePayload = async (api: AuthValidations) => {
-  const { data: data_user1 } = await api.axios.post('/user/', {
-    address: Address.fromRandom().toAddress(),
+const generateUser = async (api: AuthValidations, address?: IAccountKeys) => {
+  const addRandom = Address.fromRandom().toAddress();
+  const { data } = await api.axios.post('/user/', {
+    address: address ? accounts[address].address : addRandom,
     provider: providers['local'].name,
-    name: `${new Date()}_1 - Create user test`,
-  });
-  const { data: data_user2 } = await api.axios.post('/user/', {
-    address: Address.fromRandom().toAddress(),
-    provider: providers['local'].name,
-    name: `${new Date()}_2 - Create user test`,
+    name: `${new Date().getTime()} - Create user test`,
+    type: TypeUser.FUEL,
   });
 
-  const { data: USER_5 } = await api.axios.post('/user/', {
-    address: accounts['USER_5'].address,
-    provider: providers['local'].name,
-    name: `${new Date()}_3 - Create user test`,
-  });
+  return {
+    id: data.userId,
+    address: addRandom,
+    name: data.name,
+    type: TypeUser.FUEL,
+  };
+};
+
+const generateWorkspacePayload = async (api: AuthValidations) => {
+  const data_user1 = await generateUser(api);
+  const data_user2 = await generateUser(api);
+  const USER_5 = await generateUser(api, 'USER_5');
+  const USER_3 = await generateUser(api, 'USER_3');
 
   const { data, status } = await api.axios.post(`/workspace/`, {
     name: `[GENERATED] Workspace 1 ${new Date()}`,
@@ -30,6 +36,7 @@ const generateWorkspacePayload = async (api: AuthValidations) => {
       data_user1.id,
       data_user2.id,
       USER_5.id,
+      USER_3.id,
       Address.fromRandom().toAddress(),
     ],
   });
@@ -37,4 +44,4 @@ const generateWorkspacePayload = async (api: AuthValidations) => {
   return { data, status, data_user1, data_user2, USER_5 };
 };
 
-export { generateWorkspacePayload };
+export { generateWorkspacePayload, generateUser };

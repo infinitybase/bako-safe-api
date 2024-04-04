@@ -3,11 +3,7 @@ import { defaultConfig } from 'bsafe';
 import { BN, bn } from 'fuels';
 
 import { Predicate, TypeUser, User, PermissionAccess } from '@src/models';
-import {
-  PermissionRoles,
-  Workspace,
-  defaultPermissions,
-} from '@src/models/Workspace';
+import { PermissionRoles, Workspace } from '@src/models/Workspace';
 import Internal from '@src/utils/error/Internal';
 import {
   Unauthorized,

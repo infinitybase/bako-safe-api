@@ -4,6 +4,7 @@ import { accounts } from '@src/mocks/accounts';
 import { providers } from '@src/mocks/networks';
 import { networks } from '@src/mocks/networks';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
+import { generateWorkspacePayload } from '@src/utils/testUtils/Workspace';
 
 describe('[ADDRESS_BOOK]', () => {
   let api: AuthValidations;
@@ -45,32 +46,21 @@ describe('[ADDRESS_BOOK]', () => {
   test(
     'Create address book using a group workspace',
     async () => {
-      const { data: data_user1 } = await api.axios.post('/user/', {
-        address: Address.fromRandom().toAddress(),
-        provider: providers['local'].name,
-        name: `${new Date()} - Create user test`,
-      });
-      const { data: data_user2 } = await api.axios.post('/user/', {
-        address: Address.fromRandom().toAddress(),
-        provider: providers['local'].name,
-        name: `${new Date()} - Create user test`,
-      });
+      const auth = new AuthValidations(networks['local'], accounts['USER_1']);
 
-      const { data: _data, status } = await api.axios.post(`/workspace/`, {
-        name: '[ADDBOOK_TEST] Workspace 1',
-        description: '[ADDBOOK_TEST] Workspace 1 description',
-        members: [data_user1.id, data_user2.id],
-      });
+      await auth.create();
+      await auth.createSession();
+      const { data: workspace } = await generateWorkspacePayload(auth);
 
-      await api.selectWorkspace(_data.id);
+      await auth.selectWorkspace(workspace.id);
       const nickname = `[FAKE_CONTACT_NAME]: ${Address.fromRandom().toAddress()}`;
       const address = Address.fromRandom().toAddress();
-      const { data } = await api.axios.post('/address-book/', {
+      const { data } = await auth.axios.post('/address-book/', {
         nickname,
         address,
       });
 
-      const aux = await api.axios
+      const aux = await auth.axios
         .post('/address-book/', {
           nickname,
           address,
@@ -89,27 +79,27 @@ describe('[ADDRESS_BOOK]', () => {
   test(
     `list addressBook`,
     async () => {
-      //list with single workspace [your address book]
-      await api.axios.get(`/address-book`).then(({ data, status }) => {
-        expect(status).toBe(200);
-        data.forEach(element => {
-          expect(element).toHaveProperty('nickname');
-          expect(element.user).toHaveProperty('address');
-
-          expect(element.owner).toHaveProperty('id', api.workspace.id);
-        });
-      });
-
       //list with workspace
       const auth = new AuthValidations(networks['local'], accounts['USER_1']);
       await auth.create();
       await auth.createSession();
 
-      const old_workspace = api.workspace.id;
+      //list with single workspace [your address book]
+      await auth.axios.get(`/address-book`).then(({ data, status }) => {
+        expect(status).toBe(200);
+        data.forEach(element => {
+          expect(element).toHaveProperty('nickname');
+          expect(element.user).toHaveProperty('address');
+
+          expect(element.owner).toHaveProperty('id', auth.workspace.id);
+        });
+      });
+
+      const old_workspace = auth.workspace.id;
 
       await auth.axios.get(`/workspace/by-user`).then(async ({ data, status }) => {
         const new_workspace = data.find(i => i.id !== old_workspace);
-        const owners = [new_workspace.id, api.workspace.id];
+        const owners = [new_workspace.id, auth.workspace.id];
 
         //with pagination
         const page = 1;

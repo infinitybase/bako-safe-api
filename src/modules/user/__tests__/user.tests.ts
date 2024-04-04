@@ -24,7 +24,7 @@ describe('[USER]', () => {
       const code_length = 66;
       await api
         .post('/user/', {
-          name: `${new Date()} - Create user test`,
+          name: `${new Date().getTime()} - Create user test`,
           type: TypeUser.FUEL,
           address: Address.fromRandom().toAddress(),
           provider: defaultConfig['PROVIDER'],
@@ -33,7 +33,7 @@ describe('[USER]', () => {
           expect(status).toBe(201);
           expect(data).toHaveProperty('id');
           expect(data).toHaveProperty('type', RecoverCodeType.AUTH);
-          expect(data).toHaveProperty('origin', 'https://app.bsafe.pro');
+          expect(data).toHaveProperty('origin', 'https://safe.bako.global');
           expect(data).toHaveProperty('code');
           expect(data.code.length).toBe(code_length);
         });
@@ -48,22 +48,13 @@ describe('[USER]', () => {
       await auth.create();
       await auth.createSession();
 
-      //list by personal workspace
+      //list all predicates and transactions from user
       await auth.axios.get('user/me').then(({ data, status }) => {
         expect(status).toBe(200);
         expect(data).toHaveProperty('predicates');
         expect(data).toHaveProperty('transactions');
         expect(data.predicates.data.length).toBeLessThanOrEqual(8);
         expect(data.transactions.data.length).toBeLessThanOrEqual(8);
-        data.predicates.data.forEach(element => {
-          expect(element.workspace).toHaveProperty('id', auth.workspace.id);
-        });
-        data.transactions.data.forEach(element => {
-          expect(element.predicate.workspace).toHaveProperty(
-            'id',
-            auth.workspace.id,
-          );
-        });
       });
     },
     2 * 1000,

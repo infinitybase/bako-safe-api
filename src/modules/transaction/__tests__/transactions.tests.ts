@@ -4,7 +4,7 @@ import { Address } from 'fuels';
 import { accounts } from '@src/mocks/accounts';
 import { networks } from '@src/mocks/networks';
 import { PredicateMock } from '@src/mocks/predicate';
-import { transaction, transactionMock } from '@src/mocks/transaction';
+import { transactionMock } from '@src/mocks/transaction';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
 import { generateWorkspacePayload } from '@src/utils/testUtils/Workspace';
 
@@ -26,6 +26,7 @@ describe('[TRANSACTION]', () => {
       await api.axios.post('/predicate', predicatePayload);
 
       const { tx, payload_transfer } = await transactionMock(vault);
+
       const { data: data_transaction } = await api.axios.post(
         '/transaction',
         payload_transfer,
@@ -49,28 +50,35 @@ describe('[TRANSACTION]', () => {
     async () => {
       // logar com usuário inválido no workspace
       const auth = new AuthValidations(networks['local'], accounts['USER_3']);
+
       await auth.create();
       await auth.createSession();
+
       const {
-        data,
-        status,
         data_user1,
         data_user2,
         USER_5,
+        data: workspace,
       } = await generateWorkspacePayload(auth);
+      await auth.selectWorkspace(workspace.id);
 
       //gerar um predicate
-      const members = [data_user1.address, data_user2.address, USER_5.address];
+      const members = [data_user1.address, data_user2.address];
 
       const { predicatePayload, vault } = await PredicateMock.create(1, members);
-      await api.axios.post('/predicate', predicatePayload);
+      await auth.axios.post('/predicate', predicatePayload);
+
+      const aux_auth = new AuthValidations(networks['local'], accounts['USER_5']);
+      await aux_auth.create();
+      await aux_auth.createSession();
+      await aux_auth.selectWorkspace(workspace.id);
 
       //gerar uma transacao com um usuário inválido
       const { payload_transfer } = await transactionMock(vault);
       const {
         status: status_transaction,
         data: data_transaction,
-      } = await auth.axios.post('/transaction', payload_transfer).catch(e => {
+      } = await aux_auth.axios.post('/transaction', payload_transfer).catch(e => {
         return e.response;
       });
 
@@ -118,7 +126,7 @@ describe('[TRANSACTION]', () => {
   );
 
   test('List transactions', async () => {
-    const auth = new AuthValidations(networks['local'], accounts['USER_1']);
+    const auth = new AuthValidations(networks['local'], accounts['USER_5']);
     await auth.create();
     await auth.createSession();
 
