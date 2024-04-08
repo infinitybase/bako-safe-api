@@ -141,13 +141,21 @@ export class AddressBookService implements IAddressBookService {
         acc.push(currentItem);
         return acc;
       }
-      // Se já existe, retornar de preferencia o que tem o wk igual ao single
-      if (currentItem.owner.id === (includePersonal ? singleWk : groupWorkspace)) {
+
+      if (includePersonal && currentItem.owner.id === groupWorkspace) {
         const existingIndex = acc.findIndex(
           item => item.user.id === currentItem.user.id,
         );
         acc[existingIndex] = currentItem;
       }
+
+      // Se já existe, retornar de preferencia o que tem o wk igual ao single
+      // if (currentItem.owner.id === (includePersonal ? singleWk : groupWorkspace)) {
+      //   const existingIndex = acc.findIndex(
+      //     item => item.user.id === currentItem.user.id,
+      //   );
+      //   acc[existingIndex] = currentItem;
+      // }
 
       return acc;
     }, []);
