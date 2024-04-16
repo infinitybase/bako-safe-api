@@ -5,20 +5,8 @@ import Internal from '@src/utils/error/Internal';
 import { IDAPPCreatePayload, IDAppsService } from './types';
 
 export class DAppsService implements IDAppsService {
-  async create({
-    sessionId,
-    name,
-    origin,
-    vaults,
-    currentVault,
-  }: IDAPPCreatePayload) {
-    return await DApp.create({
-      sessionId,
-      name,
-      origin,
-      vaults: vaults,
-      currentVault,
-    })
+  async create(params: IDAPPCreatePayload) {
+    return await DApp.create(params)
       .save()
       .then(data => data)
       .catch(e => {
@@ -40,6 +28,7 @@ export class DAppsService implements IDAppsService {
         'currentVault.id',
         'currentVault.provider',
       ])
+      .innerJoinAndSelect('d.user', 'user')
       .where('d.session_id = :sessionID', { sessionID })
       .andWhere('d.origin = :origin', { origin })
       .getOne()
