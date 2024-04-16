@@ -155,8 +155,7 @@ export class TransactionService implements ITransactionService {
       .addSelect(['workspace.id', 'workspace.name', 'workspace.single']);
 
     this._filter.predicateAddress &&
-      this._filter.predicateAddress.length > 0 &&
-      queryBuilder.andWhere('t.predicate.predicateAddress IN (:...address)', {
+      queryBuilder.andWhere('predicate.predicateAddress = :address', {
         address: this._filter.predicateAddress,
       });
 
@@ -250,6 +249,7 @@ export class TransactionService implements ITransactionService {
     queryBuilder.orderBy(`t.${this._ordination.orderBy}`, this._ordination.sort);
 
     const handleInternalError = e => {
+      console.log(e);
       if (e instanceof GeneralError) throw e;
       throw new Internal({
         type: ErrorTypes.Internal,

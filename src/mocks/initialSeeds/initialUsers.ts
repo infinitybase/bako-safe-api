@@ -1,9 +1,9 @@
 import { TypeUser, User } from '@src/models';
-import { UserService } from '@src/modules/user/service';
+
+import { IconUtils } from '@utils/icons';
 
 import { accounts } from '../accounts';
 import { networks } from '../networks';
-import { IconUtils } from '@utils/icons';
 
 export const generateInitialUsers = async (): Promise<Partial<User>[]> => {
   const user1: Partial<User> = {

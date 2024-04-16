@@ -9,6 +9,7 @@ import {
 
 import { Base } from './Base';
 import { Predicate } from './Predicate';
+import { User } from './User';
 
 @Entity('dapp')
 class DApp extends Base {
@@ -32,6 +33,10 @@ class DApp extends Base {
   @JoinColumn({ name: 'current' })
   @OneToOne(() => Predicate)
   currentVault: Predicate;
+
+  @JoinColumn({ name: 'user' })
+  @OneToOne(() => User)
+  user: User;
 }
 
 export { DApp };

@@ -1,7 +1,9 @@
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
+import { TransactionRequestLike } from 'fuels';
 
 import { AuthValidatedRequest } from '@src/middlewares/auth/types';
-import { User, DApp, Predicate } from '@src/models';
+import { UnloggedRequest } from '@src/middlewares/auth/types';
+import { DApp, Predicate, User } from '@src/models';
 
 export interface IDAPPCreatePayload {
   sessionId: string;
@@ -9,6 +11,46 @@ export interface IDAPPCreatePayload {
   origin: string;
   vaults: Predicate[];
   currentVault: Predicate;
+  user: User;
+}
+
+export interface IDAPPCreateRecoverCode {
+  vaultId: string;
+  txId: string;
+}
+export interface IDAPPConfirmTx {
+  sessionId: string;
+  vaultAddress: string;
+  code: string;
+  tx: TransactionRequestLike;
+}
+
+interface ICreateRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Body]: Omit<
+    IDAPPCreatePayload,
+    'vaults' | 'currentVault' | 'user'
+  > & {
+    vaultId: string;
+    userAddress: string;
+  };
+  [ContainerTypes.Headers]: {
+    origin: string;
+  };
+}
+
+interface ICreateRecoverCodeSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Params]: {
+    sessionId: string;
+    vaultAddress: string;
+    txId: string;
+  };
+}
+
+interface IConfirmTx extends ValidatedRequestSchema {
+  [ContainerTypes.Body]: IDAPPConfirmTx;
+  [ContainerTypes.Headers]: {
+    origin: string;
+  };
 }
 
 export interface IDAPPUser {
@@ -33,4 +75,7 @@ interface IDappRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Headers]: { origin?: string; Origin?: string };
 }
 
+export type ICreateRecoverCodeRequest = UnloggedRequest<ICreateRecoverCodeSchema>;
+export type IConfirmTxRequest = AuthValidatedRequest<IConfirmTx>;
+export type ICreateRequest = AuthValidatedRequest<ICreateRequestSchema>;
 export type IDappRequest = AuthValidatedRequest<IDappRequestSchema>;

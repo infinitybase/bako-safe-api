@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
+import { request } from 'http';
 
-import { PermissionRoles } from '@src/models/Workspace';
+import { RecoverCode, RecoverCodeType } from '@src/models';
+import { PermissionRoles, Workspace } from '@src/models/Workspace';
 import { TokenUtils } from '@src/utils';
 import { validatePermissionGeneral } from '@src/utils/permissionValidate';
 
@@ -14,6 +16,7 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
     const requestAuth: IAuthRequest = req;
     const signature = requestAuth?.headers?.authorization;
     const signerAddress = requestAuth.get('signerAddress');
+    const isRecoverCode = !!signerAddress && signerAddress.includes('code');
 
     if (!signature || !signerAddress) {
       throw new Unauthorized({
@@ -21,6 +24,47 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
         title: UnauthorizedErrorTitles.MISSING_CREDENTIALS,
         detail: 'Some required credentials are missing',
       });
+    }
+
+    if (isRecoverCode) {
+      const recover = await RecoverCode.findOne({
+        where: {
+          code: signerAddress,
+          type: RecoverCodeType.AUTH_ONCE,
+        },
+        relations: ['user'],
+      });
+      if (!recover) {
+        throw new Unauthorized({
+          type: ErrorTypes.Unauthorized,
+          title: UnauthorizedErrorTitles.INVALID_RECOVER_CODE,
+          detail: 'The provided recover code is invalid',
+        });
+      }
+
+      const isOld = recover.validAt < new Date();
+      const isUsed = recover.used;
+
+      if (isOld || isUsed) {
+        throw new Unauthorized({
+          type: ErrorTypes.Unauthorized,
+          title: UnauthorizedErrorTitles.INVALID_RECOVER_CODE,
+          detail: 'The provided recover code is expired',
+        });
+      }
+
+      if (Number(recover.metadata.uses) <= 3) {
+        //todo: change this number to dynamic
+        recover.used = true;
+        await recover.save();
+      }
+
+      requestAuth.user = recover.owner;
+      requestAuth.workspace = await Workspace.findOne({
+        where: { owner: recover.owner.id, single: true }, // just single workspace
+      });
+
+      return next();
     }
 
     const token = await TokenUtils.recoverToken(signature);

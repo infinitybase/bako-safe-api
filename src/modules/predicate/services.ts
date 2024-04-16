@@ -306,6 +306,7 @@ export class PredicateService implements IPredicateService {
   }
 
   async instancePredicate(predicateId: string): Promise<Vault> {
+    console.log('[PREDICATE_ID]', predicateId);
     const predicate = await this.findById(predicateId);
 
     const configurable: IConfVault = {
@@ -314,7 +315,7 @@ export class PredicateService implements IPredicateService {
       bytecode: predicate.bytes,
     };
     const provider = await Provider.create(predicate.provider);
-
+    console.log('[PROVIDER]', provider);
     return Vault.create({
       configurable,
       provider,

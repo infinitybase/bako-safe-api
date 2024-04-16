@@ -1,18 +1,14 @@
 import { Address } from 'fuels';
-import {
-  Column,
-  Entity,
-  BeforeUpdate,
-  BeforeInsert,
-  JoinColumn,
-  OneToOne,
-} from 'typeorm';
+import { Column, Entity, BeforeInsert, JoinColumn, OneToOne } from 'typeorm';
 
 import { Base } from './Base';
+import { DApp } from './DApp';
 import { User } from './User';
 
 export enum RecoverCodeType {
   AUTH = 'AUTH',
+  TX_CONNECTOR = 'TX_CONNECTOR',
+  AUTH_ONCE = 'AUTH_ONCE',
 }
 
 @Entity('recover_codes')
@@ -33,12 +29,15 @@ class RecoverCode extends Base {
   @Column({ name: 'valid_at' })
   validAt: Date;
 
+  @Column({ name: 'metadata', type: 'jsonb' })
+  metadata: { [key: string]: string | number | boolean };
+
   @Column()
   used: boolean;
 
   @BeforeInsert()
   insertCreatedAtAndUpdatedAt() {
-    this.code = Address.fromRandom().toHexString();
+    this.code = `code${Address.fromRandom().toHexString()}`;
     this.used = false;
   }
 }
