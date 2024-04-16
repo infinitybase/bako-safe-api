@@ -151,6 +151,7 @@ export class DappController {
           validAt: code.validAt,
           tx_blocked: pendingTransactions,
           metadata: code.metadata,
+          user_address: dapp.user.address,
         },
         Responses.Created,
       );
