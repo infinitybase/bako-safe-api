@@ -29,6 +29,7 @@ export const popAuth: IEventsExecute = {
           origin,
           vaults: [predicate],
           currentVault: predicate,
+          user: dapp.user,
         });
       }
       const isIncludedVault = dapp.vaults.find(v => v.id === vaultId);
