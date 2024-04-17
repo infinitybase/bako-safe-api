@@ -7,7 +7,6 @@ import { IRecoverCodeService, ICreateRecoverCodePayload } from './types';
 
 export class RecoverCodeService implements IRecoverCodeService {
   async create(paylaod: ICreateRecoverCodePayload) {
-    console.log(paylaod);
     return RecoverCode.create(paylaod)
       .save()
       .then(data => data)

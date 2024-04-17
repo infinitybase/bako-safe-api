@@ -51,8 +51,6 @@ export class DappController {
       dapp.currentVault = predicate;
       await dapp.save();
 
-      console.log('[FINISH_SEND_MESSAGE]');
-
       const socket = new SocketClient(sessionId, origin);
       socket.sendMessage({
         room: sessionId,
@@ -65,7 +63,6 @@ export class DappController {
 
       return successful(true, Responses.Created);
     } catch (e) {
-      console.log(e);
       return error(e.error, e.statusCode);
     }
   }
@@ -119,9 +116,9 @@ export class DappController {
 
       const code = await new RecoverCodeService().create({
         owner: dapp.user,
-        type: RecoverCodeType.TX_CONNECTOR,
+        type: RecoverCodeType.AUTH_ONCE,
         origin,
-        validAt: addMinutes(new Date(), 2), //todo: change this number to dynamic
+        validAt: addMinutes(new Date(), 5), //todo: change this number to dynamic
         metadata: {
           uses: 0, // todo: increment this number on each use
           txId,
@@ -132,18 +129,6 @@ export class DappController {
           },
         },
       });
-
-      // const socket = new SocketClient(sessionId, origin);
-      // socket.sendMessage({
-      //   room: sessionId,
-      //   to: '[UI]',
-      //   type: '[TX_PENDING]',
-      //   data: {
-      //     ...code.metadata,
-      //     code: code.code,
-      //     validAt: code.validAt,
-      //   },
-      // });
 
       return successful(
         {
@@ -156,7 +141,6 @@ export class DappController {
         Responses.Created,
       );
     } catch (e) {
-      console.log(e);
       return error(e.error, e.statusCode);
     }
   }

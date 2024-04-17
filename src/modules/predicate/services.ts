@@ -122,6 +122,7 @@ export class PredicateService implements IPredicateService {
           return predicate;
         })
         .catch(e => {
+          console.log('[FIND_BY_ID]', e);
           if (e instanceof GeneralError) throw e;
 
           throw new Internal({
@@ -156,6 +157,7 @@ export class PredicateService implements IPredicateService {
       ]);
 
     const handleInternalError = e => {
+      console.log('[LIST]: ', e);
       if (e instanceof GeneralError) throw e;
 
       throw new Internal({

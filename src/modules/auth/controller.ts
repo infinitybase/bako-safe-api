@@ -39,7 +39,6 @@ export class AuthController {
 
       return successful(userToken, Responses.Ok);
     } catch (e) {
-      console.log(e);
       if (e instanceof GeneralError) throw e;
 
       return error(e.error, e.statusCode);
@@ -71,7 +70,6 @@ export class AuthController {
 
       return successful(response, Responses.Ok);
     } catch (e) {
-      console.log(e);
       return error(e.error[0], e.statusCode);
     }
   }

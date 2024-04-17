@@ -16,7 +16,7 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
     const requestAuth: IAuthRequest = req;
     const signature = requestAuth?.headers?.authorization;
     const signerAddress = requestAuth.get('signerAddress');
-    const isRecoverCode = !!signerAddress && signerAddress.includes('code');
+    const isRecoverCode = !!signature && signature.includes('code');
 
     if (!signature || !signerAddress) {
       throw new Unauthorized({
@@ -29,11 +29,12 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
     if (isRecoverCode) {
       const recover = await RecoverCode.findOne({
         where: {
-          code: signerAddress,
+          code: signature,
           type: RecoverCodeType.AUTH_ONCE,
         },
-        relations: ['user'],
+        relations: ['owner'],
       });
+
       if (!recover) {
         throw new Unauthorized({
           type: ErrorTypes.Unauthorized,
@@ -53,12 +54,13 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
         });
       }
 
-      if (Number(recover.metadata.uses) <= 3) {
+      if (Number(recover.metadata.uses) >= 3) {
         //todo: change this number to dynamic
         recover.used = true;
-        await recover.save();
       }
 
+      recover.metadata.uses = Number(recover.metadata.uses) + 1;
+      await recover.save();
       requestAuth.user = recover.owner;
       requestAuth.workspace = await Workspace.findOne({
         where: { owner: recover.owner.id, single: true }, // just single workspace
