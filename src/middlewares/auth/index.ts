@@ -24,6 +24,7 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
     }
 
     const token = await TokenUtils.recoverToken(signature);
+    await TokenUtils.renewToken(token);
 
     requestAuth.user = await TokenUtils.checkUserExists(signerAddress);
     requestAuth.userToken = token;
