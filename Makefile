@@ -1,8 +1,8 @@
 deploy-prod:
-	sudo docker-compose -f docker-compose.yml --env-file ${env_file} up --build -d  
+	sudo docker-compose -f docker-compose.yml --env-file ${env_file} up --build -d
 
 deploy-stg:
-	sudo docker-compose -f docker-compose.yml --env-file ${env_file} up --build -d 
+	sudo docker-compose -f docker-compose.yml --env-file ${env_file} up --build -d
 
 deploy-test:
 	sudo docker-compose -f docker-compose.yml --env-file ${env_file} up --build -d
@@ -13,5 +13,11 @@ database-init:
 database-down:
 	sudo docker-compose -f docker/database/docker-compose.yml --env-file ${env_file} down
 
-chain-start:
-	sudo docker-compose -f docker/chain/docker-compose.yml --env-file ${env_file} up --build -d
+dev-run:
+	docker-compose -f docker-compose.dev.yml --env-file ${env_file} up --build -d
+
+dev-down:
+	docker-compose -f docker-compose.dev.yml --env-file ${env_file} down
+
+dev-clean:
+	docker-compose -f docker-compose.dev.yml --env-file ${env_file} down -v

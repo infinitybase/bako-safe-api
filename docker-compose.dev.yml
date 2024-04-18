@@ -3,18 +3,18 @@ version: '3'
 services:
   fuel-core:
     platform: linux/amd64
-    container_name: '${PROJECT:-fuel-node}_fuel-core'
+    container_name: 'bako_fuel-core'
     environment:
       NETWORK_NAME: '${PROJECT} local'
       MIN_GAS_PRICE: ${MIN_GAS_PRICE}
       # This is the private key of the consensus.PoA.signing_key in the chainConfig.json
       # this key is responsible for validating the transactions
       CONSENSUS_KEY: ${WALLET_SECRET}
-    build: ./fuel-core
+    build: ./docker/fuel-core
     ports:
       - '${FUEL_CORE_PORT:-4000}:4000'
     volumes:
-      - fuel-core-db:/mnt/db
+      - bako-fuel-core-db:/mnt/db
     healthcheck:
       test: curl --fail http://localhost:4000/health || exit 1
       interval: 1s
@@ -23,14 +23,14 @@ services:
 
   faucet:
     platform: linux/amd64
-    container_name: '${PROJECT:-fuel-node}_faucet'
+    container_name: 'bako_faucet'
     environment:
       # Other configurations can be found at;
       # https://github.com/FuelLabs/faucet#configuration
       MIN_GAS_PRICE: ${MIN_GAS_PRICE}
       WALLET_SECRET_KEY: ${WALLET_SECRET}
       DISPENSE_AMOUNT: ${DISPENSE_AMOUNT}
-      FUEL_NODE_URL: http://${PROJECT:-fuel-node}_fuel-core:4000/graphql
+      FUEL_NODE_URL: http://bako_fuel-core:4000/graphql
     image: ghcr.io/fuellabs/faucet:v0.6.2
     ports:
       - '${FUEL_FAUCET_PORT:-4040}:3000'
@@ -40,6 +40,28 @@ services:
       fuel-core:
         condition: service_healthy
 
+  bako-pgsql:
+    image: postgres:latest
+    # Force plaform to linux/amd64 to avoid compatibility issues
+    # only works on MAC and Linux
+    platform: linux/amd64
+    container_name: bako-pgsql
+    volumes:
+      - bako-pgsql-db:/usr/local/postgres
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_USER: ${DATABASE_USERNAME}
+    ports:
+      - "${DATABASE_PORT}:${DATABASE_PORT}"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-U", "postgres", "-d", "postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
 volumes:
-  fuel-core-db:
-    name: '${PROJECT:-fuel-node}_fuel-core-db'
+  bako-pgsql-db:
+    name: 'bako-pgsql-db'
+  bako-fuel-core-db:
+    name: 'bako-fuel-core-db'

@@ -55,7 +55,7 @@ class SocketIOServer extends Server {
         data: [true],
       });
 
-      /* 
+      /*
         [AVISA PARA O DAPP QUE A TRASACAO FOI CRIADA NA BSAFE: POPUP_TRANSFER -> DAPP]
         - envia o tx hash da transacao criada na BSAFEAPI
       */
@@ -69,7 +69,7 @@ class SocketIOServer extends Server {
           });
         },
       );
-      /* 
+      /*
         [REPASSA TRANSACAO PARA A POPUP: DAPP -> POPUP_TRANSFER]
       */
       socket.on(
@@ -80,7 +80,7 @@ class SocketIOServer extends Server {
         },
       );
 
-      /* 
+      /*
         [CONFIRMA QUE O USUÁRIO ESCOLHEU UM VAULT: POPUP_AUTH -> DAPP]
         - verifica se existe uma conexão do vault com o dapp
         - setta o vault escolhido para current vault
@@ -93,7 +93,7 @@ class SocketIOServer extends Server {
         },
       );
 
-      /* 
+      /*
         [REMOVE CONEXÃO COM O DAPP: DAPP -> DAPP]
         - remove as contas conectas ao dapp
         - envia mensagens de conexão inválidando o auth
