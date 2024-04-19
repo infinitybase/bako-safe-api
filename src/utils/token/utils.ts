@@ -1,4 +1,4 @@
-import { add, addMinutes, isPast } from 'date-fns';
+import { addMinutes, differenceInMinutes, isPast } from 'date-fns';
 
 import { RecoverCode, RecoverCodeType, User, Workspace } from '@src/models';
 import { AuthService } from '@src/modules/auth/services';
@@ -12,6 +12,10 @@ import { ErrorTypes } from '@utils/error';
 import { Unauthorized, UnauthorizedErrorTitles } from '@utils/error/Unauthorized';
 
 import { recoverFuelSignature, recoverWebAuthnSignature } from './web3';
+
+const EXPIRES_IN = process.env.TOKEN_EXPIRATION_TIME ?? '20';
+const RENEWAL_EXPIRES_IN = process.env.RENEWAL_TOKEN_EXPIRATION_TIME ?? '10';
+const MINUTES_TO_RENEW = process.env.MINUTES_TO_RENEW_TOKEN ?? 2;
 
 export class TokenUtils {
   static async verifySignature({ signature, digest, encoder }) {
@@ -153,7 +157,6 @@ export class TokenUtils {
   }
 
   static async createAuthToken(signature: string, digest: string, encoder: string) {
-    const expiresIn = process.env.TOKEN_EXPIRATION_TIME ?? '15';
     const address = await TokenUtils.verifySignature({
       signature,
       digest,
@@ -180,11 +183,22 @@ export class TokenUtils {
       token: signature,
       encoder: Encoder[encoder],
       provider: user.provider,
-      expired_at: addMinutes(new Date(), Number(expiresIn)),
+      expired_at: addMinutes(new Date(), Number(EXPIRES_IN)),
       payload: digest,
       user: user,
       workspace,
     });
+  }
+
+  static async renewToken(token: UserToken) {
+    const minutesToExpiration = differenceInMinutes(token.expired_at, new Date());
+
+    if (minutesToExpiration < Number(MINUTES_TO_RENEW)) {
+      await UserToken.update(
+        { id: token.id },
+        { expired_at: addMinutes(new Date(), Number(RENEWAL_EXPIRES_IN)) },
+      );
+    }
   }
 
   static async revokeToken(user: User) {
