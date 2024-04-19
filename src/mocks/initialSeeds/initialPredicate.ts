@@ -1,5 +1,4 @@
-import { Vault } from 'bsafe';
-import { Address, Provider } from 'fuels';
+import { Address } from 'fuels';
 import { In } from 'typeorm';
 
 import { User } from '@src/models';

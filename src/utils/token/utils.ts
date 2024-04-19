@@ -163,8 +163,6 @@ export class TokenUtils {
       encoder,
     });
 
-    //console.log('[RETURN_VERIFY]: ', address);
-
     if (!address)
       throw new Unauthorized({
         type: ErrorTypes.Unauthorized,

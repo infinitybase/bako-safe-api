@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { defaultConfig } from 'bsafe';
+import { defaultConfig } from 'bakosafe';
 import crypto from 'crypto';
 import { Address } from 'fuels';
 

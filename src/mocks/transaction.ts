@@ -1,4 +1,4 @@
-import { TransactionStatus, Vault } from 'bsafe';
+import { TransactionStatus, Vault } from 'bakosafe';
 import { bn, Address } from 'fuels';
 
 import { accounts } from '@src/mocks/accounts';
@@ -20,7 +20,7 @@ export const transaction = {
 export const transactionMock = async (vault: Vault) => {
   await sendPredicateCoins(vault, bn(1_000_0), 'ETH', accounts['FULL'].privateKey);
 
-  const tx = await vault.BSAFEIncludeTransaction(transaction);
+  const tx = await vault.BakoSafeIncludeTransaction(transaction);
 
   const payload_transfer = {
     predicateAddress: vault.address.toString(),
