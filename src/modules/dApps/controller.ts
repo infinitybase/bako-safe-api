@@ -28,7 +28,7 @@ export class DappController {
 
   async connect({ body }: ICreateRequest) {
     try {
-      const { vaultId, sessionId, name, origin, userAddress } = body;
+      const { vaultId, sessionId, name, origin, userAddress, request_id } = body;
       const predicate = await new PredicateService().findById(vaultId);
       let dapp = await new DAppsService().findBySessionID(sessionId, origin);
       const user = await User.findOne({ where: { address: userAddress } });
@@ -50,11 +50,12 @@ export class DappController {
       }
       dapp.currentVault = predicate;
       await dapp.save();
-
+      //console.log('[api]: ', dapp, sessionId, request_id);
       const socket = new SocketClient(sessionId, origin);
       socket.sendMessage({
-        room: sessionId,
+        sessionId,
         to: '[CONNECTOR]',
+        request_id,
         type: '[AUTH_CONFIRMED]',
         data: {
           connected: true,

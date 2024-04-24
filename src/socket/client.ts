@@ -1,10 +1,11 @@
 import { io, Socket } from 'socket.io-client';
 
 interface IMessage {
-  room: string; // sessionId
+  sessionId: string; // sessionId
   to: string; // username -> recebe a mensagem '[UI]' por exemplo
   type: string; // tipo da mensagem/evento
   data: { [key: string]: any };
+  request_id: string;
 }
 
 export class SocketClient {

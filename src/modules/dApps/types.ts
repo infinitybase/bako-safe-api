@@ -32,6 +32,7 @@ interface ICreateRequestSchema extends ValidatedRequestSchema {
   > & {
     vaultId: string;
     userAddress: string;
+    request_id: string;
   };
   [ContainerTypes.Headers]: {
     origin: string;
