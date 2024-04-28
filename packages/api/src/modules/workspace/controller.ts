@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { defaultConfig } from 'bsafe';
+import { defaultConfig } from 'bakosafe';
 import { BN, bn } from 'fuels';
 
 import { Predicate, TypeUser, User, PermissionAccess } from '@src/models';

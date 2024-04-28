@@ -1,15 +1,13 @@
-import { TransactionStatus } from 'bsafe';
+import { TransactionStatus } from 'bakosafe';
 
 import { Predicate, Transaction, User, Asset, Witness } from '@src/models';
 
 import { accounts } from '../accounts';
 import { txData } from '../txdata';
 import { generateInitialAssets } from './initialAssets';
-import { generateInitialWitness } from './initialWitness';
 
 export interface TTI extends Partial<Omit<Transaction, 'assets' | 'witnesses'>> {
   assets: Partial<Asset>[];
-  //witnesses: Partial<Witness>[];
 }
 export const generateInitialTransaction = async (): Promise<TTI> => {
   const user = await User.findOne({
@@ -24,7 +22,7 @@ export const generateInitialTransaction = async (): Promise<TTI> => {
   });
 
   const assets = await generateInitialAssets();
-  //const witnesses = await generateInitialWitness();
+
   const transaction1: TTI = {
     name: `fake_name ${accounts['USER_1'].address} ${TransactionStatus.AWAIT_REQUIREMENTS}`,
     hash: 'fake_hash',

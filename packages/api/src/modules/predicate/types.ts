@@ -1,4 +1,4 @@
-import { Vault } from 'bsafe';
+import { Vault } from 'bakosafe';
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 
 import { AuthValidatedRequest } from '@src/middlewares/auth/types';
