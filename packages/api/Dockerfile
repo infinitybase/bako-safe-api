@@ -5,13 +5,13 @@ WORKDIR api
 ADD . /api
 
 # Install app dependencies
-RUN yarn install
+RUN pnpm install
 
 # Install pm2
-RUN yarn global add pm2
+RUN pnpm global add pm2
 
 # Build
-RUN yarn build
+RUN pnpm build
 
 # Run!
 EXPOSE 3333
