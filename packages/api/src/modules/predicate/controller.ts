@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { TransactionStatus } from 'bsafe';
+import { TransactionStatus } from 'bakosafe';
 import { bn } from 'fuels';
 
 import { Predicate } from '@src/models/Predicate';
@@ -182,8 +182,7 @@ export class PredicateController {
 
   async hasReservedCoins({ params: { address } }: IFindByHashRequest) {
     try {
-      // console.log('[HAS_RESERVED_COINS]: ');
-      //console.log('[HAS_RESERVED_COINS]: ', address);
+      console.log('[HAS_RESERVED_COINS]: ', address);
       const response = await this.transactionService
         .filter({
           predicateId: [address],
@@ -209,10 +208,10 @@ export class PredicateController {
         });
 
       const predicate = await this.predicateService.findById(address, undefined);
-
+      // console.log(predicate);
       const instance = await this.predicateService.instancePredicate(predicate.id);
       const balance = await instance.getBalance();
-
+      console.log('[BALANCE]', balance);
       //todo: move this calc logic
       const convert = `ETH-USD`;
 

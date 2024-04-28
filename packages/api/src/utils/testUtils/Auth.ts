@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
-import { IBSAFEAuth } from 'bsafe';
+import { IBakoSafeApi } from 'bakosafe';
 import { Provider, Wallet } from 'fuels';
 
 import { User, TypeUser } from '@src/models';
@@ -15,7 +15,7 @@ export type IUserAuth = {
 //todo: repply this class on SDK to user autentication resource
 export class AuthValidations {
   public user: IUserAuth;
-  public authToken: IBSAFEAuth;
+  public authToken: IBakoSafeApi;
   public axios: AxiosInstance;
   public workspace: {
     id: string;

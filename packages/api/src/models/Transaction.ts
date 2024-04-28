@@ -1,4 +1,8 @@
-import { TransactionStatus, ITransactionResume, ITransactionSummary } from 'bsafe';
+import {
+  TransactionStatus,
+  ITransactionResume,
+  ITransactionSummary,
+} from 'bakosafe';
 import { TransactionRequest } from 'fuels';
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 
