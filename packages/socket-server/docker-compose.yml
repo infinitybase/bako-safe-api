@@ -1,0 +1,25 @@
+version: '3'
+services:
+  api:
+    container_name: ${APP_NAME}
+    ports:
+      - '${PORT}:${PORT}'
+    build:
+      dockerfile: Dockerfile
+      context: .
+    working_dir: /api
+    volumes:
+      - ./uploads:/api/uploads
+    environment:
+      # DATABASE
+      - DATABASE_HOST=${DATABASE_HOST}
+      - DATABASE_PORT=${DATABASE_PORT}
+      - DATABASE_USERNAME=${DATABASE_USERNAME}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - DATABASE_NAME=${DATABASE_NAME}
+      # APP
+      - PORT=${PORT}
+      - APP_NAME=${APP_NAME}
+      - BAKO_URL_UI=${BAKO_URL_UI}
+      - BAKO_URL_API=${BAKO_URL_API}
+      - TIMEOUT_DICONNECT=${TIMEOUT_DICONNECT}
