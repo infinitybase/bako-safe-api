@@ -1,8 +1,8 @@
 FROM node:18.18.2
 
 # Create app directory
-WORKDIR api
-ADD . /api
+WORKDIR socket
+ADD . /socket
 
 # Install app dependencies
 RUN yarn install

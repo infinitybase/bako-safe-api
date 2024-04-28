@@ -7,9 +7,7 @@ services:
     build:
       dockerfile: Dockerfile
       context: .
-    working_dir: /api
-    volumes:
-      - ./uploads:/api/uploads
+    working_dir: /socket
     environment:
       # DATABASE
       - DATABASE_HOST=${DATABASE_HOST}

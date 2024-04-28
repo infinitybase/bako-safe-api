@@ -8,8 +8,6 @@ services:
       dockerfile: ${API_DOCKERFILE}
       context: .
     working_dir: /api
-    volumes:
-      - ./uploads:/api/uploads
     environment:
       - NODE_ENV=${API_ENVIRONMENT}
       # DATABASE
