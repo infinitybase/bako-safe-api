@@ -5,12 +5,12 @@ WORKDIR api
 ADD . /api
 
 # Install app dependencies
-RUN yarn install
+RUN pnpm install
 
 # Build
-RUN yarn build
+RUN pnpm build
 
 # Run!
 EXPOSE 3333
 
-ENTRYPOINT ["yarn", "start"]
+ENTRYPOINT ["pnpm", "start"]
