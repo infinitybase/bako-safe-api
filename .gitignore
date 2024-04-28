@@ -1,0 +1,26 @@
+node_modules
+.turbo
+.husky
+
+##DB
+postgresql/
+
+## API
+# Build
+build
+yarn.lock
+package-lock.json
+.editorconfig
+bsafe/
+pnpm-lock.yaml
+
+#env
+.env
+.env.staging
+.env.prod
+
+# Mac OS
+.DS_Store
+
+# Logs
+.log
