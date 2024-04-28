@@ -2,11 +2,12 @@
 import { Client, type QueryResult } from 'pg'
 
 const {
-  DATABASE_USER,
+  DATABASE_NAME,
   DATABASE_PASSWORD,
   DATABASE_DATABASE,
   DATABASE_HOST,
-  DATABASE_PORT
+  DATABASE_PORT,
+  DATABASE_USERNAME
 } = process.env
 
 interface ConnectionConfig {
@@ -18,11 +19,11 @@ interface ConnectionConfig {
 }
 
 export const defaultConnection: ConnectionConfig = {
-  user: DATABASE_USER,
+  user: DATABASE_USERNAME,
   password: DATABASE_PASSWORD,
-  database: DATABASE_DATABASE,
+  database: DATABASE_NAME,
   host: DATABASE_HOST,
-  port: Number(DATABASE_PORT)
+  port: Number(DATABASE_PORT),
 }
 
 export class DatabaseClass {
@@ -32,6 +33,7 @@ export class DatabaseClass {
   }
 
   static async connect (connection: ConnectionConfig = defaultConnection): Promise<DatabaseClass> {
+    console.log(defaultConnection)
     const cl = new Client(connection)
     await cl.connect()
     return new DatabaseClass(cl)

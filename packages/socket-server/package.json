@@ -9,7 +9,6 @@
   },
   "scripts": {
     "dev": "NODE_ENV=development ts-node-dev --respawn --transpile-only -r tsconfig-paths/register -r dotenv/config src/index.ts",
-    "test": "sudo chmod +x ./scripts/init_test.sh && ./scripts/init_test.sh",
     "start": "pm2-runtime start ./build/index.js",
     "build": "tsc --project . && tscpaths -p tsconfig.json -s ./src -o ./build",
     "lint": "eslint --ext .ts src/",
@@ -19,8 +18,10 @@
   },
   "keywords": [],
   "dependencies": {
+    "bakosafe":"0.0.50",
     "express": "4.17.1",
     "express-joi-validation": "5.0.0",
+    "fuels": "0.76.12",
     "pg": "8.5.1",
     "pm2": "5.3.0",
     "socket.io": "4.7.2",

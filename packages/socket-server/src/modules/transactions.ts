@@ -1,6 +1,6 @@
 import { SocketEvents, SocketUsernames } from '@src/types'
 import { DatabaseClass } from '@src/utils/database'
-import { BSafe, TransactionStatus, Vault } from 'bsafe'
+import { BakoSafe, TransactionStatus, Vault } from 'bakosafe'
 import { TransactionRequestLike } from 'fuels'
 import crypto from 'crypto'
 import { Socket } from 'socket.io'
@@ -11,24 +11,27 @@ export interface IEventTX_REQUEST {
 }
 
 export interface IEventTX_CONFIRM {
-	_transaction: TransactionRequestLike
+	tx: TransactionRequestLike
 	operations: any
 }
 
-const { BAKO_URL_API } = process.env
+const { BAKO_URL_UI, BAKO_URL_API } = process.env
 
 export const txConfirm = async ({ data, socket }: { data: IEventTX_CONFIRM; socket: Socket }) => {
 	const { sessionId, username, request_id } = socket.handshake.auth
 	const room = `${sessionId}:${SocketUsernames.CONNECTOR}:${request_id}`
 	const { origin, host } = socket.handshake.headers
-	const { _transaction: tx, operations } = data
+	console.log(data)
+	const { tx, operations } = data
 	const { auth } = socket.handshake
 	try {
 		// ------------------------------ [VALIDACOES] ------------------------------
 
-		console.log('[TX_EVENT_CONFIRM]', socket.handshake.headers)
+		console.log('[TX_EVENT_CONFIRM]', socket.handshake.headers, origin, BAKO_URL_UI)
 		// validar se o origin é diferente da url usada no front...adicionar um .env pra isso
-		if (origin != BAKO_URL_API) return
+
+		if (origin != BAKO_URL_UI) return
+		console.log('[PASSOU PELO RETURN]: ')
 		const database = await DatabaseClass.connect()
 
 		// ------------------------------ [VALIDACOES] ------------------------------
@@ -60,15 +63,24 @@ export const txConfirm = async ({ data, socket }: { data: IEventTX_CONFIRM; sock
 
 		// ------------------------------ [TX] ------------------------------
 		// console.log('[chamando predicate]', dapp.current_vault_id, dapp.user_address, code.code)
-		BSafe.setup({
-			API_URL: BAKO_URL_API,
+		BakoSafe.setup({
+			SERVER_URL: BAKO_URL_API,
 		})
 		const predicate = await Vault.create({
 			id: dapp.current_vault_id,
 			address: dapp.user_address,
 			token: code.code,
 		})
-		const _tx = await predicate.BSAFEIncludeTransaction(tx)
+		console.log('[predicate]', !!predicate)
+		console.log('[pre]', !!tx, tx)
+		const _tx = await predicate
+			.BakoSafeIncludeTransaction(tx)
+			.then(tx => tx)
+			.catch(e => {
+				console.log('[ERRO NA TX]', e)
+				return undefined
+			})
+		console.log('[tx]', !!_tx)
 		// ------------------------------ [TX] ------------------------------
 
 		// ------------------------------ [SUMMARY] ------------------------------
@@ -79,7 +91,7 @@ export const txConfirm = async ({ data, socket }: { data: IEventTX_CONFIRM; sock
 					name: dapp.name,
 					origin: dapp.origin,
 				})}'
-				WHERE id = '${_tx.BSAFETransactionId}'
+				WHERE id = '${_tx.BakoSafeTransactionId}'
 			`)
 		// ------------------------------ [SUMMARY] ------------------------------
 
@@ -91,11 +103,22 @@ export const txConfirm = async ({ data, socket }: { data: IEventTX_CONFIRM; sock
 		// ------------------------------ [INVALIDATION] ------------------------------
 
 		// ------------------------------ [EMIT] ------------------------------
-		socket.to(room).emit(SocketEvents.DEFAULT, {
+		console.log('[MENSAGEM ENVIADA]: ', {
 			username,
 			room: sessionId,
 			to: SocketUsernames.CONNECTOR,
-			type: SocketEvents.TX_REQUEST,
+			type: SocketEvents.TX_CONFIRM,
+			data: {
+				id: _tx.getHashTxId(),
+				status: '[SUCCESS]',
+			},
+		})
+		socket.to(room).emit(SocketEvents.DEFAULT, {
+			username,
+			room: sessionId,
+			request_id,
+			to: SocketUsernames.CONNECTOR,
+			type: SocketEvents.TX_CONFIRM,
 			data: {
 				id: _tx.getHashTxId(),
 				status: '[SUCCESS]',
@@ -103,9 +126,11 @@ export const txConfirm = async ({ data, socket }: { data: IEventTX_CONFIRM; sock
 		})
 		// ------------------------------ [EMIT] ------------------------------
 	} catch (e) {
+		console.log(e)
 		socket.to(room).emit(SocketEvents.DEFAULT, {
 			username,
 			room: sessionId,
+			request_id,
 			to: SocketUsernames.CONNECTOR,
 			type: SocketEvents.TX_REQUEST,
 			data: {
