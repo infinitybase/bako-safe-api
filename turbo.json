@@ -29,8 +29,14 @@
       "outputMode": "new-only",
       "cache": false
     },
+    "socket:dev:start": {
+      "dependsOn": ["db:dev:start"],
+      "outputs": [],
+      "outputMode": "new-only",
+      "cache": false
+    },
     "api:dev:start": {
-      "dependsOn": ["db:dev:start", "chain:dev:start"],
+      "dependsOn": ["db:dev:start", "chain:dev:start", "socket:dev:start"],
       "outputs": ["dist/**"],
       "outputMode": "new-only",
       "cache": false
