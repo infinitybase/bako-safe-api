@@ -1,4 +1,4 @@
-import { TransactionStatus } from 'bsafe';
+import { TransactionStatus } from 'bakosafe';
 import { addMinutes } from 'date-fns';
 
 import { DApp, Predicate, RecoverCodeType, Transaction, User } from '@src/models';
