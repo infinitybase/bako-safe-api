@@ -1,0 +1,16 @@
+FROM node:18.18.2
+
+# Create app directory
+WORKDIR api
+ADD . /api
+
+# Install app dependencies
+RUN pnpm install
+
+# Build
+RUN pnpm build
+
+# Run!
+EXPOSE 3333
+
+ENTRYPOINT ["pnpm", "start"]

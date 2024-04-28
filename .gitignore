@@ -1,5 +1,12 @@
-# Build
 node_modules
+.turbo
+.husky
+
+##DB
+postgresql/
+
+## API
+# Build
 build
 yarn.lock
 package-lock.json
@@ -17,8 +24,3 @@ pnpm-lock.yaml
 
 # Logs
 .log
-
-# Tests
-docker/database/postgresql
-docker/database/postgresqltest
-docker/database/postgresqldev
