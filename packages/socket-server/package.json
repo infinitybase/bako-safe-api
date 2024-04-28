@@ -11,9 +11,6 @@
     "dev": "NODE_ENV=development ts-node-dev --respawn --transpile-only -r tsconfig-paths/register -r dotenv/config src/index.ts",
     "start": "pm2-runtime start ./build/index.js",
     "build": "tsc --project . && tscpaths -p tsconfig.json -s ./src -o ./build",
-    "lint": "eslint --ext .ts src/",
-    "lint:fix": "eslint --ext .ts src/ --fix",
-    "format": "prettier --write \"src/**/*.ts\"",
     "run:docker": "make -C ./ deploy env_file=.env"
   },
   "keywords": [],
