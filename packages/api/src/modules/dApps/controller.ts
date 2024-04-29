@@ -18,6 +18,8 @@ import {
   IDappRequest,
 } from './types';
 
+const { BAKO_URL_API } = process.env;
+
 export class DappController {
   private _dappService: IDAppsService;
 
@@ -51,7 +53,7 @@ export class DappController {
       dapp.currentVault = predicate;
       await dapp.save();
       console.log('[api]: ', dapp, sessionId, request_id);
-      const socket = new SocketClient(sessionId, origin);
+      const socket = new SocketClient(sessionId, BAKO_URL_API);
       console.log(socket);
       socket.sendMessage({
         sessionId,

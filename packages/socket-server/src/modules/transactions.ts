@@ -33,6 +33,7 @@ export const txConfirm = async ({ data, socket }: { data: IEventTX_CONFIRM; sock
 		if (origin != BAKO_URL_UI) return
 		console.log('[PASSOU PELO RETURN]: ')
 		const database = await DatabaseClass.connect()
+		console.log('[DB_CONNECTED]: ', database)
 
 		// ------------------------------ [VALIDACOES] ------------------------------
 
@@ -44,7 +45,7 @@ export const txConfirm = async ({ data, socket }: { data: IEventTX_CONFIRM; sock
 				JOIN "predicates" c ON d.current = c.id
 				WHERE d.session_id = '${auth.sessionId}'  
 			`)
-		// console.log('[DAPP]: ', dapp)
+		console.log('[DAPP]: ', dapp)
 		if (!dapp) return
 		// ------------------------------ [CODE] ------------------------------
 		const code = await database.query(`
@@ -57,12 +58,13 @@ export const txConfirm = async ({ data, socket }: { data: IEventTX_CONFIRM; sock
 				ORDER BY valid_at DESC
 				LIMIT 1;
 			`)
+		console.log('[CODE]', code)
 		if (!code) return
-		// console.log('[CODE]', code)
+
 		// ------------------------------ [CODE] ------------------------------
 
 		// ------------------------------ [TX] ------------------------------
-		// console.log('[chamando predicate]', dapp.current_vault_id, dapp.user_address, code.code)
+		console.log('[chamando predicate]', dapp.current_vault_id, dapp.user_address, code.code)
 		BakoSafe.setup({
 			SERVER_URL: BAKO_URL_API,
 		})
