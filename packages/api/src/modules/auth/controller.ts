@@ -39,6 +39,7 @@ export class AuthController {
 
       return successful(userToken, Responses.Ok);
     } catch (e) {
+      console.log(e);
       if (e instanceof GeneralError) throw e;
 
       return error(e.error, e.statusCode);

@@ -1,4 +1,5 @@
 import { io, Socket } from 'socket.io-client';
+
 const { SOCKET_URL } = process.env;
 
 interface IMessage {
@@ -22,8 +23,7 @@ export class SocketClient {
 
     //todo: move this URL to a .env file
     const URL = SOCKET_URL;
-    this.socket = io(URL, { autoConnect: false, auth });
-    this.socket.connect();
+    this.socket = io(URL, { autoConnect: true, auth });
   }
 
   // Método para enviar uma mensagem para o servidor

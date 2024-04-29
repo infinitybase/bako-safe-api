@@ -15,6 +15,10 @@ const io = new socketIo.Server(server, {
 	connectTimeout: Number(TIMEOUT_DICONNECT), // 1 hora
 })
 
+io.of('/').adapter.on('create-room', room => {
+	console.log(`room ${room} was created`)
+})
+
 // Endpoint de teste para o Express
 app.get('/', (req, res) => {
 	res.status(200)
@@ -23,9 +27,10 @@ app.get('/', (req, res) => {
 
 // Configuração do Socket.IO
 io.on(SocketEvents.CONNECT, async socket => {
+	console.log('Conexão estabelecida com o cliente:', socket.id, socket.handshake.auth)
 	const { sessionId, username, request_id } = socket.handshake.auth
 	await socket.join(`${sessionId}:${username}:${request_id}`)
-	console.log('[CONEXAO]: ', socket.handshake.auth, socket.id)
+	//console.log('[CONEXAO]: ', socket.handshake.auth, socket.id)
 	/* 
 		[UI] emite esse evento quando o usuário confirma a tx 
 			- verifica se o evento veio da origem correta -> BAKO-UI [http://localhost:5174, https://safe.bako.global]

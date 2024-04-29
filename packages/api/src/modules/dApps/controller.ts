@@ -50,8 +50,9 @@ export class DappController {
       }
       dapp.currentVault = predicate;
       await dapp.save();
-      //console.log('[api]: ', dapp, sessionId, request_id);
+      console.log('[api]: ', dapp, sessionId, request_id);
       const socket = new SocketClient(sessionId, origin);
+      console.log(socket);
       socket.sendMessage({
         sessionId,
         to: '[CONNECTOR]',
