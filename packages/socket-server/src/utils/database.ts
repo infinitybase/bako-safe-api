@@ -2,12 +2,11 @@
 import { Client, type QueryResult } from 'pg'
 
 const {
-  DATABASE_NAME,
-  DATABASE_PASSWORD,
-  DATABASE_DATABASE,
   DATABASE_HOST,
   DATABASE_PORT,
-  DATABASE_USERNAME
+  DATABASE_USERNAME,
+  DATABASE_PASSWORD,
+  DATABASE_NAME
 } = process.env
 
 interface ConnectionConfig {
@@ -33,6 +32,7 @@ export class DatabaseClass {
   }
 
   static async connect (connection: ConnectionConfig = defaultConnection): Promise<DatabaseClass> {
+    console.log('Conectando ao banco de dados...', defaultConnection)
     const cl = new Client(connection)
     await cl.connect()
     return new DatabaseClass(cl)
