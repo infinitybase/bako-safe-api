@@ -54,6 +54,9 @@ io.on(SocketEvents.CONNECT, async socket => {
 	socket.on(SocketEvents.DEFAULT, data => {
 		const { sessionId, to, request_id } = data
 		const room = `${sessionId}:${to}:${request_id}`
+		console.log('Mensagem recebida do cliente:', {
+			data,
+		})
 		socket.to(room).emit(SocketEvents.DEFAULT, data)
 	})
 })
