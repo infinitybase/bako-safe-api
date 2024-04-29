@@ -22,7 +22,7 @@ app.get('/', (req, res) => {
 
 // Configuração do Socket.IO
 io.on(SocketEvents.CONNECT, async socket => {
-	console.log('Conexão estabelecida com o cliente:', socket.id, socket.handshake.auth)
+	console.log('Conexão estabelecida com o cliente:', socket.handshake.auth)
 	const { sessionId, username, request_id } = socket.handshake.auth
 	await socket.join(`${sessionId}:${username}:${request_id}`)
 	//console.log('[CONEXAO]: ', socket.handshake.auth, socket.id)

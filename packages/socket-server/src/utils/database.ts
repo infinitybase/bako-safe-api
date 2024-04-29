@@ -33,7 +33,6 @@ export class DatabaseClass {
   }
 
   static async connect (connection: ConnectionConfig = defaultConnection): Promise<DatabaseClass> {
-    console.log(defaultConnection)
     const cl = new Client(connection)
     await cl.connect()
     return new DatabaseClass(cl)
