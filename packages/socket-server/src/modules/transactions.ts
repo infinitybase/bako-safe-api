@@ -39,7 +39,7 @@ export const txConfirm = async ({ data, socket }: { data: IEventTX_CONFIRM; sock
 
 		// ------------------------------ [DAPP] ------------------------------
 		const dapp = await database.query(`
-				SELECT d.*, u.id AS user_id, u.address AS user_address, c.id AS current_vault_id
+				SELECT d.*, u.id AS user_id, u.address AS user_address, c.id AS current_vault_id, c.provider AS current_vault_provider
 				FROM dapp d
 				JOIN "users" u ON d.user = u.id
 				JOIN "predicates" c ON d.current = c.id
@@ -65,8 +65,13 @@ export const txConfirm = async ({ data, socket }: { data: IEventTX_CONFIRM; sock
 
 		// ------------------------------ [TX] ------------------------------
 		console.log('[chamando predicate]', dapp.current_vault_id, dapp.user_address, code.code)
+		console.log('[BakoSafe_preset]', {
+			SERVER_URL: BAKO_URL_API,
+			PROVIDER: dapp.current_vault_provider,
+		})
 		BakoSafe.setup({
 			SERVER_URL: BAKO_URL_API,
+			PROVIDER: dapp.current_vault_provider,
 		})
 		const predicate = await Vault.create({
 			id: dapp.current_vault_id,
