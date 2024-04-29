@@ -1,9 +1,8 @@
+import { txConfirm, txRequest } from './modules/transactions'
+import { SocketEvents } from './types'
 import express from 'express'
 import http from 'http'
 import socketIo from 'socket.io'
-
-import { SocketEvents } from './types'
-import { txConfirm, txRequest } from './modules/transactions'
 
 const { PORT, TIMEOUT_DICONNECT, APP_NAME } = process.env
 
@@ -26,6 +25,7 @@ app.get('/', (req, res) => {
 io.on(SocketEvents.CONNECT, async socket => {
 	const { sessionId, username, request_id } = socket.handshake.auth
 	await socket.join(`${sessionId}:${username}:${request_id}`)
+	console.log('[CONEXAO]: ', socket.handshake.auth, socket.id)
 	/* 
 		[UI] emite esse evento quando o usuário confirma a tx 
 			- verifica se o evento veio da origem correta -> BAKO-UI [http://localhost:5174, https://safe.bako.global]

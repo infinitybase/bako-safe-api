@@ -1,8 +1,8 @@
 import { SocketEvents, SocketUsernames } from '@src/types'
 import { DatabaseClass } from '@src/utils/database'
 import { BakoSafe, TransactionStatus, Vault } from 'bakosafe'
-import { TransactionRequestLike } from 'fuels'
 import crypto from 'crypto'
+import { TransactionRequestLike } from 'fuels'
 import { Socket } from 'socket.io'
 
 export interface IEventTX_REQUEST {

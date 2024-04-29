@@ -14,6 +14,6 @@ RUN yarn global add pm2
 RUN yarn build
 
 # Run!
-EXPOSE 3333
+EXPOSE 3001
 
 ENTRYPOINT ["yarn", "start"]
