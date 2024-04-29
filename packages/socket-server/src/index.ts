@@ -14,11 +14,6 @@ const io = new socketIo.Server(server, {
 	},
 	connectTimeout: Number(TIMEOUT_DICONNECT), // 1 hora
 })
-
-io.of('/').adapter.on('create-room', room => {
-	console.log(`room ${room} was created`)
-})
-
 // Endpoint de teste para o Express
 app.get('/', (req, res) => {
 	res.status(200)
