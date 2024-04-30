@@ -19,4 +19,43 @@ describe('[PREDICATE VERSION]', () => {
     expect(data).toHaveProperty('bytes', predicateVersion.bytes);
     expect(data).toHaveProperty('active', true);
   });
+
+  test('List predicate versions', async () => {
+    //with pagination
+    const page = 0;
+    const perPage = 10;
+    await api
+      .get(`/predicate-version?page=${page}&perPage=${perPage}`)
+      .then(({ data, status }) => {
+        expect(status).toBe(200);
+        expect(data).toHaveProperty('data');
+        expect(data).toHaveProperty('total');
+        expect(data).toHaveProperty('currentPage', page);
+        expect(data).toHaveProperty('perPage', perPage);
+        expect(data.data.length).toBeLessThanOrEqual(perPage);
+        data.data.forEach(element => {
+          expect(element).toHaveProperty('id');
+          expect(element).toHaveProperty('name');
+          expect(element).toHaveProperty('description');
+          expect(element).toHaveProperty('rootAddress');
+          expect(element).toHaveProperty('abi');
+          expect(element).toHaveProperty('bytes');
+          expect(element).toHaveProperty('active');
+        });
+      });
+
+    //without pagination
+    await api.get('/predicate-version').then(({ data, status }) => {
+      expect(status).toBe(200);
+      data.forEach(element => {
+        expect(element).toHaveProperty('id');
+        expect(element).toHaveProperty('name');
+        expect(element).toHaveProperty('description');
+        expect(element).toHaveProperty('rootAddress');
+        expect(element).toHaveProperty('abi');
+        expect(element).toHaveProperty('bytes');
+        expect(element).toHaveProperty('active');
+      });
+    });
+  });
 });

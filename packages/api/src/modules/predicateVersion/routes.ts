@@ -5,10 +5,11 @@ import { handleResponse } from '@src/utils';
 
 const router = Router();
 const predicateVersionService = new PredicateVersionService();
-const { findCurrentVersion } = new PredicateVersionController(
+const { list, findCurrentVersion } = new PredicateVersionController(
   predicateVersionService,
 );
 
+router.get('/', handleResponse(list));
 router.get('/current', handleResponse(findCurrentVersion));
 
 export default router;
