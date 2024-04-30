@@ -1,6 +1,11 @@
 import { Responses, bindMethods, successful } from '@src/utils';
-import { IListRequest, IPredicateVersionService } from './types';
+import {
+  IFindByRootAddressRequest,
+  IListRequest,
+  IPredicateVersionService,
+} from './types';
 import { error } from '@src/utils/error';
+import { PredicateVersion } from '@src/models';
 
 export class PredicateVersionController {
   private predicateVersionService: IPredicateVersionService;
@@ -19,6 +24,24 @@ export class PredicateVersionController {
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })
         .list();
+
+      return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async findByRootAddress(req: IFindByRootAddressRequest) {
+    const { rootAddress } = req.params;
+
+    try {
+      const response = await this.predicateVersionService
+        .filter({
+          rootAddress,
+        })
+        .paginate(undefined)
+        .list()
+        .then((data: PredicateVersion[]) => data[0]);
 
       return successful(response, Responses.Ok);
     } catch (e) {

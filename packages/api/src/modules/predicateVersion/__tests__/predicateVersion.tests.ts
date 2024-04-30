@@ -58,4 +58,18 @@ describe('[PREDICATE VERSION]', () => {
       });
     });
   });
+
+  test('Find predicate version by root address', async () => {
+    const { data } = await api.get(
+      `/predicate-version/${predicateVersion.rootAddress}`,
+    );
+
+    expect(data).toHaveProperty('id');
+    expect(data).toHaveProperty('name', predicateVersion.name);
+    expect(data).toHaveProperty('description', null);
+    expect(data).toHaveProperty('rootAddress', predicateVersion.rootAddress);
+    expect(data).toHaveProperty('abi', predicateVersion.abi);
+    expect(data).toHaveProperty('bytes', predicateVersion.bytes);
+    expect(data).toHaveProperty('active', true);
+  });
 });

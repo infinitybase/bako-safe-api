@@ -31,7 +31,14 @@ interface IListRequestSchema extends ValidatedRequestSchema {
   };
 }
 
+interface IFindByRootAddressRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Params]: {
+    rootAddress: string;
+  };
+}
+
 export type IListRequest = UnloggedRequest<IListRequestSchema>;
+export type IFindByRootAddressRequest = UnloggedRequest<IFindByRootAddressRequestSchema>;
 
 export interface IPredicateVersionService {
   ordination(ordination?: IOrdination<PredicateVersion>): this;
