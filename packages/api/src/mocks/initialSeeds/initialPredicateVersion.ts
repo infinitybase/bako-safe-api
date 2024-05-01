@@ -1,8 +1,8 @@
 import { PredicateVersion } from '@src/models';
-import { predicateVersion } from '../predicateVersion';
+import { predicateVersions } from '../predicateVersion';
 
 export const generateInitialPredicateVersion = async (): Promise<
   Partial<PredicateVersion>
 > => {
-  return predicateVersion;
+  return predicateVersions[0];
 };
