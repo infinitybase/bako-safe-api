@@ -35,13 +35,9 @@ export class PredicateVersionController {
     const { rootAddress } = req.params;
 
     try {
-      const response = await this.predicateVersionService
-        .filter({
-          rootAddress,
-        })
-        .paginate(undefined)
-        .list()
-        .then((data: PredicateVersion[]) => data[0]);
+      const response = await this.predicateVersionService.findByRootAddress(
+        rootAddress,
+      );
 
       return successful(response, Responses.Ok);
     } catch (e) {

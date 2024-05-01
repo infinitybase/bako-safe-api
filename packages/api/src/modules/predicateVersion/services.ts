@@ -82,6 +82,30 @@ export class PredicateVersionService implements IPredicateVersionService {
           .catch(handleInternalError);
   }
 
+  async findByRootAddress(rootAddress: string): Promise<PredicateVersion> {
+    return await PredicateVersion.findOne({ where: { rootAddress } })
+      .then(predicateVersion => {
+        if (!predicateVersion) {
+          throw new NotFound({
+            type: ErrorTypes.NotFound,
+            title: 'Predicate version not found',
+            detail: `Predicate version with root address ${rootAddress} was not found`,
+          });
+        }
+
+        return predicateVersion;
+      })
+      .catch(e => {
+        if (e instanceof GeneralError) throw e;
+
+        throw new Internal({
+          type: ErrorTypes.Internal,
+          title: 'Error on predicate version findByRootAddress',
+          detail: e,
+        });
+      });
+  }
+
   async findCurrentVersion(): Promise<PredicateVersion> {
     return await PredicateVersion.findOne({
       order: {
@@ -104,7 +128,7 @@ export class PredicateVersionService implements IPredicateVersionService {
 
         throw new Internal({
           type: ErrorTypes.Internal,
-          title: 'Error on predicate findCurrentVersion',
+          title: 'Error on predicate version findCurrentVersion',
           detail: e,
         });
       });

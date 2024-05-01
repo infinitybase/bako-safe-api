@@ -46,5 +46,6 @@ export interface IPredicateVersionService {
   filter(filter: IPredicateVersionFilterParams): this;
 
   list: () => Promise<IPagination<PredicateVersion> | PredicateVersion[]>;
+  findByRootAddress: (rootAddress: string) => Promise<PredicateVersion>;
   findCurrentVersion: () => Promise<PredicateVersion>;
 }

@@ -9,6 +9,7 @@ describe('[PREDICATE VERSION]', () => {
   });
 
   test('Find current predicate version', async () => {
+    // TODO: adicionar logica de criar o predicate version baseado no mock
     const { data } = await api.get('/predicate-version/current');
 
     expect(data).toHaveProperty('id');
@@ -60,6 +61,7 @@ describe('[PREDICATE VERSION]', () => {
   });
 
   test('Find predicate version by root address', async () => {
+    // TODO: adicionar logica de criar o predicate version baseado no mock
     const { data } = await api.get(
       `/predicate-version/${predicateVersion.rootAddress}`,
     );
