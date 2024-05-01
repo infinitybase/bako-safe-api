@@ -1,10 +1,11 @@
 import { Responses, bindMethods, successful } from '@src/utils';
 import {
+  ICreateRequest,
   IFindByRootAddressRequest,
   IListRequest,
   IPredicateVersionService,
 } from './types';
-import { error } from '@src/utils/error';
+import { BadRequest, ErrorTypes, error } from '@src/utils/error';
 import { PredicateVersion } from '@src/models';
 
 export class PredicateVersionController {
@@ -13,6 +14,32 @@ export class PredicateVersionController {
   constructor(predicateVersionService: IPredicateVersionService) {
     this.predicateVersionService = predicateVersionService;
     bindMethods(this);
+  }
+
+  async create(req: ICreateRequest) {
+    const { body } = req;
+    const { rootAddress } = body;
+
+    try {
+      const duplicatedPredicateVersion = await PredicateVersion.findOne({
+        where: { rootAddress },
+        withDeleted: true,
+      });
+
+      if (duplicatedPredicateVersion) {
+        throw new BadRequest({
+          type: ErrorTypes.Create,
+          title: 'Error on predicate version creation',
+          detail: `Predicate version with root address ${rootAddress} already exists`,
+        });
+      }
+
+      const response = await this.predicateVersionService.create(body);
+
+      return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
   }
 
   async list(req: IListRequest) {

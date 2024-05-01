@@ -1,4 +1,4 @@
-import { predicateVersion } from '@src/mocks/predicateVersion';
+import { predicateVersions } from '@src/mocks/predicateVersion';
 import axios from 'axios';
 
 describe('[PREDICATE VERSION]', () => {
@@ -8,17 +8,47 @@ describe('[PREDICATE VERSION]', () => {
     });
   });
 
-  test('Find current predicate version', async () => {
-    // TODO: adicionar logica de criar o predicate version baseado no mock
-    const { data } = await api.get('/predicate-version/current');
+  test('Create predicate version', async () => {
+    await api
+      .post('/predicate-version', predicateVersions[1])
+      .then(({ data, status }) => {
+        expect(status).toBe(200);
+        expect(data).toHaveProperty('id');
+        expect(data).toHaveProperty('name', predicateVersions[1].name);
+        expect(data).toHaveProperty('description', null);
+        expect(data).toHaveProperty(
+          'rootAddress',
+          predicateVersions[1].rootAddress,
+        );
+        expect(data).toHaveProperty('abi', predicateVersions[1].abi);
+        expect(data).toHaveProperty('bytes', predicateVersions[1].bytes);
+        expect(data).toHaveProperty('active', true);
+      });
 
-    expect(data).toHaveProperty('id');
-    expect(data).toHaveProperty('name', predicateVersion.name);
-    expect(data).toHaveProperty('description', null);
-    expect(data).toHaveProperty('rootAddress', predicateVersion.rootAddress);
-    expect(data).toHaveProperty('abi', predicateVersion.abi);
-    expect(data).toHaveProperty('bytes', predicateVersion.bytes);
-    expect(data).toHaveProperty('active', true);
+    //duplicated root address
+    const { data, status } = await api
+      .post('/predicate-version', predicateVersions[1])
+      .catch(e => {
+        return e.response;
+      });
+
+    expect(status).toBe(400);
+    expect(data).toHaveProperty('type');
+    expect(data).toHaveProperty('title');
+    expect(data).toHaveProperty('detail');
+  });
+
+  test('Find current predicate version', async () => {
+    await api.get('/predicate-version/current').then(({ data, status }) => {
+      expect(status).toBe(200);
+      expect(data).toHaveProperty('id');
+      expect(data).toHaveProperty('name');
+      expect(data).toHaveProperty('description');
+      expect(data).toHaveProperty('rootAddress');
+      expect(data).toHaveProperty('abi');
+      expect(data).toHaveProperty('bytes');
+      expect(data).toHaveProperty('active');
+    });
   });
 
   test('List predicate versions', async () => {
@@ -61,17 +91,20 @@ describe('[PREDICATE VERSION]', () => {
   });
 
   test('Find predicate version by root address', async () => {
-    // TODO: adicionar logica de criar o predicate version baseado no mock
-    const { data } = await api.get(
-      `/predicate-version/${predicateVersion.rootAddress}`,
-    );
-
-    expect(data).toHaveProperty('id');
-    expect(data).toHaveProperty('name', predicateVersion.name);
-    expect(data).toHaveProperty('description', null);
-    expect(data).toHaveProperty('rootAddress', predicateVersion.rootAddress);
-    expect(data).toHaveProperty('abi', predicateVersion.abi);
-    expect(data).toHaveProperty('bytes', predicateVersion.bytes);
-    expect(data).toHaveProperty('active', true);
+    await api
+      .get(`/predicate-version/${predicateVersions[1].rootAddress}`)
+      .then(({ data, status }) => {
+        expect(status).toBe(200);
+        expect(data).toHaveProperty('id');
+        expect(data).toHaveProperty('name', predicateVersions[1].name);
+        expect(data).toHaveProperty('description', null);
+        expect(data).toHaveProperty(
+          'rootAddress',
+          predicateVersions[1].rootAddress,
+        );
+        expect(data).toHaveProperty('abi', predicateVersions[1].abi);
+        expect(data).toHaveProperty('bytes', predicateVersions[1].bytes);
+        expect(data).toHaveProperty('active', true);
+      });
   });
 });
