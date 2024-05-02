@@ -1,4 +1,4 @@
-import { predicateVersions } from '@src/mocks/predicateVersion';
+import { predicateVersionMock } from '@src/mocks/predicateVersion';
 import axios from 'axios';
 
 describe('[PREDICATE VERSION]', () => {
@@ -62,18 +62,18 @@ describe('[PREDICATE VERSION]', () => {
 
   test('Find predicate version by root address', async () => {
     await api
-      .get(`/predicate/version/${predicateVersions[0].rootAddress}`)
+      .get(`/predicate/version/${predicateVersionMock.rootAddress}`)
       .then(({ data, status }) => {
         expect(status).toBe(200);
         expect(data).toHaveProperty('id');
-        expect(data).toHaveProperty('name', predicateVersions[0].name);
+        expect(data).toHaveProperty('name', predicateVersionMock.name);
         expect(data).toHaveProperty('description', null);
         expect(data).toHaveProperty(
           'rootAddress',
-          predicateVersions[0].rootAddress,
+          predicateVersionMock.rootAddress,
         );
-        expect(data).toHaveProperty('abi', predicateVersions[0].abi);
-        expect(data).toHaveProperty('bytes', predicateVersions[0].bytes);
+        expect(data).toHaveProperty('abi', predicateVersionMock.abi);
+        expect(data).toHaveProperty('bytes', predicateVersionMock.bytes);
         expect(data).toHaveProperty('active', true);
       });
   });
