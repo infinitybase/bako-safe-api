@@ -2,7 +2,7 @@ import axios, { AxiosInstance } from 'axios';
 import { IBakoSafeApi } from 'bakosafe';
 import { Provider, Wallet } from 'fuels';
 
-import { User, TypeUser } from '@src/models';
+import { TypeUser } from '@src/models';
 
 import { IDefaultAccount } from '../../mocks/accounts';
 

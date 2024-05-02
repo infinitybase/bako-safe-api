@@ -52,9 +52,7 @@ export class DappController {
       }
       dapp.currentVault = predicate;
       await dapp.save();
-      console.log('[api]: ', dapp, sessionId, request_id);
       const socket = new SocketClient(sessionId, BAKO_URL_API);
-      console.log(socket);
       socket.sendMessage({
         sessionId,
         to: '[CONNECTOR]',

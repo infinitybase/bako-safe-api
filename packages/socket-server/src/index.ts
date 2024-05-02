@@ -12,7 +12,7 @@ const io = new socketIo.Server(server, {
 	cors: {
 		origin: '*',
 	},
-	connectTimeout: Number(TIMEOUT_DICONNECT), // 1 hora
+	connectTimeout: Number(TIMEOUT_DICONNECT), // 30 mins
 })
 // Endpoint de teste para o Express
 app.get('/', (req, res) => {
@@ -58,6 +58,13 @@ io.on(SocketEvents.CONNECT, async socket => {
 			data,
 		})
 		socket.to(room).emit(SocketEvents.DEFAULT, data)
+	})
+
+	socket.on('disconnect', () => {
+		console.log('Cliente desconectado:', socket.handshake.auth)
+		socket.disconnect(true)
+
+		//console.log(socket.listenersAny(), socket.getMaxListeners(), socket._cleanup())
 	})
 })
 
