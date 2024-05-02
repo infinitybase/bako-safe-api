@@ -9,7 +9,7 @@ describe('[PREDICATE VERSION]', () => {
   });
 
   test('Find current predicate version', async () => {
-    await api.get('/predicate-version/current').then(({ data, status }) => {
+    await api.get('/predicate/version/current').then(({ data, status }) => {
       expect(status).toBe(200);
       expect(data).toHaveProperty('id');
       expect(data).toHaveProperty('name');
@@ -26,7 +26,7 @@ describe('[PREDICATE VERSION]', () => {
     const page = 0;
     const perPage = 10;
     await api
-      .get(`/predicate-version?page=${page}&perPage=${perPage}`)
+      .get(`/predicate/version?page=${page}&perPage=${perPage}`)
       .then(({ data, status }) => {
         expect(status).toBe(200);
         expect(data).toHaveProperty('data');
@@ -46,7 +46,7 @@ describe('[PREDICATE VERSION]', () => {
       });
 
     //without pagination
-    await api.get('/predicate-version').then(({ data, status }) => {
+    await api.get('/predicate/version').then(({ data, status }) => {
       expect(status).toBe(200);
       data.forEach(element => {
         expect(element).toHaveProperty('id');
@@ -62,18 +62,18 @@ describe('[PREDICATE VERSION]', () => {
 
   test('Find predicate version by root address', async () => {
     await api
-      .get(`/predicate-version/${predicateVersions[1].rootAddress}`)
+      .get(`/predicate/version/${predicateVersions[0].rootAddress}`)
       .then(({ data, status }) => {
         expect(status).toBe(200);
         expect(data).toHaveProperty('id');
-        expect(data).toHaveProperty('name', predicateVersions[1].name);
+        expect(data).toHaveProperty('name', predicateVersions[0].name);
         expect(data).toHaveProperty('description', null);
         expect(data).toHaveProperty(
           'rootAddress',
-          predicateVersions[1].rootAddress,
+          predicateVersions[0].rootAddress,
         );
-        expect(data).toHaveProperty('abi', predicateVersions[1].abi);
-        expect(data).toHaveProperty('bytes', predicateVersions[1].bytes);
+        expect(data).toHaveProperty('abi', predicateVersions[0].abi);
+        expect(data).toHaveProperty('bytes', predicateVersions[0].bytes);
         expect(data).toHaveProperty('active', true);
       });
   });

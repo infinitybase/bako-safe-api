@@ -16,8 +16,8 @@ const router = Router();
 
 router.use('/auth', auth);
 router.use('/user', users);
+router.use('/predicate/version', predicateVersions);
 router.use('/predicate', predicates);
-router.use('/predicate-version', predicateVersions);
 router.use('/transaction', transactions);
 router.use('/template', vaultTemplate);
 router.use('/address-book', addressBook);
