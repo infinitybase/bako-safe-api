@@ -8,36 +8,6 @@ describe('[PREDICATE VERSION]', () => {
     });
   });
 
-  test('Create predicate version', async () => {
-    await api
-      .post('/predicate-version', predicateVersions[1])
-      .then(({ data, status }) => {
-        expect(status).toBe(200);
-        expect(data).toHaveProperty('id');
-        expect(data).toHaveProperty('name', predicateVersions[1].name);
-        expect(data).toHaveProperty('description', null);
-        expect(data).toHaveProperty(
-          'rootAddress',
-          predicateVersions[1].rootAddress,
-        );
-        expect(data).toHaveProperty('abi', predicateVersions[1].abi);
-        expect(data).toHaveProperty('bytes', predicateVersions[1].bytes);
-        expect(data).toHaveProperty('active', true);
-      });
-
-    //duplicated root address
-    const { data, status } = await api
-      .post('/predicate-version', predicateVersions[1])
-      .catch(e => {
-        return e.response;
-      });
-
-    expect(status).toBe(400);
-    expect(data).toHaveProperty('type');
-    expect(data).toHaveProperty('title');
-    expect(data).toHaveProperty('detail');
-  });
-
   test('Find current predicate version', async () => {
     await api.get('/predicate-version/current').then(({ data, status }) => {
       expect(status).toBe(200);

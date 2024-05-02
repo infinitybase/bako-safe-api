@@ -1,9 +1,5 @@
 import { PredicateVersion } from '@src/models';
-import {
-  IPredicateVersionFilterParams,
-  IPredicateVersionPayload,
-  IPredicateVersionService,
-} from './types';
+import { IPredicateVersionFilterParams, IPredicateVersionService } from './types';
 import Internal from '@src/utils/error/Internal';
 import { ErrorTypes, NotFound } from '@src/utils/error';
 import GeneralError from '@src/utils/error/GeneralError';
@@ -32,19 +28,6 @@ export class PredicateVersionService implements IPredicateVersionService {
   ordination(ordination?: IOrdination<PredicateVersion>) {
     this._ordination = setOrdination(ordination);
     return this;
-  }
-
-  async create(payload: IPredicateVersionPayload): Promise<PredicateVersion> {
-    return PredicateVersion.create(payload)
-      .save()
-      .then(predicateVersion => predicateVersion)
-      .catch(e => {
-        throw new Internal({
-          type: ErrorTypes.Internal,
-          title: 'Error on predicate version creation',
-          detail: e,
-        });
-      });
   }
 
   async list(): Promise<IPagination<PredicateVersion> | PredicateVersion[]> {

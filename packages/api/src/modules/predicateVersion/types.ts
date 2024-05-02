@@ -19,19 +19,6 @@ export interface IPredicateVersionFilterParams {
   active?: boolean;
 }
 
-export interface IPredicateVersionPayload {
-  name: string;
-  description?: string;
-  rootAddress: string;
-  abi: string;
-  bytes: string;
-  active?: boolean;
-}
-
-interface ICreateRequestSchema extends ValidatedRequestSchema {
-  [ContainerTypes.Body]: IPredicateVersionPayload;
-}
-
 interface IListRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Query]: {
     q: string;
@@ -50,7 +37,6 @@ interface IFindByRootAddressRequestSchema extends ValidatedRequestSchema {
   };
 }
 
-export type ICreateRequest = UnloggedRequest<ICreateRequestSchema>;
 export type IListRequest = UnloggedRequest<IListRequestSchema>;
 export type IFindByRootAddressRequest = UnloggedRequest<IFindByRootAddressRequestSchema>;
 
@@ -59,7 +45,6 @@ export interface IPredicateVersionService {
   paginate(pagination?: PaginationParams): this;
   filter(filter: IPredicateVersionFilterParams): this;
 
-  create: (payload: Partial<PredicateVersion>) => Promise<PredicateVersion>;
   list: () => Promise<IPagination<PredicateVersion> | PredicateVersion[]>;
   findByRootAddress: (rootAddress: string) => Promise<PredicateVersion>;
   findCurrentVersion: () => Promise<PredicateVersion>;
