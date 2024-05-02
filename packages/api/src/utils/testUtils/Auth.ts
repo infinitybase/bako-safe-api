@@ -6,6 +6,8 @@ import { User, TypeUser } from '@src/models';
 
 import { IDefaultAccount } from '../../mocks/accounts';
 
+const { API_URL } = process.env;
+
 export type IUserAuth = {
   id: string;
   avatar: string;
@@ -29,7 +31,7 @@ export class AuthValidations {
     private readonly account: IDefaultAccount,
   ) {
     this.axios = axios.create({
-      baseURL: 'http://localhost:3333',
+      baseURL: API_URL,
     });
   }
   async create() {

@@ -10,10 +10,12 @@ import { AuthValidations } from '@src/utils/testUtils/Auth';
 
 import { accounts } from '../../../mocks/accounts';
 
+const { API_URL } = process.env;
+
 describe('[USER]', () => {
   let api = beforeAll(() => {
     api = axios.create({
-      baseURL: 'http://localhost:3333',
+      baseURL: API_URL,
     });
   });
 
