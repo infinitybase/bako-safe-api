@@ -13,6 +13,7 @@ import { Base } from './Base';
 import { Transaction } from './Transaction';
 import { User } from './User';
 import { Workspace } from './Workspace';
+import { PredicateVersion } from './PredicateVersion';
 
 export interface PredicateMember {
   avatar: string;
@@ -66,6 +67,10 @@ class Predicate extends Base {
     inverseJoinColumn: { name: 'user_id', referencedColumnName: 'id' },
   })
   members: User[];
+
+  @JoinColumn({ name: 'version_id' })
+  @ManyToOne(() => PredicateVersion, { nullable: true })
+  version: PredicateVersion;
 }
 
 export { Predicate };
