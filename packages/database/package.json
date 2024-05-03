@@ -1,14 +1,15 @@
 {
-    "name": "db-dev",
-    "version": "0.0.1",
-    "license": "MIT",
-    "scripts": {
-        "db:dev:start": "make -C ./ database-init env_file=.env",
-        "db:dev:stop": "make -C ./ database-down env_file=.env",
-        "db:dev:test": "pending",
-        "db:dev:reestart": "pending"
-     },
-     "devDependencies": {
-        "husky": "5.2.0"
-     }
-  }
+   "name": "database",
+   "version": "0.0.1",
+   "license": "MIT",
+   "scripts": {
+      "db:dev:start": "make -C ./ database-init env_file=.env.dev",
+      "db:dev:stop": "make -C ./ database-down env_file=.env",
+      "db:test:start": "make -C ./ database-init env_file=.env.test",
+      "db:test:stop": "make -C ./ database-down env_file=.env.test",
+      "db:dev:reestart": "pending"
+   },
+   "devDependencies": {
+      "husky": "5.2.0"
+   }
+}

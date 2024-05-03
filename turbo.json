@@ -2,19 +2,19 @@
   "$schema": "https://turborepo.org/schema.json",
   "pipeline": {
     "prebuild": {
-      "dependsOn": ["^prebuild"],
-      "outputs": ["dist/sway/**"],
+      "dependsOn": [
+        "^prebuild"
+      ],
+      "outputs": [
+        "dist/sway/**"
+      ],
       "outputMode": "hash-only",
       "cache": false
     },
     "build": {
-      "outputs": ["dist/**"],
-      "outputMode": "new-only",
-      "cache": false
-    },
-    "test": {
-      "dependsOn": ["^prebuild"],
-      "outputs": ["dist/**"],
+      "outputs": [
+        "dist/**"
+      ],
       "outputMode": "new-only",
       "cache": false
     },
@@ -24,25 +24,86 @@
       "cache": false
     },
     "chain:dev:start": {
-      "dependsOn": ["db:dev:start"],
+      "dependsOn": [
+        "db:dev:start"
+      ],
       "outputs": [],
       "outputMode": "new-only",
       "cache": false
     },
     "socket:dev:start": {
-      "dependsOn": ["db:dev:start"],
+      "dependsOn": [
+        "db:dev:start"
+      ],
       "outputs": [],
       "outputMode": "new-only",
       "cache": false
     },
     "api:dev:start": {
-      "dependsOn": ["db:dev:start", "chain:dev:start", "socket:dev:start"],
-      "outputs": ["dist/**"],
+      "dependsOn": [
+        "db:dev:start",
+        "chain:dev:start",
+        "socket:dev:start"
+      ],
+      "outputs": [
+        "dist/**"
+      ],
       "outputMode": "new-only",
       "cache": false
     },
     "dev": {
-      "dependsOn": ["api:dev:start"],
+      "dependsOn": [
+        "api:dev:start"
+      ],
+      "outputs": [],
+      "outputMode": "new-only",
+      "cache": false
+    },
+    "db:test:start": {
+      "outputs": [],
+      "outputMode": "new-only",
+      "cache": false
+    },
+    "chain:test:start": {
+      "dependsOn": [
+        "db:test:start"
+      ],
+      "outputs": [],
+      "outputMode": "new-only",
+      "cache": false
+    },
+    "socket:test:start": {
+      "dependsOn": [
+        "db:test:start"
+      ],
+      "outputs": [],
+      "outputMode": "new-only",
+      "cache": false
+    },
+    "api:test:run": {
+      "dependsOn": [
+        "db:test:start",
+        "chain:test:start",
+        "socket:test:start"
+      ],
+      "outputs": [],
+      "outputMode": "new-only",
+      "cache": false
+    },
+    "api:run:test": {
+      "dependsOn": [
+        "api:test:run"
+      ],
+      "outputs": [
+        "dist/**"
+      ],
+      "outputMode": "new-only",
+      "cache": false
+    },
+    "test": {
+      "dependsOn": [
+        "api:test:start"
+      ],
       "outputs": [],
       "outputMode": "new-only",
       "cache": false
