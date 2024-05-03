@@ -37,7 +37,6 @@ export class PredicateService implements IPredicateService {
     'p.provider',
     'p.chainId',
     'p.configurable',
-    'p.version',
   ];
 
   filter(filter: IPredicateFilterParams) {
@@ -74,6 +73,7 @@ export class PredicateService implements IPredicateService {
         .where({ id })
         .leftJoinAndSelect('p.members', 'members')
         .leftJoinAndSelect('p.owner', 'owner')
+        .leftJoin('p.version', 'version')
         .leftJoin('p.workspace', 'workspace')
         .leftJoin('workspace.addressBook', 'addressBook')
         .leftJoin('addressBook.user', 'adb_workspace')
@@ -85,6 +85,9 @@ export class PredicateService implements IPredicateService {
           'members.address',
           'owner.id',
           'owner.address',
+          'version.id',
+          'version.abi',
+          'version.bytes',
           'workspace.id',
           'workspace.name',
           'addressBook.nickname',

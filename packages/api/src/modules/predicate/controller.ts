@@ -32,24 +32,25 @@ import {
   IListRequest,
   IPredicateService,
 } from './types';
+import { IPredicateVersionService } from '../predicateVersion/types';
 
 export class PredicateController {
   private userService: IUserService;
   private predicateService: IPredicateService;
-  private addressBookService: IAddressBookService;
+  private predicateVersionService: IPredicateVersionService;
   private transactionService: ITransactionService;
   private notificationService: INotificationService;
 
   constructor(
     userService: IUserService,
     predicateService: IPredicateService,
-    addressBookService: IAddressBookService,
+    predicateVersionService: IPredicateVersionService,
     transactionService: ITransactionService,
     notificationService: INotificationService,
   ) {
     this.userService = userService;
     this.predicateService = predicateService;
-    this.addressBookService = addressBookService;
+    this.predicateVersionService = predicateVersionService;
     this.transactionService = transactionService;
     this.notificationService = notificationService;
     bindMethods(this);
@@ -74,11 +75,14 @@ export class PredicateController {
         members.push(user);
       }
 
+      const version = await this.predicateVersionService.findCurrentVersion();
+
       const newPredicate = await this.predicateService.create({
         ...payload,
         owner: user,
         members,
         workspace,
+        version,
       });
 
       // include signer permission to vault on workspace

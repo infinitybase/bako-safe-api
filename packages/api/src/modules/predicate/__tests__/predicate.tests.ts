@@ -40,6 +40,9 @@ describe('[PREDICATE]', () => {
         predicatePayload.predicateAddress,
       );
       expect(data).toHaveProperty('owner.address', accounts['USER_1'].address);
+      expect(data).toHaveProperty('version.id');
+      expect(data).toHaveProperty('version.abi');
+      expect(data).toHaveProperty('version.bytes');
 
       //permissions validation
       expect(
@@ -185,6 +188,9 @@ describe('[PREDICATE]', () => {
         const n_members = [n_data2.nickname, n_data1.nickname, n_data5.nickname];
 
         expect(status).toBe(200);
+        expect(data).toHaveProperty('version.id');
+        expect(data).toHaveProperty('version.abi');
+        expect(data).toHaveProperty('version.bytes');
 
         //validate workspace members
         workspace.addressBook.forEach(element => {
