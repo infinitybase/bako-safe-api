@@ -35,12 +35,6 @@ class Predicate extends Base {
   minSigners: number;
 
   @Column()
-  bytes: string;
-
-  @Column()
-  abi: string;
-
-  @Column()
   configurable: string;
 
   @Column()

@@ -30,8 +30,6 @@ export const generateInitialPredicate = async (): Promise<Partial<Predicate>> =>
     predicateAddress: Address.fromRandom().toString(),
     description: `fake_description: ${new Date().getTime()}`,
     minSigners: 1,
-    bytes: predicatePayload.bytes,
-    abi: predicatePayload.abi,
     configurable: predicatePayload.configurable,
     provider: predicatePayload.provider,
     chainId: predicatePayload.chainId,

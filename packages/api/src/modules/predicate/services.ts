@@ -37,8 +37,7 @@ export class PredicateService implements IPredicateService {
     'p.provider',
     'p.chainId',
     'p.configurable',
-    'p.bytes',
-    'p.abi',
+    'p.version',
   ];
 
   filter(filter: IPredicateFilterParams) {
@@ -313,8 +312,8 @@ export class PredicateService implements IPredicateService {
 
     const configurable: IConfVault = {
       ...JSON.parse(predicate.configurable),
-      abi: predicate.abi,
-      bytecode: predicate.bytes,
+      abi: predicate.version.abi,
+      bytecode: predicate.version.bytes,
     };
     const provider = await Provider.create(predicate.provider);
     console.log('[PROVIDER]', provider);
