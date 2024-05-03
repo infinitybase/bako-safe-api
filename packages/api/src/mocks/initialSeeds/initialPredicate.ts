@@ -1,11 +1,12 @@
 import { Address } from 'fuels';
 import { In } from 'typeorm';
 
-import { User } from '@src/models';
+import { PredicateVersion, User } from '@src/models';
 import { Predicate } from '@src/models/Predicate';
 
 import { PredicateMock } from '../predicate';
 import { generateInitialUsers } from './initialUsers';
+import { predicateVersionMock } from '../predicateVersion';
 
 export const generateInitialPredicate = async (): Promise<Partial<Predicate>> => {
   const users = (await generateInitialUsers()).map(u => u.name);
@@ -20,6 +21,9 @@ export const generateInitialPredicate = async (): Promise<Partial<Predicate>> =>
       name: In(users),
     },
   });
+  const version = await PredicateVersion.findOne({
+    rootAddress: predicateVersionMock.rootAddress,
+  });
 
   const predicate1: Partial<Predicate> = {
     name: `fake_name: ${members[0].name}`,
@@ -33,6 +37,7 @@ export const generateInitialPredicate = async (): Promise<Partial<Predicate>> =>
     chainId: predicatePayload.chainId,
     owner,
     members,
+    version,
     createdAt: new Date(),
   };
 
