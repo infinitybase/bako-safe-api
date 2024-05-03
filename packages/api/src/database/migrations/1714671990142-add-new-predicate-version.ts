@@ -34,7 +34,7 @@ export class addNewPredicateVersion1714671990142 implements MigrationInterface {
   }
 }
 
-const predicateVersion = {
+export const predicateVersion = {
   name: generatePredicateVersionName(
     '0xcd8d8c3e7ac1498d4a8b02ffe31b4726239bfd802e0778d1d901766cfedf90ce',
   ),
