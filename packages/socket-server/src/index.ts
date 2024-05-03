@@ -63,6 +63,8 @@ io.on(SocketEvents.CONNECT, async socket => {
 	socket.on('disconnect', () => {
 		console.log('Cliente desconectado:', socket.handshake.auth)
 		socket.disconnect(true)
+		socket.rooms.forEach(room => socket.leave(room));
+		socket.removeAllListeners();
 
 		//console.log(socket.listenersAny(), socket.getMaxListeners(), socket._cleanup())
 	})
