@@ -1,0 +1,20 @@
+[OBJETIVO]:
+Criar um deploy de contratos que passe pelo ecossistema da bako safe, vinculando um terminal (CLI) a um vault, 
+e processando a transação equivalente ao deploy.
+
+
+[PROCESSO]:
+Utilizando o recurso stichies do grapql, interceptar a request submit, emitida ao servidor da fuel 'https://fuel-beta5/graphql'
+fazendo com que as requisicoes passem inicialmente por um getway (http://localhost:3002/getway), onde a tx da request interceptada
+irá inserir dentro da bako uma solicitacao de transação, que ao ser assinada e atender as regras do predicate, irá ser confirmada pela
+bako api.
+
+
+[INDEFINICOES]:
+- É necessário responder a request de submit ao solicitante (cli)?
+
+
+[REFERENCIAS]:
+- Stichie example: https://github.com/ardatan/schema-stitching/blob/master/examples/combining-local-and-remote-schemas/src/gateway.ts
+- Forc deploy: https://docs.fuel.network/docs/forc/plugins/forc_deploy/
+
