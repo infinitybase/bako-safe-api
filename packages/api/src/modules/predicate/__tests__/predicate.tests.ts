@@ -6,6 +6,7 @@ import { PredicateMock } from '@src/mocks/predicate';
 import { PermissionRoles } from '@src/models/Workspace';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
 import { generateWorkspacePayload } from '@src/utils/testUtils/Workspace';
+import { predicateVersionMock } from '@src/mocks/predicateVersion';
 
 describe('[PREDICATE]', () => {
   let api: AuthValidations;
@@ -17,7 +18,7 @@ describe('[PREDICATE]', () => {
   });
 
   test(
-    'Create predicate',
+    'Create predicate without root address',
     async () => {
       const {
         data: data_workspace,
@@ -28,6 +29,48 @@ describe('[PREDICATE]', () => {
       const members = [data_user1.address, data_user2.address];
       const { predicatePayload } = await PredicateMock.create(1, members);
       const { data } = await api.axios.post('/predicate', predicatePayload);
+
+      const { data: workspace, status: status_find } = await api.axios.get(
+        `/workspace/${api.workspace.id}`,
+      );
+
+      //predicate validation
+      expect(data).toHaveProperty('id');
+      expect(data).toHaveProperty(
+        'predicateAddress',
+        predicatePayload.predicateAddress,
+      );
+      expect(data).toHaveProperty('owner.address', accounts['USER_1'].address);
+      expect(data).toHaveProperty('version.id');
+      expect(data).toHaveProperty('version.abi');
+      expect(data).toHaveProperty('version.bytes');
+
+      //permissions validation
+      expect(
+        workspace.permissions[data_user1.id][PermissionRoles.SIGNER],
+      ).toContain(data.id);
+      expect(
+        workspace.permissions[data_user2.id][PermissionRoles.SIGNER],
+      ).toContain(data.id);
+    },
+    10 * 1000,
+  );
+
+  test(
+    'Create predicate with root address',
+    async () => {
+      const {
+        data: data_workspace,
+        data_user1,
+        data_user2,
+        USER_5,
+      } = await generateWorkspacePayload(api);
+      const members = [data_user1.address, data_user2.address];
+      const { predicatePayload } = await PredicateMock.create(1, members);
+      const { data } = await api.axios.post('/predicate', {
+        ...predicatePayload,
+        rootAddress: predicateVersionMock.rootAddress,
+      });
 
       const { data: workspace, status: status_find } = await api.axios.get(
         `/workspace/${api.workspace.id}`,

@@ -5,7 +5,7 @@ import { AuthValidatedRequest } from '@src/middlewares/auth/types';
 import { IDefaultOrdination, IOrdination } from '@src/utils/ordination';
 import { IPagination, PaginationParams } from '@src/utils/pagination';
 
-import { Predicate, User } from '@models/index';
+import { Predicate, PredicateVersion, User } from '@models/index';
 
 export enum OrderBy {
   name = 'name',
@@ -28,6 +28,7 @@ export interface IPredicatePayload {
   chainId?: number;
   user: User;
   //members?: User[];
+  rootAddress?: string;
 }
 
 export interface IPredicateMemberPayload {

@@ -57,6 +57,8 @@ export class PredicateController {
   }
 
   async create({ body: payload, user, workspace }: ICreatePredicateRequest) {
+    const { rootAddress } = payload;
+
     try {
       const members: User[] = [];
 
@@ -75,7 +77,13 @@ export class PredicateController {
         members.push(user);
       }
 
-      const version = await this.predicateVersionService.findCurrentVersion();
+      let version = null;
+
+      if (rootAddress) {
+        version = await this.predicateVersionService.findByRootAddress(rootAddress);
+      } else {
+        version = await this.predicateVersionService.findCurrentVersion();
+      }
 
       const newPredicate = await this.predicateService.create({
         ...payload,
