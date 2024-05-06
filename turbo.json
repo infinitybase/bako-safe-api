@@ -66,7 +66,7 @@
     },
     "chain:test:start": {
       "dependsOn": [
-        "db:test:start"
+        "db:dev:start"
       ],
       "outputs": [],
       "outputMode": "new-only",
@@ -82,7 +82,7 @@
     },
     "api:test:run": {
       "dependsOn": [
-        "db:test:start",
+        "db:dev:start",
         "chain:test:start",
         "socket:test:start"
       ],

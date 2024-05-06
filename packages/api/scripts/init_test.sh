@@ -1,7 +1,7 @@
 sleep 20
 
 echo "Running api..."
-pnpm api:run:dev &
+pnpm dev &
 
 DEV_PID=$!
 

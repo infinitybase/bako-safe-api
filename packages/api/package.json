@@ -5,7 +5,7 @@
   "license": "Apache-2.0",
   "scripts": {
     "dev": "NODE_ENV=development ts-node-dev --respawn --transpile-only -r tsconfig-paths/register -r dotenv/config src/server/index.ts",
-    "api:run:test": "sudo chmod +x ./scripts/init_test.sh && ./scripts/init_test.sh",
+    "api:run:test": "chmod +x ./scripts/init_test.sh && ./scripts/init_test.sh",
     "start": "pm2-runtime start ./build/server/index.js",
     "build": "tsc --project . && tscpaths -p tsconfig.json -s ./src -o ./build",
     "copyFiles": "copyfiles --error --up 1 src/**/*.html build",
