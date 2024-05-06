@@ -63,7 +63,7 @@ class Predicate extends Base {
   members: User[];
 
   @JoinColumn({ name: 'version_id' })
-  @ManyToOne(() => PredicateVersion, { nullable: true })
+  @ManyToOne(() => PredicateVersion)
   version: PredicateVersion;
 }
 
