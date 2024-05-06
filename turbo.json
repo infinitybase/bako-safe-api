@@ -102,7 +102,7 @@
     },
     "test": {
       "dependsOn": [
-        "api:test:start"
+        "api:run:test"
       ],
       "outputs": [],
       "outputMode": "new-only",
