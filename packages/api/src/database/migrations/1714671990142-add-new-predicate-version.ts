@@ -7,7 +7,7 @@ export class addNewPredicateVersion1714671990142 implements MigrationInterface {
       `INSERT INTO predicate_versions (
         name,
         description,
-        root_address, 
+        code, 
         abi,
         bytes, 
         created_at,
@@ -16,7 +16,7 @@ export class addNewPredicateVersion1714671990142 implements MigrationInterface {
         VALUES (
           '${predicateVersion.name}',
           '${predicateVersion.description}',
-          '${predicateVersion.rootAddress}',
+          '${predicateVersion.code}',
           '${predicateVersion.abi}',
           '${predicateVersion.bytes}',
           NOW(),
@@ -29,7 +29,7 @@ export class addNewPredicateVersion1714671990142 implements MigrationInterface {
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       DELETE FROM predicate_versions
-      WHERE root_address = '${predicateVersion.rootAddress}'
+      WHERE code = '${predicateVersion.code}'
     `);
   }
 }
@@ -39,7 +39,7 @@ export const predicateVersion = {
     '0xcd8d8c3e7ac1498d4a8b02ffe31b4726239bfd802e0778d1d901766cfedf90ce',
   ),
   description: 'Vault with minimum subscribers rule',
-  rootAddress: '0xcd8d8c3e7ac1498d4a8b02ffe31b4726239bfd802e0778d1d901766cfedf90ce',
+  code: '0xcd8d8c3e7ac1498d4a8b02ffe31b4726239bfd802e0778d1d901766cfedf90ce',
   abi: JSON.stringify({
     types: [
       {

@@ -7,7 +7,7 @@ export class addNewPredicateVersion1715016143734 implements MigrationInterface {
       `INSERT INTO predicate_versions (
           name,
           description,
-          root_address, 
+          code, 
           abi,
           bytes, 
           created_at,
@@ -16,7 +16,7 @@ export class addNewPredicateVersion1715016143734 implements MigrationInterface {
           VALUES (
             '${predicateVersion.name}',
             '${predicateVersion.description}',
-            '${predicateVersion.rootAddress}',
+            '${predicateVersion.code}',
             '${predicateVersion.abi}',
             '${predicateVersion.bytes}',
             NOW(),
@@ -29,7 +29,7 @@ export class addNewPredicateVersion1715016143734 implements MigrationInterface {
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
     DELETE FROM predicate_versions
-    WHERE root_address = '${predicateVersion.rootAddress}'
+    WHERE code = '${predicateVersion.code}'
   `);
   }
 }
@@ -40,7 +40,7 @@ export const predicateVersion = {
   ),
   description:
     'Vault resolves security problem with duplicated signatures or witnesses in  0xcd8d8c3e7ac1498d4a8b02ffe31b4726239bfd802e0778d1d901766cfedf90ce version',
-  rootAddress: '0xa8efb18f92443ae8f9d92953e5fb42e0bd3d183392b95f316b9f586874d89ebc',
+  code: '0xa8efb18f92443ae8f9d92953e5fb42e0bd3d183392b95f316b9f586874d89ebc',
   abi: JSON.stringify({
     types: [
       {

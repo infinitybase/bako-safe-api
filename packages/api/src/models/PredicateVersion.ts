@@ -9,8 +9,8 @@ class PredicateVersion extends Base {
   @Column({ nullable: true })
   description?: string;
 
-  @Column({ name: 'root_address' })
-  rootAddress: string;
+  @Column()
+  code: string;
 
   @Column()
   bytes: string;

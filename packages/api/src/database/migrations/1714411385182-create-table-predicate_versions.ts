@@ -25,7 +25,7 @@ export class createTablePredicateVersions1714411385182
             isNullable: true,
           },
           {
-            name: 'root_address',
+            name: 'code',
             type: 'varchar',
             isUnique: true,
           },

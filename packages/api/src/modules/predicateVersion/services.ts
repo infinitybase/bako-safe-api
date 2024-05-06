@@ -50,9 +50,9 @@ export class PredicateVersionService implements IPredicateVersionService {
     this._filter.active &&
       qb.andWhere('pv.active = :active', { active: this._filter.active });
 
-    this._filter.rootAddress &&
-      qb.andWhere('pv.rootAddress = :rootAddress', {
-        rootAddress: this._filter.rootAddress,
+    this._filter.code &&
+      qb.andWhere('pv.code = :code', {
+        code: this._filter.code,
       });
 
     this._filter.q &&
@@ -82,14 +82,14 @@ export class PredicateVersionService implements IPredicateVersionService {
           .catch(handleInternalError);
   }
 
-  async findByRootAddress(rootAddress: string): Promise<PredicateVersion> {
-    return await PredicateVersion.findOne({ where: { rootAddress } })
+  async findByCode(code: string): Promise<PredicateVersion> {
+    return await PredicateVersion.findOne({ where: { code } })
       .then(predicateVersion => {
         if (!predicateVersion) {
           throw new NotFound({
             type: ErrorTypes.NotFound,
             title: 'Predicate version not found',
-            detail: `Predicate version with root address ${rootAddress} was not found`,
+            detail: `Predicate version with code ${code} was not found`,
           });
         }
 
@@ -100,7 +100,7 @@ export class PredicateVersionService implements IPredicateVersionService {
 
         throw new Internal({
           type: ErrorTypes.Internal,
-          title: 'Error on predicate version findByRootAddress',
+          title: 'Error on predicate version findByCode',
           detail: e,
         });
       });

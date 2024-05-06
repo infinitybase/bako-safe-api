@@ -15,14 +15,14 @@ export enum Sort {
 
 export interface IPredicateVersionFilterParams {
   q?: string;
-  rootAddress?: string;
+  code?: string;
   active?: boolean;
 }
 
 interface IListRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Query]: {
     q: string;
-    rootAddress: string;
+    code: string;
     active: boolean;
     orderBy: OrderBy | IDefaultOrdination;
     sort: Sort;
@@ -31,14 +31,14 @@ interface IListRequestSchema extends ValidatedRequestSchema {
   };
 }
 
-interface IFindByRootAddressRequestSchema extends ValidatedRequestSchema {
+interface IFindByCodeRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Params]: {
-    rootAddress: string;
+    code: string;
   };
 }
 
 export type IListRequest = UnloggedRequest<IListRequestSchema>;
-export type IFindByRootAddressRequest = UnloggedRequest<IFindByRootAddressRequestSchema>;
+export type IFindByCodeRequest = UnloggedRequest<IFindByCodeRequestSchema>;
 
 export interface IPredicateVersionService {
   ordination(ordination?: IOrdination<PredicateVersion>): this;
@@ -46,6 +46,6 @@ export interface IPredicateVersionService {
   filter(filter: IPredicateVersionFilterParams): this;
 
   list: () => Promise<IPagination<PredicateVersion> | PredicateVersion[]>;
-  findByRootAddress: (rootAddress: string) => Promise<PredicateVersion>;
+  findByCode: (code: string) => Promise<PredicateVersion>;
   findCurrentVersion: () => Promise<PredicateVersion>;
 }

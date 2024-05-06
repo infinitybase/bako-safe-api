@@ -16,7 +16,7 @@ describe('[PREDICATE VERSION]', () => {
       expect(data).toHaveProperty('id');
       expect(data).toHaveProperty('name');
       expect(data).toHaveProperty('description');
-      expect(data).toHaveProperty('rootAddress');
+      expect(data).toHaveProperty('code');
       expect(data).toHaveProperty('abi');
       expect(data).toHaveProperty('bytes');
       expect(data).toHaveProperty('active');
@@ -40,7 +40,7 @@ describe('[PREDICATE VERSION]', () => {
           expect(element).toHaveProperty('id');
           expect(element).toHaveProperty('name');
           expect(element).toHaveProperty('description');
-          expect(element).toHaveProperty('rootAddress');
+          expect(element).toHaveProperty('code');
           expect(element).toHaveProperty('abi');
           expect(element).toHaveProperty('bytes');
           expect(element).toHaveProperty('active');
@@ -54,7 +54,7 @@ describe('[PREDICATE VERSION]', () => {
         expect(element).toHaveProperty('id');
         expect(element).toHaveProperty('name');
         expect(element).toHaveProperty('description');
-        expect(element).toHaveProperty('rootAddress');
+        expect(element).toHaveProperty('code');
         expect(element).toHaveProperty('abi');
         expect(element).toHaveProperty('bytes');
         expect(element).toHaveProperty('active');
@@ -62,18 +62,15 @@ describe('[PREDICATE VERSION]', () => {
     });
   });
 
-  test('Find predicate version by root address', async () => {
+  test('Find predicate version by code', async () => {
     await api
-      .get(`/predicate/version/${predicateVersionMock.rootAddress}`)
+      .get(`/predicate/version/${predicateVersionMock.code}`)
       .then(({ data, status }) => {
         expect(status).toBe(200);
         expect(data).toHaveProperty('id');
         expect(data).toHaveProperty('name', predicateVersionMock.name);
         expect(data).toHaveProperty('description', null);
-        expect(data).toHaveProperty(
-          'rootAddress',
-          predicateVersionMock.rootAddress,
-        );
+        expect(data).toHaveProperty('code', predicateVersionMock.code);
         expect(data).toHaveProperty('abi', predicateVersionMock.abi);
         expect(data).toHaveProperty('bytes', predicateVersionMock.bytes);
         expect(data).toHaveProperty('active', true);

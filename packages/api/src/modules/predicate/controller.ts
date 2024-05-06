@@ -18,7 +18,6 @@ import {
 import { error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
 
-import { IAddressBookService } from '../addressBook/types';
 import { INotificationService } from '../notification/types';
 import { ITransactionService } from '../transaction/types';
 import { IUserService } from '../user/types';
@@ -57,7 +56,7 @@ export class PredicateController {
   }
 
   async create({ body: payload, user, workspace }: ICreatePredicateRequest) {
-    const { rootAddress } = payload;
+    const { code } = payload;
 
     try {
       const members: User[] = [];
@@ -79,8 +78,8 @@ export class PredicateController {
 
       let version = null;
 
-      if (rootAddress) {
-        version = await this.predicateVersionService.findByRootAddress(rootAddress);
+      if (code) {
+        version = await this.predicateVersionService.findByCode(code);
       } else {
         version = await this.predicateVersionService.findCurrentVersion();
       }

@@ -22,7 +22,7 @@ export const generateInitialPredicate = async (): Promise<Partial<Predicate>> =>
     },
   });
   const version = await PredicateVersion.findOne({
-    rootAddress: predicateVersionMock.rootAddress,
+    code: predicateVersionMock.code,
   });
 
   const predicate1: Partial<Predicate> = {

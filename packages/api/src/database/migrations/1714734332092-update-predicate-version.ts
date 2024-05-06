@@ -7,7 +7,7 @@ export class updatePredicateVersion1714734332092 implements MigrationInterface {
     const defaultPredicateVersion = await queryRunner.manager.findOne(
       PredicateVersion,
       {
-        rootAddress: predicateVersion.rootAddress,
+        code: predicateVersion.code,
       },
     );
 
@@ -22,7 +22,7 @@ export class updatePredicateVersion1714734332092 implements MigrationInterface {
         [defaultPredicateVersion.id],
       );
     } else {
-      throw new Error('No predicate version found for the given root address.');
+      throw new Error('No predicate version found for the given code.');
     }
   }
 

@@ -1,11 +1,10 @@
 import { generatePredicateVersionName } from '@src/utils';
 
-const rootAddress =
-  '0x379cc51194ba4c6288b1dae9cfe7e758a95d268cf5525c3ffb6b0c3bef941872';
+const code = '0x379cc51194ba4c6288b1dae9cfe7e758a95d268cf5525c3ffb6b0c3bef941872';
 
 export const predicateVersionMock = {
-  name: `fake_name: ${generatePredicateVersionName(rootAddress)}`,
-  rootAddress: rootAddress,
+  name: `fake_name: ${generatePredicateVersionName(code)}`,
+  code,
   abi: JSON.stringify({
     types: [
       { typeId: 0, type: '[_; 10]', components: [Array], typeParameters: null },

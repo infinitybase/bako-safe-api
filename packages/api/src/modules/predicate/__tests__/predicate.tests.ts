@@ -18,7 +18,7 @@ describe('[PREDICATE]', () => {
   });
 
   test(
-    'Create predicate without root address',
+    'Create predicate without code',
     async () => {
       const {
         data: data_workspace,
@@ -57,7 +57,7 @@ describe('[PREDICATE]', () => {
   );
 
   test(
-    'Create predicate with root address',
+    'Create predicate with code',
     async () => {
       const {
         data: data_workspace,
@@ -69,7 +69,7 @@ describe('[PREDICATE]', () => {
       const { predicatePayload } = await PredicateMock.create(1, members);
       const { data } = await api.axios.post('/predicate', {
         ...predicatePayload,
-        rootAddress: predicateVersionMock.rootAddress,
+        code: predicateVersionMock.code,
       });
 
       const { data: workspace, status: status_find } = await api.axios.get(
