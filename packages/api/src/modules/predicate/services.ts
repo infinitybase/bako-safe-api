@@ -88,6 +88,7 @@ export class PredicateService implements IPredicateService {
           'version.id',
           'version.abi',
           'version.bytes',
+          'version.code',
           'workspace.id',
           'workspace.name',
           'addressBook.nickname',
