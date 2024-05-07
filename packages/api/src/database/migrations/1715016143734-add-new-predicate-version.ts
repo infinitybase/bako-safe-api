@@ -19,8 +19,8 @@ export class addNewPredicateVersion1715016143734 implements MigrationInterface {
             '${predicateVersion.code}',
             '${predicateVersion.abi}',
             '${predicateVersion.bytes}',
-            NOW(),
-            NOW()
+            CURRENT_TIMESTAMP + INTERVAL '2 seconds',
+            CURRENT_TIMESTAMP + INTERVAL '2 seconds'
           )
         `,
     );
