@@ -44,6 +44,7 @@ describe('[PREDICATE]', () => {
       expect(data).toHaveProperty('version.id');
       expect(data).toHaveProperty('version.abi');
       expect(data).toHaveProperty('version.bytes');
+      expect(data).toHaveProperty('version.code');
 
       //permissions validation
       expect(
@@ -86,6 +87,7 @@ describe('[PREDICATE]', () => {
       expect(data).toHaveProperty('version.id');
       expect(data).toHaveProperty('version.abi');
       expect(data).toHaveProperty('version.bytes');
+      expect(data).toHaveProperty('version.code');
 
       //permissions validation
       expect(
@@ -234,6 +236,7 @@ describe('[PREDICATE]', () => {
         expect(data).toHaveProperty('version.id');
         expect(data).toHaveProperty('version.abi');
         expect(data).toHaveProperty('version.bytes');
+        expect(data).toHaveProperty('version.code');
 
         //validate workspace members
         workspace.addressBook.forEach(element => {
