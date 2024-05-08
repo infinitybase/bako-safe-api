@@ -18,6 +18,7 @@
       "outputMode": "new-only",
       "cache": false
     },
+
     "db:dev:start": {
       "outputs": [],
       "outputMode": "new-only",

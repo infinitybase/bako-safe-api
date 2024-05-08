@@ -5,7 +5,9 @@ import { io, Socket } from 'socket.io-client';
 const envPath = path.resolve(process.cwd(), `.env.${process.env.NODE_ENV}`);
 
 dotenv.config({ path: envPath });
-const { API_URL } = process.env;
+
+const { SOCKET_URL, API_URL } = process.env;
+
 
 interface IMessage {
   sessionId: string; // sessionId
@@ -27,7 +29,7 @@ export class SocketClient {
     };
 
     //todo: move this URL to a .env file
-    const URL = API_URL;
+    const URL = SOCKET_URL;
     this.socket = io(URL, { autoConnect: true, auth });
   }
 
