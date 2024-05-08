@@ -9,14 +9,12 @@ dotenv.config({ path: envPath });
 const {
   DATABASE_PASSWORD,
   DATABASE_HOST,
-  DATABASE_URL,
   DATABASE_USERNAME,
   DATABASE_NAME,
   DATABASE_PORT,
   NODE_ENV,
 } = process.env;
 
-const [host, port] = String(DATABASE_URL).split(':');
 const environment: string = NODE_ENV;
 const entitiesDir = path.resolve(__dirname, '..', 'models', '**', '*{.ts,.js}');
 export const migrationsDir = path.resolve(

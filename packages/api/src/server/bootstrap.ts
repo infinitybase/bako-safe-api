@@ -1,8 +1,13 @@
+import path from 'path';
 import dotenv from 'dotenv';
 import { getConnection } from 'typeorm';
 
 import startConnection from '@database/connection';
 import runSeeders from '@database/seeders';
+
+const envPath = path.resolve(process.cwd(), `.env.${process.env.NODE_ENV}`);
+
+dotenv.config({ path: envPath });
 
 class Bootstrap {
   static async connectDatabase() {

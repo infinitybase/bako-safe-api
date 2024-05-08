@@ -22,19 +22,29 @@ run-tests:
 	@echo "Waiting for API tests to run..."
 	@sleep 10
 	@echo "Running Jest tests..."
-	@NODE_ENV=test node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand --silent; \
+	@NODE_ENV=test node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand; \
 	JEST_EXIT_CODE=$$?; \
+	CHAIN_RUNNING=$$(docker ps | grep bsafe_chain | wc -l); \
 	if [ $$JEST_EXIT_CODE -ne 0 ]; then \
 		echo "Stopping containers..."; \
 		docker rm -f bsafe_database_test; \
-		docker rm -f bsafe_faucet; \
-		docker rm -f bsafe_fuel-core; \
+		if [ $$CHAIN_RUNNING -eq 0 ]; then \
+			echo "Stopping bsafe_chain container..."; \
+			docker rm -f bsafe_faucet; \
+			docker rm -f bsafe_fuel-core; \
+		else \
+			echo "bsafe_chain is still running, not stopping it."; \
+		fi; \
 		exit $$JEST_EXIT_CODE; \
 	else \
 		echo "Stopping containers..."; \
 		docker rm -f bsafe_database_test; \
-		docker rm -f bsafe_faucet; \
-		docker rm -f bsafe_fuel-core; \
+		if [ $$CHAIN_RUNNING -eq 0 ]; then \
+			docker rm -f bsafe_faucet; \
+			docker rm -f bsafe_fuel-core; \
+		else \
+			echo "bsafe_chain is still running, not stopping it."; \
+		fi; \
 		echo "Jest tests passed"; \
 	fi
 

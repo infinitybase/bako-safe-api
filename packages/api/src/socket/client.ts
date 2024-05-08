@@ -1,5 +1,10 @@
+import path from 'path';
+import dotenv from 'dotenv';
 import { io, Socket } from 'socket.io-client';
 
+const envPath = path.resolve(process.cwd(), `.env.${process.env.NODE_ENV}`);
+
+dotenv.config({ path: envPath });
 const { API_URL } = process.env;
 
 interface IMessage {

@@ -65,13 +65,15 @@ export class AuthController {
       const response = await new RecoverCodeService().create({
         owner,
         type: RecoverCodeType.AUTH,
-        origin: origin ?? process.env.UI_URL,
+        origin: origin ?? 'https://safe.bako.global',
         validAt: addMinutes(new Date(), 5),
       });
 
+      console.log(response);
       return successful(response, Responses.Ok);
     } catch (e) {
-      return error(e.error[0], e.statusCode);
+      console.log(e);
+      return error(e.error, e.statusCode);
     }
   }
 

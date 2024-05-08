@@ -1,3 +1,6 @@
+import path from 'path';
+import dotenv from 'dotenv';
+
 import { addMinutes, differenceInMinutes, isPast } from 'date-fns';
 
 import { RecoverCode, RecoverCodeType, User, Workspace } from '@src/models';
@@ -12,6 +15,10 @@ import { ErrorTypes } from '@utils/error';
 import { Unauthorized, UnauthorizedErrorTitles } from '@utils/error/Unauthorized';
 
 import { recoverFuelSignature, recoverWebAuthnSignature } from './web3';
+
+const envPath = path.resolve(process.cwd(), `.env.${process.env.NODE_ENV}`);
+
+dotenv.config({ path: envPath });
 
 const EXPIRES_IN = process.env.TOKEN_EXPIRATION_TIME ?? '20';
 const RENEWAL_EXPIRES_IN = process.env.RENEWAL_TOKEN_EXPIRATION_TIME ?? '10';

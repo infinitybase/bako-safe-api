@@ -1,19 +1,23 @@
 import axios from 'axios';
 import { defaultConfig } from 'bakosafe';
-import crypto from 'crypto';
 import { Address } from 'fuels';
+import path from 'path';
+import dotenv from 'dotenv';
 
-import { generateInitialUsers } from '@src/mocks/initialSeeds/initialUsers';
 import { networks } from '@src/mocks/networks';
 import { RecoverCodeType, TypeUser } from '@src/models';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
 
 import { accounts } from '../../../mocks/accounts';
 
+const envPath = path.resolve(process.cwd(), `.env.${process.env.NODE_ENV}`);
+
+dotenv.config({ path: envPath });
+
 describe('[USER]', () => {
   let api = beforeAll(() => {
     api = axios.create({
-      baseURL: 'http://localhost:3333',
+      baseURL: process.env.API_URL,
     });
   });
 

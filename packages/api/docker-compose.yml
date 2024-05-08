@@ -1,7 +1,7 @@
 version: '3'
 services:
   api:
-    container_name: ${API_NAME}
+    container_name: ${API_NAME}${NODE_ENV}
     ports:
       - '${API_PORT}:${API_PORT}'
     build:

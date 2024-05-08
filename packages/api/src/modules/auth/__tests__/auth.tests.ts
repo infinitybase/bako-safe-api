@@ -5,6 +5,12 @@ import { generateInitialUsers } from '@src/mocks/initialSeeds/initialUsers';
 import { networks } from '@src/mocks/networks';
 import { RecoverCodeType } from '@src/models';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
+import path from 'path';
+import dotenv from 'dotenv';
+
+const envPath = path.resolve(process.cwd(), `.env.${process.env.NODE_ENV}`);
+
+dotenv.config({ path: envPath });
 
 describe('[AUTH]', () => {
   test(
@@ -49,12 +55,19 @@ describe('[AUTH]', () => {
 
   test('generate a code with register user', async () => {
     const api = axios.create({
-      baseURL: 'http://localhost:3333',
+      baseURL: process.env.API_URL,
     });
 
     const [user1] = await generateInitialUsers();
 
-    const { data } = await api.post(`/auth/code/${user1.address}`);
+    console.log(user1.address);
+
+    const data = await api
+      .post(`/auth/code/${user1.address}`)
+      .then(data => data)
+      .catch(err => err);
+
+    console.log(JSON.stringify(data));
 
     expect(data).toHaveProperty('code');
     expect(data).toHaveProperty('type', RecoverCodeType.AUTH);
