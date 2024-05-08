@@ -1,6 +1,13 @@
+import path from 'path';
+import dotenv from 'dotenv';
 import { io, Socket } from 'socket.io-client';
 
-const { SOCKET_URL } = process.env;
+const envPath = path.resolve(process.cwd(), `.env.${process.env.NODE_ENV}`);
+
+dotenv.config({ path: envPath });
+
+const { SOCKET_URL, API_URL } = process.env;
+
 
 interface IMessage {
   sessionId: string; // sessionId

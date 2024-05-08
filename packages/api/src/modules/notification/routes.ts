@@ -2,6 +2,8 @@ import { Router } from 'express';
 
 import { authMiddleware } from '@src/middlewares';
 import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
+import path from 'path';
+import dotenv from 'dotenv';
 
 import { handleResponse } from '@utils/index';
 
@@ -11,6 +13,11 @@ import { NotificationService } from './services';
 const router = Router();
 const notificationService = new NotificationService();
 const { readAll, list } = new NotificationController(notificationService);
+
+const envPath = path.resolve(process.cwd(), `.env.${process.env.NODE_ENV}`);
+
+dotenv.config({ path: envPath });
+
 const { MAIL_TESTING_NOTIFICATIONS } = process.env;
 
 // ENDPOINT TO VALIDATE EMAIL SENDING

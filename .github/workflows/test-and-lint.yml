@@ -2,9 +2,9 @@ name: Test and lint
 
 on:
   push:
-    branches: ['main']
+    branches: ["main, staging"]
   pull_request:
-    branches: ['main']
+    branches: ["main, staging"]
 
 jobs:
   run-checks:
@@ -21,4 +21,4 @@ jobs:
         run: pnpm eslint . --ext .js,.jsx,.ts,.tsx
 
       - name: Run Tests
-        run: pnpm jest
+        run: pnpm test

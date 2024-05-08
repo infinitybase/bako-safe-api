@@ -1,9 +1,16 @@
+import path from 'path';
+import dotenv from 'dotenv';
+
 import { TypeUser, User } from '@src/models';
 
 import { IconUtils } from '@utils/icons';
 
 import { accounts } from '../accounts';
 import { networks } from '../networks';
+
+const envPath = path.resolve(process.cwd(), `.env.${process.env.NODE_ENV}`);
+
+dotenv.config({ path: envPath });
 
 export const generateInitialUsers = async (): Promise<Partial<User>[]> => {
   const user1: Partial<User> = {

@@ -19,9 +19,7 @@ export const transaction = {
 
 export const transactionMock = async (vault: Vault) => {
   await sendPredicateCoins(vault, bn(1_000_0), 'ETH', accounts['FULL'].privateKey);
-
   const tx = await vault.BakoSafeIncludeTransaction(transaction);
-
   const payload_transfer = {
     predicateAddress: vault.address.toString(),
     name: `[TESTE_MOCK] ${Address.fromRandom().toString()}`,

@@ -7,7 +7,8 @@
     "./packages/*"
   ],
   "scripts": {
-    "dev":"turbo run dev",
+    "dev": "turbo run dev",
+    "test": "turbo run test",
     "dev:db:start": "turbo run db:dev:start",
     "dev:chain:start": "turbo run chain:dev:start"
   },

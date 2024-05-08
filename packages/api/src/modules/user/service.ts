@@ -1,3 +1,6 @@
+import path from 'path';
+import dotenv from 'dotenv';
+
 import axios from 'axios';
 import { Brackets } from 'typeorm';
 
@@ -17,6 +20,10 @@ import { IconUtils } from '@utils/icons';
 
 import { WorkspaceService } from '../workspace/services';
 import { IFilterParams, IUserService, IUserPayload } from './types';
+
+const envPath = path.resolve(process.cwd(), `.env.${process.env.NODE_ENV}`);
+
+dotenv.config({ path: envPath });
 
 const { UI_URL } = process.env;
 
