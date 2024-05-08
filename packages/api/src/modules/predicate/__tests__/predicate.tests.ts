@@ -18,7 +18,7 @@ describe('[PREDICATE]', () => {
   });
 
   test(
-    'Create predicate without code',
+    'Create predicate without version code',
     async () => {
       const {
         data: data_workspace,
@@ -58,7 +58,7 @@ describe('[PREDICATE]', () => {
   );
 
   test(
-    'Create predicate with code',
+    'Create predicate with version code',
     async () => {
       const {
         data: data_workspace,
@@ -70,7 +70,7 @@ describe('[PREDICATE]', () => {
       const { predicatePayload } = await PredicateMock.create(1, members);
       const { data } = await api.axios.post('/predicate', {
         ...predicatePayload,
-        code: predicateVersionMock.code,
+        versionCode: predicateVersionMock.code,
       });
 
       const { data: workspace, status: status_find } = await api.axios.get(

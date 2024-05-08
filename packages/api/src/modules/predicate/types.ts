@@ -28,7 +28,7 @@ export interface IPredicatePayload {
   chainId?: number;
   user: User;
   //members?: User[];
-  code?: string;
+  versionCode?: string;
 }
 
 export interface IPredicateMemberPayload {

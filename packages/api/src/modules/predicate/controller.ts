@@ -56,7 +56,7 @@ export class PredicateController {
   }
 
   async create({ body: payload, user, workspace }: ICreatePredicateRequest) {
-    const { code } = payload;
+    const { versionCode } = payload;
 
     try {
       const members: User[] = [];
@@ -78,8 +78,8 @@ export class PredicateController {
 
       let version = null;
 
-      if (code) {
-        version = await this.predicateVersionService.findByCode(code);
+      if (versionCode) {
+        version = await this.predicateVersionService.findByCode(versionCode);
       } else {
         version = await this.predicateVersionService.findCurrentVersion();
       }
