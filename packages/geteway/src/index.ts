@@ -3,6 +3,7 @@ import express from 'express'
 import { buildHTTPExecutor } from '@graphql-tools/executor-http'
 import { createHandler } from 'graphql-http/lib/use/express'
 import { schemaFromExecutor } from '@graphql-tools/wrap'
+import expressPlayground from 'graphql-playground-middleware-express'
 
 const { PROVIDER } = process.env
 
@@ -23,46 +24,64 @@ async function main() {
 	const handler = createHandler({
 		schema,
 		//@ts-ignore
-		execute({ schema, operationName, document, variableValues, ...rest }) {
-			console.log('Executando a operação:', {
-				operationName,
-				// 	document,
-				variableValues,
-			})
-			return executor({
+		async execute({ schema, operationName, document, variableValues, ...rest }) {
+			const address = '0x6f31d6081bc4e90bb797bb89b9ec81f06e8ed5a6c4880f47746c7b03b772b4da'
+			console.log('[REQ]: ', variableValues)
+			const isValid = !!variableValues && !!variableValues.owner
+
+			isValid &&
+				console.log('Executando a operação:', {
+					operationName,
+					// 	document,
+					variableValues: JSON.stringify({
+						...variableValues,
+						//...(isValid && { owner: address }),
+					}),
+				})
+
+			const res = await executor({
+				...rest,
 				document,
 				operationName,
-				variables: variableValues,
-				...rest,
+				variables: {
+					...variableValues,
+					//...(isValid && { owner: address }),
+				},
 			})
+
+			console.log('[RES]: ', res)
+			return res
 		},
 	}) // Crie o handler uma única vez
 
-	app.all('/graphql', async (req, res) => {
-		try {
-			// console.log(await parseRequestParams(req, res))
-			return handler(req, res, err => {
-				if (err) {
-					console.error('Erro ao processar a requisição:', err)
-					res.status(500).json({ error: 'Erro interno' })
-				}
-				console.log('Requisição processada com sucesso:', res.statusCode, res.statusMessage, res.body)
-			})
-		} catch (e) {
-			console.error('Erro ao processar a requisição:', e)
-			res.status(500).json({ error: 'Erro interno' })
-		}
-	}) // Use o handler para todas as requisições /graphql
+	// app.use('/graphql', (req, res, next) => {
+	// 	!!req && console.log('[REQ]', req.body)
+	// 	next()
+	// }) // Use o handler para todas as requisições /graphql
 
-	// app.get(
-	// 	'/graphql',
-	// 	expressPlayground({
-	// 		endpoint: '/graphql',
-	// 		settings: {
-	// 			'schema.polling.enable': true,
-	// 		},
-	// 	}),
-	// )
+	app.post('/graphql', handler)
+
+	// Check health of the graphql endpoint and the fuel provider
+	app.get('/health', async (_, res) => {
+		console.log('Checando a saúde do endpoint')
+		let providerUp = null
+		try {
+			providerUp = (await fetch(`${PROVIDER.replace('/graphql', '/health')}`).then(res => res.json())).up
+		} catch (_e) {
+			providerUp = false
+		}
+		res.json({ up: providerUp })
+	})
+
+	app.get(
+		'/graphql',
+		() => {
+			console.log('Acesso ao playground')
+		},
+		expressPlayground({
+			endpoint: '/graphql',
+		}),
+	)
 
 	app.listen(4001, () => {
 		console.log(`Servidor rodando em http://localhost:4001`)
