@@ -2,7 +2,9 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { ConnectionOptions } from 'typeorm';
 
-dotenv.config();
+const envPath = path.resolve(process.cwd(), `.env.${process.env.NODE_ENV}`);
+
+dotenv.config({ path: envPath });
 
 const {
   DATABASE_PASSWORD,

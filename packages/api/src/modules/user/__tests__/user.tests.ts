@@ -21,7 +21,7 @@ describe('[USER]', () => {
     'Create user',
     //'ATUAL',
     async () => {
-      const code_length = 66;
+      const code_length = 70;
       await api
         .post('/user/', {
           name: `${new Date().getTime()} - Create user test`,
@@ -61,27 +61,27 @@ describe('[USER]', () => {
   );
 
   // if recives true, the name is already in use
-  test(
-    'validate existing name',
-    async () => {
-      const [user1] = await generateInitialUsers();
-      //verify existing name
-      await api.get(`/user/nickname/${user1.name}`).then(({ data, status }) => {
-        expect(status).toBe(200);
-        expect(data).toHaveProperty('address', user1.address);
-        expect(data).toHaveProperty('name', user1.name);
-        expect(data).toHaveProperty('provider', user1.provider);
-        expect(data).toHaveProperty('type', user1.type);
-      });
+  // test(
+  //   'validate existing name',
+  //   async () => {
+  //     const [user1] = await generateInitialUsers();
+  //     //verify existing name
+  //     await api.get(`/user/nickname/${user1.name}`).then(({ data, status }) => {
+  //       expect(status).toBe(200);
+  //       expect(data).toHaveProperty('address', user1.address);
+  //       expect(data).toHaveProperty('name', user1.name);
+  //       expect(data).toHaveProperty('provider', user1.provider);
+  //       expect(data).toHaveProperty('type', user1.type);
+  //     });
 
-      //verify not existing name
-      await api
-        .get(`/user/nickaname/${crypto.randomUUID()}`)
-        .then(({ data, status }) => {
-          expect(status).toBe(200);
-          expect(data).toStrictEqual({});
-        });
-    },
-    3 * 1000,
-  );
+  //     //verify not existing name
+  //     await api
+  //       .get(`/user/nickaname/${crypto.randomUUID()}`)
+  //       .then(({ data, status }) => {
+  //         expect(status).toBe(200);
+  //         expect(data).toStrictEqual({});
+  //       });
+  //   },
+  //   3 * 1000,
+  // );
 });

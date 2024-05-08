@@ -1,7 +1,7 @@
 version: '3'
 services:
   db:
-    container_name: ${DATABASE_ENVIRONMENT}
+    container_name: ${DOCKER_NAME}
     image: postgres
     environment:
       POSTGRES_DB: ${DATABASE_NAME}
@@ -10,6 +10,6 @@ services:
     volumes:
       - ./postgresql${DATABASE_ENVIRONMENT}:/var/lib/postgresql/data
     ports:
-      - "${DATABASE_PORT}:${DATABASE_PORT}"
+      - "${DATABASE_PORT}:5432"
     labels:
       - environment=${DATABASE_ENVIRONMENT}
