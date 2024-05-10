@@ -53,6 +53,7 @@ export class DappController {
       dapp.currentVault = predicate;
       await dapp.save();
       const socket = new SocketClient(sessionId, API_URL);
+
       console.log({
         sessionId,
         API_URL,
