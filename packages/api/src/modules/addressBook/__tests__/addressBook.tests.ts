@@ -1,7 +1,6 @@
 import { Address } from 'fuels';
 
 import { accounts } from '@src/mocks/accounts';
-import { providers } from '@src/mocks/networks';
 import { networks } from '@src/mocks/networks';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
 import { generateWorkspacePayload } from '@src/utils/testUtils/Workspace';

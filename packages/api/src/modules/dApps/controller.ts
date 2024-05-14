@@ -1,3 +1,6 @@
+import path from 'path';
+import dotenv from 'dotenv';
+
 import { TransactionStatus } from 'bakosafe';
 import { addMinutes } from 'date-fns';
 
@@ -17,6 +20,10 @@ import {
   IDAppsService,
   IDappRequest,
 } from './types';
+
+const envPath = path.resolve(process.cwd(), `.env.${process.env.NODE_ENV}`);
+
+dotenv.config({ path: envPath });
 
 const { BAKO_URL_API } = process.env;
 
@@ -52,9 +59,7 @@ export class DappController {
       }
       dapp.currentVault = predicate;
       await dapp.save();
-      console.log('[api]: ', dapp, sessionId, request_id);
       const socket = new SocketClient(sessionId, BAKO_URL_API);
-      console.log(socket);
       socket.sendMessage({
         sessionId,
         to: '[CONNECTOR]',

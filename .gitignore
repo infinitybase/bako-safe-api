@@ -5,6 +5,7 @@ node_modules
 ##DB
 postgresql/
 postgresqltest/
+postgresqldev/
 
 ## API
 # Build

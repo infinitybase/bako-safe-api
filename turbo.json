@@ -18,6 +18,7 @@
       "outputMode": "new-only",
       "cache": false
     },
+
     "db:dev:start": {
       "outputs": [],
       "outputMode": "new-only",
@@ -59,6 +60,11 @@
       "outputMode": "new-only",
       "cache": false
     },
+    "db:test:stop": {
+      "outputs": [],
+      "outputMode": "new-only",
+      "cache": false
+    },
     "db:test:start": {
       "outputs": [],
       "outputMode": "new-only",
@@ -80,23 +86,13 @@
       "outputMode": "new-only",
       "cache": false
     },
-    "api:test:run": {
+    "api:run:test": {
       "dependsOn": [
         "db:test:start",
         "chain:test:start",
         "socket:test:start"
       ],
       "outputs": [],
-      "outputMode": "new-only",
-      "cache": false
-    },
-    "api:run:test": {
-      "dependsOn": [
-        "api:test:run"
-      ],
-      "outputs": [
-        "dist/**"
-      ],
       "outputMode": "new-only",
       "cache": false
     },

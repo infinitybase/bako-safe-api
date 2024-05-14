@@ -6,8 +6,7 @@
       "db:dev:start": "make -C ./ database-init env_file=.env",
       "db:dev:stop": "make -C ./ database-down env_file=.env",
       "db:test:start": "make -C ./ database-init env_file=.env.test",
-      "db:test:stop": "make -C ./ database-down env_file=.env.test",
-      "db:dev:reestart": "pending"
+      "db:test:stop": "make -C ./ database-down env_file=.env.test"
    },
    "devDependencies": {
       "husky": "5.2.0"

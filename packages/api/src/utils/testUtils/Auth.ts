@@ -1,10 +1,15 @@
+import path from 'path';
+import dotenv from 'dotenv';
 import axios, { AxiosInstance } from 'axios';
 import { IBakoSafeApi } from 'bakosafe';
 import { Provider, Wallet } from 'fuels';
 
-import { User, TypeUser } from '@src/models';
+import { TypeUser } from '@src/models';
 
 import { IDefaultAccount } from '../../mocks/accounts';
+const envPath = path.resolve(process.cwd(), `.env.${process.env.NODE_ENV}`);
+
+dotenv.config({ path: envPath });
 
 export type IUserAuth = {
   id: string;
@@ -29,7 +34,7 @@ export class AuthValidations {
     private readonly account: IDefaultAccount,
   ) {
     this.axios = axios.create({
-      baseURL: 'http://localhost:3333',
+      baseURL: process.env.API_URL,
     });
   }
   async create() {

@@ -6,15 +6,19 @@ import http from 'http';
 import morgan from 'morgan';
 import pm2 from 'pm2';
 import process from 'process';
+import path from 'path';
+import dotenv from 'dotenv';
 
 import { router } from '@src/routes';
 import { Callback } from '@src/utils';
 
 import { handleErrors } from '@middlewares/index';
 
-import SocketIOServer from '../socket/socket';
+const envPath = path.resolve(process.cwd(), `.env.${process.env.NODE_ENV}`);
 
-const { API_PORT, PORT } = process.env;
+dotenv.config({ path: envPath });
+
+const { API_PORT, PORT, API_DEFAULT_NETWORK, UI_URL, API_URL } = process.env;
 
 type ServerHooks = {
   onServerStart?: Callback;
@@ -58,15 +62,22 @@ class App {
 
   async init() {
     // App
+    console.log({
+      API_PORT,
+      PORT,
+      API_DEFAULT_NETWORK,
+      UI_URL,
+      API_URL,
+    });
     const port = API_PORT || PORT || 3333;
+
     console.log('[APP] Starting application.');
     this.httpServer = http.createServer(this.app);
     this.httpServer.listen(port, () => {
       console.log(`[APP] Application running in http://localhost:${port}`);
       App.hooks.onServerStart?.();
     });
-
-    new SocketIOServer(this.httpServer);
+    //new SocketIOServer(this.httpServer);
   }
 
   private initMiddlewares() {

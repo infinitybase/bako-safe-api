@@ -1,8 +1,14 @@
+import path from 'path';
+import dotenv from 'dotenv';
 import JWT from 'jsonwebtoken';
 
 import { IAuthRequest } from '@src/middlewares/auth/types';
 
 import { IAccessTokenPayload, IRefreshTokenPayload } from './types';
+
+const envPath = path.resolve(process.cwd(), `.env.${process.env.NODE_ENV}`);
+
+dotenv.config({ path: envPath });
 
 const { ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET } = process.env;
 
