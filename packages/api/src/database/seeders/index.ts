@@ -1,4 +1,4 @@
-import glob from 'glob';
+import * as glob from 'glob';
 import path from 'path';
 
 import { SeedsMonitor } from '@src/models/SeedsMonitor';
@@ -6,19 +6,9 @@ import Bootstrap from '@src/server/bootstrap';
 
 const runSeeders = async () => {
   await Bootstrap.connectDatabase();
-  const files = glob.sync(`${__dirname}/**/*.{js,ts}`);
+  const files = glob.sync(`${__dirname}/**/*.{js,ts}`).sort();
 
   const seeders: string[] = [];
-  files
-    .filter(file => !file.includes('index'))
-    .filter(async file => {
-      const filename = file.replace(__dirname, '');
-      !!(await SeedsMonitor.find({
-        where: {
-          filename,
-        },
-      }));
-    });
 
   for (const file of files.filter(file => !file.includes('index'))) {
     const filename = file.replace(__dirname, '');
