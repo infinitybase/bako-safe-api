@@ -21,7 +21,7 @@ describe('[USER]', () => {
     'Create user',
     //'ATUAL',
     async () => {
-      const code_length = 66;
+      const code_length = 70;
       await api
         .post('/user/', {
           name: `${new Date().getTime()} - Create user test`,
@@ -33,7 +33,7 @@ describe('[USER]', () => {
           expect(status).toBe(201);
           expect(data).toHaveProperty('id');
           expect(data).toHaveProperty('type', RecoverCodeType.AUTH);
-          expect(data).toHaveProperty('origin', 'https://safe.bako.global');
+          expect(data).toHaveProperty('origin', process.env.UI_URL);
           expect(data).toHaveProperty('code');
           expect(data.code.length).toBe(code_length);
         });
