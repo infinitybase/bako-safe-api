@@ -249,7 +249,6 @@ export class TransactionService implements ITransactionService {
     queryBuilder.orderBy(`t.${this._ordination.orderBy}`, this._ordination.sort);
 
     const handleInternalError = e => {
-      console.log(e);
       if (e instanceof GeneralError) throw e;
       throw new Internal({
         type: ErrorTypes.Internal,

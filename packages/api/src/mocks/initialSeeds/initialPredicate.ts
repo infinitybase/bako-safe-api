@@ -4,9 +4,10 @@ import { In } from 'typeorm';
 import { PredicateVersion, User } from '@src/models';
 import { Predicate } from '@src/models/Predicate';
 
-import { PredicateMock } from '../predicate';
 import { generateInitialUsers } from './initialUsers';
 import { predicateVersionMock } from '../predicateVersion';
+
+import { BakoSafe } from 'bakosafe';
 
 export const generateInitialPredicate = async (): Promise<Partial<Predicate>> => {
   const users = (await generateInitialUsers()).map(u => u.name);
@@ -14,7 +15,14 @@ export const generateInitialPredicate = async (): Promise<Partial<Predicate>> =>
   const owner = await User.findOne({
     where: { name: users[0] },
   });
-  const { predicatePayload } = await PredicateMock.create(1, [owner.address]);
+  const predicatePayload = {
+    configurable: JSON.stringify({
+      SIGNATURES_COUNT: 1,
+      SIGNERS: [owner?.address],
+    }),
+    provider: BakoSafe.getProviders('CHAIN_URL'),
+    chainId: 0,
+  };
   const members = await User.find({
     take: 3,
     where: {

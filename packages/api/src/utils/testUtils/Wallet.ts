@@ -1,11 +1,11 @@
-import { defaultConfig, Vault } from 'bakosafe';
+import { BakoSafe, Vault } from 'bakosafe';
 import { BN, Wallet, Provider, bn } from 'fuels';
 
 import { assets } from '@src/mocks/assets';
 
 export const txParams = {
-  gasPrice: bn(defaultConfig['GAS_PRICE']),
-  gasLimit: bn(defaultConfig['GAS_LIMIT']),
+  gasPrice: BakoSafe.getGasConfig('GAS_PRICE'),
+  gasLimit: BakoSafe.getGasConfig('GAS_LIMIT'),
 };
 
 export const sendPredicateCoins = async (
@@ -16,7 +16,7 @@ export const sendPredicateCoins = async (
 ) => {
   const wallet = Wallet.fromPrivateKey(
     rootWallet,
-    await Provider.create(defaultConfig['PROVIDER']),
+    await Provider.create(BakoSafe.getProviders('CHAIN_URL')),
   );
   // console.log(
   //   '[ROOT_BALANCE]: ',
@@ -32,7 +32,7 @@ export const sendPredicateCoins = async (
 };
 
 export const signBypK = async (message: string, privateKey: string) => {
-  const provider = await Provider.create(defaultConfig['PROVIDER']);
+  const provider = await Provider.create(BakoSafe.getProviders('CHAIN_URL'));
   const signer = Wallet.fromPrivateKey(privateKey, provider);
   return signer.signMessage(message);
 };

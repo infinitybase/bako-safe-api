@@ -1,5 +1,4 @@
-import { IConfVault, Vault } from 'bakosafe';
-import { defaultConfig } from 'bakosafe';
+import { BakoSafe, IConfVault, Vault } from 'bakosafe';
 import crypto from 'crypto';
 import { Provider } from 'fuels';
 
@@ -24,17 +23,16 @@ export class PredicateMock {
     min: number,
     SIGNERS: string[],
   ): Promise<PredicateMock> {
-    const provider = await Provider.create(defaultConfig['PROVIDER']);
+    const provider = await Provider.create(BakoSafe.getProviders('CHAIN_URL'));
     const _BSAFEVaultconfigurable = {
       SIGNATURES_COUNT: min,
       SIGNERS,
-      network: defaultConfig['PROVIDER'],
+      network: BakoSafe.getProviders('CHAIN_URL'),
       chainId: provider.getChainId(),
     };
 
     const vault = await Vault.create({
       configurable: _BSAFEVaultconfigurable,
-      provider,
     });
 
     const predicatePayload = {

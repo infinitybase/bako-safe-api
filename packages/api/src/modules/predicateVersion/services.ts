@@ -37,7 +37,6 @@ export class PredicateVersionService implements IPredicateVersionService {
     const qb = PredicateVersion.createQueryBuilder('pv').select();
 
     const handleInternalError = e => {
-      console.log('[LIST]: ', e);
       if (e instanceof GeneralError) throw e;
 
       throw new Internal({

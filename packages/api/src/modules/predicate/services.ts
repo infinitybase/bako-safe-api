@@ -125,7 +125,6 @@ export class PredicateService implements IPredicateService {
           return predicate;
         })
         .catch(e => {
-          console.log('[FIND_BY_ID]', e);
           if (e instanceof GeneralError) throw e;
 
           throw new Internal({
@@ -160,7 +159,6 @@ export class PredicateService implements IPredicateService {
       ]);
 
     const handleInternalError = e => {
-      console.log('[LIST]: ', e);
       if (e instanceof GeneralError) throw e;
 
       throw new Internal({
@@ -311,7 +309,6 @@ export class PredicateService implements IPredicateService {
   }
 
   async instancePredicate(predicateId: string): Promise<Vault> {
-    console.log('[PREDICATE_ID]', predicateId);
     const predicate = await this.findById(predicateId);
 
     const configurable: IConfVault = {
@@ -319,11 +316,9 @@ export class PredicateService implements IPredicateService {
       abi: predicate.version.abi,
       bytecode: predicate.version.bytes,
     };
-    const provider = await Provider.create(predicate.provider);
-    console.log('[PROVIDER]', provider);
+
     return Vault.create({
       configurable,
-      provider,
     });
   }
 }
