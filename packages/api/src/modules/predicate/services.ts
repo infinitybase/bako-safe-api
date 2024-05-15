@@ -313,12 +313,11 @@ export class PredicateService implements IPredicateService {
 
     const configurable: IConfVault = {
       ...JSON.parse(predicate.configurable),
-      abi: predicate.version.abi,
-      bytecode: predicate.version.bytes,
     };
 
     return Vault.create({
       configurable,
+      version: predicate.version.code,
     });
   }
 }
