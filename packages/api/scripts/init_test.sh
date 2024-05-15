@@ -40,7 +40,7 @@ DEV_PID=$!
 sleep 20
 
 # Executa os testes Jest
-NODE_ENV=test node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand
+NODE_ENV=test node --experimental-vm-modules ./node_modules/jest/bin/jest.js --setupFiles dotenv/config --runInBand
 
 # Limpa e encerra os processos antes de sair
 cleanup

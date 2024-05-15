@@ -23,13 +23,12 @@ export interface IPredicatePayload {
   minSigners: number;
   addresses?: string[];
   //owner_id: string;
-  bytes: string;
-  abi: string;
   configurable: string;
   provider: string;
   chainId?: number;
   user: User;
   //members?: User[];
+  versionCode?: string;
 }
 
 export interface IPredicateMemberPayload {

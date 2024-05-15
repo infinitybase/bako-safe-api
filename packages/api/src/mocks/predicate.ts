@@ -44,8 +44,6 @@ export class PredicateMock {
       chainId: vault.provider.getChainId(),
       predicateAddress: vault.address.toString(),
       minSigners: min,
-      bytes: vault.getBin(),
-      abi: JSON.stringify(vault.getAbi()),
       configurable: JSON.stringify({ ...vault.getConfigurable() }),
       addresses: _BSAFEVaultconfigurable.SIGNERS.map(signer => signer),
     };

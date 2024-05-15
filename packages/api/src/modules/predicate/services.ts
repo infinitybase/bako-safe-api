@@ -37,8 +37,6 @@ export class PredicateService implements IPredicateService {
     'p.provider',
     'p.chainId',
     'p.configurable',
-    'p.bytes',
-    'p.abi',
   ];
 
   filter(filter: IPredicateFilterParams) {
@@ -75,6 +73,7 @@ export class PredicateService implements IPredicateService {
         .where({ id })
         .leftJoinAndSelect('p.members', 'members')
         .leftJoinAndSelect('p.owner', 'owner')
+        .leftJoin('p.version', 'version')
         .leftJoin('p.workspace', 'workspace')
         .leftJoin('workspace.addressBook', 'addressBook')
         .leftJoin('addressBook.user', 'adb_workspace')
@@ -86,6 +85,10 @@ export class PredicateService implements IPredicateService {
           'members.address',
           'owner.id',
           'owner.address',
+          'version.id',
+          'version.abi',
+          'version.bytes',
+          'version.code',
           'workspace.id',
           'workspace.name',
           'addressBook.nickname',
@@ -313,8 +316,8 @@ export class PredicateService implements IPredicateService {
 
     const configurable: IConfVault = {
       ...JSON.parse(predicate.configurable),
-      abi: predicate.abi,
-      bytecode: predicate.bytes,
+      abi: predicate.version.abi,
+      bytecode: predicate.version.bytes,
     };
     const provider = await Provider.create(predicate.provider);
     console.log('[PROVIDER]', provider);
