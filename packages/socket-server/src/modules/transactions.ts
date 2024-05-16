@@ -1,9 +1,9 @@
 import { SocketEvents, SocketUsernames } from '@src/types'
-import { DatabaseClass } from '@src/utils/database'
 import { BakoSafe, TransactionStatus, Vault } from 'bakosafe'
 import crypto from 'crypto'
 import { TransactionRequestLike } from 'fuels'
 import { Socket } from 'socket.io'
+import { Client } from 'pg'
 
 export interface IEventTX_REQUEST {
 	_transaction: TransactionRequestLike
@@ -17,7 +17,7 @@ export interface IEventTX_CONFIRM {
 
 const { BAKO_URL_UI, BAKO_URL_API } = process.env
 
-export const txConfirm = async ({ data, socket }: { data: IEventTX_CONFIRM; socket: Socket }) => {
+export const txConfirm = async ({ data, socket, database }: { data: IEventTX_CONFIRM; socket: Socket; database: Client }) => {
 	const { sessionId, username, request_id } = socket.handshake.auth
 	const room = `${sessionId}:${SocketUsernames.CONNECTOR}:${request_id}`
 	const { origin, host } = socket.handshake.headers
@@ -32,7 +32,7 @@ export const txConfirm = async ({ data, socket }: { data: IEventTX_CONFIRM; sock
 
 		if (origin != BAKO_URL_UI) return
 		console.log('[PASSOU PELO RETURN]: ')
-		const database = await DatabaseClass.connect()
+		//const database = await DatabaseClass.connect()
 		console.log('[DB_CONNECTED]: ', database)
 
 		// ------------------------------ [VALIDACOES] ------------------------------
@@ -148,14 +148,13 @@ export const txConfirm = async ({ data, socket }: { data: IEventTX_CONFIRM; sock
 	}
 }
 
-export const txRequest = async ({ data, socket }: { data: IEventTX_REQUEST; socket: Socket }) => {
+export const txRequest = async ({ data, socket, database }: { data: IEventTX_REQUEST; socket: Socket; database: Client }) => {
 	try {
 		const { sessionId, username, request_id } = socket.handshake.auth
 		const { _transaction } = data
 		const { origin, host } = socket.handshake.headers
 		const { auth } = socket.handshake
 		// console.log(socket.handshake.headers)
-		const database = await DatabaseClass.connect()
 		//console.log('[TX_EVENT_REQUEST]', socket.handshake.headers)
 
 		const dapp = await database.query(`
