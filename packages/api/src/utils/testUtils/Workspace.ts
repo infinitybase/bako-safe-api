@@ -1,16 +1,16 @@
 import { Address } from 'fuels';
 
-import { providers } from '@src/mocks/networks';
 import { TypeUser } from '@src/models';
 
 import { IAccountKeys, accounts } from '../../mocks/accounts';
 import { AuthValidations } from './Auth';
+import { BakoSafe } from 'bakosafe';
 
 const generateUser = async (api: AuthValidations, address?: IAccountKeys) => {
   const addRandom = Address.fromRandom().toAddress();
   const { data } = await api.axios.post('/user/', {
     address: address ? accounts[address].address : addRandom,
-    provider: providers['local'].name,
+    provider: BakoSafe.getProviders('CHAIN_URL'),
     name: `${new Date().getTime()} - Create user test`,
     type: TypeUser.FUEL,
   });

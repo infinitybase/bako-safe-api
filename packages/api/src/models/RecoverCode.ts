@@ -2,7 +2,7 @@ import { Address } from 'fuels';
 import { Column, Entity, BeforeInsert, JoinColumn, OneToOne } from 'typeorm';
 
 import { Base } from './Base';
-import { DApp } from './DApp';
+
 import { User } from './User';
 
 export enum RecoverCodeType {

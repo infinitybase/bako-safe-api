@@ -5,17 +5,17 @@ import { PermissionRoles } from '@src/models/Workspace';
 
 import { handleResponse } from '@utils/index';
 
-import { AddressBookService } from '../addressBook/services';
 import { NotificationService } from '../notification/services';
 import { TransactionService } from '../transaction/services';
 import { UserService } from '../user/service';
 import { PredicateController } from './controller';
 import { PredicateService } from './services';
 import { validateAddPredicatePayload } from './validations';
+import { PredicateVersionService } from '../predicateVersion/services';
 
 const router = Router();
 const predicateService = new PredicateService();
-const addressBookService = new AddressBookService();
+const predicateVersionService = new PredicateVersionService();
 const userService = new UserService();
 const transactionService = new TransactionService();
 const notificationService = new NotificationService();
@@ -30,7 +30,7 @@ const {
 } = new PredicateController(
   userService,
   predicateService,
-  addressBookService,
+  predicateVersionService,
   transactionService,
   notificationService,
 );

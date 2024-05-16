@@ -18,7 +18,6 @@ import {
 import { error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
 
-import { IAddressBookService } from '../addressBook/types';
 import { INotificationService } from '../notification/types';
 import { ITransactionService } from '../transaction/types';
 import { IUserService } from '../user/types';
@@ -32,30 +31,33 @@ import {
   IListRequest,
   IPredicateService,
 } from './types';
+import { IPredicateVersionService } from '../predicateVersion/types';
 
 export class PredicateController {
   private userService: IUserService;
   private predicateService: IPredicateService;
-  private addressBookService: IAddressBookService;
+  private predicateVersionService: IPredicateVersionService;
   private transactionService: ITransactionService;
   private notificationService: INotificationService;
 
   constructor(
     userService: IUserService,
     predicateService: IPredicateService,
-    addressBookService: IAddressBookService,
+    predicateVersionService: IPredicateVersionService,
     transactionService: ITransactionService,
     notificationService: INotificationService,
   ) {
     this.userService = userService;
     this.predicateService = predicateService;
-    this.addressBookService = addressBookService;
+    this.predicateVersionService = predicateVersionService;
     this.transactionService = transactionService;
     this.notificationService = notificationService;
     bindMethods(this);
   }
 
   async create({ body: payload, user, workspace }: ICreatePredicateRequest) {
+    const { versionCode } = payload;
+
     try {
       const members: User[] = [];
 
@@ -74,11 +76,20 @@ export class PredicateController {
         members.push(user);
       }
 
+      let version = null;
+
+      if (versionCode) {
+        version = await this.predicateVersionService.findByCode(versionCode);
+      } else {
+        version = await this.predicateVersionService.findCurrentVersion();
+      }
+
       const newPredicate = await this.predicateService.create({
         ...payload,
         owner: user,
         members,
         workspace,
+        version,
       });
 
       // include signer permission to vault on workspace
@@ -182,7 +193,6 @@ export class PredicateController {
 
   async hasReservedCoins({ params: { address } }: IFindByHashRequest) {
     try {
-      console.log('[HAS_RESERVED_COINS]: ', address);
       const response = await this.transactionService
         .filter({
           predicateId: [address],
@@ -211,7 +221,7 @@ export class PredicateController {
       // console.log(predicate);
       const instance = await this.predicateService.instancePredicate(predicate.id);
       const balance = await instance.getBalance();
-      console.log('[BALANCE]', balance);
+
       //todo: move this calc logic
       const convert = `ETH-USD`;
 

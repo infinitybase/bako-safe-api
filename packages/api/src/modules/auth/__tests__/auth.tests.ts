@@ -6,6 +6,8 @@ import { networks } from '@src/mocks/networks';
 import { RecoverCodeType } from '@src/models';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
 
+const { API_URL } = process.env;
+
 describe('[AUTH]', () => {
   test(
     'Sign in with personal workspace',
@@ -49,7 +51,7 @@ describe('[AUTH]', () => {
 
   test('generate a code with register user', async () => {
     const api = axios.create({
-      baseURL: 'http://localhost:3333',
+      baseURL: API_URL,
     });
 
     const [user1] = await generateInitialUsers();

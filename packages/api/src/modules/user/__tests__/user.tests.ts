@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { defaultConfig } from 'bakosafe';
+import { BakoSafe } from 'bakosafe';
 import crypto from 'crypto';
 import { Address } from 'fuels';
 
@@ -10,10 +10,12 @@ import { AuthValidations } from '@src/utils/testUtils/Auth';
 
 import { accounts } from '../../../mocks/accounts';
 
+const { API_URL, UI_URL } = process.env;
+
 describe('[USER]', () => {
   let api = beforeAll(() => {
     api = axios.create({
-      baseURL: 'http://localhost:3333',
+      baseURL: API_URL,
     });
   });
 
@@ -21,19 +23,19 @@ describe('[USER]', () => {
     'Create user',
     //'ATUAL',
     async () => {
-      const code_length = 70;
+      const code_length = `code${Address.fromRandom().toHexString()}`.length;
       await api
         .post('/user/', {
           name: `${new Date().getTime()} - Create user test`,
           type: TypeUser.FUEL,
           address: Address.fromRandom().toAddress(),
-          provider: defaultConfig['PROVIDER'],
+          provider: BakoSafe.getProviders('CHAIN_URL'),
         })
         .then(({ data, status }) => {
           expect(status).toBe(201);
           expect(data).toHaveProperty('id');
           expect(data).toHaveProperty('type', RecoverCodeType.AUTH);
-          expect(data).toHaveProperty('origin', process.env.UI_URL);
+          expect(data).toHaveProperty('origin', UI_URL);
           expect(data).toHaveProperty('code');
           expect(data.code.length).toBe(code_length);
         });

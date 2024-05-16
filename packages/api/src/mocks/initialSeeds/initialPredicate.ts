@@ -1,11 +1,13 @@
 import { Address } from 'fuels';
 import { In } from 'typeorm';
 
-import { User } from '@src/models';
+import { PredicateVersion, User } from '@src/models';
 import { Predicate } from '@src/models/Predicate';
 
-import { PredicateMock } from '../predicate';
 import { generateInitialUsers } from './initialUsers';
+import { predicateVersionMock } from '../predicateVersion';
+
+import { BakoSafe } from 'bakosafe';
 
 export const generateInitialPredicate = async (): Promise<Partial<Predicate>> => {
   const users = (await generateInitialUsers()).map(u => u.name);
@@ -13,12 +15,22 @@ export const generateInitialPredicate = async (): Promise<Partial<Predicate>> =>
   const owner = await User.findOne({
     where: { name: users[0] },
   });
-  const { predicatePayload } = await PredicateMock.create(1, [owner.address]);
+  const predicatePayload = {
+    configurable: JSON.stringify({
+      SIGNATURES_COUNT: 1,
+      SIGNERS: [owner?.address],
+    }),
+    provider: BakoSafe.getProviders('CHAIN_URL'),
+    chainId: 0,
+  };
   const members = await User.find({
     take: 3,
     where: {
       name: In(users),
     },
+  });
+  const version = await PredicateVersion.findOne({
+    code: predicateVersionMock.code,
   });
 
   const predicate1: Partial<Predicate> = {
@@ -26,13 +38,12 @@ export const generateInitialPredicate = async (): Promise<Partial<Predicate>> =>
     predicateAddress: Address.fromRandom().toString(),
     description: `fake_description: ${new Date().getTime()}`,
     minSigners: 1,
-    bytes: predicatePayload.bytes,
-    abi: predicatePayload.abi,
     configurable: predicatePayload.configurable,
     provider: predicatePayload.provider,
     chainId: predicatePayload.chainId,
     owner,
     members,
+    version,
     createdAt: new Date(),
   };
 

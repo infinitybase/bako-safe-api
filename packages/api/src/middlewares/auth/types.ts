@@ -21,6 +21,7 @@ export interface AuthValidatedRequest<T extends ValidatedRequestSchema>
 
 export interface UnloggedRequest<T extends ValidatedRequestSchema> extends Request {
   body: T[ContainerTypes.Body];
+  query: T[ContainerTypes.Query] & ParsedQs;
   headers: T[ContainerTypes.Headers];
 }
 

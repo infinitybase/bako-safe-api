@@ -1,4 +1,4 @@
-import { defaultConfig } from 'bakosafe';
+import { BakoSafe } from 'bakosafe';
 
 import { TypeUser, User, PermissionAccess } from '@src/models';
 import {
@@ -164,7 +164,7 @@ export class WorkspaceService implements IWorkspaceService {
                   return await new UserService().create({
                     address: member,
                     name: member,
-                    provider: defaultConfig['PROVIDER'],
+                    provider: BakoSafe.getProviders('CHAIN_URL'),
                     avatar: IconUtils.user(),
                     type: TypeUser.FUEL,
                   });

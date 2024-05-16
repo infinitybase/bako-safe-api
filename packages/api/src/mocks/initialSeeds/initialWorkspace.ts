@@ -6,7 +6,6 @@ import {
   Workspace,
   defaultPermissions,
 } from '@src/models/Workspace';
-import { UserService } from '@src/modules/user/service';
 
 import { accounts } from '../accounts';
 import { IconUtils } from '@utils/icons';

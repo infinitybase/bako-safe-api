@@ -156,12 +156,16 @@ export class TransactionController {
             id: predicate.id,
             address: predicate.predicateAddress,
           },
+          BakoSafeID: '',
         },
         witnesses,
         predicate,
         createdBy: user,
         summary,
       });
+
+      newTransaction.resume.BakoSafeID = newTransaction.id;
+      await newTransaction.save();
 
       await new PredicateService().update(predicate.id);
 

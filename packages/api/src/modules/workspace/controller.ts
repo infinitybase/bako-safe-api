@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { defaultConfig } from 'bakosafe';
+import { BakoSafe } from 'bakosafe';
 import { BN, bn } from 'fuels';
 
 import { Predicate, TypeUser, User, PermissionAccess } from '@src/models';
@@ -230,7 +230,7 @@ export class WorkspaceController {
                   return await new UserService().create({
                     address: member,
                     name: member,
-                    provider: defaultConfig['PROVIDER'],
+                    provider: BakoSafe.getProviders('CHAIN_URL'),
                     avatar: IconUtils.user(),
                     type: TypeUser.FUEL,
                   });

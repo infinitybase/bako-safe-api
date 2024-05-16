@@ -178,7 +178,6 @@ export class UserController {
 
       return successful(code, Responses.Created);
     } catch (e) {
-      console.log(e);
       return error(e.error, e.statusCode);
     }
   }

@@ -6,6 +6,7 @@ import { TypeUser } from '@src/models';
 import { PermissionRoles, defaultPermissions } from '@src/models/Workspace';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
 import { generateWorkspacePayload } from '@src/utils/testUtils/Workspace';
+import { BakoSafe } from 'bakosafe';
 
 describe('[WORKSPACE]', () => {
   let api: AuthValidations;
@@ -188,7 +189,7 @@ describe('[WORKSPACE]', () => {
     const aux_address = Address.fromRandom().toAddress();
     const { data: data_user_aux } = await api.axios.post('/user/', {
       address: aux_address,
-      provider: providers['local'].name,
+      provider: BakoSafe.getProviders('CHAIN_URL'),
       name: `${new Date().getTime()} - Create user test`,
       type: TypeUser.FUEL,
     });

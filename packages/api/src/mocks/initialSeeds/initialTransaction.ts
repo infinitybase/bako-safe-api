@@ -40,6 +40,7 @@ export const generateInitialTransaction = async (): Promise<TTI> => {
       requiredSigners: 0,
       outputs: [],
       hash: 'fake_hash',
+      BakoSafeID: 'fake_BakoSafeID',
     },
     createdBy: user,
     predicate,
