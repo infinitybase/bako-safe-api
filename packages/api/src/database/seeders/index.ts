@@ -6,7 +6,7 @@ import Bootstrap from '@src/server/bootstrap';
 
 const runSeeders = async () => {
   await Bootstrap.connectDatabase();
-  const files = glob.sync(`${__dirname}/**/*.{js,ts}`);
+  const files = glob.sync(`${__dirname}/**/*.{js,ts}`).sort();
 
   const seeders: string[] = [];
 
