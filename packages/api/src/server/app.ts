@@ -12,18 +12,9 @@ import { Callback } from '@src/utils';
 
 import { handleErrors } from '@middlewares/index';
 
-import SocketIOServer from '../socket/socket';
-
 const { API_PORT, PORT } = process.env;
 
-type ServerHooks = {
-  onServerStart?: Callback;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onServerStop?: Callback<any>;
-};
-
 class App {
-  static hooks: ServerHooks = {};
   private readonly app: Express.Application;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -36,26 +27,6 @@ class App {
     this.initErrorHandler();
   }
 
-  static serverHooks(handles: ServerHooks) {
-    this.hooks = handles;
-  }
-
-  static pm2HandleServerStop() {
-    pm2.launchBus((err, bus) => {
-      if (err) {
-        console.error('[APP] Error on start PM2 bus.');
-        return;
-      }
-
-      console.error('[APP] PM2 bus started.');
-
-      bus.on('process:exception', async packet => {
-        await App.hooks.onServerStop?.(packet);
-        process.exit(1);
-      });
-    });
-  }
-
   async init() {
     // App
     const port = API_PORT || PORT || 3333;
@@ -63,10 +34,7 @@ class App {
     this.httpServer = http.createServer(this.app);
     this.httpServer.listen(port, () => {
       console.log(`[APP] Application running in http://localhost:${port}`);
-      App.hooks.onServerStart?.();
     });
-
-    new SocketIOServer(this.httpServer);
   }
 
   private initMiddlewares() {
