@@ -8,7 +8,7 @@ import pm2 from 'pm2';
 import process from 'process';
 
 import { router } from '@src/routes';
-import { Callback } from '@src/utils';
+import { Callback, TVLCronJob } from '@src/utils';
 
 import { handleErrors } from '@middlewares/index';
 
@@ -25,6 +25,7 @@ class App {
     this.initMiddlewares();
     this.initRoutes();
     this.initErrorHandler();
+    this.initCronJobs();
   }
 
   async init() {
@@ -52,6 +53,10 @@ class App {
 
   private initErrorHandler() {
     this.app.use(handleErrors);
+  }
+
+  private initCronJobs() {
+    TVLCronJob.start();
   }
 
   get serverApp() {
