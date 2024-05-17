@@ -13,6 +13,7 @@ import { Callback } from '@src/utils';
 import { handleErrors } from '@middlewares/index';
 
 import SocketIOServer from '../socket/socket';
+import { TVLCronJob } from '@src/utils/cronJobs';
 
 const { API_PORT, PORT } = process.env;
 
@@ -34,6 +35,7 @@ class App {
     this.initMiddlewares();
     this.initRoutes();
     this.initErrorHandler();
+    this.initCronJobs();
   }
 
   static serverHooks(handles: ServerHooks) {
@@ -84,6 +86,10 @@ class App {
 
   private initErrorHandler() {
     this.app.use(handleErrors);
+  }
+
+  private initCronJobs() {
+    TVLCronJob.start();
   }
 
   get serverApp() {
