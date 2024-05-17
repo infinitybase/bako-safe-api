@@ -8,12 +8,11 @@ import pm2 from 'pm2';
 import process from 'process';
 
 import { router } from '@src/routes';
-import { Callback } from '@src/utils';
+import { Callback, TVLCronJob } from '@src/utils';
 
 import { handleErrors } from '@middlewares/index';
 
 import SocketIOServer from '../socket/socket';
-import { TVLCronJob } from '@src/utils/cronJobs';
 
 const { API_PORT, PORT } = process.env;
 
