@@ -26,6 +26,9 @@ const TVLCronJob = cron.schedule('0 0 * * *', async () => {
     // Busca dados de todos os vaults
     const predicates = await Predicate.createQueryBuilder('p')
       .leftJoinAndSelect('p.version', 'version')
+      .where("p.configurable::jsonb ->> 'network' NOT LIKE :network", {
+        network: '%localhost%',
+      })
       .select(['p.id', 'p.configurable', 'version.code'])
       .getMany();
 
