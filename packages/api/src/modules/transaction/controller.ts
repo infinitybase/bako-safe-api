@@ -392,6 +392,7 @@ export class TransactionController {
               await this.transactionService.update(id, {
                 status: TransactionStatus.FAILED,
                 sendTime: new Date(),
+                resume: { ...resume, status: TransactionStatus.FAILED },
               });
               throw new Error('Transaction send failed');
             });
