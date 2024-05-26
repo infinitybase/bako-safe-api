@@ -99,12 +99,9 @@ describe('[TRANSACTION]', () => {
       const auth = new AuthValidations(networks['local'], accounts['USER_5']);
       await auth.create();
       await auth.createSession();
-      const {
-        data,
-        data_user1,
-        data_user2,
-        USER_5,
-      } = await generateWorkspacePayload(auth);
+      const { data_user1, data_user2, USER_5 } = await generateWorkspacePayload(
+        auth,
+      );
 
       //gerar um predicate
       const members = [data_user1.address, data_user2.address, USER_5.address];

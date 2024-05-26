@@ -69,9 +69,9 @@ export const txConfirm = async ({ data, socket, database }: { data: IEventTX_CON
 			SERVER_URL: BAKO_URL_API,
 			PROVIDER: dapp.current_vault_provider,
 		})
-		BakoSafe.setup({
+		BakoSafe.setProviders({
 			SERVER_URL: BAKO_URL_API,
-			PROVIDER: dapp.current_vault_provider,
+			CHAIN_URL: dapp.current_vault_provider,
 		})
 		const predicate = await Vault.create({
 			id: dapp.current_vault_id,
