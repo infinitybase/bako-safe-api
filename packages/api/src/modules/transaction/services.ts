@@ -365,15 +365,13 @@ export class TransactionService implements ITransactionService {
     const _witnesses = witnesses
       .filter(w => !!w.signature)
       .map(witness => witness.signature);
-    txData.witnesses = witnesses.map(witness => witness.signature).filter(w => !!w);
+    const tx = (txData.witnesses = witnesses
+      .map(witness => witness.signature)
+      .filter(w => !!w));
     console.log(_witnesses);
 
-    const tx = transactionRequestify({
-      ...txData,
-      witnesses: _witnesses,
-    });
-
     this.checkInvalidConditions(api_transaction);
+    // tx.maxFee = tx.maxFee.mul(2);
 
     const tx_est = await provider.estimatePredicates(tx);
 
