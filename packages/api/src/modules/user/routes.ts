@@ -28,6 +28,4 @@ router.put(
   handleResponse(userController.update),
 );
 
-router.delete('/:id', authMiddleware, handleResponse(userController.delete));
-
 export default router;
