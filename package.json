@@ -7,11 +7,11 @@
     "./packages/*"
   ],
   "scripts": {
-    "dev":"turbo run dev",
+    "dev": "turbo run dev",
     "dev:db:start": "turbo run db:dev:start",
     "dev:chain:start": "turbo run chain:dev:start"
   },
   "devDependencies": {
-    "turbo": "^1.10.0"
+    "turbo": "^1.13.3"
   }
 }
