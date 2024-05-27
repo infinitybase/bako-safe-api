@@ -1,3 +1,5 @@
+import GeneralError from '@utils/error/GeneralError';
+
 export { default as BadRequest } from './BadRequest';
 export * from './GeneralError';
 export { default as NotFound } from './NotFound';
@@ -14,10 +16,14 @@ export interface ErrorResponse<T> {
   statusCode: Responses;
 }
 
-const error = <ResponsePayload>(
+const error = <ResponsePayload extends GeneralError>(
   payload: ResponsePayload,
   statusCode: Responses,
 ): ErrorResponse<ResponsePayload> => {
+  if ('detail' in payload && process.env.NODE_ENV !== 'development') {
+    payload.detail = null;
+  }
+
   return {
     payload,
     statusCode,
