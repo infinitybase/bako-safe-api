@@ -4,14 +4,14 @@ import { BN, Wallet, Provider, bn } from 'fuels';
 import { assets } from '@src/mocks/assets';
 
 export const txParams = {
-  gasPrice: BakoSafe.getGasConfig('GAS_PRICE'),
+  maxFee: BakoSafe.getGasConfig('MAX_FEE'),
   gasLimit: BakoSafe.getGasConfig('GAS_LIMIT'),
 };
 
 export const sendPredicateCoins = async (
   predicate: Vault,
   amount: BN,
-  asset: 'ETH' | 'DAI' | 'sETH',
+  asset: string,
   rootWallet: string,
 ) => {
   const wallet = Wallet.fromPrivateKey(

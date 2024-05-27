@@ -1,5 +1,5 @@
-import { TransactionStatus, Vault } from 'bakosafe';
-import { bn, Address } from 'fuels';
+import { BakoSafe, TransactionStatus, Vault } from 'bakosafe';
+import { bn, Address, Provider } from 'fuels';
 
 import { accounts } from '@src/mocks/accounts';
 import { assets } from '@src/mocks/assets';
@@ -9,7 +9,7 @@ export const transaction = {
   name: 'Transaction A',
   assets: [
     {
-      amount: bn(1_0).format(),
+      amount: '0.0001',
       assetId: assets['ETH'],
       to: accounts['STORE'].address,
     },
@@ -18,7 +18,13 @@ export const transaction = {
 };
 
 export const transactionMock = async (vault: Vault) => {
-  await sendPredicateCoins(vault, bn(1_000_0), 'ETH', accounts['FULL'].privateKey);
+  const provider = await Provider.create(BakoSafe.getProviders('CHAIN_URL'));
+  await sendPredicateCoins(
+    vault,
+    bn.parseUnits('0.5'),
+    provider.getBaseAssetId(),
+    accounts['FULL'].privateKey,
+  );
 
   const tx = await vault.BakoSafeIncludeTransaction(transaction);
 

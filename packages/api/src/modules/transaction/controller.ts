@@ -392,6 +392,7 @@ export class TransactionController {
               await this.transactionService.update(id, {
                 status: TransactionStatus.FAILED,
                 sendTime: new Date(),
+                resume: { ...resume, status: TransactionStatus.FAILED },
               });
               throw new Error('Transaction send failed');
             });
@@ -519,11 +520,12 @@ export class TransactionController {
             resume: result,
           });
         })
-        .catch(async () => {
+        .catch(async e => {
           await this.transactionService.update(id, {
             status: TransactionStatus.FAILED,
             sendTime: new Date(),
           });
+          console.log('[failed]', e);
           throw new Error('Transaction send failed');
         });
 

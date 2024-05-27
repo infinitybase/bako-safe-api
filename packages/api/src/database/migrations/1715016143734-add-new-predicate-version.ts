@@ -19,8 +19,8 @@ export class addNewPredicateVersion1715016143734 implements MigrationInterface {
             '${predicateVersion.code}',
             '${predicateVersion.abi}',
             '${predicateVersion.bytes}',
-            CURRENT_TIMESTAMP + INTERVAL '2 seconds',
-            CURRENT_TIMESTAMP + INTERVAL '2 seconds'
+            CURRENT_TIMESTAMP + INTERVAL '${predicateVersion.timeout} seconds',
+            CURRENT_TIMESTAMP + INTERVAL '${predicateVersion.timeout} seconds'
           )
         `,
     );
@@ -35,6 +35,7 @@ export class addNewPredicateVersion1715016143734 implements MigrationInterface {
 }
 
 export const predicateVersion = {
+  timeout: 2,
   name: generatePredicateVersionName(
     '0xa8efb18f92443ae8f9d92953e5fb42e0bd3d183392b95f316b9f586874d89ebc',
   ),

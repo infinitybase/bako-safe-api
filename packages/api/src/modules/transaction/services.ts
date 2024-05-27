@@ -366,7 +366,6 @@ export class TransactionService implements ITransactionService {
     const _witnesses = witnesses
       .filter(w => !!w.signature)
       .map(witness => witness.signature);
-    txData.witnesses = witnesses.map(witness => witness.signature).filter(w => !!w);
 
     const tx = transactionRequestify({
       ...txData,
@@ -393,9 +392,12 @@ export class TransactionService implements ITransactionService {
           gasUsed: transaction.fee.format({ precision: 9 }),
           status: TransactionStatus.PROCESS_ON_CHAIN,
         };
+
         return resume;
       })
       .catch(e => {
+        console.log('[ERRO_SEND_TOCHAIN]: ', e);
+
         throw new Internal({
           type: ErrorTypes.Internal,
           title: 'Error on transaction sendToChain',
