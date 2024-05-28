@@ -10,9 +10,6 @@
     "build": "tsc --project . && tscpaths -p tsconfig.json -s ./src -o ./build",
     "run:socket-server": "make -C ./ deploy env_file=.env"
   },
-  "engines": {
-    "node": ">=18.18.2"
-  },
   "keywords": [],
   "dependencies": {
     "bakosafe": "0.0.57",
