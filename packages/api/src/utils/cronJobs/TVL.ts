@@ -5,7 +5,7 @@ import cron from 'node-cron';
 import axios from 'axios';
 
 const assetId =
-  '0x0000000000000000000000000000000000000000000000000000000000000000';
+  '0xf8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad07';
 
 // Executa todos os dias a meia-noite
 const TVLCronJob = cron.schedule('0 0 * * *', async () => {
