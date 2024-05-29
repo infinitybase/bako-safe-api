@@ -175,24 +175,24 @@ export class TransactionService implements ITransactionService {
     //console.log('[transaction_FILTER]: ', this._filter);
 
     // =============== specific for home ===============
-    (this._filter.workspaceId || this._filter.signer) &&
-      queryBuilder.andWhere(
-        new Brackets(qb => {
-          if (this._filter.workspaceId) {
-            qb.orWhere('workspace.id IN (:...workspace)', {
-              workspace: this._filter.workspaceId,
-            });
-          }
-          // Uncomment this to not show workspace transactions in the single.
-          if (this._filter.signer) {
-            qb.orWhere(subQb => {
-              subQb.where('witnesses.account = :signer', {
-                signer: this._filter.signer,
-              });
-            });
-          }
-        }),
-      );
+    // (this._filter.workspaceId || this._filter.signer) &&
+    //   queryBuilder.andWhere(
+    //     new Brackets(qb => {
+    //       if (this._filter.workspaceId) {
+    //         qb.orWhere('workspace.id IN (:...workspace)', {
+    //           workspace: this._filter.workspaceId,
+    //         });
+    //       }
+    //       // Uncomment this to not show workspace transactions in the single.
+    //       // if (this._filter.signer) {
+    //       //   qb.orWhere(subQb => {
+    //       //     subQb.where('witnesses.account = :signer', {
+    //       //       signer: this._filter.signer,
+    //       //     });
+    //       //   });
+    //       // }
+    //     }),
+    //   );
     // =============== specific for home ===============
 
     this._filter.to &&
