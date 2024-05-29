@@ -4,6 +4,7 @@ import crypto from 'crypto'
 import { TransactionRequestLike } from 'fuels'
 import { Socket } from 'socket.io'
 import { Client } from 'pg'
+import { DatabaseClass } from '@utils/database'
 
 export interface IEventTX_REQUEST {
 	_transaction: TransactionRequestLike
@@ -15,60 +16,61 @@ export interface IEventTX_CONFIRM {
 	operations: any
 }
 
+interface IEvent<D> {
+	data: D
+	socket: Socket
+	database: DatabaseClass
+}
+
 const { BAKO_URL_UI, BAKO_URL_API } = process.env
 
-export const txConfirm = async ({ data, socket, database }: { data: IEventTX_CONFIRM; socket: Socket; database: Client }) => {
+export const txConfirm = async ({ data, socket, database }: IEvent<IEventTX_CONFIRM>) => {
 	const { sessionId, username, request_id } = socket.handshake.auth
 	const room = `${sessionId}:${SocketUsernames.CONNECTOR}:${request_id}`
 	const { origin, host } = socket.handshake.headers
-	console.log(data)
+
 	const { tx, operations } = data
 	const { auth } = socket.handshake
 	try {
 		// ------------------------------ [VALIDACOES] ------------------------------
-
-		console.log('[TX_EVENT_CONFIRM]', socket.handshake.headers, origin, BAKO_URL_UI)
 		// validar se o origin é diferente da url usada no front...adicionar um .env pra isso
 
 		if (origin != BAKO_URL_UI) return
-		console.log('[PASSOU PELO RETURN]: ')
-		//const database = await DatabaseClass.connect()
-		console.log('[DB_CONNECTED]: ', database)
-
-		// ------------------------------ [VALIDACOES] ------------------------------
 
 		// ------------------------------ [DAPP] ------------------------------
-		const dapp = await database.query(`
+		const dapp = await database.query(
+			`
 				SELECT d.*, u.id AS user_id, u.address AS user_address, c.id AS current_vault_id, c.provider AS current_vault_provider
 				FROM dapp d
 				JOIN "users" u ON d.user = u.id
 				JOIN "predicates" c ON d.current = c.id
-				WHERE d.session_id = '${auth.sessionId}'  
-			`)
-		console.log('[DAPP]: ', dapp)
+				WHERE d.session_id = $1  
+			`,
+			[auth.sessionId],
+		)
+
 		if (!dapp) return
+
 		// ------------------------------ [CODE] ------------------------------
-		const code = await database.query(`
+		const code = await database.query(
+			`
 				SELECT *
 				FROM recover_codes
-				WHERE origin = '${host}' 
-				AND owner = '${dapp.user_id}'
+				WHERE origin = $1
+				AND owner = $2
 				AND used = false
 				AND valid_at > NOW()
 				ORDER BY valid_at DESC
 				LIMIT 1;
-			`)
-		console.log('[CODE]', code)
+			`,
+			[host, dapp.user_id],
+		)
+
 		if (!code) return
 
 		// ------------------------------ [CODE] ------------------------------
 
 		// ------------------------------ [TX] ------------------------------
-		console.log('[chamando predicate]', dapp.current_vault_id, dapp.user_address, code.code)
-		console.log('[BakoSafe_preset]', {
-			SERVER_URL: BAKO_URL_API,
-			PROVIDER: dapp.current_vault_provider,
-		})
 		BakoSafe.setProviders({
 			SERVER_URL: BAKO_URL_API,
 			CHAIN_URL: dapp.current_vault_provider,
@@ -78,8 +80,6 @@ export const txConfirm = async ({ data, socket, database }: { data: IEventTX_CON
 			address: dapp.user_address,
 			token: code.code,
 		})
-		console.log('[predicate]', !!predicate)
-		console.log('[pre]', !!tx, tx)
 		const _tx = await predicate
 			.BakoSafeIncludeTransaction(tx)
 			.then(tx => tx)
@@ -87,39 +87,36 @@ export const txConfirm = async ({ data, socket, database }: { data: IEventTX_CON
 				console.log('[ERRO NA TX]', e)
 				return undefined
 			})
-		console.log('[tx]', !!_tx)
 		// ------------------------------ [TX] ------------------------------
 
 		// ------------------------------ [SUMMARY] ------------------------------
-		await database.query(`
+		await database.query(
+			`
 				UPDATE transactions
-				SET summary = '${JSON.stringify({
+				SET summary = $1
+				WHERE id = '${_tx.BakoSafeTransactionId}'
+			`,
+			[
+				JSON.stringify({
 					operations: operations.operations,
 					name: dapp.name,
 					origin: dapp.origin,
-				})}'
-				WHERE id = '${_tx.BakoSafeTransactionId}'
-			`)
+				}),
+			],
+		)
 		// ------------------------------ [SUMMARY] ------------------------------
 
 		// ------------------------------ [INVALIDATION] ------------------------------
-		await database.query(`
+		await database.query(
+			`
 				DELETE FROM recover_codes
-				WHERE id = '${code.id}'
-			`)
+				WHERE id = $1
+			`,
+			[code.id],
+		)
 		// ------------------------------ [INVALIDATION] ------------------------------
 
 		// ------------------------------ [EMIT] ------------------------------
-		console.log('[MENSAGEM ENVIADA]: ', {
-			username,
-			room: sessionId,
-			to: SocketUsernames.CONNECTOR,
-			type: SocketEvents.TX_CONFIRM,
-			data: {
-				id: _tx.getHashTxId(),
-				status: '[SUCCESS]',
-			},
-		})
 		socket.to(room).emit(SocketEvents.DEFAULT, {
 			username,
 			room: sessionId,
@@ -148,16 +145,15 @@ export const txConfirm = async ({ data, socket, database }: { data: IEventTX_CON
 	}
 }
 
-export const txRequest = async ({ data, socket, database }: { data: IEventTX_REQUEST; socket: Socket; database: Client }) => {
+export const txRequest = async ({ data, socket, database }: IEvent<IEventTX_REQUEST>) => {
 	try {
 		const { sessionId, username, request_id } = socket.handshake.auth
 		const { _transaction } = data
 		const { origin, host } = socket.handshake.headers
 		const { auth } = socket.handshake
-		// console.log(socket.handshake.headers)
-		//console.log('[TX_EVENT_REQUEST]', socket.handshake.headers)
 
-		const dapp = await database.query(`
+		const dapp = await database.query(
+			`
 				SELECT d.*, u.id AS user_id,
 				u.address AS user_address,
 				c.id AS current_vault_id, 
@@ -167,38 +163,47 @@ export const txRequest = async ({ data, socket, database }: { data: IEventTX_REQ
 				FROM dapp d
 				JOIN "users" u ON d.user = u.id
 				JOIN "predicates" c ON d.current = c.id
-				WHERE d.session_id = '${auth.sessionId}'  
-			`)
+				WHERE d.session_id = $1  
+			`,
+			[auth.sessionId],
+		)
 		const isValid = dapp && dapp.origin === origin
 
 		//todo: adicionar emissao de erro
 		if (!isValid) return
 
-		const vault = await database.query(`
+		const vault = await database.query(
+			`
 				SELECT * from predicates
-				WHERE id = '${dapp.current_vault_id}'
-			`)
+				WHERE id = $1
+			`,
+			[dapp.current_vault_id],
+		)
 
 		if (!vault) return
 
-		const code = await database.query(`
+		const code = await database.query(
+			`
 				INSERT INTO recover_codes (origin, owner, type, code, valid_at, metadata, used)
-				VALUES ('${host}', '${dapp.user_id}', 'AUTH_ONCE', 'code${crypto.randomUUID()}',
-				NOW() + INTERVAL '2 minutes', '${JSON.stringify({ uses: 0 })}', false)
+				VALUES ($1, $2, 'AUTH_ONCE', $3, NOW() + INTERVAL '2 minutes', $4, false)
 				RETURNING *;
-			`)
+			`,
+			[host, dapp.user_id, `code${crypto.randomUUID()}`, `${JSON.stringify({ uses: 0 })}`],
+		)
 
-		const tx_pending = await database.query(`
+		const tx_pending = await database.query(
+			`
 				SELECT COUNT(*)
 				FROM transactions t
-				WHERE t.predicate_id = '${vault.id}' 
-				AND t.status = '${TransactionStatus.AWAIT_REQUIREMENTS}'
+				WHERE t.predicate_id = $1 
+				AND t.status = $2
 				AND t.deleted_at IS NULL;
-			`)
+			`,
+			[vault.id, TransactionStatus.AWAIT_REQUIREMENTS],
+		)
 		//console.log('[TX_PENDING]', tx_pending, Number(tx_pending.count) > 0)
 
 		const room = `${sessionId}:${SocketUsernames.UI}:${request_id}`
-		console.log('[TUDO OK POR AQUI, ENVIANDO AO FRONT]: ', room)
 		socket.to(room).emit(SocketEvents.DEFAULT, {
 			username,
 			room: sessionId,

@@ -1,9 +1,10 @@
-import { txConfirm, txRequest } from './modules/transactions'
-import { SocketEvents } from './types'
-import express from 'express'
 import http from 'http'
+import express from 'express'
 import socketIo from 'socket.io'
-import { DatabaseClass } from './utils/database'
+
+import { txConfirm, txRequest } from '@modules/transactions'
+import { DatabaseClass } from '@utils/database'
+import { SocketEvents } from './types'
 
 const { PORT, TIMEOUT_DICONNECT, APP_NAME } = process.env
 

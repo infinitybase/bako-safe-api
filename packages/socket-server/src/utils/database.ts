@@ -42,9 +42,9 @@ export class DatabaseClass {
     return this.instance;
   }
 
-  async query (query: string): Promise<any> {
+  async query (query: string, params?: string[]): Promise<any> {
     try {
-      const { rows }: QueryResult = await this.client.query(query)
+      const { rows }: QueryResult = await this.client.query(query, params)
       if (rows.length === 1) return rows[0]
       return rows
     } catch (error) {
