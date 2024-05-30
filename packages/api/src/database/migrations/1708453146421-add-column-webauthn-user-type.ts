@@ -16,7 +16,6 @@ export class addColumnWebauthn1708453146421 implements MigrationInterface {
       new TableColumn({
         name: 'type',
         type: 'varchar',
-        isNullable: false,
       }),
     );
   }
