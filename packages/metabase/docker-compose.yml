@@ -1,0 +1,28 @@
+version: "3"
+
+services:
+  db:
+    container_name: "${DATABASE_CONTAINER_NAME}"
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    ports:
+      - "${DATABASE_PORT}:5432"
+
+  metabase:
+    image: metabase/metabase
+    restart: always
+    environment:
+      MB_DB_TYPE: ${METABASE_DB_TYPE}
+      MB_DB_DBNAME: ${METABASE_DB_NAME}
+      MB_DB_PORT: ${METABASE_DB_PORT}
+      MB_DB_USER: ${METABASE_DB_USER}
+      MB_DB_PASS: ${METABASE_DB_PASSWORD}
+      MB_DB_HOST: ${METABASE_DB_HOST}
+    ports:
+      - "${METABASE_PORT}:3000"

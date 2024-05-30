@@ -1,9 +1,0 @@
-#!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
-
-echo "\n🐶 [Husky] Running prettier:"
-yarn pretty-quick --staged --pattern '**/*.*(js|ts)'
-
-echo "\n🐶 [Husky] Running ESLint:"
-yarn lint-staged
-

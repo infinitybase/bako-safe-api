@@ -1,0 +1,9 @@
+{
+  "name": "bakosafe-metabase",
+  "description": "A customized Metabase service to provide a dashboard with various metrics related to bakosafe",
+  "license": "Apache-2.0",
+  "version": "0.0.1",
+  "scripts": {
+    "run:metabase": "make -C ./ deploy env_file=.env"
+  }
+}

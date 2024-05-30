@@ -1,12 +1,5 @@
-node_modules
-.turbo
-.husky
-
-##DB
-postgresql/
-
-## API
 # Build
+node_modules
 build
 yarn.lock
 package-lock.json

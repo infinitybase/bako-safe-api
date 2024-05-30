@@ -1,0 +1,64 @@
+{
+  "$schema": "https://turborepo.org/schema.json",
+  "pipeline": {
+    "db:dev:start": {
+      "outputs": [],
+      "outputMode": "new-only",
+      "cache": false
+    },
+    "chain:dev:start": {
+      "dependsOn": ["db:dev:start"],
+      "outputs": [],
+      "outputMode": "new-only",
+      "cache": false
+    },
+    "socket:dev:start": {
+      "dependsOn": ["db:dev:start"],
+      "outputs": [],
+      "outputMode": "new-only",
+      "cache": false
+    },
+    "api:dev:start": {
+      "dependsOn": ["db:dev:start", "chain:dev:start", "socket:dev:start"],
+      "outputs": ["dist/**"],
+      "outputMode": "new-only",
+      "cache": false
+    },
+    "dev": {
+      "dependsOn": ["api:dev:start"],
+      "outputs": [],
+      "outputMode": "new-only",
+      "cache": false
+    },
+    "run:metabase": {
+      "dependsOn": ["^run:metabase"],
+      "outputs": [],
+      "cache": false
+    },
+    "run:socket-server": {
+      "dependsOn": ["^run:socket-server"],
+      "outputs": [],
+      "cache": false
+    },
+    "run:stg": {
+      "dependsOn": ["run:socket-server"],
+      "outputs": ["dist/**"],
+      "cache": false
+    },
+    "run:prod": {
+      "dependsOn": ["^run:prod", "run:socket-server"],
+      "outputs": ["dist/**"],
+      "cache": false
+    },
+    "start:stg": {
+      "dependsOn": ["run:stg", "run:metabase"],
+      "outputs": [],
+      "cache": false
+    },
+    "start:prod": {
+      "dependsOn": ["run:prod"],
+      "outputs": [],
+      "cache": false
+    }
+  }
+}

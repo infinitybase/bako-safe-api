@@ -15,10 +15,10 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install modules
-        run: yarn
+        run: pnpm
 
       - name: Run ESLint
-        run: yarn eslint . --ext .js,.jsx,.ts,.tsx
+        run: pnpm eslint . --ext .js,.jsx,.ts,.tsx
 
       - name: Run Tests
-        run: yarn jest
+        run: pnpm jest
