@@ -21,6 +21,8 @@ export class SocketClient {
       origin,
     };
 
+    console.log('Conectando ao servidor Socket.IO:', auth, SOCKET_URL);
+
     //todo: move this URL to a .env file
     const URL = SOCKET_URL;
     this.socket = io(URL, { autoConnect: true, auth });
