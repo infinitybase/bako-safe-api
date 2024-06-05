@@ -1,6 +1,6 @@
 import { io, Socket } from 'socket.io-client';
 
-const { API_URL } = process.env;
+const { SOCKET_URL } = process.env;
 
 interface IMessage {
   sessionId: string; // sessionId
@@ -22,7 +22,7 @@ export class SocketClient {
     };
 
     //todo: move this URL to a .env file
-    const URL = API_URL;
+    const URL = SOCKET_URL;
     this.socket = io(URL, { autoConnect: true, auth });
   }
 
