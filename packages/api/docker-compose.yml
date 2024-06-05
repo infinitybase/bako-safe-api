@@ -21,6 +21,7 @@ services:
       - APP_NAME=${API_NAME}
       - UI_URL=${UI_URL}
       - API_URL=${API_URL}
+      - SOCKET_URL={SOCKET_URL}
       - ASSETS_URL=${ASSETS_URL}
       - API_DEFAULT_NETWORK=${API_DEFAULT_NETWORK}
       # ADMIN USER
