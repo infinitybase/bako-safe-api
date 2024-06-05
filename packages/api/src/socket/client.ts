@@ -22,7 +22,10 @@ export class SocketClient {
     //todo: move this URL to a .env file
     const URL = process.env.SOCKET_URL ?? 'http://localhost:3001';
 
-    console.log('Conectando ao servidor Socket.IO:', auth, URL);
+    console.log('Conectando ao servidor Socket.IO:', {
+      auth,
+      URL,
+    });
 
     this.socket = io(URL, { autoConnect: true, auth });
   }
