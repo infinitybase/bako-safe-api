@@ -1,7 +1,5 @@
 import { io, Socket } from 'socket.io-client';
 
-const { SOCKET_URL } = process.env;
-
 interface IMessage {
   sessionId: string; // sessionId
   to: string; // username -> recebe a mensagem '[UI]' por exemplo
@@ -21,10 +19,11 @@ export class SocketClient {
       origin,
     };
 
-    console.log('Conectando ao servidor Socket.IO:', auth, SOCKET_URL);
-
     //todo: move this URL to a .env file
-    const URL = SOCKET_URL;
+    const URL = process.env.SOCKET_URL ?? 'http://localhost:3001';
+
+    console.log('Conectando ao servidor Socket.IO:', auth, URL);
+
     this.socket = io(URL, { autoConnect: true, auth });
   }
 
