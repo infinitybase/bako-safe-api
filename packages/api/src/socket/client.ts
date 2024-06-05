@@ -19,12 +19,16 @@ export class SocketClient {
       origin,
     };
 
-    //todo: move this URL to a .env file
-    const URL = process.env.SOCKET_URL ?? 'http://localhost:3001';
+    const isDev = process.env.NODE_ENV === 'development';
+    const URL = isDev ? process.env.SOCKET_URL : process.env.API_URL;
 
     console.log('Conectando ao servidor Socket.IO:', {
       auth,
       URL,
+      API_s: process.env.SOCKET_URL,
+      API: process.env.API_URL,
+      environment: process.env.NODE_ENV,
+      isDev,
     });
 
     this.socket = io(URL, { autoConnect: true, auth });
