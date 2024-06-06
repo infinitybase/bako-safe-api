@@ -1,7 +1,5 @@
 import { io, Socket } from 'socket.io-client';
 
-const { SOCKET_URL } = process.env;
-
 interface IMessage {
   sessionId: string; // sessionId
   to: string; // username -> recebe a mensagem '[UI]' por exemplo
@@ -21,8 +19,9 @@ export class SocketClient {
       origin,
     };
 
-    //todo: move this URL to a .env file
-    const URL = SOCKET_URL;
+    const isDev = process.env.NODE_ENV === 'development';
+    const URL = isDev ? process.env.SOCKET_URL : process.env.API_URL;
+
     this.socket = io(URL, { autoConnect: true, auth });
   }
 
