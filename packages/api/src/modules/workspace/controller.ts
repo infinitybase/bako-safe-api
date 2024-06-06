@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { BakoSafe } from 'bakosafe';
+import { Asset, BakoSafe } from 'bakosafe';
 import { BN, bn } from 'fuels';
 
 import { Predicate, TypeUser, User, PermissionAccess } from '@src/models';
@@ -74,6 +74,7 @@ export class WorkspaceController {
     try {
       const { workspace } = req;
       const predicateService = new PredicateService();
+      const predicatesBalance = [];
       const balance = await Predicate.find({
         where: {
           workspace: workspace.id,
@@ -84,9 +85,20 @@ export class WorkspaceController {
         for await (const predicate of response) {
           const vault = await predicateService.instancePredicate(predicate.id);
           _balance = _balance.add(await vault.getBalance());
+          predicatesBalance.push(...(await vault.getBalances()));
         }
         return _balance;
       });
+
+      const assetsBalance = await Asset.assetsGroupById(
+        predicatesBalance.map(item => ({ ...item, amount: item.amount.format() })),
+      );
+      const formattedAssetsBalance = Object.entries(assetsBalance).map(
+        ([assetId, amount]) => ({
+          assetId,
+          amount: amount.format(),
+        }),
+      );
 
       const convert = `ETH-USD`;
 
@@ -112,6 +124,7 @@ export class WorkspaceController {
             2,
           ),
           workspaceId: workspace.id,
+          assetsBalance: formattedAssetsBalance,
         },
         Responses.Ok,
       );
