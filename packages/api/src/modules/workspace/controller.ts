@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { Asset, BakoSafe } from 'bakosafe';
 import { BN, bn } from 'fuels';
 
@@ -12,7 +11,7 @@ import {
 import { IconUtils } from '@src/utils/icons';
 
 import { ErrorTypes, error } from '@utils/error';
-import { Responses, successful } from '@utils/index';
+import { Responses, calculateBalanceUSD, successful } from '@utils/index';
 
 import { PredicateService } from '../predicate/services';
 import { UserService } from '../user/service';
@@ -75,19 +74,17 @@ export class WorkspaceController {
       const { workspace } = req;
       const predicateService = new PredicateService();
       const predicatesBalance = [];
-      const balance = await Predicate.find({
+
+      await Predicate.find({
         where: {
           workspace: workspace.id,
         },
         select: ['id'],
       }).then(async (response: Predicate[]) => {
-        let _balance: BN = bn(0);
         for await (const predicate of response) {
           const vault = await predicateService.instancePredicate(predicate.id);
-          _balance = _balance.add(await vault.getBalance());
           predicatesBalance.push(...(await vault.getBalances()));
         }
-        return _balance;
       });
 
       const assetsBalance = await Asset.assetsGroupById(
@@ -96,33 +93,13 @@ export class WorkspaceController {
       const formattedAssetsBalance = Object.entries(assetsBalance).map(
         ([assetId, amount]) => ({
           assetId,
-          amount: amount.format(),
+          amount,
         }),
       );
 
-      const convert = `ETH-USD`;
-
-      const priceUSD: number = await axios
-        .get(`https://economia.awesomeapi.com.br/last/${convert}`)
-        .then(({ data }) => {
-          // console.log(
-          //   data,
-          //   data[convert.replace('-', '')].bid ?? 0.0,
-          //   balance.format().toString(),
-          // );
-          return data[convert.replace('-', '')].bid ?? 0.0;
-        })
-        .catch(e => {
-          console.log('[WORKSPACE_REQUEST_BALANCE_ERROR]: ', e);
-          return 0.0;
-        });
-
       return successful(
         {
-          balance: balance.format().toString(),
-          balanceUSD: (parseFloat(balance.format().toString()) * priceUSD).toFixed(
-            2,
-          ),
+          balanceUSD: await calculateBalanceUSD(formattedAssetsBalance),
           workspaceId: workspace.id,
           assetsBalance: formattedAssetsBalance,
         },

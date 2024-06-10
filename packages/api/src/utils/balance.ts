@@ -25,7 +25,7 @@ const calculateBalanceUSD = async (balances: CoinQuantity[]): Promise<string> =>
   let balanceUSD = 0.0;
 
   for await (const balance of balances) {
-    const formattedAmount = parseFloat(balance.amount.format().toString());
+    const formattedAmount = parseFloat(balance.amount.format());
     const assetSymbol = getAssetSymbolByAssetId(balance.assetId);
 
     if (assetSymbol) {
