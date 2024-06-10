@@ -1,20 +1,15 @@
 import { Predicate, TotalValueLocked } from '@src/models';
-import { IConfVault, Vault } from 'bakosafe';
-import { BN, bn } from 'fuels';
+import { Asset, IConfVault, Vault } from 'bakosafe';
 import cron from 'node-cron';
-import axios from 'axios';
-
-const assetId =
-  '0xf8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad07';
+import { getAssetSlugByAssetId, getPriceUSD } from '../balance';
 
 // Executa todos os dias a meia-noite
 const TVLCronJob = cron.schedule('0 0 * * *', async () => {
   console.log('[TVL CRON JOB] running');
   try {
-    //Validação para limitar apenas um registro diário por assetId
+    //Validação para limitar apenas um registro diário
     const savedTVL = await TotalValueLocked.createQueryBuilder('tvl')
-      .where('tvl.assetId = :assetId', { assetId })
-      .andWhere('DATE(tvl.created_at) = CURRENT_DATE')
+      .where('DATE(tvl.created_at) = CURRENT_DATE')
       .select(['tvl.id'])
       .getOne();
 
@@ -26,13 +21,16 @@ const TVLCronJob = cron.schedule('0 0 * * *', async () => {
     // Busca dados de todos os vaults
     const predicates = await Predicate.createQueryBuilder('p')
       .leftJoinAndSelect('p.version', 'version')
+      .select(['p.id', 'p.configurable', 'version.code'])
       .where("p.configurable::jsonb ->> 'network' NOT LIKE :network", {
         network: '%localhost%',
       })
-      .select(['p.id', 'p.configurable', 'version.code'])
+      .andWhere('version.name NOT LIKE :fakeName', {
+        fakeName: '%fake_name%',
+      })
       .getMany();
 
-    let tvl: BN = bn(0);
+    const vaultsBalance = [];
 
     for await (const predicate of predicates) {
       const configurable: IConfVault = {
@@ -45,34 +43,45 @@ const TVLCronJob = cron.schedule('0 0 * * *', async () => {
         version: predicate.version.code,
       });
 
-      // Obtem o balance de cada predicate e soma balance de todos os predicates
-      const balance = await vault.getBalance();
-      tvl = tvl.add(balance);
+      // Obtém os balances de cada vault e adiciona no array de balances
+      const balances = await vault.getBalances();
+      vaultsBalance.push(...balances);
     }
 
-    const convert = `ETH-USD`;
+    const assetsTVL = await Asset.assetsGroupById(
+      vaultsBalance.map(item => ({ ...item, amount: item.amount.format() })),
+    );
+    const formattedAssetsTVL = await Promise.all(
+      Object.entries(assetsTVL)
+        // Filtro para considerar apenas assets existentes no dicionário
+        .filter(([assetId, amount]) => {
+          const assetSlug = getAssetSlugByAssetId(assetId);
+          return assetSlug !== undefined;
+        })
+        .map(async ([assetId, amount]) => {
+          const assetSlug = getAssetSlugByAssetId(assetId);
+          const formattedAmount = amount.format();
+          const priceUSD = await getPriceUSD(assetSlug);
 
-    // Obtem cotação ETH-USD
-    const priceUSD: number = await axios
-      .get(`https://economia.awesomeapi.com.br/last/${convert}`)
-      .then(({ data }) => {
-        return data[convert.replace('-', '')].bid ?? 0.0;
-      })
-      .catch(e => {
-        console.log('[TVL_USD_REQUEST_ERROR]: ', e);
-        return 0.0;
-      });
+          return {
+            assetId,
+            amount: formattedAmount,
+            amountUSD: Number((parseFloat(formattedAmount) * priceUSD).toFixed(2)),
+          };
+        }),
+    );
 
-    // Converte o valor somado de todos os predicates para USD
-    const amount = tvl.format().toString();
-    const amountUSD = Number((parseFloat(amount) * priceUSD).toFixed(2));
-
-    // Salva no BD
-    await TotalValueLocked.create({
-      assetId,
-      amount,
-      amountUSD,
-    }).save();
+    // Salva cada item no BD
+    await Promise.all(
+      formattedAssetsTVL.map(
+        async ({ assetId, amount, amountUSD }) =>
+          await TotalValueLocked.create({
+            assetId,
+            amount,
+            amountUSD,
+          }).save(),
+      ),
+    );
 
     console.log(
       `[TVL CRON JOB] successfully executed on ${new Date().toISOString()}`,
