@@ -72,16 +72,13 @@ const TVLCronJob = cron.schedule('0 0 * * *', async () => {
     );
 
     // Salva cada item no BD
-    await Promise.all(
-      formattedAssetsTVL.map(
-        async ({ assetId, amount, amountUSD }) =>
-          await TotalValueLocked.create({
-            assetId,
-            amount,
-            amountUSD,
-          }).save(),
-      ),
-    );
+    for await (const formattedAssetTVL of formattedAssetsTVL) {
+      await TotalValueLocked.create({
+        assetId: formattedAssetTVL.assetId,
+        amount: formattedAssetTVL.amount,
+        amountUSD: formattedAssetTVL.amountUSD,
+      }).save();
+    }
 
     console.log(
       `[TVL CRON JOB] successfully executed on ${new Date().toISOString()}`,
