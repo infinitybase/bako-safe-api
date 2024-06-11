@@ -1,5 +1,5 @@
 import { TransactionStatus } from 'bakosafe';
-import { bn } from 'fuels';
+import { CoinQuantity, bn } from 'fuels';
 
 import { Predicate } from '@src/models/Predicate';
 import { Workspace } from '@src/models/Workspace';
@@ -36,6 +36,7 @@ import {
   IPredicateService,
 } from './types';
 import { IPredicateVersionService } from '../predicateVersion/types';
+import { assets } from '@src/mocks/assets';
 
 export class PredicateController {
   private userService: IUserService;
@@ -210,15 +211,26 @@ export class PredicateController {
                 transaction.status === TransactionStatus.PENDING_SENDER,
             )
             .reduce((accumulator, transaction: Transaction) => {
-              return accumulator.add(
-                transaction.assets.reduce((assetAccumulator, asset: Asset) => {
-                  return assetAccumulator.add(bn.parseUnits(asset.amount));
-                }, bn.parseUnits('0')),
-              );
-            }, bn.parseUnits('0'));
+              transaction.assets.forEach((asset: Asset) => {
+                const assetId = asset.assetId;
+                const amount = bn.parseUnits(asset.amount);
+                const existingAsset = accumulator.find(
+                  item => item.assetId === assetId,
+                );
+
+                if (existingAsset) {
+                  existingAsset.amount = existingAsset.amount.add(amount);
+                } else {
+                  accumulator.push({ assetId, amount });
+                }
+              });
+              return accumulator;
+            }, [] as CoinQuantity[]);
         })
-        .catch(e => {
-          return bn.parseUnits('0');
+        .catch(() => {
+          return [
+            { assetId: assets.ETH, amount: bn.parseUnits('0') },
+          ] as CoinQuantity[];
         });
 
       const predicate = await this.predicateService.findById(address, undefined);
