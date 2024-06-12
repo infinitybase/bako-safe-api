@@ -158,8 +158,6 @@ export class TransactionService implements ITransactionService {
         address: this._filter.predicateAddress,
       });
 
-    console.log(this._ordination);
-
     // =============== specific for workspace ===============
     this._filter.workspaceId &&
       !this._filter.signer &&
