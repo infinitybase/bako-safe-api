@@ -119,6 +119,8 @@ export class TransactionService implements ITransactionService {
       });
   }
 
+  //todo: melhorar a valocidade de processamento dessa query
+  //caso trocar inner por left atrapalha muito a performance
   async list(): Promise<IPagination<Transaction> | Transaction[]> {
     const hasPagination = this._pagination?.page && this._pagination?.perPage;
     const queryBuilder = Transaction.createQueryBuilder('t')
@@ -135,8 +137,8 @@ export class TransactionService implements ITransactionService {
         't.summary',
         't.updatedAt',
       ])
-      .leftJoinAndSelect('t.assets', 'assets')
-      .innerJoin('t.witnesses', 'witnesses')
+      .leftJoin('t.assets', 'assets')
+      .leftJoin('t.witnesses', 'witnesses')
       .innerJoin('t.predicate', 'predicate')
       .addSelect([
         'predicate.name',
@@ -147,6 +149,10 @@ export class TransactionService implements ITransactionService {
         'witnesses.account',
         'witnesses.signature',
         'witnesses.status',
+        'assets.id',
+        'assets.amount',
+        'assets.to',
+        'assets.assetId',
       ])
       .innerJoin('predicate.members', 'members')
       .addSelect(['members.id', 'members.avatar', 'members.address'])
