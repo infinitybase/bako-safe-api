@@ -76,7 +76,7 @@ export class WorkspaceController {
       const predicateService = new PredicateService();
       const balance = await Predicate.find({
         where: {
-          workspace: workspace.id,
+          workspace: workspace,
         },
         select: ['id'],
       }).then(async (response: Predicate[]) => {

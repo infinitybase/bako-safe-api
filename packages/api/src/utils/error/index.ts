@@ -1,6 +1,9 @@
 export { default as BadRequest } from './BadRequest';
 export * from './GeneralError';
 export { default as NotFound } from './NotFound';
+export * from './Forbidden';
+export * from './Unauthorized';
+export { default as Internal } from './Internal';
 
 export enum Responses {
   BadRequest = 400,

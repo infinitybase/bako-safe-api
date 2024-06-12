@@ -525,7 +525,6 @@ export class TransactionController {
             status: TransactionStatus.FAILED,
             sendTime: new Date(),
           });
-          console.log('[failed]', e);
           throw new Error('Transaction send failed');
         });
 

@@ -71,6 +71,7 @@ export class DappController {
 
       return successful(true, Responses.Created);
     } catch (e) {
+      console.log('[ERRO AO CRIAR]: ', e);
       return error(e.error, e.statusCode);
     }
   }

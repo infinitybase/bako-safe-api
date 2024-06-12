@@ -2,7 +2,7 @@ version: '3'
 services:
   db:
     container_name: ${DATABASE_ENVIRONMENT}
-    image: postgres
+    image: postgres:16.3-alpine3.20
     environment:
       POSTGRES_DB: ${DATABASE_NAME}
       POSTGRES_USER: ${DATABASE_USERNAME}

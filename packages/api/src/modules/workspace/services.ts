@@ -116,22 +116,28 @@ export class WorkspaceService implements IWorkspaceService {
   }
 
   async create(payload: Partial<Workspace>): Promise<Workspace> {
-    return await Workspace.create(payload)
-      .save()
-      .then(data => data)
-      .catch(error => {
-        if (error instanceof GeneralError) throw error;
+    try {
+      // Criar e salvar o Workspace
+      await Workspace.create(payload).save();
+      return this.findLast();
+    } catch (error) {
+      if (error instanceof GeneralError) {
+        throw error;
+      }
 
-        throw new Internal({
-          type: ErrorTypes.Create,
-          title: 'Error on workspace create',
-          detail: error,
-        });
+      throw new Internal({
+        type: ErrorTypes.Create,
+        title: 'Error on workspace create',
+        detail: error,
       });
+    }
   }
 
   async update(payload: Partial<Workspace>): Promise<boolean> {
-    const w = Object.assign(await Workspace.findOne({ id: payload.id }), payload);
+    const w = Object.assign(
+      await Workspace.findOne({ where: { id: payload.id } }),
+      payload,
+    );
 
     return w
       .save()
@@ -223,7 +229,7 @@ export class WorkspaceService implements IWorkspaceService {
     predicate: string,
     worksapce: string,
   ): Promise<void> {
-    return await Workspace.findOne({ id: worksapce })
+    return await Workspace.findOne({ where: { id: worksapce } })
       .then(async workspace => {
         const p = workspace.permissions;
         signers.map(s => {
@@ -288,5 +294,22 @@ export class WorkspaceService implements IWorkspaceService {
         permissions: workspace.permissions,
       };
     });
+  }
+
+  async findLast() {
+    try {
+      return await Workspace.createQueryBuilder('w')
+        .innerJoinAndSelect('w.owner', 'owner')
+        .innerJoinAndSelect('w.members', 'members')
+        .orderBy('w.createdAt', 'DESC')
+        .take(1)
+        .getOne();
+    } catch (e) {
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on workspace find',
+        detail: e,
+      });
+    }
   }
 }
