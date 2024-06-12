@@ -12,7 +12,15 @@ import { IconUtils } from '@utils/icons';
 export default async function () {
   const users = await generateInitialUsers();
   for await (const user of users) {
-    const _user = await User.create(user).save();
+    const _user = await User.create(user)
+      .save()
+      .then(async _ => {
+        return await User.findOne({
+          order: {
+            createdAt: 'DESC',
+          },
+        });
+      });
 
     await Workspace.create({
       name: `singleWorkspace[${_user.id}]`,

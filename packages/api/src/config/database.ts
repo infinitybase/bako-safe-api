@@ -42,10 +42,6 @@ const development: ConnectionOptions = {
   database: DATABASE_NAME,
   entities: [entitiesDir],
   migrations: [migrationsDir, seedersDir],
-  cli: {
-    entitiesDir: './src/models/',
-    migrationsDir: './src/database/migrations/',
-  },
   synchronize: false,
   migrationsRun: true,
 };
@@ -59,10 +55,6 @@ const test: ConnectionOptions = {
   database: DATABASE_NAME,
   entities: [entitiesDir],
   migrations: [migrationsDir, seedersDir],
-  cli: {
-    entitiesDir: './src/models/',
-    migrationsDir: './src/database/migrations/',
-  },
   synchronize: false,
   migrationsRun: true,
 };
@@ -76,11 +68,10 @@ const production: ConnectionOptions = {
   database: process.env.DATABASE_NAME,
   entities: [entitiesDir],
   migrations: [migrationsDir, seedersDir],
-  cli: {
-    entitiesDir: './src/models/',
-    migrationsDir: './src/database/migrations/',
-  },
   synchronize: false,
+  ssl: {
+    rejectUnauthorized: false,
+  },
   migrationsRun: true,
 };
 
@@ -93,11 +84,10 @@ const staging: ConnectionOptions = {
   database: process.env.DATABASE_NAME,
   entities: [entitiesDir],
   migrations: [migrationsDir, seedersDir],
-  cli: {
-    entitiesDir: './src/models/',
-    migrationsDir: './src/database/migrations/',
-  },
   synchronize: false,
+  ssl: {
+    rejectUnauthorized: false,
+  },
   migrationsRun: true,
 };
 

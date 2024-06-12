@@ -59,7 +59,7 @@ export class AuthController {
     try {
       const { address } = req.params;
       const { origin } = req.headers;
-      const owner = await User.findOne({ address: address });
+      const owner = await User.findOne({ where: { address } });
 
       const response = await new RecoverCodeService().create({
         owner,

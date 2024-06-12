@@ -1,14 +1,5 @@
 import GeneralError, { Error } from './GeneralError';
 
-export enum ErrorTypes {
-  Create = 'CreateException',
-  Update = 'UpdateException',
-  Delete = 'DeleteException',
-  NotFound = 'NotFound',
-  Unauthorized = 'Unauthorized',
-  Internal = 'Internal',
-}
-
 export enum UnauthorizedErrorTitles {
   MISSING_CREDENTIALS = 'Missing credentials',
   INVALID_CREDENTIALS = 'Invalid credentials',

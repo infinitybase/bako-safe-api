@@ -107,9 +107,8 @@ export class PredicateVersionService implements IPredicateVersionService {
 
   async findCurrentVersion(): Promise<PredicateVersion> {
     return await PredicateVersion.findOne({
-      order: {
-        createdAt: 'DESC',
-      },
+      where: { active: true },
+      order: { updatedAt: 'DESC' },
     })
       .then(predicateVersion => {
         if (!predicateVersion) {

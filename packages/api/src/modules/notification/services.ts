@@ -13,6 +13,8 @@ import {
   INotificationService,
   IUpdateNotificationPayload,
 } from './types';
+import { DeepPartial } from 'typeorm';
+import { VaultTemplate } from '@src/models/VaultTemplate';
 
 export class NotificationService implements INotificationService {
   private _pagination: PaginationParams;
@@ -38,9 +40,10 @@ export class NotificationService implements INotificationService {
   }
 
   async create(payload: ICreateNotificationPayload): Promise<Notification> {
-    return await Notification.create(payload)
+    const partialPayload: DeepPartial<Notification> = payload;
+    return await Notification.create(partialPayload)
       .save()
-      .then(notification => notification)
+      .then(() => this.findLast())
       .catch(e => {
         throw new Internal({
           type: ErrorTypes.Internal,
@@ -90,6 +93,21 @@ export class NotificationService implements INotificationService {
         throw new Internal({
           type: ErrorTypes.Internal,
           title: 'Error on notification update',
+          detail: e,
+        });
+      });
+  }
+
+  async findLast(): Promise<Notification> {
+    return await Notification.createQueryBuilder('notification')
+      .select()
+      .orderBy('notification.createdAt', 'DESC')
+      .getOne()
+      .then(data => data)
+      .catch(e => {
+        throw new Internal({
+          type: ErrorTypes.Internal,
+          title: 'Error on notification find last',
           detail: e,
         });
       });

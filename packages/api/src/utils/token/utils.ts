@@ -74,7 +74,7 @@ export class TokenUtils {
     return user;
   }
 
-  static async invalidateRecoverCode(user: string, type) {
+  static async invalidateRecoverCode(user: User, type) {
     const recoverCode = await RecoverCode.findOne({
       where: { owner: user, type },
       order: { createdAt: 'DESC' },
@@ -172,7 +172,7 @@ export class TokenUtils {
 
     const user = await TokenUtils.checkUserExists(address);
 
-    await TokenUtils.invalidateRecoverCode(user.id, RecoverCodeType.AUTH);
+    await TokenUtils.invalidateRecoverCode(user, RecoverCodeType.AUTH);
 
     const workspace = await TokenUtils.findSingleWorkspace(user.id);
     await TokenUtils.revokeToken(user); // todo: verify if it's necessary

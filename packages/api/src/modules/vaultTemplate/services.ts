@@ -12,6 +12,7 @@ import {
   IVaultTemplateService,
   IUpdatePayload,
 } from './types';
+import { DeepPartial } from 'typeorm';
 
 export class VaultTemplateService implements IVaultTemplateService {
   private _ordination: IOrdination<VaultTemplate> = {
@@ -36,9 +37,10 @@ export class VaultTemplateService implements IVaultTemplateService {
   }
 
   async create(payload: ICreatePayload): Promise<VaultTemplate> {
-    return await VaultTemplate.create(payload)
+    const partialPayload: DeepPartial<VaultTemplate> = payload;
+    return await VaultTemplate.create(partialPayload)
       .save()
-      .then(template => template)
+      .then(() => this.findLast())
       .catch(e => {
         throw new Internal({
           type: ErrorTypes.Internal,
@@ -123,5 +125,21 @@ export class VaultTemplateService implements IVaultTemplateService {
             return template ?? [];
           })
           .catch(handleInternalError);
+  }
+
+  async findLast(): Promise<VaultTemplate> {
+    try {
+      return await VaultTemplate.createQueryBuilder('t')
+        .select()
+        .take(1)
+        .orderBy('t.createdAt', 'DESC')
+        .getOne();
+    } catch (e) {
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on vault template find last',
+        detail: e,
+      });
+    }
   }
 }

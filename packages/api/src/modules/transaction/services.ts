@@ -126,7 +126,6 @@ export class TransactionService implements ITransactionService {
         't.createdAt',
         't.gasUsed',
         't.hash',
-        't.createdAt',
         't.id',
         't.name',
         't.predicateId',
@@ -183,14 +182,6 @@ export class TransactionService implements ITransactionService {
               workspace: this._filter.workspaceId,
             });
           }
-          // Uncomment this to not show workspace transactions in the single.
-          // if (this._filter.signer) {
-          //   qb.orWhere(subQb => {
-          //     subQb.where('witnesses.account = :signer', {
-          //       signer: this._filter.signer,
-          //     });
-          //   });
-          // }
 
           if (this._filter.signer) {
             qb.orWhere('members.address = :signer', {

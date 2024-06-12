@@ -144,7 +144,7 @@ export class UserController {
 
       if (!existingUser) {
         //verify name exists
-        const existingName = await User.findOne({ name });
+        const existingName = await User.findOne({ where: { name } });
         if (existingName) {
           throw new BadRequest({
             type: ErrorTypes.Create,

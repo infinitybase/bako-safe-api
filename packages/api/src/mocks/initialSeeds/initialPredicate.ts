@@ -30,7 +30,9 @@ export const generateInitialPredicate = async (): Promise<Partial<Predicate>> =>
     },
   });
   const version = await PredicateVersion.findOne({
-    code: predicateVersionMock.code,
+    where: {
+      code: predicateVersionMock.code,
+    },
   });
 
   const predicate1: Partial<Predicate> = {
