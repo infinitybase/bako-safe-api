@@ -43,7 +43,6 @@ export class DappController {
           currentVault: predicate,
           user,
         });
-        console.log('[DAPP]: ', dapp);
       }
 
       const isIncludedVault = dapp.vaults.find(v => v.id === vaultId);
