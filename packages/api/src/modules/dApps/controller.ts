@@ -43,6 +43,7 @@ export class DappController {
           currentVault: predicate,
           user,
         });
+        console.log('[DAPP]: ', dapp);
       }
 
       const isIncludedVault = dapp.vaults.find(v => v.id === vaultId);
@@ -71,6 +72,7 @@ export class DappController {
 
       return successful(true, Responses.Created);
     } catch (e) {
+      console.log('[ERRO AO CRIAR]: ', e);
       return error(e.error, e.statusCode);
     }
   }
