@@ -257,7 +257,7 @@ export class PredicateService implements IPredicateService {
       const updatedPredicate = await this.findById(id);
 
       if (!updatedPredicate) {
-        throw new Internal({
+        throw new NotFound({
           type: ErrorTypes.NotFound,
           title: 'Predicate not found',
           detail: `Predicate with id ${id} not found after update`,
@@ -266,6 +266,7 @@ export class PredicateService implements IPredicateService {
 
       return updatedPredicate;
     } catch (e) {
+      if (e instanceof NotFound) throw e;
       throw new Internal({
         type: ErrorTypes.Internal,
         title: 'Error on predicate update',
