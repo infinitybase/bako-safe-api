@@ -19,6 +19,7 @@ import {
   Responses,
   bindMethods,
   calculateBalanceUSD,
+  subtractReservedCoinsFromBalances,
   successful,
 } from '@utils/index';
 
@@ -236,10 +237,14 @@ export class PredicateController {
       const predicate = await this.predicateService.findById(address, undefined);
       const instance = await this.predicateService.instancePredicate(predicate.id);
       const balances = await instance.getBalances();
+      const balancesToConvert =
+        response.length > 0
+          ? subtractReservedCoinsFromBalances(balances, response)
+          : balances;
 
       return successful(
         {
-          balanceUSD: await calculateBalanceUSD(balances),
+          balanceUSD: await calculateBalanceUSD(balancesToConvert),
           reservedCoins: response,
         },
         Responses.Ok,
