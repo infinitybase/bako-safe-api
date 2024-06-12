@@ -5,6 +5,7 @@ import Internal from '@utils/error/Internal';
 
 import { IRecoverCodeService, ICreateRecoverCodePayload } from './types';
 import { DeepPartial } from 'typeorm';
+import { NotFound } from '@src/utils/error';
 
 export class RecoverCodeService implements IRecoverCodeService {
   async create(paylaod: ICreateRecoverCodePayload) {
@@ -25,7 +26,7 @@ export class RecoverCodeService implements IRecoverCodeService {
     try {
       const recoverCode = await RecoverCode.findOne({ where: { id } });
       if (!recoverCode) {
-        throw new Internal({
+        throw new NotFound({
           type: ErrorTypes.NotFound,
           title: 'Recover code not found',
           detail: `Recover code with ID ${id} not found`,
@@ -35,6 +36,8 @@ export class RecoverCodeService implements IRecoverCodeService {
       Object.assign(recoverCode, payload);
       return await recoverCode.save();
     } catch (e) {
+      if (e instanceof NotFound) throw e;
+
       throw new Internal({
         type: ErrorTypes.Update,
         title: 'Error on recover code update',
