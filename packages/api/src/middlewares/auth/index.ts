@@ -63,7 +63,7 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
       await recover.save();
       requestAuth.user = recover.owner;
       requestAuth.workspace = await Workspace.findOne({
-        where: { owner: recover.owner.id, single: true }, // just single workspace
+        where: { owner: recover.owner, single: true }, // just single workspace
       });
 
       return next();

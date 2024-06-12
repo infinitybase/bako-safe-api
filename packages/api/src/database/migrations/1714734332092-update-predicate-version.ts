@@ -7,7 +7,9 @@ export class updatePredicateVersion1714734332092 implements MigrationInterface {
     const defaultPredicateVersion = await queryRunner.manager.findOne(
       PredicateVersion,
       {
-        code: predicateVersion.code,
+        where: {
+          code: predicateVersion.code,
+        },
       },
     );
 

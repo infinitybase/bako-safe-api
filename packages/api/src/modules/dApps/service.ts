@@ -3,12 +3,16 @@ import { ErrorTypes } from '@src/utils/error';
 import Internal from '@src/utils/error/Internal';
 
 import { IDAPPCreatePayload, IDAppsService } from './types';
+import { DeepPartial } from 'typeorm';
 
 export class DAppsService implements IDAppsService {
   async create(params: IDAPPCreatePayload) {
-    return await DApp.create(params)
+    const partialPayload: DeepPartial<DApp> = params;
+    return await DApp.create(partialPayload)
       .save()
-      .then(data => data)
+      .then(async () => {
+        return await DApp.findOne({ order: { createdAt: 'DESC' } });
+      })
       .catch(e => {
         throw new Internal({
           type: ErrorTypes.Internal,

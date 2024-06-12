@@ -1,5 +1,4 @@
 import { IConfVault, Vault } from 'bakosafe';
-import { Provider } from 'fuels';
 import { Brackets } from 'typeorm';
 
 import { NotFound } from '@src/utils/error';
@@ -16,6 +15,10 @@ import {
   IPredicatePayload,
   IPredicateService,
 } from './types';
+import {
+  Unauthorized,
+  UnauthorizedErrorTitles,
+} from '@src/utils/error/Unauthorized';
 
 export class PredicateService implements IPredicateService {
   private _ordination: IOrdination<Predicate> = {
@@ -55,21 +58,21 @@ export class PredicateService implements IPredicateService {
   }
 
   async create(payload: IPredicatePayload): Promise<Predicate> {
-    return Predicate.create(payload)
-      .save()
-      .then(predicate => predicate)
-      .catch(e => {
-        throw new Internal({
-          type: ErrorTypes.Internal,
-          title: 'Error on predicate creation',
-          detail: e,
-        });
+    try {
+      const predicate = await Predicate.create(payload).save();
+      return predicate;
+    } catch (e) {
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on predicate creation',
+        detail: e,
       });
+    }
   }
 
   async findById(id: string, signer?: string): Promise<Predicate> {
-    return (
-      Predicate.createQueryBuilder('p')
+    try {
+      const predicate = await Predicate.createQueryBuilder('p')
         .where({ id })
         .leftJoinAndSelect('p.members', 'members')
         .leftJoinAndSelect('p.owner', 'owner')
@@ -96,44 +99,28 @@ export class PredicateService implements IPredicateService {
           'addressBook.user_id',
           'adb_workspace.id',
         ])
-        //.addSelect(['workspace.id', 'workspace.address_book'])
-        //.innerJoin('workspace.address_book', 'address_book')
-        // .innerJoin('address_book.user', 'address_book_user')
-        // .addSelect(['workspace.id', 'address_book.nickname', 'address_book_user.id'])
-        .getOne()
+        .getOne();
 
-        .then(predicate => {
-          const isNotMember = !predicate.members
-            .map(m => m.address)
-            .includes(signer);
+      if (!predicate) {
+        throw new NotFound({
+          type: ErrorTypes.NotFound,
+          title: 'Predicate not found',
+          detail: `Predicate with id ${id} not found`,
+        });
+      }
 
-          // if (isNotMember) {
-          //   throw new Unauthorized({
-          //     type: ErrorTypes.Unauthorized,
-          //     title: UnauthorizedErrorTitles.INVALID_PERMISSION,
-          //     detail: `You are not authorized to access requested predicate.`,
-          //   });
-          // }
+      return predicate;
+    } catch (e) {
+      if (e instanceof GeneralError) {
+        throw e;
+      }
 
-          if (!predicate) {
-            throw new NotFound({
-              type: ErrorTypes.NotFound,
-              title: 'Predicate not found',
-              detail: `Predicate with id ${id} not found`,
-            });
-          }
-          return predicate;
-        })
-        .catch(e => {
-          if (e instanceof GeneralError) throw e;
-
-          throw new Internal({
-            type: ErrorTypes.Internal,
-            title: 'Error on predicate findById',
-            detail: e,
-          });
-        })
-    );
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on predicate findById',
+        detail: e,
+      });
+    }
   }
 
   async list(): Promise<IPagination<Predicate> | Predicate[]> {
@@ -158,154 +145,159 @@ export class PredicateService implements IPredicateService {
         'workspace.avatar',
       ]);
 
-    const handleInternalError = e => {
-      if (e instanceof GeneralError) throw e;
+    try {
+      // Aplicar filtros
+      if (this._filter.address) {
+        queryBuilder.andWhere('p.predicateAddress = :predicateAddress', {
+          predicateAddress: this._filter.address,
+        });
+      }
+
+      if (this._filter.provider) {
+        queryBuilder.andWhere('LOWER(p.provider) = LOWER(:provider)', {
+          provider: `${this._filter.provider}`,
+        });
+      }
+
+      if (this._filter.workspace && !this._filter.signer) {
+        queryBuilder.andWhere(
+          new Brackets(qb => {
+            qb.orWhere('workspace.id IN (:...workspace)', {
+              workspace: this._filter.workspace,
+            });
+          }),
+        );
+      }
+
+      if (this._filter.name) {
+        queryBuilder.andWhere('p.name = :name', {
+          name: this._filter.name,
+        });
+      }
+
+      if (this._filter.workspace || this._filter.signer) {
+        queryBuilder.andWhere(
+          new Brackets(qb => {
+            if (this._filter.workspace) {
+              qb.orWhere('workspace.id IN (:...workspace)', {
+                workspace: this._filter.workspace,
+              });
+            }
+            if (this._filter.signer) {
+              qb.orWhere(subQb => {
+                const subQuery = subQb
+                  .subQuery()
+                  .select('1')
+                  .from('predicate_members', 'pm')
+                  .where('pm.predicate_id = p.id')
+                  .andWhere(
+                    '(pm.user_id = (SELECT u.id FROM users u WHERE u.address = :signer))',
+                    { signer: this._filter.signer },
+                  )
+                  .getQuery();
+                return `EXISTS ${subQuery}`;
+              });
+            }
+          }),
+        );
+      }
+
+      if (this._filter.q) {
+        queryBuilder.andWhere(
+          new Brackets(qb =>
+            qb
+              .where('LOWER(p.name) LIKE LOWER(:name)', {
+                name: `%${this._filter.q}%`,
+              })
+              .orWhere('LOWER(p.description) LIKE LOWER(:description)', {
+                description: `%${this._filter.q}%`,
+              }),
+          ),
+        );
+      }
+
+      // Aplicar ordenação
+      if (hasOrdination) {
+        queryBuilder.orderBy(
+          `p.${this._ordination.orderBy}`,
+          this._ordination.sort,
+        );
+      }
+
+      // Paginação
+      if (hasPagination) {
+        return await Pagination.create(queryBuilder).paginate(this._pagination);
+      } else {
+        const predicates = await queryBuilder.getMany();
+        return predicates ?? [];
+      }
+    } catch (e) {
+      if (e instanceof GeneralError) {
+        throw e;
+      }
 
       throw new Internal({
         type: ErrorTypes.Internal,
         title: 'Error on predicate list',
         detail: e,
       });
-    };
-
-    // todo:
-    /**
-     * include inner join to transactions and assets
-     * return itens
-     * and filter just assets ID
-     */
-
-    this._filter.address &&
-      queryBuilder.andWhere('p.predicateAddress = :predicateAddress', {
-        predicateAddress: this._filter.address,
-      });
-
-    this._filter.provider &&
-      queryBuilder.andWhere('LOWER(p.provider) = LOWER(:provider)', {
-        provider: `${this._filter.provider}`,
-      });
-
-    // =============== specific for workspace ===============
-    this._filter.workspace &&
-      !this._filter.signer &&
-      queryBuilder.andWhere(
-        new Brackets(qb => {
-          if (this._filter.workspace) {
-            qb.orWhere('workspace.id IN (:...workspace)', {
-              workspace: this._filter.workspace,
-            });
-          }
-        }),
-      );
-
-    this._filter.name &&
-      queryBuilder.andWhere('p.name = :name', {
-        name: this._filter.name,
-      });
-
-    // =============== specific for home ===============
-    (this._filter.workspace || this._filter.signer) &&
-      queryBuilder.andWhere(
-        new Brackets(qb => {
-          if (this._filter.workspace) {
-            qb.orWhere('workspace.id IN (:...workspace)', {
-              workspace: this._filter.workspace,
-            });
-          }
-          // Se o filtro signer existe
-          if (this._filter.signer) {
-            qb.orWhere(subQb => {
-              const subQuery = subQb
-                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                //@ts-ignore
-                .subQuery()
-                .select('1')
-                .from('predicate_members', 'pm')
-                .where('pm.predicate_id = p.id')
-                .andWhere(
-                  '(pm.user_id = (SELECT u.id FROM users u WHERE u.address = :signer))',
-                  { signer: this._filter.signer },
-                )
-                .getQuery();
-
-              return `EXISTS ${subQuery}`;
-            });
-          }
-        }),
-      );
-    // =============== specific for home ===============
-
-    // this._filter.signer &&
-    //   queryBuilder.andWhere(qb => {
-    //     const subQuery = qb
-    //       .subQuery()
-    //       .select('1')
-    //       .from('predicate_members', 'pm')
-    //       .where('pm.predicate_id = p.id')
-    //       .andWhere(
-    //         '(pm.user_id = (SELECT u.id FROM users u WHERE u.address = :signer))',
-    //         { signer: this._filter.signer },
-    //       )
-    //       .getQuery();
-
-    //     return `EXISTS ${subQuery}`;
-    //   });
-
-    this._filter.q &&
-      queryBuilder.andWhere(
-        new Brackets(qb =>
-          qb
-            .where('LOWER(p.name) LIKE LOWER(:name)', {
-              name: `%${this._filter.q}%`,
-            })
-            .orWhere('LOWER(p.description) LIKE LOWER(:description)', {
-              description: `%${this._filter.q}%`,
-            }),
-        ),
-      );
-
-    hasOrdination &&
-      queryBuilder.orderBy(`p.${this._ordination.orderBy}`, this._ordination.sort);
-
-    return hasPagination
-      ? Pagination.create(queryBuilder)
-          .paginate(this._pagination)
-          .then(result => result)
-          .catch(handleInternalError)
-      : queryBuilder
-          .getMany()
-          .then(predicates => predicates ?? [])
-          .catch(handleInternalError);
+    }
   }
 
   async update(id: string, payload?: IPredicatePayload): Promise<Predicate> {
-    return Predicate.update(
-      { id },
-      {
-        ...payload,
-        updatedAt: new Date(),
-      },
-    )
-      .then(() => this.findById(id))
-      .catch(e => {
+    try {
+      await Predicate.update(
+        { id },
+        {
+          ...payload,
+          updatedAt: new Date(),
+        },
+      );
+
+      const updatedPredicate = await this.findById(id);
+
+      if (!updatedPredicate) {
         throw new Internal({
-          type: ErrorTypes.Internal,
-          title: 'Error on predicate update',
-          detail: e,
+          type: ErrorTypes.NotFound,
+          title: 'Predicate not found',
+          detail: `Predicate with id ${id} not found after update`,
         });
+      }
+
+      return updatedPredicate;
+    } catch (e) {
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on predicate update',
+        detail: e,
       });
+    }
   }
 
   async delete(id: string): Promise<boolean> {
-    return await Predicate.update({ id }, { deletedAt: new Date() })
-      .then(() => true)
-      .catch(() => {
+    try {
+      const result = await Predicate.update({ id }, { deletedAt: new Date() });
+
+      if (result.affected === 0) {
         throw new NotFound({
           type: ErrorTypes.NotFound,
           title: 'Predicate not found',
           detail: `Predicate with id ${id} not found`,
         });
+      }
+
+      return true;
+    } catch (e) {
+      if (e instanceof NotFound) {
+        throw e;
+      }
+
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on predicate deletion',
+        detail: e,
       });
+    }
   }
 
   async instancePredicate(predicateId: string): Promise<Vault> {

@@ -4,46 +4,73 @@ import { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
 
 import { IRecoverCodeService, ICreateRecoverCodePayload } from './types';
+import { DeepPartial } from 'typeorm';
 
 export class RecoverCodeService implements IRecoverCodeService {
   async create(paylaod: ICreateRecoverCodePayload) {
-    return RecoverCode.create(paylaod)
-      .save()
-      .then(data => data)
-      .catch(e => {
-        throw new Internal({
-          type: ErrorTypes.Create,
-          title: 'Error on recover code create',
-          detail: e,
-        });
+    try {
+      const partialPayload: DeepPartial<RecoverCode> = paylaod;
+      await RecoverCode.create(partialPayload).save();
+      return this.findLast();
+    } catch (e) {
+      throw new Internal({
+        type: ErrorTypes.Create,
+        title: 'Error on recover code create',
+        detail: e,
       });
+    }
   }
 
   async update(id: string, payload: Partial<RecoverCode>) {
-    const recoverCode = Object.assign(await RecoverCode.findOne({ id }), payload);
-    return recoverCode
-      .save()
-      .then(async () => {
-        return await RecoverCode.findOne({ id });
-      })
-      .catch(e => {
+    try {
+      const recoverCode = await RecoverCode.findOne({ where: { id } });
+      if (!recoverCode) {
         throw new Internal({
-          type: ErrorTypes.Update,
-          title: 'Error on recover code update',
-          detail: e,
+          type: ErrorTypes.NotFound,
+          title: 'Recover code not found',
+          detail: `Recover code with ID ${id} not found`,
         });
+      }
+
+      Object.assign(recoverCode, payload);
+      return await recoverCode.save();
+    } catch (e) {
+      throw new Internal({
+        type: ErrorTypes.Update,
+        title: 'Error on recover code update',
+        detail: e,
       });
+    }
   }
 
   async findByCode(code: string) {
-    return RecoverCode.findOne({ where: { code } })
-      .then(data => data)
-      .catch(e => {
-        throw new Internal({
-          type: ErrorTypes.Internal,
-          title: 'Error on recover code find',
-          detail: e,
-        });
+    try {
+      const data = await RecoverCode.findOne({ where: { code } });
+      return data;
+    } catch (e) {
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on recover code find',
+        detail: e,
       });
+    }
+  }
+
+  async findLast() {
+    try {
+      return await RecoverCode.createQueryBuilder('rc')
+        .select()
+        .innerJoin('rc.owner', 'owner')
+        .addSelect(['owner.id'])
+        .take(1)
+        .orderBy('rc.createdAt', 'DESC')
+        .getOne();
+    } catch (e) {
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on recover code find last',
+        detail: e,
+      });
+    }
   }
 }
