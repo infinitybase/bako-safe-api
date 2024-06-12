@@ -139,7 +139,9 @@ export class TransactionService implements ITransactionService {
       ])
       .leftJoin('t.assets', 'assets')
       .leftJoin('t.witnesses', 'witnesses')
-      .innerJoin('t.predicate', 'predicate')
+      .leftJoin('t.predicate', 'predicate')
+      .leftJoin('predicate.members', 'members')
+      .leftJoin('predicate.workspace', 'workspace')
       .addSelect([
         'predicate.name',
         'predicate.id',
@@ -153,11 +155,13 @@ export class TransactionService implements ITransactionService {
         'assets.amount',
         'assets.to',
         'assets.assetId',
-      ])
-      .innerJoin('predicate.members', 'members')
-      .addSelect(['members.id', 'members.avatar', 'members.address'])
-      .innerJoin('predicate.workspace', 'workspace')
-      .addSelect(['workspace.id', 'workspace.name', 'workspace.single']);
+        'members.id',
+        'members.avatar',
+        'members.address',
+        'workspace.id',
+        'workspace.name',
+        'workspace.single',
+      ]);
 
     this._filter.predicateAddress &&
       queryBuilder.andWhere('predicate.predicateAddress = :address', {
