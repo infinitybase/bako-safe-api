@@ -1,4 +1,4 @@
-import { CoinQuantity } from 'fuels';
+import { CoinQuantity, bn } from 'fuels';
 import { assets } from '@src/mocks/assets';
 
 import axios from 'axios';
@@ -37,4 +37,29 @@ const calculateBalanceUSD = async (balances: CoinQuantity[]): Promise<string> =>
   return balanceUSD.toFixed(2);
 };
 
-export { getPriceUSD, getAssetSlugByAssetId, calculateBalanceUSD };
+const subtractReservedCoinsFromBalances = (
+  balances: CoinQuantity[],
+  reservedCoins: CoinQuantity[],
+): CoinQuantity[] => {
+  return balances.reduce((acc, balance) => {
+    const reservedCoin = reservedCoins.find(
+      coin => coin.assetId === balance.assetId,
+    );
+    const adjustedAmount = reservedCoin
+      ? balance.amount.sub(reservedCoin.amount)
+      : balance.amount;
+
+    if (adjustedAmount.gt(bn.parseUnits('0'))) {
+      acc.push({ ...balance, amount: adjustedAmount });
+    }
+
+    return acc;
+  }, [] as CoinQuantity[]);
+};
+
+export {
+  getPriceUSD,
+  getAssetSlugByAssetId,
+  calculateBalanceUSD,
+  subtractReservedCoinsFromBalances,
+};
