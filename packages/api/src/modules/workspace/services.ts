@@ -298,11 +298,12 @@ export class WorkspaceService implements IWorkspaceService {
 
   async findLast() {
     try {
-      const data = await Workspace.find({
-        order: { createdAt: 'DESC' },
-        relations: ['owner', 'members'],
-      });
-      return data[0];
+      return await Workspace.createQueryBuilder('w')
+        .innerJoinAndSelect('w.owner', 'owner')
+        .innerJoinAndSelect('w.members', 'members')
+        .orderBy('w.createdAt', 'DESC')
+        .take(1)
+        .getOne();
     } catch (e) {
       throw new Internal({
         type: ErrorTypes.Internal,

@@ -128,6 +128,18 @@ export class VaultTemplateService implements IVaultTemplateService {
   }
 
   async findLast(): Promise<VaultTemplate> {
-    return await VaultTemplate.findOne({ order: { createdAt: 'DESC' } });
+    try {
+      return await VaultTemplate.createQueryBuilder('t')
+        .select()
+        .take(1)
+        .orderBy('t.createdAt', 'DESC')
+        .getOne();
+    } catch (e) {
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on vault template find last',
+        detail: e,
+      });
+    }
   }
 }
