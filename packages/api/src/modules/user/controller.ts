@@ -140,7 +140,7 @@ export class UserController {
 
       //verify user exists
       let existingUser = await this.userService.findByAddress(address);
-      if (existingUser) return successful(existingUser, Responses.Created);
+      // if (existingUser) return successful(existingUser, Responses.Created);
 
       if (!existingUser) {
         //verify name exists
