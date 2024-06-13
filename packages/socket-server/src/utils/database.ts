@@ -15,6 +15,9 @@ interface ConnectionConfig {
   database: string
   host: string
   port: number
+  ssl: {
+    rejectUnauthorized: boolean
+  };
 }
 
 export const defaultConnection: ConnectionConfig = {
@@ -23,6 +26,9 @@ export const defaultConnection: ConnectionConfig = {
   database: DATABASE_NAME,
   host: DATABASE_HOST,
   port: Number(DATABASE_PORT),
+  ssl: {
+    rejectUnauthorized: false,
+  },
 }
 
 export class DatabaseClass {
