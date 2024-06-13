@@ -140,12 +140,12 @@ export class UserController {
 
       //verify user exists
       let existingUser = await this.userService.findByAddress(address);
-      //if (existingUser) return successful(existingUser, Responses.Created);
+      if (existingUser) return successful(existingUser, Responses.Created);
 
       if (!existingUser) {
         //verify name exists
         const existingName = await User.findOne({ where: { name } });
-        if (existingName) {
+        if (name && existingName) {
           throw new BadRequest({
             type: ErrorTypes.Create,
             title: 'Error on user create',

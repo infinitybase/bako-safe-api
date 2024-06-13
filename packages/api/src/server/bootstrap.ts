@@ -41,7 +41,7 @@ class Bootstrap {
   }
 
   static async runSeeders() {
-    await runSeeders();
+    // await runSeeders();
   }
 }
 
