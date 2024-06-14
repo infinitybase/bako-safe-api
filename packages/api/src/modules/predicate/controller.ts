@@ -218,7 +218,7 @@ export class PredicateController {
         });
 
       const predicate = await this.predicateService.findById(address, undefined);
-      // console.log(predicate);
+
       const instance = await this.predicateService.instancePredicate(predicate.id);
       const balance = await instance.getBalance();
 
@@ -228,15 +228,9 @@ export class PredicateController {
       const priceUSD: number = await axios
         .get(`https://economia.awesomeapi.com.br/last/${convert}`)
         .then(({ data }) => {
-          // console.log(
-          //   data,
-          //   data[convert.replace('-', '')].bid ?? 0.0,
-          //   balance.format().toString(),
-          // );
           return data[convert.replace('-', '')].bid ?? 0.0;
         })
         .catch(e => {
-          console.log('[WORKSPACE_REQUEST_BALANCE_ERROR]: ', e);
           return 0.0;
         });
 

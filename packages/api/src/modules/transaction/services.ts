@@ -418,13 +418,6 @@ export class TransactionService implements ITransactionService {
     const sender = new TransactionResponse(idOnChain, provider);
     const result = await sender.fetch();
 
-    // console.log('[VERIFY_ON_CHAIN] result:', result.status.type);
-    // console.log('[LÓGICAS]: ', {
-    //   enviado:
-    //     result.status.type === TransactionProcessStatus.SUCCESS ||
-    //     result.status.type === TransactionProcessStatus.FAILED,
-    // });
-
     if (result.status.type === TransactionProcessStatus.SUBMITED) {
       return api_transaction.resume;
     } else if (

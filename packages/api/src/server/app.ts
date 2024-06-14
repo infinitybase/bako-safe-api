@@ -25,7 +25,7 @@ class App {
     this.initMiddlewares();
     this.initRoutes();
     this.initErrorHandler();
-    // this.initCronJobs();
+    this.initCronJobs();
   }
 
   async init() {
