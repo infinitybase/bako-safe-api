@@ -4,7 +4,13 @@ import { RecoverCode, RecoverCodeType } from '@src/models';
 import { User } from '@src/models/User';
 import { bindMethods } from '@src/utils/bindMethods';
 
-import { BadRequest, ErrorTypes, error } from '@utils/error';
+import {
+  BadRequest,
+  ErrorTypes,
+  Unauthorized,
+  UnauthorizedErrorTitles,
+  error,
+} from '@utils/error';
 import { IconUtils } from '@utils/icons';
 import { Responses, successful } from '@utils/index';
 
@@ -44,7 +50,7 @@ export class UserController {
 
       return successful(response, Responses.Ok);
     } catch (e) {
-      return error(e.error[0], e.statusCode);
+      return error(e.error, e.statusCode);
     }
   }
 
@@ -129,7 +135,7 @@ export class UserController {
 
       return successful(response, Responses.Ok);
     } catch (e) {
-      return error(e.error[0], e.statusCode);
+      return error(e.error, e.statusCode);
     }
   }
 
@@ -205,13 +211,22 @@ export class UserController {
 
       return successful(response, Responses.Ok);
     } catch (e) {
-      return error(e.error[0], e.statusCode);
+      return error(e.error, e.statusCode);
     }
   }
 
   async update(req: IUpdateRequest) {
     try {
+      const { user } = req;
       const { id } = req.params;
+
+      if (user.id !== id) {
+        throw new Unauthorized({
+          type: ErrorTypes.Update,
+          title: UnauthorizedErrorTitles.INVALID_PERMISSION,
+          detail: `User id ${user.id} is not allowed to update user id ${id}`,
+        });
+      }
 
       const response = await this.userService.update(id, {
         ...req.body,
@@ -219,7 +234,8 @@ export class UserController {
 
       return successful(response, Responses.Ok);
     } catch (e) {
-      return error(e.error[0], e.statusCode);
+      console.log(e);
+      return error(e.error, e.statusCode);
     }
   }
 
@@ -230,7 +246,7 @@ export class UserController {
 
       return successful(response, Responses.Ok);
     } catch (e) {
-      return error(e.error[0], e.statusCode);
+      return error(e.error, e.statusCode);
     }
   }
 }

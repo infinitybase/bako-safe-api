@@ -74,19 +74,27 @@ export class WorkspaceController {
     try {
       const { workspace } = req;
       const predicateService = new PredicateService();
-      const balance = await Predicate.find({
-        where: {
-          workspace: workspace,
-        },
-        select: ['id'],
-      }).then(async (response: Predicate[]) => {
-        let _balance: BN = bn(0);
-        for await (const predicate of response) {
-          const vault = await predicateService.instancePredicate(predicate.id);
-          _balance = _balance.add(await vault.getBalance());
-        }
-        return _balance;
-      });
+      const balance = await predicateService
+        .filter({
+          workspace: [workspace.id],
+        })
+        .list()
+        .then(async (response: Predicate[]) => {
+          let _balance: BN = bn(0);
+          for await (const predicate of response) {
+            const vault = await predicateService.instancePredicate(predicate.id);
+            _balance = _balance.add(await vault.getBalance());
+          }
+          return _balance;
+        })
+        .catch(e => {
+          console.log(e);
+          throw new Internal({
+            type: ErrorTypes.Internal,
+            title: 'Error on get balance',
+            detail: e,
+          });
+        });
 
       const convert = `ETH-USD`;
 
@@ -138,7 +146,9 @@ export class WorkspaceController {
 
   async update(req: IUpdateRequest) {
     try {
-      const { id } = req.params;
+      const {
+        workspace: { id },
+      } = req;
 
       const response = await new WorkspaceService()
         .update({
@@ -159,8 +169,11 @@ export class WorkspaceController {
 
   async updatePermissions(req: IUpdatePermissionsRequest) {
     try {
-      const { id, member } = req.params;
+      const { member } = req.params;
       const { permissions } = req.body;
+      const {
+        workspace: { id },
+      } = req;
 
       const response = await new WorkspaceService()
         .filter({ id })
@@ -205,7 +218,11 @@ export class WorkspaceController {
 
   async addMember(req: IUpdateMembersRequest) {
     try {
-      const { id, member } = req.params;
+      const { member } = req.params;
+      const {
+        workspace: { id },
+      } = req;
+
       const workspace = await new WorkspaceService()
         .filter({ id })
         .list()
@@ -218,6 +235,9 @@ export class WorkspaceController {
             });
           }
           return data[0];
+        })
+        .catch(e => {
+          throw e;
         });
 
       const _member =
@@ -250,7 +270,11 @@ export class WorkspaceController {
 
   async removeMember(req: IUpdateMembersRequest) {
     try {
-      const { id, member } = req.params;
+      const { member } = req.params;
+      const {
+        workspace: { id },
+      } = req;
+
       const workspace = await new WorkspaceService()
         .filter({ id })
         .list()

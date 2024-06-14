@@ -7,7 +7,12 @@ import GeneralError, { ErrorTypes } from '@src/utils/error/GeneralError';
 
 import { IAuthRequest } from '@middlewares/auth/types';
 
-import { NotFound, error } from '@utils/error';
+import {
+  NotFound,
+  Unauthorized,
+  UnauthorizedErrorTitles,
+  error,
+} from '@utils/error';
 import { Responses, successful, bindMethods, TokenUtils } from '@utils/index';
 
 import { RecoverCodeService } from '../recoverCode/services';
@@ -95,9 +100,15 @@ export class AuthController {
         userId: user,
       });
 
-      if (isUserMember) {
-        token.workspace = workspace;
+      if (!isUserMember) {
+        throw new Unauthorized({
+          type: ErrorTypes.Unauthorized,
+          title: UnauthorizedErrorTitles.INVALID_PERMISSION,
+          detail: `User not allowed to change workspace`,
+        });
       }
+
+      token.workspace = workspace;
 
       return successful(
         await token.save().then(({ workspace, token, user }: UserToken) => {

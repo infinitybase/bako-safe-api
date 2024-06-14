@@ -21,7 +21,6 @@ describe('[USER]', () => {
 
   test(
     'Create user',
-    //'ATUAL',
     async () => {
       const code_length = `code${Address.fromRandom().toHexString()}`.length;
       await api
@@ -61,6 +60,44 @@ describe('[USER]', () => {
     },
     2 * 1000,
   );
+
+  test('Update user', async () => {
+    const auth = new AuthValidations(networks['local'], accounts['USER_1']);
+    await auth.create();
+    await auth.createSession();
+    const newName = `${new Date().getTime()} - Update user test`;
+    //update user
+    await auth.axios
+      .put(`user/${auth.user.id}`, {
+        name: newName,
+      })
+      .then(({ data, status }) => {
+        expect(status).toBe(200);
+        expect(data).toHaveProperty('id');
+        expect(data).toHaveProperty('name');
+        expect(data).toHaveProperty('type', TypeUser.FUEL);
+        expect(data.name).toBe(newName);
+      });
+  });
+
+  test('Inválid update user', async () => {
+    const auth = new AuthValidations(networks['local'], accounts['USER_1']);
+    await auth.create();
+    await auth.createSession();
+
+    const _auth = new AuthValidations(networks['local'], accounts['USER_5']);
+    await _auth.create();
+    await _auth.createSession();
+    //update user
+    await _auth.axios
+      .put(`user/${auth.user.id}`, {
+        name: '',
+      })
+      .catch(({ response }) => {
+        expect(response.status).toBe(401);
+        expect(response.data).toHaveProperty('title', 'Invalid permission');
+      });
+  });
 
   // if recives true, the name is already in use
   test(
