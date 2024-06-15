@@ -64,12 +64,11 @@ export class AddressBookController {
 
       if (!savedUser) {
         savedUser = await this.userService.create({
+          name: address,
           address,
           provider: user.provider,
           avatar: IconUtils.user(),
           type: TypeUser.FUEL,
-
-          active: true,
         });
       }
 
@@ -123,8 +122,7 @@ export class AddressBookController {
           provider: user.provider,
           avatar: IconUtils.user(),
           type: TypeUser.FUEL,
-
-          active: true,
+          name: body.address,
         });
       }
 

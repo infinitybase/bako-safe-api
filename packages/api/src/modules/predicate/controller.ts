@@ -70,6 +70,7 @@ export class PredicateController {
             provider: payload.provider,
             avatar: IconUtils.user(),
             type: TypeUser.FUEL,
+            name: member,
           });
         }
 

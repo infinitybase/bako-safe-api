@@ -1,7 +1,7 @@
 import { addMinutes } from 'date-fns';
 
-import { RecoverCode, RecoverCodeType } from '@src/models';
-import { User } from '@src/models/User';
+import { PredicateVersion, RecoverCode, RecoverCodeType } from '@src/models';
+import { TypeUser, User } from '@src/models/User';
 import { bindMethods } from '@src/utils/bindMethods';
 
 import {
@@ -29,6 +29,8 @@ import {
   IUpdateRequest,
   IUserService,
 } from './types';
+import { BakoSafe, Vault } from 'bakosafe';
+import { Provider } from 'fuels';
 
 export class UserController {
   private userService: IUserService;
@@ -142,11 +144,10 @@ export class UserController {
   //verify used name
   async create(req: ICreateRequest) {
     try {
-      const { address, name } = req.body;
+      const { address, name, provider, type } = req.body;
 
       //verify user exists
       let existingUser = await this.userService.findByAddress(address);
-      // if (existingUser) return successful(existingUser, Responses.Created);
 
       if (!existingUser) {
         //verify name exists
@@ -164,7 +165,22 @@ export class UserController {
           ...req.body,
           name: name ?? address,
           avatar: IconUtils.user(),
+          webauthn: {
+            ...req.body.webauthn,
+            predicate_id: '',
+            predicate_address: '',
+          },
         });
+
+        if (type == TypeUser.WEB_AUTHN) {
+          const { id, predicateAddress } = await this.abstractAccount(
+            existingUser,
+            provider,
+          );
+          existingUser.webauthn.predicate_id = id;
+          existingUser.webauthn.predicate_address = predicateAddress;
+          await existingUser.save();
+        }
       }
 
       const code = await new RecoverCodeService()
@@ -184,6 +200,7 @@ export class UserController {
 
       return successful(code, Responses.Created);
     } catch (e) {
+      console.log(e);
       return error(e.error, e.statusCode);
     }
   }
@@ -248,5 +265,36 @@ export class UserController {
     } catch (e) {
       return error(e.error, e.statusCode);
     }
+  }
+
+  async abstractAccount(user: User, provider_url: string) {
+    // crie um predicate 1:1 com o usuário
+    const provider = await Provider.create(provider_url);
+    const predicate = await Vault.create({
+      configurable: {
+        SIGNATURES_COUNT: 1,
+        SIGNERS: [user.address],
+        network: BakoSafe.getProviders('CHAIN_URL'),
+        chainId: provider.getChainId(),
+      },
+    });
+
+    const version = await PredicateVersion.findOne({
+      where: { code: predicate.version },
+    });
+
+    return await new PredicateService().create({
+      name: `Abstract account ${user.address}`,
+      description: `Account predicate by ${user.address}`,
+      provider: predicate.provider.url,
+      chainId: predicate.provider.getChainId(),
+      predicateAddress: predicate.address.toString(),
+      minSigners: 1,
+      configurable: JSON.stringify({ ...predicate.getConfigurable() }),
+      addresses: [user.address],
+      user,
+      owner: user,
+      version,
+    });
   }
 }
