@@ -100,15 +100,9 @@ export class AuthController {
         userId: user,
       });
 
-      if (!isUserMember) {
-        throw new Unauthorized({
-          type: ErrorTypes.Unauthorized,
-          title: UnauthorizedErrorTitles.INVALID_PERMISSION,
-          detail: `User not allowed to change workspace`,
-        });
+      if (isUserMember) {
+        token.workspace = workspace;
       }
-
-      token.workspace = workspace;
 
       return successful(
         await token.save().then(({ workspace, token, user }: UserToken) => {

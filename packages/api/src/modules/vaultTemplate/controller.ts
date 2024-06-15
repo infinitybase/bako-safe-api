@@ -105,7 +105,7 @@ export class VaultTemplateController {
         throw new Unauthorized({
           type: ErrorTypes.Unauthorized,
           title: UnauthorizedErrorTitles.INVALID_PERMISSION,
-          detail: `User not allowed to change workspace`,
+          detail: `User not allowed to change vault template`,
         });
       }
 
