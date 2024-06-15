@@ -9,6 +9,8 @@ export type WebAuthn = {
   publicKey: string;
   origin: string;
   hardware: string;
+  predicate_id: string;
+  predicate_address: string;
 };
 
 export enum TypeUser {
