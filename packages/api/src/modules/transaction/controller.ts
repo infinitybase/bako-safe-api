@@ -347,6 +347,12 @@ export class TransactionController {
 
       const witness = witnesses.find(w => w.account === account);
 
+      const transactionStatus = await this.transactionService.validateStatus(id);
+
+      if (transactionStatus === TransactionStatus.DECLINED) {
+        throw new Error('Transaction was already declined.');
+      }
+
       if (signer && confirm === 'true') {
         const acc_signed =
           Signer.recoverAddress(hashMessage(hash), signer).toString() ==
