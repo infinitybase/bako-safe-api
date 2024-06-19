@@ -168,7 +168,6 @@ export class WorkspaceController {
         Responses.Ok,
       );
     } catch (e) {
-      console.log('ERROR BALANCE', e);
       return error(e.error, e.statusCode);
     }
   }
