@@ -7,7 +7,11 @@ import {
   Workspace,
   defaultPermissions,
 } from '@src/models/Workspace';
-import { ErrorTypes } from '@src/utils/error';
+import {
+  ErrorTypes,
+  Unauthorized,
+  UnauthorizedErrorTitles,
+} from '@src/utils/error';
 import GeneralError from '@src/utils/error/GeneralError';
 import Internal from '@src/utils/error/Internal';
 import { IOrdination, setOrdination } from '@src/utils/ordination';

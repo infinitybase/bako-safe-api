@@ -7,7 +7,12 @@ import GeneralError, { ErrorTypes } from '@src/utils/error/GeneralError';
 
 import { IAuthRequest } from '@middlewares/auth/types';
 
-import { NotFound, error } from '@utils/error';
+import {
+  NotFound,
+  Unauthorized,
+  UnauthorizedErrorTitles,
+  error,
+} from '@utils/error';
 import { Responses, successful, bindMethods, TokenUtils } from '@utils/index';
 
 import { RecoverCodeService } from '../recoverCode/services';

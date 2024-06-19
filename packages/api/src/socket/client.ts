@@ -28,7 +28,6 @@ export class SocketClient {
   // Método para enviar uma mensagem para o servidor
   sendMessage(message: IMessage) {
     this.socket.emit('message', message);
-    console.log('Mensagem enviada para o servidor:', message);
   }
 
   // Método para desconectar do servidor Socket.IO

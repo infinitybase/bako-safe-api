@@ -54,11 +54,6 @@ export class DappController {
       await dapp.save();
       const socket = new SocketClient(sessionId, API_URL);
 
-      console.log({
-        sessionId,
-        API_URL,
-      });
-
       socket.sendMessage({
         sessionId,
         to: '[CONNECTOR]',
@@ -71,7 +66,6 @@ export class DappController {
 
       return successful(true, Responses.Created);
     } catch (e) {
-      console.log('[ERRO AO CRIAR]: ', e);
       return error(e.error, e.statusCode);
     }
   }
