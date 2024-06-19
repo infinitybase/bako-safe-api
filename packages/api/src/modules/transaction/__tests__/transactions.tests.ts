@@ -204,9 +204,7 @@ describe('[TRANSACTION]', () => {
 
       const { data } = await auth.axios.post('/transaction', payload_transfer);
 
-      const slicedHash = payload_transfer.hash.slice(2);
-
-      const signature = await auth.signer(slicedHash);
+      const signature = await auth.signer(payload_transfer.hash);
 
       // recusando a transação/assinatura
       const declineTransaction = await auth.axios.put(
