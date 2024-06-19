@@ -1,7 +1,13 @@
-import { Asset, BakoSafe } from 'bakosafe';
-import { BN, bn } from 'fuels';
+import { Asset, BakoSafe, TransactionStatus } from 'bakosafe';
 
-import { Predicate, TypeUser, User, PermissionAccess } from '@src/models';
+import {
+  Predicate,
+  TypeUser,
+  User,
+  PermissionAccess,
+  Transaction,
+  Asset as AssetModel,
+} from '@src/models';
 import { PermissionRoles, Workspace } from '@src/models/Workspace';
 import Internal from '@src/utils/error/Internal';
 import {
@@ -11,11 +17,17 @@ import {
 import { IconUtils } from '@src/utils/icons';
 
 import { ErrorTypes, error } from '@utils/error';
-import { Responses, calculateBalanceUSD, successful } from '@utils/index';
+import {
+  Responses,
+  calculateBalanceUSD,
+  subtractReservedCoinsFromBalances,
+  successful,
+} from '@utils/index';
 
 import { PredicateService } from '../predicate/services';
 import { UserService } from '../user/service';
 import { WorkspaceService } from './services';
+import { TransactionService } from '../transaction/services';
 import {
   ICreateRequest,
   IGetBalanceRequest,
@@ -24,6 +36,8 @@ import {
   IUpdatePermissionsRequest,
   IUpdateRequest,
 } from './types';
+import { CoinQuantity, bn } from 'fuels';
+import { assets } from '@src/mocks/assets';
 
 export class WorkspaceController {
   async listByUser(req: IListByUserRequest) {
@@ -73,7 +87,9 @@ export class WorkspaceController {
     try {
       const { workspace } = req;
       const predicateService = new PredicateService();
+      const transactionService = new TransactionService();
       const predicatesBalance = [];
+      let reservedCoins: CoinQuantity[] = [];
 
       await Predicate.find({
         where: {
@@ -85,11 +101,51 @@ export class WorkspaceController {
           const vault = await predicateService.instancePredicate(predicate.id);
           predicatesBalance.push(...(await vault.getBalances()));
         }
+
+        // Calculates amount of coins reserved per asset
+        const predicateIds = response.map(item => item.id);
+        reservedCoins = await transactionService
+          .filter({
+            predicateId: predicateIds,
+          })
+          .list()
+          .then((data: Transaction[]) => {
+            return data
+              .filter(
+                (transaction: Transaction) =>
+                  transaction.status === TransactionStatus.AWAIT_REQUIREMENTS ||
+                  transaction.status === TransactionStatus.PENDING_SENDER,
+              )
+              .reduce((accumulator, transaction: Transaction) => {
+                transaction.assets.forEach((asset: AssetModel) => {
+                  const assetId = asset.assetId;
+                  const amount = bn.parseUnits(asset.amount);
+                  const existingAsset = accumulator.find(
+                    item => item.assetId === assetId,
+                  );
+
+                  if (existingAsset) {
+                    existingAsset.amount = existingAsset.amount.add(amount);
+                  } else {
+                    accumulator.push({ assetId, amount });
+                  }
+                });
+                return accumulator;
+              }, [] as CoinQuantity[]);
+          })
+          .catch(() => {
+            return [
+              { assetId: assets.ETH, amount: bn.parseUnits('0') },
+            ] as CoinQuantity[];
+          });
       });
 
-      const assetsBalance = await Asset.assetsGroupById(
-        predicatesBalance.map(item => ({ ...item, amount: item.amount.format() })),
-      );
+      // Calculate balance per asset
+      const formattedPredicatesBalance = predicatesBalance.map(item => ({
+        ...item,
+        amount: item.amount.format(),
+      }));
+      const assetsBalance = await Asset.assetsGroupById(formattedPredicatesBalance);
       const formattedAssetsBalance = Object.entries(assetsBalance).map(
         ([assetId, amount]) => ({
           assetId,
@@ -97,11 +153,17 @@ export class WorkspaceController {
         }),
       );
 
+      // Subtracts the amount of coins reserved per asset from the balance per asset
+      const availableAssetsBalance =
+        reservedCoins.length > 0
+          ? subtractReservedCoinsFromBalances(formattedAssetsBalance, reservedCoins)
+          : formattedAssetsBalance;
+
       return successful(
         {
-          balanceUSD: await calculateBalanceUSD(formattedAssetsBalance),
+          balanceUSD: await calculateBalanceUSD(availableAssetsBalance),
           workspaceId: workspace.id,
-          assetsBalance: formattedAssetsBalance,
+          assetsBalance: availableAssetsBalance,
         },
         Responses.Ok,
       );
