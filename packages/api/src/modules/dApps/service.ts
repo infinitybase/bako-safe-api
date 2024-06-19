@@ -3,12 +3,14 @@ import { ErrorTypes } from '@src/utils/error';
 import Internal from '@src/utils/error/Internal';
 
 import { IDAPPCreatePayload, IDAppsService } from './types';
+import { DeepPartial } from 'typeorm';
 
 export class DAppsService implements IDAppsService {
   async create(params: IDAPPCreatePayload) {
-    return await DApp.create(params)
+    const partialPayload: DeepPartial<DApp> = params;
+    return await DApp.create(partialPayload)
       .save()
-      .then(data => data)
+      .then(() => this.findLast())
       .catch(e => {
         throw new Internal({
           type: ErrorTypes.Internal,
@@ -63,20 +65,20 @@ export class DAppsService implements IDAppsService {
       });
   }
 
-  // async checkExist(address: string, sessionId, url: string) {
-  //   return await DApp.createQueryBuilder('d')
-  //     .innerJoin('d.users', 'users')
-  //     .where('users.address = :address', { address })
-  //     .andWhere('d.session_id = :sessionId', { sessionId })
-  //     .andWhere('d.url = :url', { url })
-  //     .getOne()
-  //     .then(data => data)
-  //     .catch(e => {
-  //       throw new Internal({
-  //         type: ErrorTypes.Internal,
-  //         title: 'Error on find active sessions to dapp',
-  //         detail: e,
-  //       });
-  //     });
-  // }
+  async findLast() {
+    try {
+      return await DApp.createQueryBuilder('d')
+        .select()
+        .innerJoinAndSelect('d.vaults', 'vaults')
+        .innerJoinAndSelect('d.currentVault', 'currentVault')
+        .orderBy('d.createdAt', 'DESC')
+        .getOne();
+    } catch (e) {
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on find last dapp',
+        detail: e,
+      });
+    }
+  }
 }

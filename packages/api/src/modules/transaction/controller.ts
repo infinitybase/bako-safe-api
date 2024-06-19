@@ -362,6 +362,14 @@ export class TransactionController {
       }
 
       if (witness) {
+        if (witness.status !== WitnessesStatus.PENDING) {
+          throw new NotFound({
+            detail: 'Transaction was already declined.',
+            title: UnauthorizedErrorTitles.INVALID_SIGNATURE,
+            type: ErrorTypes.NotFound,
+          });
+        }
+
         await this.witnessService.update(witness.id, {
           signature: signer,
           status: confirm ? WitnessesStatus.DONE : WitnessesStatus.REJECTED,
@@ -525,7 +533,6 @@ export class TransactionController {
             status: TransactionStatus.FAILED,
             sendTime: new Date(),
           });
-          console.log('[failed]', e);
           throw new Error('Transaction send failed');
         });
 

@@ -184,4 +184,55 @@ describe('[TRANSACTION]', () => {
       expect(data).toHaveLength(0);
     });
   });
+
+  test(
+    'Throw an error when witness that has a status different from pending try to sign a transaction',
+    async () => {
+      // logar com usuário inválido no workspace
+      const auth = new AuthValidations(networks['local'], accounts['USER_5']);
+      await auth.create();
+      await auth.createSession();
+      const { USER_5 } = await generateWorkspacePayload(auth);
+
+      const members = [USER_5.address];
+
+      const { predicatePayload, vault } = await PredicateMock.create(1, members);
+      await api.axios.post('/predicate', predicatePayload);
+
+      //gerar uma transacao com um usuário inválido
+      const { payload_transfer } = await transactionMock(vault);
+
+      const { data } = await auth.axios.post('/transaction', payload_transfer);
+
+      const signature = await auth.signer(payload_transfer.hash);
+
+      // recusando a transação/assinatura
+      const declineTransaction = await auth.axios.put(
+        `/transaction/signer/${data.id}`,
+        {
+          account: data.witnesses[0].account,
+          confirm: false,
+          signer: signature,
+        },
+      );
+      // recusando ou assinando, sempre é retornado verdadeiro
+      expect(declineTransaction.data).toBeTruthy();
+
+      // Confirmando/assinando a transação depois da mesma ser recusada
+      const confirmTransaction = auth.axios.put(`/transaction/signer/${data.id}`, {
+        account: data.witnesses[0].account,
+        confirm: true,
+        signer: signature,
+      });
+
+      await expect(confirmTransaction).rejects.toMatchObject({
+        response: {
+          data: {
+            detail: 'Transaction was already declined.',
+          },
+        },
+      });
+    },
+    60 * 1000,
+  );
 });

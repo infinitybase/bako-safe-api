@@ -54,11 +54,6 @@ export class DappController {
       await dapp.save();
       const socket = new SocketClient(sessionId, API_URL);
 
-      console.log({
-        sessionId,
-        API_URL,
-      });
-
       socket.sendMessage({
         sessionId,
         to: '[CONNECTOR]',

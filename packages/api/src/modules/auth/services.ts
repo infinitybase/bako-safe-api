@@ -59,8 +59,20 @@ export class AuthService implements IAuthService {
 
   async findToken(params: IFindTokenParams): Promise<UserToken | undefined> {
     const queryBuilder = await UserToken.createQueryBuilder('ut')
-      .innerJoinAndSelect('ut.user', 'user')
-      .innerJoinAndSelect('ut.workspace', 'workspace');
+      .leftJoin('ut.user', 'user')
+      .leftJoin('ut.workspace', 'workspace')
+      .addSelect([
+        'user.id',
+        'user.avatar',
+        'user.address',
+        'user.type',
+        'user.webauthn',
+        'workspace.id',
+        'workspace.name',
+        'workspace.avatar',
+        'workspace.single',
+        'workspace.permissions',
+      ]);
 
     params.userId &&
       queryBuilder.where('ut.user = :userId', { userId: params.userId });

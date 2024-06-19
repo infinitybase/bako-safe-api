@@ -1,10 +1,16 @@
 import { addMinutes } from 'date-fns';
 
 import { RecoverCode, RecoverCodeType } from '@src/models';
-import { User } from '@src/models/User';
+import { TypeUser, User } from '@src/models/User';
 import { bindMethods } from '@src/utils/bindMethods';
 
-import { BadRequest, ErrorTypes, error } from '@utils/error';
+import {
+  BadRequest,
+  ErrorTypes,
+  Unauthorized,
+  UnauthorizedErrorTitles,
+  error,
+} from '@utils/error';
 import { IconUtils } from '@utils/icons';
 import { Responses, successful } from '@utils/index';
 
@@ -23,6 +29,7 @@ import {
   IUpdateRequest,
   IUserService,
 } from './types';
+import { Not } from 'typeorm';
 
 export class UserController {
   private userService: IUserService;
@@ -44,7 +51,7 @@ export class UserController {
 
       return successful(response, Responses.Ok);
     } catch (e) {
-      return error(e.error[0], e.statusCode);
+      return error(e.error, e.statusCode);
     }
   }
 
@@ -129,7 +136,7 @@ export class UserController {
 
       return successful(response, Responses.Ok);
     } catch (e) {
-      return error(e.error[0], e.statusCode);
+      return error(e.error, e.statusCode);
     }
   }
 
@@ -140,12 +147,12 @@ export class UserController {
 
       //verify user exists
       let existingUser = await this.userService.findByAddress(address);
-      //if (existingUser) return successful(existingUser, Responses.Created);
+      // if (existingUser) return successful(existingUser, Responses.Created);
 
       if (!existingUser) {
         //verify name exists
-        const existingName = await User.findOne({ name });
-        if (existingName) {
+        const existingName = await User.findOne({ where: { name } });
+        if (name && existingName) {
           throw new BadRequest({
             type: ErrorTypes.Create,
             title: 'Error on user create',
@@ -205,13 +212,37 @@ export class UserController {
 
       return successful(response, Responses.Ok);
     } catch (e) {
-      return error(e.error[0], e.statusCode);
+      return error(e.error, e.statusCode);
     }
   }
 
   async update(req: IUpdateRequest) {
     try {
+      const { user } = req;
       const { id } = req.params;
+      const { name } = req.body;
+
+      if (user.id !== id) {
+        throw new Unauthorized({
+          type: ErrorTypes.Update,
+          title: UnauthorizedErrorTitles.INVALID_PERMISSION,
+          detail: `User id ${user.id} is not allowed to update user id ${id}`,
+        });
+      }
+
+      if (name) {
+        const existingUser = await User.findOne({
+          where: { name, id: Not(user.id) },
+        });
+
+        if (existingUser) {
+          throw new BadRequest({
+            type: ErrorTypes.Update,
+            title: 'Error on user update',
+            detail: `User with name ${name} already exists`,
+          });
+        }
+      }
 
       const response = await this.userService.update(id, {
         ...req.body,
@@ -219,7 +250,8 @@ export class UserController {
 
       return successful(response, Responses.Ok);
     } catch (e) {
-      return error(e.error[0], e.statusCode);
+      console.log(e);
+      return error(e.error, e.statusCode);
     }
   }
 
@@ -230,7 +262,7 @@ export class UserController {
 
       return successful(response, Responses.Ok);
     } catch (e) {
-      return error(e.error[0], e.statusCode);
+      return error(e.error, e.statusCode);
     }
   }
 }

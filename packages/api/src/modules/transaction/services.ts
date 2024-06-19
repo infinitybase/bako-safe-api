@@ -119,6 +119,8 @@ export class TransactionService implements ITransactionService {
       });
   }
 
+  //todo: melhorar a valocidade de processamento dessa query
+  //caso trocar inner por left atrapalha muito a performance
   async list(): Promise<IPagination<Transaction> | Transaction[]> {
     const hasPagination = this._pagination?.page && this._pagination?.perPage;
     const queryBuilder = Transaction.createQueryBuilder('t')
@@ -126,7 +128,6 @@ export class TransactionService implements ITransactionService {
         't.createdAt',
         't.gasUsed',
         't.hash',
-        't.createdAt',
         't.id',
         't.name',
         't.predicateId',
@@ -136,9 +137,11 @@ export class TransactionService implements ITransactionService {
         't.summary',
         't.updatedAt',
       ])
-      .leftJoinAndSelect('t.assets', 'assets')
-      .innerJoin('t.witnesses', 'witnesses')
-      .innerJoin('t.predicate', 'predicate')
+      .leftJoin('t.assets', 'assets')
+      .leftJoin('t.witnesses', 'witnesses')
+      .leftJoin('t.predicate', 'predicate')
+      .leftJoin('predicate.members', 'members')
+      .leftJoin('predicate.workspace', 'workspace')
       .addSelect([
         'predicate.name',
         'predicate.id',
@@ -148,11 +151,17 @@ export class TransactionService implements ITransactionService {
         'witnesses.account',
         'witnesses.signature',
         'witnesses.status',
-      ])
-      .innerJoin('predicate.members', 'members')
-      .addSelect(['members.id', 'members.avatar', 'members.address'])
-      .innerJoin('predicate.workspace', 'workspace')
-      .addSelect(['workspace.id', 'workspace.name', 'workspace.single']);
+        'assets.id',
+        'assets.amount',
+        'assets.to',
+        'assets.assetId',
+        'members.id',
+        'members.avatar',
+        'members.address',
+        'workspace.id',
+        'workspace.name',
+        'workspace.single',
+      ]);
 
     this._filter.predicateAddress &&
       queryBuilder.andWhere('predicate.predicateAddress = :address', {
@@ -183,14 +192,6 @@ export class TransactionService implements ITransactionService {
               workspace: this._filter.workspaceId,
             });
           }
-          // Uncomment this to not show workspace transactions in the single.
-          // if (this._filter.signer) {
-          //   qb.orWhere(subQb => {
-          //     subQb.where('witnesses.account = :signer', {
-          //       signer: this._filter.signer,
-          //     });
-          //   });
-          // }
 
           if (this._filter.signer) {
             qb.orWhere('members.address = :signer', {
@@ -416,13 +417,6 @@ export class TransactionService implements ITransactionService {
     const idOnChain = `0x${api_transaction.hash}`;
     const sender = new TransactionResponse(idOnChain, provider);
     const result = await sender.fetch();
-
-    // console.log('[VERIFY_ON_CHAIN] result:', result.status.type);
-    // console.log('[LÓGICAS]: ', {
-    //   enviado:
-    //     result.status.type === TransactionProcessStatus.SUCCESS ||
-    //     result.status.type === TransactionProcessStatus.FAILED,
-    // });
 
     if (result.status.type === TransactionProcessStatus.SUBMITED) {
       return api_transaction.resume;

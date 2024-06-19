@@ -91,54 +91,54 @@ export class WorkspaceController {
       const predicatesBalance = [];
       let reservedCoins: CoinQuantity[] = [];
 
-      await Predicate.find({
-        where: {
-          workspace: workspace.id,
-        },
-        select: ['id'],
-      }).then(async (response: Predicate[]) => {
-        for await (const predicate of response) {
-          const vault = await predicateService.instancePredicate(predicate.id);
-          predicatesBalance.push(...(await vault.getBalances()));
-        }
+      await predicateService
+        .filter({
+          workspace: [workspace.id],
+        })
+        .list()
+        .then(async (response: Predicate[]) => {
+          for await (const predicate of response) {
+            const vault = await predicateService.instancePredicate(predicate.id);
+            predicatesBalance.push(...(await vault.getBalances()));
+          }
 
-        // Calculates amount of coins reserved per asset
-        const predicateIds = response.map(item => item.id);
-        reservedCoins = await transactionService
-          .filter({
-            predicateId: predicateIds,
-          })
-          .list()
-          .then((data: Transaction[]) => {
-            return data
-              .filter(
-                (transaction: Transaction) =>
-                  transaction.status === TransactionStatus.AWAIT_REQUIREMENTS ||
-                  transaction.status === TransactionStatus.PENDING_SENDER,
-              )
-              .reduce((accumulator, transaction: Transaction) => {
-                transaction.assets.forEach((asset: AssetModel) => {
-                  const assetId = asset.assetId;
-                  const amount = bn.parseUnits(asset.amount);
-                  const existingAsset = accumulator.find(
-                    item => item.assetId === assetId,
-                  );
+          // Calculates amount of coins reserved per asset
+          const predicateIds = response.map(item => item.id);
+          reservedCoins = await transactionService
+            .filter({
+              predicateId: predicateIds,
+            })
+            .list()
+            .then((data: Transaction[]) => {
+              return data
+                .filter(
+                  (transaction: Transaction) =>
+                    transaction.status === TransactionStatus.AWAIT_REQUIREMENTS ||
+                    transaction.status === TransactionStatus.PENDING_SENDER,
+                )
+                .reduce((accumulator, transaction: Transaction) => {
+                  transaction.assets.forEach((asset: AssetModel) => {
+                    const assetId = asset.assetId;
+                    const amount = bn.parseUnits(asset.amount);
+                    const existingAsset = accumulator.find(
+                      item => item.assetId === assetId,
+                    );
 
-                  if (existingAsset) {
-                    existingAsset.amount = existingAsset.amount.add(amount);
-                  } else {
-                    accumulator.push({ assetId, amount });
-                  }
-                });
-                return accumulator;
-              }, [] as CoinQuantity[]);
-          })
-          .catch(() => {
-            return [
-              { assetId: assets.ETH, amount: bn.parseUnits('0') },
-            ] as CoinQuantity[];
-          });
-      });
+                    if (existingAsset) {
+                      existingAsset.amount = existingAsset.amount.add(amount);
+                    } else {
+                      accumulator.push({ assetId, amount });
+                    }
+                  });
+                  return accumulator;
+                }, [] as CoinQuantity[]);
+            })
+            .catch(() => {
+              return [
+                { assetId: assets.ETH, amount: bn.parseUnits('0') },
+              ] as CoinQuantity[];
+            });
+        });
 
       // Calculate balance per asset
       const formattedPredicatesBalance = predicatesBalance.map(item => ({
@@ -168,6 +168,7 @@ export class WorkspaceController {
         Responses.Ok,
       );
     } catch (e) {
+      console.log('ERROR BALANCE', e);
       return error(e.error, e.statusCode);
     }
   }
@@ -190,7 +191,9 @@ export class WorkspaceController {
 
   async update(req: IUpdateRequest) {
     try {
-      const { id } = req.params;
+      const {
+        workspace: { id },
+      } = req;
 
       const response = await new WorkspaceService()
         .update({
@@ -211,8 +214,11 @@ export class WorkspaceController {
 
   async updatePermissions(req: IUpdatePermissionsRequest) {
     try {
-      const { id, member } = req.params;
+      const { member } = req.params;
       const { permissions } = req.body;
+      const {
+        workspace: { id },
+      } = req;
 
       const response = await new WorkspaceService()
         .filter({ id })
@@ -257,7 +263,11 @@ export class WorkspaceController {
 
   async addMember(req: IUpdateMembersRequest) {
     try {
-      const { id, member } = req.params;
+      const { member } = req.params;
+      const {
+        workspace: { id },
+      } = req;
+
       const workspace = await new WorkspaceService()
         .filter({ id })
         .list()
@@ -270,6 +280,9 @@ export class WorkspaceController {
             });
           }
           return data[0];
+        })
+        .catch(e => {
+          throw e;
         });
 
       const _member =
@@ -302,7 +315,11 @@ export class WorkspaceController {
 
   async removeMember(req: IUpdateMembersRequest) {
     try {
-      const { id, member } = req.params;
+      const { member } = req.params;
+      const {
+        workspace: { id },
+      } = req;
+
       const workspace = await new WorkspaceService()
         .filter({ id })
         .list()

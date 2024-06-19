@@ -88,19 +88,26 @@ describe('[WORKSPACE]', () => {
   );
 
   test('Update workspace', async () => {
-    const { data } = await generateWorkspacePayload(api);
+    const auth_aux = new AuthValidations(networks['local'], accounts['USER_5']);
+    await auth_aux.create();
+    await auth_aux.createSession();
 
-    const { data: workspace, status: status_find } = await api.axios.get(
+    const { data } = await generateWorkspacePayload(auth_aux);
+    await auth_aux.selectWorkspace(data.id);
+
+    await auth_aux.selectWorkspace(data.id);
+
+    const { data: workspace, status: status_find } = await auth_aux.axios.get(
       `/workspace/${data.id}`,
     );
 
-    const { data: workspace_updated, status: status_update } = await api.axios.put(
-      `/workspace/${data.id}`,
-      {
-        name: 'Workspace 1 updated',
-        description: 'Workspace 1 description updated',
-      },
-    );
+    const {
+      data: workspace_updated,
+      status: status_update,
+    } = await auth_aux.axios.put(`/workspace/${data.id}`, {
+      name: 'Workspace 1 updated',
+      description: 'Workspace 1 description updated',
+    });
 
     expect(status_find).toBe(200);
     expect(workspace).toHaveProperty('id');
@@ -124,18 +131,38 @@ describe('[WORKSPACE]', () => {
     );
   });
 
+  test('Inválid permission to update workspace', async () => {
+    try {
+      const { data } = await generateWorkspacePayload(api);
+
+      await api.selectWorkspace(data.id);
+
+      await api.axios.put(`/workspace/${data.id}`, {
+        name: 'Workspace 1 updated',
+        description: 'Workspace 1 description updated',
+      });
+    } catch (e) {
+      expect(e.response.status).toBe(401);
+      expect(e.response.data.errors.detail).toEqual(
+        'You do not have permission to access this resource',
+      );
+    }
+  });
+
   test(
     'Upgrade workspace permissions',
     async () => {
-      const { data, data_user1, data_user2 } = await generateWorkspacePayload(api);
-
       const auth_aux = new AuthValidations(networks['local'], accounts['USER_5']);
       await auth_aux.create();
       await auth_aux.createSession();
+      const { data, data_user1, data_user2 } = await generateWorkspacePayload(
+        auth_aux,
+      );
+
       await auth_aux.selectWorkspace(data.id);
 
       //update permission
-      await api.axios
+      await auth_aux.axios
         .put(`/workspace/${data.id}/permissions/${data_user1.id}`, {
           permissions: defaultPermissions[PermissionRoles.MANAGER],
         })
@@ -152,7 +179,7 @@ describe('[WORKSPACE]', () => {
         });
 
       //update owner
-      await api.axios
+      await auth_aux.axios
         .put(`/workspace/${data.id}/permissions/${data.owner.id}`, {
           permissions: defaultPermissions[PermissionRoles.MANAGER],
         })
@@ -164,7 +191,7 @@ describe('[WORKSPACE]', () => {
         });
 
       //update without permission
-      await auth_aux.axios
+      await api.axios
         .put(`/workspace/${data.id}/permissions/${data_user2.id}`, {
           permissions: defaultPermissions[PermissionRoles.MANAGER],
         })
@@ -179,27 +206,26 @@ describe('[WORKSPACE]', () => {
   );
 
   test('Upgrade workspace members', async () => {
-    const { data } = await generateWorkspacePayload(api);
-
     const auth_aux = new AuthValidations(networks['local'], accounts['USER_5']);
     await auth_aux.create();
     await auth_aux.createSession();
+    const { data } = await generateWorkspacePayload(auth_aux);
     await auth_aux.selectWorkspace(data.id);
 
     const aux_address = Address.fromRandom().toAddress();
-    const { data: data_user_aux } = await api.axios.post('/user/', {
+    const { data: data_user_aux } = await auth_aux.axios.post('/user/', {
       address: aux_address,
       provider: BakoSafe.getProviders('CHAIN_URL'),
       name: `${new Date().getTime()} - Create user test`,
       type: TypeUser.FUEL,
     });
 
-    const { data: workspace } = await api.axios.get(`/workspace/${data.id}`);
+    const { data: workspace } = await auth_aux.axios.get(`/workspace/${data.id}`);
 
     let quantityMembers = workspace.members.length;
 
     //include exists on database member
-    await api.axios
+    await auth_aux.axios
       .post(`/workspace/${data.id}/members/${data_user_aux.userId}/include`)
       .then(({ data, status }) => {
         quantityMembers++;
@@ -212,9 +238,9 @@ describe('[WORKSPACE]', () => {
         expect(data).toHaveProperty('permissions');
       });
 
-    //include not exists on database member (create)
+    // //include not exists on database member (create)
     const aux_byAddress = Address.fromRandom().toAddress();
-    await api.axios
+    await auth_aux.axios
       .post(`/workspace/${data.id}/members/${aux_byAddress}/include`)
       .then(({ data, status }) => {
         quantityMembers++;
@@ -228,7 +254,7 @@ describe('[WORKSPACE]', () => {
       });
 
     //remove member
-    await api.axios
+    await auth_aux.axios
       .post(`/workspace/${data.id}/members/${data_user_aux.userId}/remove`)
       .then(({ data, status }) => {
         quantityMembers--;
@@ -242,7 +268,7 @@ describe('[WORKSPACE]', () => {
       });
 
     //remove owner
-    await api.axios
+    await auth_aux.axios
       .post(`/workspace/${data.id}/members/${workspace.owner.id}/remove`)
       .catch(({ response }) => {
         expect(response.status).toBe(401);
@@ -251,8 +277,8 @@ describe('[WORKSPACE]', () => {
         );
       });
 
-    //update without permission
-    await auth_aux.axios
+    // //update without permission
+    await api.axios
       .post(`/workspace/${data.id}/members/${data_user_aux.userId}/include`)
       .catch(({ response }) => {
         expect(response.status).toBe(401);

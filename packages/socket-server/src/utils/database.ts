@@ -15,6 +15,9 @@ interface ConnectionConfig {
   database: string
   host: string
   port: number
+  ssl: {
+    rejectUnauthorized: boolean
+  };
 }
 
 export const defaultConnection: ConnectionConfig = {
@@ -23,23 +26,31 @@ export const defaultConnection: ConnectionConfig = {
   database: DATABASE_NAME,
   host: DATABASE_HOST,
   port: Number(DATABASE_PORT),
+  ssl: {
+    rejectUnauthorized: false,
+  },
 }
 
 export class DatabaseClass {
   private readonly client: Client
+  private static instance: DatabaseClass;
   protected constructor (client: Client) {
     this.client = client
   }
 
   static async connect (connection: ConnectionConfig = defaultConnection): Promise<DatabaseClass> {
-    const cl = new Client(connection)
-    await cl.connect()
-    return new DatabaseClass(cl)
+    if (!this.instance) {
+      const cl = new Client(connection)
+      await cl.connect();
+      this.instance = new DatabaseClass(cl);
+    }
+
+    return this.instance;
   }
 
-  async query (query: string): Promise<any> {
+  async query (query: string, params?: string[]): Promise<any> {
     try {
-      const { rows }: QueryResult = await this.client.query(query)
+      const { rows }: QueryResult = await this.client.query(query, params)
       if (rows.length === 1) return rows[0]
       return rows
     } catch (error) {
