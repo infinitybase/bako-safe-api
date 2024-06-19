@@ -58,7 +58,7 @@ describe('[USER]', () => {
         expect(data.transactions.data.length).toBeLessThanOrEqual(8);
       });
     },
-    2 * 1000,
+    10 * 1000,
   );
 
   test('Update user', async () => {

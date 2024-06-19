@@ -21,16 +21,14 @@ describe('[PREDICATE]', () => {
     'Create predicate without version code',
     async () => {
       const {
-        data: data_workspace,
         data_user1,
         data_user2,
-        USER_5,
       } = await generateWorkspacePayload(api);
       const members = [data_user1.address, data_user2.address];
       const { predicatePayload } = await PredicateMock.create(1, members);
       const { data } = await api.axios.post('/predicate', predicatePayload);
 
-      const { data: workspace, status: status_find } = await api.axios.get(
+      const { data: workspace } = await api.axios.get(
         `/workspace/${api.workspace.id}`,
       );
 

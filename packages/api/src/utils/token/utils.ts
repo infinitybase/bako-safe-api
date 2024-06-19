@@ -12,6 +12,7 @@ import { ErrorTypes } from '@utils/error';
 import { Unauthorized, UnauthorizedErrorTitles } from '@utils/error/Unauthorized';
 
 import { recoverFuelSignature, recoverWebAuthnSignature } from './web3';
+import app from '@src/server/app';
 
 const EXPIRES_IN = process.env.TOKEN_EXPIRATION_TIME ?? '20';
 const RENEWAL_EXPIRES_IN = process.env.RENEWAL_TOKEN_EXPIRATION_TIME ?? '10';
@@ -40,20 +41,6 @@ export class TokenUtils {
     return address;
   }
 
-  //   verifyExpiredToken() {
-  //     const expiredToken = isPast(this.userToken.expired_at);
-
-  //     if (expiredToken) {
-  //       throw new Unauthorized({
-  //         type: ErrorTypes.Unauthorized,
-  //         title: UnauthorizedErrorTitles.EXPIRED_TOKEN,
-  //         detail: 'The provided token is expired, please sign in again',
-  //       });
-  //     }
-
-  //     return this;
-  //   }
-
   static async checkUserExists(address: string) {
     const user = await new UserService()
       .filter({ address })
@@ -61,8 +48,6 @@ export class TokenUtils {
       .then(response => {
         return response[0] ?? undefined;
       });
-
-    //console.log(address);
 
     if (!user) {
       throw new Unauthorized({
@@ -100,7 +85,8 @@ export class TokenUtils {
   }
 
   static async recoverToken(signature: string) {
-    const token = await new AuthService().findToken({ signature });
+    const token = await app._sessionCache.getSession(signature);
+
     if (!token) {
       throw new Unauthorized({
         type: ErrorTypes.Unauthorized,
@@ -177,7 +163,7 @@ export class TokenUtils {
     const workspace = await TokenUtils.findSingleWorkspace(user.id);
     await TokenUtils.revokeToken(user); // todo: verify if it's necessary
 
-    return await new AuthService().signIn({
+    const sig = await new AuthService().signIn({
       token: signature,
       encoder: Encoder[encoder],
       provider: user.provider,
@@ -186,6 +172,11 @@ export class TokenUtils {
       user: user,
       workspace,
     });
+
+    return await UserToken.findOne({
+      where: { token: sig.accessToken },
+      relations: ['user', 'workspace'],
+    })
   }
 
   static async renewToken(token: UserToken) {

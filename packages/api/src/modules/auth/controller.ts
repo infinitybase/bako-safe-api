@@ -23,6 +23,7 @@ import {
   ICreateRecoverCodeRequest,
   ISignInRequest,
 } from './types';
+import app from '@src/server/app';
 
 export class AuthController {
   private authService: IAuthService;
@@ -41,7 +42,7 @@ export class AuthController {
         digest,
         encoder,
       );
-
+      await app._sessionCache.addSession(userToken.token, userToken);
       return successful(userToken, Responses.Ok);
     } catch (e) {
       if (e instanceof GeneralError) throw e;
@@ -103,6 +104,8 @@ export class AuthController {
       if (isUserMember) {
         token.workspace = workspace;
       }
+
+      await app._sessionCache.addSession(token.token, token);
 
       return successful(
         await token.save().then(({ workspace, token, user }: UserToken) => {

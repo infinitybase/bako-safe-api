@@ -53,7 +53,7 @@ export class AuthValidations {
       signature: tx,
     });
 
-    this.axios.defaults.headers.common['Authorization'] = data.accessToken;
+    this.axios.defaults.headers.common['Authorization'] = data.token;
     this.axios.defaults.headers.common['Signeraddress'] = data.address;
     this.authToken = {
       address: data.address,
