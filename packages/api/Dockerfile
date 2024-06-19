@@ -1,19 +1,22 @@
 FROM node:18.18.2
 
 # Create app directory
-WORKDIR api
+WORKDIR /api
 ADD . /api
 
-# Install app dependencies
-RUN yarn install
+# Install pnpm
+RUN npm install -g pnpm
 
-# Install pm2
-RUN yarn global add pm2
+# Install app dependencies
+RUN pnpm install
 
 # Build
-RUN yarn build
+RUN pnpm run build
+
+# Install pm2
+RUN pnpm add pm2 -g
 
 # Run!
 EXPOSE 3333
 
-ENTRYPOINT ["yarn", "start"]
+ENTRYPOINT ["pnpm", "start"]
