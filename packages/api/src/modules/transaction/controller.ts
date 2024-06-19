@@ -347,12 +347,6 @@ export class TransactionController {
 
       const witness = witnesses.find(w => w.account === account);
 
-      const transactionStatus = await this.transactionService.validateStatus(id);
-
-      if (transactionStatus === TransactionStatus.DECLINED) {
-        throw new Error('Transaction was already declined.');
-      }
-
       if (signer && confirm === 'true') {
         const acc_signed =
           Signer.recoverAddress(hashMessage(hash), signer).toString() ==
@@ -368,6 +362,14 @@ export class TransactionController {
       }
 
       if (witness) {
+        if (witness.status !== WitnessesStatus.PENDING) {
+          throw new NotFound({
+            detail: 'Transaction was already declined.',
+            title: UnauthorizedErrorTitles.INVALID_SIGNATURE,
+            type: ErrorTypes.NotFound,
+          });
+        }
+
         await this.witnessService.update(witness.id, {
           signature: signer,
           status: confirm ? WitnessesStatus.DONE : WitnessesStatus.REJECTED,
