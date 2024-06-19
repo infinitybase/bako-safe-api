@@ -230,7 +230,7 @@ export class UserController {
         });
       }
 
-      if (name && user.type === TypeUser.WEB_AUTHN) {
+      if (name) {
         const existingUser = await User.findOne({
           where: { name, id: Not(user.id) },
         });
