@@ -22,6 +22,7 @@ export class AuthService implements IAuthService {
           avatar: data.user.avatar,
           address: data.user.address,
           user_id: data.user.id,
+          expiredAt: data.expired_at,
           workspace: {
             id: data.workspace.id,
             name: data.workspace.name,
