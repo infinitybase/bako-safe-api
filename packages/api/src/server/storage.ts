@@ -1,7 +1,6 @@
 import { User } from "@src/models";
 import UserToken from "@src/models/UserToken";
 import { Workspace } from "@src/models/Workspace";
-import { AuthService } from "@src/modules/auth/services"
 import { TokenUtils } from "@src/utils";
 import { isPast } from "date-fns";
 
@@ -12,11 +11,12 @@ export interface ISession {
     user: User;
   }
 
+const CLEAR_TIME = 60 * 1000 * 23; // 23 minutos
 
 
 export class SessionStorage {
     data = new Map<string, UserToken>();
-    private nextClear: number = new Date().getTime() + 3600 * 1000; 
+    private nextClear: number = new Date().getTime() + CLEAR_TIME; 
 
     constructor () {
         this.data = new Map<string, UserToken>();
@@ -24,30 +24,35 @@ export class SessionStorage {
 
     // adiciona uma sessão ao store limpa as sessões expiradas
     public async addSession(sessionId: string, session: UserToken) {
-        console.log('[SESSION_ADD]: ', sessionId)
         const pendingClear = new Date().getTime() > this.nextClear;
         pendingClear && await this.clearExpiredSessions();
         this.data.set(sessionId, session);
     }
 
-    // busca inicialmente no store de sessões, caso nao exista, busca no database
-    // verifica se a sessão está ativa -> passa pela renovacao de token
+    // - busca o token no store
+    //      - se não encontrar busca no banco
+    // - envia para a renovacao, que é renovado se necessário, se nao, retorna o mesmo token
+    // - se o token estiver expirado, remove do store e do banco
     public async getSession(sessionId: string) {
-        const session = this.data.get(sessionId);
-        console.log('[SESSION_GET]: ', sessionId)
+        let session = this.data.get(sessionId);
         if (!session) {
-            const token = await new AuthService().findToken({
-                signature: sessionId
-            })
-
-            TokenUtils.renewToken(token);
-            return token;
+            session = await this.getTokenOnDatabase(sessionId);
         }
 
-
+        if (session && isPast(session.expired_at)) {
+            await this.removeSession(sessionId);
+            return null;
+        }
 
         return session;
     }
+
+    public async getTokenOnDatabase(sessionId: string) {
+        const token = await TokenUtils.getTokenBySignature(sessionId);
+
+        return token;
+    }
+
 
     // remove uma sessão do store e do database
     public async removeSession(sessionId: string) {
@@ -57,7 +62,7 @@ export class SessionStorage {
         this.data.delete(sessionId);
     }
 
-
+    // limpa as sessões expiradas
     public async clearExpiredSessions() {
             for await (const [sessionId, session] of this.data.entries()) {
                 if (isPast(session.expired_at)) {
@@ -67,7 +72,7 @@ export class SessionStorage {
                     this.data.delete(sessionId);
                 }
             }
-            this.nextClear = new Date().getTime() + 3600 * 1000;
+            this.nextClear = new Date().getTime() + CLEAR_TIME;
     }
 
 

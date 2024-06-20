@@ -24,7 +24,6 @@ describe('[WORKSPACE]', () => {
       await api.axios.get(`/workspace/by-user`).then(({ data, status }) => {
         expect(status).toBe(200);
         expect(data).toBeInstanceOf(Array);
-
         data.forEach(element => {
           expect(element).toHaveProperty('id');
           expect(element).toHaveProperty('name');

@@ -173,10 +173,20 @@ export class TokenUtils {
       workspace,
     });
 
-    return await UserToken.findOne({
-      where: { token: sig.accessToken },
-      relations: ['user', 'workspace'],
-    })
+    return {
+      userToken: await this.getTokenBySignature(sig.accessToken),
+      signin: sig,
+    }
+  }
+  
+  static async getTokenBySignature(signature: string) {
+    return await UserToken.createQueryBuilder('userToken')
+      .leftJoinAndSelect('userToken.user', 'user')
+      .leftJoinAndSelect('userToken.workspace', 'workspace')
+      .where('userToken.token = :token', { token: signature })
+      .getOne();
+
+
   }
 
   static async renewToken(token: UserToken) {
@@ -187,7 +197,12 @@ export class TokenUtils {
         { id: token.id },
         { expired_at: addMinutes(new Date(), Number(RENEWAL_EXPIRES_IN)) },
       );
+
+      return await this.getTokenBySignature(token.token);
     }
+
+    return token;
+    
   }
 
   static async revokeToken(user: User) {

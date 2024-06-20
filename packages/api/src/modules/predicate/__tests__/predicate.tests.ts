@@ -182,7 +182,7 @@ describe('[PREDICATE]', () => {
     });
   });
 
-  test('Find predicate by id', async () => {
+  test('Find predicate by id', async () => {    
     const auth = new AuthValidations(networks['local'], accounts['USER_3']);
     await auth.create();
     await auth.createSession();
@@ -199,15 +199,15 @@ describe('[PREDICATE]', () => {
     //create a new nicknames
     const { data: n_data5 } = await auth.axios.post('/address-book/', {
       address: USER_5.address,
-      nickname: `[TESTE]${USER_5.address}`,
+      nickname: `[TESTE]${USER_5.address}${new Date().getTime()}`,
     });
     const { data: n_data1 } = await auth.axios.post('/address-book/', {
       address: data_user1.address,
-      nickname: `[TESTE]${data_user1.address}`,
+      nickname: `[TESTE]${data_user1.address}${new Date().getTime()}`,
     });
     const { data: n_data2 } = await auth.axios.post('/address-book/', {
       address: data_user2.address,
-      nickname: `[TESTE]${data_user2.address}`,
+      nickname: `[TESTE]${data_user2.address}${new Date().getTime()}`,
     });
 
     //create a vault

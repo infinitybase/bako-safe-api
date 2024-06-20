@@ -18,11 +18,15 @@ class App {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 
   constructor() {
+    const isDevmode = process.env.NODE_ENV === 'development';
+
     this.app = Express();
     this.initMiddlewares();
     this.initRoutes();
     this.initErrorHandler();
-    this.initCronJobs();
+    
+    isDevmode && this.initCronJobs();
+    
     this.sessionCache = new SessionStorage();
   }
 

@@ -14,11 +14,8 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
   try {
     const requestAuth: IAuthRequest = req;
     const signature = requestAuth?.headers?.authorization;
-    //const signerAddress = requestAuth.get('signerAddress');
     const isRecoverCode = !!signature && signature.includes('code');
     
-    console.log('[AUTH_MIDDLEWARE] -------------------------------------', signature)
-
     if (!signature) {
       throw new Unauthorized({
         type: ErrorTypes.Unauthorized,
@@ -50,8 +47,6 @@ function authPermissionMiddleware(permission?: PermissionRoles[]) {
       
       if (!permission || permission.length === 0) return next();
       const { user, workspace } = requestAuth;
-
-      console.log('[AUTH_PERMISSION_MIDDLEWARE] -------------------------------------', user, workspace)
 
       // if not required info
       if (!user || !workspace) {
