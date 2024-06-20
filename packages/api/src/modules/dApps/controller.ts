@@ -72,11 +72,12 @@ export class DappController {
 
   async currentAccount({ params, headers }: IDappRequest) {
     try {
-      const a = await this._dappService.findBySessionID(
+      const account = await this._dappService.findBySessionID(
         params.sessionId,
-        headers.origin || headers.Origin,
+        headers.origin ?? headers.Origin,
       );
-      return successful(a.currentVault.predicateAddress, Responses.Ok);
+      const response = account?.currentVault.predicateAddress ?? null;
+      return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }
@@ -159,11 +160,14 @@ export class DappController {
 
   async currentNetwork({ params, headers }: IDappRequest) {
     try {
-      const a = await this._dappService.findBySessionID(
+      const dapp = await this._dappService.findBySessionID(
         params.sessionId,
         headers.origin || headers.Origin,
       );
-      return successful(a.currentVault.provider, Responses.Ok);
+
+      const result = dapp?.currentVault.provider ?? null;
+
+      return successful(result, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }

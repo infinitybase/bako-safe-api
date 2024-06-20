@@ -26,48 +26,7 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
       });
     }
 
-    if (isRecoverCode) {
-      const recover = await RecoverCode.findOne({
-        where: {
-          code: signature,
-          type: RecoverCodeType.AUTH_ONCE,
-        },
-        relations: ['owner'],
-      });
-
-      if (!recover) {
-        throw new Unauthorized({
-          type: ErrorTypes.Unauthorized,
-          title: UnauthorizedErrorTitles.INVALID_RECOVER_CODE,
-          detail: 'The provided recover code is invalid',
-        });
-      }
-
-      const isOld = recover.validAt < new Date();
-      const isUsed = recover.used;
-
-      if (isOld || isUsed) {
-        throw new Unauthorized({
-          type: ErrorTypes.Unauthorized,
-          title: UnauthorizedErrorTitles.INVALID_RECOVER_CODE,
-          detail: 'The provided recover code is expired',
-        });
-      }
-
-      if (Number(recover.metadata.uses) >= 3) {
-        //todo: change this number to dynamic
-        recover.used = true;
-      }
-
-      recover.metadata.uses = Number(recover.metadata.uses) + 1;
-      await recover.save();
-      requestAuth.user = recover.owner;
-      requestAuth.workspace = await Workspace.findOne({
-        where: { owner: recover.owner, single: true }, // just single workspace
-      });
-
-      return next();
-    }
+    if (isRecoverCode) return connectorMiddleware(req, res, next)
 
     const token = await TokenUtils.recoverToken(signature);
     await TokenUtils.renewToken(token);
@@ -146,6 +105,54 @@ function authPermissionMiddleware(permission?: PermissionRoles[]) {
       //return e;
     }
   };
+}
+
+const connectorMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+  const requestAuth: IAuthRequest = req;
+  const signature = requestAuth?.headers?.authorization;
+  const recover = await RecoverCode.findOne({
+    where: {
+      code: signature,
+      type: RecoverCodeType.AUTH_ONCE,
+    },
+    relations: ['owner'],
+  });
+
+  if (!recover) {
+    throw new Unauthorized({
+      type: ErrorTypes.Unauthorized,
+      title: UnauthorizedErrorTitles.INVALID_RECOVER_CODE,
+      detail: 'The provided recover code is invalid',
+    });
+  }
+
+  const isOld = recover.validAt < new Date();
+  const isUsed = recover.used;
+
+  if (isOld || isUsed) {
+    throw new Unauthorized({
+      type: ErrorTypes.Unauthorized,
+      title: UnauthorizedErrorTitles.INVALID_RECOVER_CODE,
+      detail: 'The provided recover code is expired',
+    });
+  }
+
+  if (Number(recover.metadata.uses) >= 3) {
+    //todo: change this number to dynamic
+    recover.used = true;
+  }
+
+  recover.metadata.uses = Number(recover.metadata.uses) + 1;
+  await recover.save();
+  
+  requestAuth.user = recover.owner;
+  requestAuth.workspace = await Workspace.findOne({
+    where: {
+      owner: recover.owner,
+    },
+  })
+
+  return next();
 }
 
 export { authMiddleware, authPermissionMiddleware };
