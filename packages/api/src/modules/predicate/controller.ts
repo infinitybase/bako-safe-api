@@ -171,6 +171,8 @@ export class PredicateController {
     const { params, workspace } = req;
     const { name } = params;
     try {
+      if(!name || name.length === 0) return successful(false, Responses.Ok);
+
       const response = await Predicate.createQueryBuilder('p')
         .leftJoin('p.workspace', 'w')
         .addSelect(['w.id', 'w.name'])
