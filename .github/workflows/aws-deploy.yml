@@ -1,8 +1,8 @@
+name: Prod Deploy to Amazon ECS
+
 on:
   push:
     branches: [ FEAT/get-ci ]
-
-name: Prod Deploy to Amazon ECS
 
 jobs:
   deploy:
@@ -30,32 +30,30 @@ jobs:
       id: login_ecr
       uses: aws-actions/amazon-ecr-login@v1
 
-    - name: Build and push Docker image
-      id: docker_build
-      uses: docker/build-push-action@v2
+    - name: Build, tag, and push image to Amazon ECR
+      id: build-image
       env:
-        ECR_NAME: bako-safe-api
         ECR_REGISTRY: ${{ steps.login_ecr.outputs.registry }}
+        ECR_REPOSITORY: bako-safe-api
         IMAGE_TAG: ${{ github.sha }}
-      with:
-        context: ./packages/api
-        file: ./packages/api/Dockerfile
-        platforms: linux/arm64
-        push: true
-        tags: ${{ env.ECR_REGISTRY }}/${{ env.ECR_NAME }}:${{ env.IMAGE_TAG }}
+      run: |
+        # Build a docker container and push it to ECR
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./packages/api
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
     - name: Fill in the new image ID in the Amazon ECS task definition
-      id: task_def
+      id: task-def
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
         task-definition: ./packages/api/prod_task_definition.json
         container-name: bako-safe-api
-        image: ${{ env.ECR_REGISTRY }}/${{ env.ECR_NAME }}:${{ env.IMAGE_TAG }}
+        image: ${{ steps.build-image.outputs.image }}
 
     - name: Deploy Amazon ECS task definition
       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
       with:
-        task-definition: ${{ steps.task_def.outputs.task-definition }}
+        task-definition: ${{ steps.task-def.outputs.task-definition }}
         service: bako-safe-api-service
         cluster: Bako-Safe-ECS
         wait-for-service-stability: true
