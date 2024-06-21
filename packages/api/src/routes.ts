@@ -30,9 +30,9 @@ router.get('/ping', ({ res }) =>
   res.send(`${new Date().toISOString()} ${process.env.APP_NAME}`),
 );
 
-// Health Check
+// healthcheck route
 router.get('/healthcheck', ({ res }) =>
-  res.status(200).send({ status: 'ok', message: 'Health check Bako-Safe-Api passed' }),
+  res.status(200).send({ status: 'ok' })
 );
 
 export { router };
