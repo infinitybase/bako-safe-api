@@ -43,8 +43,10 @@ jobs:
         platforms: linux/arm64
         push: true
         tags: ${{ env.ECR_REGISTRY }}/${{ env.ECR_NAME }}:${{ env.IMAGE_TAG }}
-      outputs:
-        image: ${{ steps.docker_build.outputs.image }}
+
+    - name: Set image output
+      id: set_image_output
+      run: echo "IMAGE=${{ env.ECR_REGISTRY }}/${{ env.ECR_NAME }}:${{ env.IMAGE_TAG }}" >> $GITHUB_ENV
 
     - name: Fill in the new image ID in the Amazon ECS task definition
       id: task_def
@@ -52,7 +54,7 @@ jobs:
       with:
         task-definition: ./packages/api/prod_task_definition.json
         container-name: bako-safe-api
-        image: ${{ steps.docker_build.outputs.image }}
+        image: ${{ env.IMAGE }}
 
     - name: Deploy Amazon ECS task definition
       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
