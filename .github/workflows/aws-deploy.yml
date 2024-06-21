@@ -34,6 +34,7 @@ jobs:
       id: docker_build
       uses: docker/build-push-action@v2
       env:
+        ECR_NAME: bako-safe-api
         ECR_REGISTRY: ${{ steps.login_ecr.outputs.registry }}
         IMAGE_TAG: ${{ github.sha }}
       with:
@@ -41,7 +42,7 @@ jobs:
         file: ./packages/api/Dockerfile
         platforms: linux/arm64
         push: true
-        tags: ${{ env.ECR_REGISTRY }}/:${{ env.IMAGE_TAG }}
+        tags: ${{ env.ECR_REGISTRY }}/${{ env.ECR_NAME }}:${{ env.IMAGE_TAG }}
 
     - name: Fill in the new image ID in the Amazon ECS task definition
       id: task_def
