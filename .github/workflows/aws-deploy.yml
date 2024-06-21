@@ -37,7 +37,8 @@ jobs:
         ECR_REPOSITORY: 392170836981.dkr.ecr.us-east-1.amazonaws.com/bako-safe-api
         IMAGE_TAG: ${{ github.sha }}
       with:
-        context: .
+        context: ./packages/api
+        file: ./packages/api/Dockerfile
         platforms: linux/arm64
         push: true
         tags: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
