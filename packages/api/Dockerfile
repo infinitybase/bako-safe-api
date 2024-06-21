@@ -1,8 +1,5 @@
 FROM arm64v8/node:18.18.2-alpine
 
-# Instalar o Yarn globalmente
-RUN npm install -g yarn
-
 # Create app directory
 WORKDIR /api
 ADD . /api
