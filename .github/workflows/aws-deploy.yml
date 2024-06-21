@@ -30,12 +30,6 @@ jobs:
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
 
-    - name: Set up Node.js environment
-      uses: actions/setup-node@v2
-      with:
-        node-version: '18'
-        cache: 'yarn'
-
     - name: Build and push Docker image
       uses: docker/build-push-action@v2
       env:
