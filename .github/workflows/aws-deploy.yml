@@ -50,7 +50,7 @@ jobs:
       with:
         task-definition: ./packages/api/prod_task_definition.json
         container-name: bako-safe-api
-        image: ${{ steps.docker_build.outputs.image }}
+        image: ${{ env.ECR_REGISTRY }}/${{ env.ECR_NAME }}:${{ env.IMAGE_TAG }}
 
     - name: Deploy Amazon ECS task definition
       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
