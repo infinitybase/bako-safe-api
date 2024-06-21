@@ -5,15 +5,15 @@ WORKDIR api
 ADD . /api
 
 # Install app dependencies
-RUN yarn install
+RUN npm install
 
 # Install pm2
-RUN yarn global add pm2
+RUN npm global add pm2
 
 # Build
-RUN yarn build
+RUN npm build
 
 # Run!
 EXPOSE 3333
 
-ENTRYPOINT ["yarn", "start"]
+ENTRYPOINT ["npm", "run", "start"]
