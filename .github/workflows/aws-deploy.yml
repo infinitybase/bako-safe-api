@@ -43,10 +43,11 @@ jobs:
         platforms: linux/arm64
         push: true
         tags: ${{ env.ECR_REGISTRY }}/${{ env.ECR_NAME }}:${{ env.IMAGE_TAG }}
+      run: |
+        echo "IMAGE=${{ env.ECR_REGISTRY }}/${{ env.ECR_NAME }}:${{ env.IMAGE_TAG }}" >> $GITHUB_ENV
 
-    - name: Set image output
-      id: set_image_output
-      run: echo "IMAGE=${{ env.ECR_REGISTRY }}/${{ env.ECR_NAME }}:${{ env.IMAGE_TAG }}" >> $GITHUB_ENV
+    - name: Output image details
+      run: echo "Image: ${{ env.IMAGE }}"
 
     - name: Fill in the new image ID in the Amazon ECS task definition
       id: task_def
