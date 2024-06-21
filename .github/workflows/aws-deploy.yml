@@ -27,13 +27,14 @@ jobs:
         aws-region: us-east-1
 
     - name: Login to Amazon ECR
-      id: login-ecr
+      id: login_ecr
       uses: aws-actions/amazon-ecr-login@v1
 
     - name: Build and push Docker image
+      id: docker_build
       uses: docker/build-push-action@v2
       env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        ECR_REGISTRY: ${{ steps.login_ecr.outputs.registry }}
         ECR_REPOSITORY: 392170836981.dkr.ecr.us-east-1.amazonaws.com/bako-safe-api
         IMAGE_TAG: ${{ github.sha }}
       with:
@@ -43,3 +44,20 @@ jobs:
         push: true
         tags: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}
 
+    - name: Fill in the new image ID in the Amazon ECS task definition
+      id: task_def
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      with:
+        with:
+          task-definition: ./packages/api/prod_task_definition.json
+          container-name: bako-safe-api
+          image: ${{ steps.docker_build.outputs.image }}
+
+    - name: Deploy Amazon ECS task definition
+      id: deploy
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      with:
+        task-definition: ${{ steps.task_def.outputs.task-definition }}
+        service: bako-safe-api-service
+        cluster: Bako-Safe-ECS
+        wait-for-service-stability: true
