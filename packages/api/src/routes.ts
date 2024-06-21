@@ -29,4 +29,13 @@ router.use('/workspace', workspace);
 router.get('/ping', ({ res }) =>
   res.send(`${new Date().toISOString()} ${process.env.APP_NAME}`),
 );
+
+// Health Check
+router.get('/healthcheck', ({ res }) =>
+  res.status(200).send({
+     status: 'ok', 
+     message: `Health check ${process.env.APP_NAME} passed` 
+  }),
+);
+
 export { router };
