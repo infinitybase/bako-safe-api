@@ -67,7 +67,7 @@ export class SessionStorage {
             for await (const [sessionId, session] of this.data.entries()) {
                 if (isPast(session.expired_at)) {
                     await UserToken.delete({
-                        token: sessionId
+                        id: session.id
                     });
                     this.data.delete(sessionId);
                 }
