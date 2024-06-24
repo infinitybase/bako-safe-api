@@ -1,7 +1,8 @@
 import { Predicate, TotalValueLocked } from '@src/models';
 import { Asset, IConfVault, Vault } from 'bakosafe';
 import cron from 'node-cron';
-import { getAssetSlugByAssetId, getPriceUSD } from '../balance';
+import { generateSlugParams, getPriceUSD } from '../balance';
+import { assetsMapById } from '../assets';
 
 // Executa todos os dias a meia-noite
 const TVLCronJob = cron.schedule('0 0 * * *', async () => {
@@ -51,25 +52,32 @@ const TVLCronJob = cron.schedule('0 0 * * *', async () => {
     const assetsTVL = await Asset.assetsGroupById(
       vaultsBalance.map(item => ({ ...item, amount: item.amount.format() })),
     );
-    const formattedAssetsTVL = await Promise.all(
-      Object.entries(assetsTVL)
-        // Filtro para considerar apenas assets existentes no dicionário
-        .filter(([assetId, amount]) => {
-          const assetSlug = getAssetSlugByAssetId(assetId);
-          return assetSlug !== undefined;
-        })
-        .map(async ([assetId, amount]) => {
-          const assetSlug = getAssetSlugByAssetId(assetId);
-          const formattedAmount = amount.format();
-          const priceUSD = await getPriceUSD(assetSlug);
+    const validAssetsTVL = Object.entries(assetsTVL)
+      // Filtro para considerar apenas assets existentes no dicionário
+      .filter(([assetId, amount]) => {
+        const asset = assetsMapById[assetId];
+        return asset !== undefined;
+      })
+      .map(([assetId, amount]) => {
+        return {
+          amount,
+          assetId,
+        };
+      });
 
-          return {
-            assetId,
-            amount: formattedAmount,
-            amountUSD: Number((parseFloat(formattedAmount) * priceUSD).toFixed(2)),
-          };
-        }),
-    );
+    const assetSlugs = generateSlugParams(validAssetsTVL);
+    const assetPrices = await getPriceUSD(assetSlugs);
+
+    const formattedAssetsTVL = validAssetsTVL.map(asset => {
+      const formattedAmount = asset.amount.format();
+      const priceUSD = assetPrices[asset.assetId] ?? 0;
+
+      return {
+        assetId: asset.assetId,
+        amount: formattedAmount,
+        amountUSD: Number((parseFloat(formattedAmount) * priceUSD).toFixed(2)),
+      };
+    });
 
     // Salva cada item no BD
     for await (const formattedAssetTVL of formattedAssetsTVL) {
