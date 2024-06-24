@@ -1,4 +1,4 @@
-name: Prod Deploy to Amazon ECS
+name: Prod Deploy API to Amazon ECS
 
 on:
   push:

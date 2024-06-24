@@ -1,4 +1,4 @@
-name: Prod Deploy to Amazon ECS
+name: Prod Deploy Socket Server to Amazon ECS
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
 
 jobs:
   deploy:
-    name: Deploy Socket server to Amazon ECS
+    name: Deploy Socket Server to Amazon ECS
     runs-on: ubuntu-latest
 
     steps:
