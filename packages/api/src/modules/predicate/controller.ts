@@ -11,6 +11,7 @@ import {
   Asset,
   NotificationTitle,
   Transaction,
+  TransactionType,
   TypeUser,
   User,
 } from '@models/index';
@@ -142,7 +143,66 @@ export class PredicateController {
 
   async findById({ params: { id }, user }: IFindByIdRequest) {
     try {
-      const predicate = await this.predicateService.findById(id, user.address);
+      const { predicate, missingDeposits } = await this.predicateService.findById(
+        id,
+        user.address,
+      );
+
+      if (missingDeposits.length >= 1) {
+        for (const deposit of missingDeposits) {
+          console.log('Processing deposit:', deposit);
+
+          try {
+            await this.transactionService.create({
+              // em transaction "normal" o nome do campo é id, nos depositos é TXID
+              txData: deposit.txData,
+              type: TransactionType.DEPOSIT,
+              // verificar name e hash, esse são valores provisórios
+              name: deposit.id,
+              hash: deposit.id,
+              sendTime: deposit.date,
+              gasUsed: deposit.gasUsed,
+              predicateId: predicate.id,
+              status: TransactionStatus.SUCCESS,
+              resume: {
+                // verificar hash
+                hash: deposit.id,
+                status: TransactionStatus.SUCCESS,
+                witnesses: [predicate.owner.address],
+                // Corrigir tipagem
+                // @ts-ignore
+                outputs: deposit.operations.map(({ assetsSent, to, from }) => ({
+                  // Corrigir tipagem
+                  // @ts-ignore
+                  amount: String(assetsSent[0].amount.format()),
+                  to,
+                  from,
+                  assetId: assetsSent[0].assetId,
+                })),
+                requiredSigners: predicate.minSigners,
+                totalSigners: predicate.members.length,
+                predicate: {
+                  id: predicate.id,
+                  address: predicate.predicateAddress,
+                },
+                BakoSafeID: '',
+              },
+              witnesses: [
+                {
+                  ...predicate.owner,
+                  account: predicate.owner.id,
+                  createdAt: deposit.date,
+                },
+              ],
+              predicate,
+              createdBy: predicate.owner,
+              summary: null,
+            });
+          } catch (error) {
+            console.error('Error saving deposit:', deposit, error);
+          }
+        }
+      }
 
       return successful(predicate, Responses.Ok);
     } catch (e) {
@@ -160,12 +220,12 @@ export class PredicateController {
         .list()
         .then((data: Predicate[]) => data[0]);
 
-      const _response = await this.predicateService.findById(
+      const { predicate } = await this.predicateService.findById(
         response.id,
         undefined,
       );
 
-      return successful(_response, Responses.Ok);
+      return successful(predicate, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }
@@ -217,7 +277,10 @@ export class PredicateController {
           return bn.parseUnits('0');
         });
 
-      const predicate = await this.predicateService.findById(address, undefined);
+      const { predicate } = await this.predicateService.findById(
+        address,
+        undefined,
+      );
 
       const instance = await this.predicateService.instancePredicate(predicate.id);
       const balance = await instance.getBalance();

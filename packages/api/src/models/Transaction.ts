@@ -13,6 +13,10 @@ import { Base } from './Base';
 import { Predicate } from './Predicate';
 import { Witness } from './Witness';
 
+export enum TransactionType {
+  TRANSACTION_SCRIPT = 'TRANSACTION_SCRIPT',
+  DEPOSIT = 'DEPOSIT',
+}
 @Entity('transactions')
 class Transaction extends Base {
   @Column()
@@ -20,6 +24,14 @@ class Transaction extends Base {
 
   @Column()
   hash: string;
+
+  @Column({
+    name: 'type',
+    type: 'enum',
+    enum: TransactionType,
+    default: TransactionType.TRANSACTION_SCRIPT,
+  })
+  type: TransactionType;
 
   @Column({
     type: 'jsonb',
