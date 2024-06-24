@@ -1,15 +1,15 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:us-east-1:392170836981:task-definition/bako-safe-api:4",
+    "taskDefinitionArn": "arn:aws:ecs:us-east-1:392170836981:task-definition/bako-safe-socket-server-api:3",
     "containerDefinitions": [
         {
-            "name": "bako-safe-api",
-            "image": "392170836981.dkr.ecr.us-east-1.amazonaws.com/bako-safe-api:v1",
+            "name": "bako-safe-socket-server-api",
+            "image": "392170836981.dkr.ecr.us-east-1.amazonaws.com/bako-safe-socket-server-api:v1",
             "cpu": 0,
             "portMappings": [
                 {
-                    "name": "port-3333",
-                    "containerPort": 3333,
-                    "hostPort": 3333,
+                    "name": "port-3001",
+                    "containerPort": 3001,
+                    "hostPort": 3001,
                     "protocol": "tcp",
                     "appProtocol": "http"
                 }
@@ -18,7 +18,7 @@
             "environment": [],
             "environmentFiles": [
                 {
-                    "value": "arn:aws:s3:::bako-safe-env/api.stg.env",
+                    "value": "arn:aws:s3:::bako-safe-env/bako-safe-socket-server-api-prod.env",
                     "type": "s3"
                 }
             ],
@@ -28,7 +28,7 @@
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
-                    "awslogs-group": "/ecs/bako-safe-api",
+                    "awslogs-group": "/ecs/bako-safe-socket-server-api",
                     "awslogs-create-group": "true",
                     "awslogs-region": "us-east-1",
                     "awslogs-stream-prefix": "ecs"
@@ -38,11 +38,11 @@
             "systemControls": []
         }
     ],
-    "family": "bako-safe-api",
+    "family": "bako-safe-socket-server-api",
     "taskRoleArn": "arn:aws:iam::392170836981:role/ecs-api-bsafe-s3-bako-safe-env",
     "executionRoleArn": "arn:aws:iam::392170836981:role/ecsTaskExecutionRole",
     "networkMode": "awsvpc",
-    "revision": 4,
+    "revision": 3,
     "volumes": [],
     "status": "ACTIVE",
     "requiresAttributes": [
@@ -85,13 +85,13 @@
     "requiresCompatibilities": [
         "FARGATE"
     ],
-    "cpu": "512",
-    "memory": "1024",
+    "cpu": "256",
+    "memory": "512",
     "runtimePlatform": {
         "cpuArchitecture": "ARM64",
         "operatingSystemFamily": "LINUX"
     },
-    "registeredAt": "2024-06-21T19:04:43.968Z",
+    "registeredAt": "2024-06-21T19:49:17.607Z",
     "registeredBy": "arn:aws:iam::392170836981:user/jota",
     "tags": [
         {
@@ -100,7 +100,7 @@
         },
         {
             "key": "nome",
-            "value": "bako-safe-api-task"
+            "value": "bako-safe-socket-server-api-task"
         }
     ]
 }
