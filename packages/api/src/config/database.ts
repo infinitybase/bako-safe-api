@@ -10,10 +10,10 @@ const {
   DATABASE_USERNAME,
   DATABASE_NAME,
   DATABASE_PORT,
-  NODE_ENV,
+  API_ENVIRONMENT,
 } = process.env;
 
-const environment: string = NODE_ENV;
+const environment: string = API_ENVIRONMENT;
 const entitiesDir = path.resolve(__dirname, '..', 'models', '**', '*{.ts,.js}');
 
 console.log('[DATABASE_CONNECTION]: ', {
@@ -22,7 +22,7 @@ console.log('[DATABASE_CONNECTION]: ', {
   DATABASE_USERNAME,
   DATABASE_NAME,
   DATABASE_PORT,
-  NODE_ENV,
+  API_ENVIRONMENT,
 })
 
 export const migrationsDir = path.resolve(
@@ -79,6 +79,9 @@ const production: ConnectionOptions = {
   entities: [entitiesDir],
   migrations: [migrationsDir, seedersDir],
   synchronize: false,
+  ssl: {
+    rejectUnauthorized: false,
+  },
   migrationsRun: true,
 };
 
@@ -92,6 +95,9 @@ const staging: ConnectionOptions = {
   entities: [entitiesDir],
   migrations: [migrationsDir, seedersDir],
   synchronize: false,
+  ssl: {
+    rejectUnauthorized: false,
+  },
   migrationsRun: true,
 };
 
