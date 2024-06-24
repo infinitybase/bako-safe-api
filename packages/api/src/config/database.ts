@@ -79,9 +79,6 @@ const production: ConnectionOptions = {
   entities: [entitiesDir],
   migrations: [migrationsDir, seedersDir],
   synchronize: false,
-  ssl: {
-    rejectUnauthorized: false,
-  },
   migrationsRun: true,
 };
 
@@ -95,9 +92,6 @@ const staging: ConnectionOptions = {
   entities: [entitiesDir],
   migrations: [migrationsDir, seedersDir],
   synchronize: false,
-  ssl: {
-    rejectUnauthorized: false,
-  },
   migrationsRun: true,
 };
 
