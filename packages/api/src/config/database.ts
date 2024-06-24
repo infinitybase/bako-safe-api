@@ -15,6 +15,16 @@ const {
 
 const environment: string = NODE_ENV;
 const entitiesDir = path.resolve(__dirname, '..', 'models', '**', '*{.ts,.js}');
+
+console.log('[DATABASE_CONNECTION]: ', {
+  DATABASE_PASSWORD,
+  DATABASE_HOST,
+  DATABASE_USERNAME,
+  DATABASE_NAME,
+  DATABASE_PORT,
+  NODE_ENV,
+})
+
 export const migrationsDir = path.resolve(
   __dirname,
   '..',
