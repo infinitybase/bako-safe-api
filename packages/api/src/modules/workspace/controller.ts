@@ -179,12 +179,7 @@ export class WorkspaceController {
     try {
       const { id } = req.params;
 
-      const response = await new WorkspaceService()
-        .filter({
-          id,
-        })
-        .list()
-        .then((response: Workspace[]) => response[0]);
+      const response = await new WorkspaceService().findById(id);
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
@@ -203,10 +198,7 @@ export class WorkspaceController {
           id,
         })
         .then(async () => {
-          return await new WorkspaceService()
-            .filter({ id })
-            .list()
-            .then(data => data[0]);
+          return await new WorkspaceService().findById(id);
         });
       return successful(response, Responses.Ok);
     } catch (e) {

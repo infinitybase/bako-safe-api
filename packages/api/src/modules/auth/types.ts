@@ -69,6 +69,7 @@ export interface IFindTokenParams {
 
 export interface ISignInResponse {
   accessToken: string;
+  expiredAt: Date;
   avatar: string;
   user_id: string;
   workspace: {
