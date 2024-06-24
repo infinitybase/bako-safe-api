@@ -19,6 +19,7 @@ import { IconUtils } from '@src/utils/icons';
 import { ErrorTypes, error } from '@utils/error';
 import {
   Responses,
+  assetsMapBySymbol,
   calculateBalanceUSD,
   subtractReservedCoinsFromBalances,
   successful,
@@ -37,7 +38,6 @@ import {
   IUpdateRequest,
 } from './types';
 import { CoinQuantity, bn } from 'fuels';
-import { assets } from '@src/mocks/assets';
 
 export class WorkspaceController {
   async listByUser(req: IListByUserRequest) {
@@ -135,7 +135,10 @@ export class WorkspaceController {
             })
             .catch(() => {
               return [
-                { assetId: assets.ETH, amount: bn.parseUnits('0') },
+                {
+                  assetId: assetsMapBySymbol['ETH'].id,
+                  amount: bn.parseUnits('0'),
+                },
               ] as CoinQuantity[];
             });
         });

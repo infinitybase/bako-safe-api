@@ -17,6 +17,7 @@ import {
 import { error } from '@utils/error';
 import {
   Responses,
+  assetsMapBySymbol,
   bindMethods,
   calculateBalanceUSD,
   subtractReservedCoinsFromBalances,
@@ -37,7 +38,6 @@ import {
   IPredicateService,
 } from './types';
 import { IPredicateVersionService } from '../predicateVersion/types';
-import { assets } from '@src/mocks/assets';
 
 export class PredicateController {
   private userService: IUserService;
@@ -230,7 +230,10 @@ export class PredicateController {
         })
         .catch(() => {
           return [
-            { assetId: assets.ETH, amount: bn.parseUnits('0') },
+            {
+              assetId: assetsMapBySymbol['ETH'].id,
+              amount: bn.parseUnits('0'),
+            },
           ] as CoinQuantity[];
         });
 

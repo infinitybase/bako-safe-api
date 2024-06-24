@@ -2,15 +2,16 @@ import { BakoSafe, TransactionStatus, Vault } from 'bakosafe';
 import { bn, Address, Provider } from 'fuels';
 
 import { accounts } from '@src/mocks/accounts';
-import { assets } from '@src/mocks/assets';
+
 import { sendPredicateCoins } from '@src/utils/testUtils/Wallet';
+import { assetsMapBySymbol } from '@src/utils';
 
 export const transaction = {
   name: 'Transaction A',
   assets: [
     {
       amount: '0.0001',
-      assetId: assets['ETH'],
+      assetId: assetsMapBySymbol['ETH'].id,
       to: accounts['STORE'].address,
     },
   ],
