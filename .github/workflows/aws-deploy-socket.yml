@@ -1,4 +1,4 @@
-name: [Socket Server] Deploy to Amazon ECS
+name: '[Socket Server] Deploy to Amazon ECS'
 
 on:
   push:
