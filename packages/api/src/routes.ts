@@ -27,7 +27,7 @@ router.use('/workspace', workspace);
 
 // ping route
 router.get('/ping', ({ res }) =>
-  res.send(`${new Date().toISOString()} ${process.env.APP_NAME}`),
+  res.send(`${new Date().toISOString()} ${process.env.API_NAME}`),
 );
 
 // healthcheck route

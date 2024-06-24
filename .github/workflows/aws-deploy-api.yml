@@ -1,4 +1,4 @@
-name: Prod Deploy API to Amazon ECS
+name: [API] Deploy to Amazon ECS
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
 
 jobs:
   deploy:
-    name: Deploy API to Amazon ECS
+    name: [API] Deploy to Amazon ECS
     runs-on: ubuntu-latest
 
     steps:
