@@ -9,3 +9,4 @@ export * from './token';
 export * from './predicateVersionName';
 export * from './cronJobs';
 export * from './balance';
+export * from './assets';
