@@ -24,6 +24,11 @@ app.get('/', (req, res) => {
 	res.json({ message: `${APP_NAME} ${new Date()}` })
 })
 
+// Health Check
+app.get('/health', ({ res }) =>
+    res.status(200).send({ status: 'ok', message: `Health check ${process.env.APP_NAME} passed` }),
+);
+
 // Configuração do Socket.IO
 io.on(SocketEvents.CONNECT, async socket => {
 	console.log('Conexão estabelecida com o cliente:', socket.handshake.auth)
