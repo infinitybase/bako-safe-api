@@ -2,7 +2,7 @@ name: Prod Deploy API to Amazon ECS
 
 on:
   push:
-    branches: [ main ]
+    branches: [ FEAT/get-ci ]
 
 jobs:
   deploy:
