@@ -2,7 +2,7 @@ name: '[API] Deploy to Amazon ECS'
 
 on:
   push:
-    branches: [ FEAT/get-ci ]
+    branches: [ main ]
 
 jobs:
   deploy:
