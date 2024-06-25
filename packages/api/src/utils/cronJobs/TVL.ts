@@ -1,8 +1,8 @@
 import { Predicate, TotalValueLocked } from '@src/models';
 import { Asset, IConfVault, Vault } from 'bakosafe';
 import cron from 'node-cron';
-import { generateSlugParams, getPriceUSD } from '../balance';
 import { assetsMapById } from '../assets';
+import app from '@src/server/app';
 
 // Executa todos os dias a meia-noite
 const TVLCronJob = cron.schedule('0 0 * * *', async () => {
@@ -65,12 +65,9 @@ const TVLCronJob = cron.schedule('0 0 * * *', async () => {
         };
       });
 
-    const assetSlugs = generateSlugParams(validAssetsTVL);
-    const assetPrices = await getPriceUSD(assetSlugs);
-
     const formattedAssetsTVL = validAssetsTVL.map(asset => {
       const formattedAmount = asset.amount.format();
-      const priceUSD = assetPrices[asset.assetId] ?? 0;
+      const priceUSD = app._quoteCache.getQuote(asset.assetId);
 
       return {
         assetId: asset.assetId,
