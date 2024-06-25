@@ -35,6 +35,11 @@ export const assets: IAsset[] = [
     id: '0xda1fb840452bba3ab65a11f782902e7286fc44b94a9b85059dd7f8b68bf371d4',
   },
   {
+    symbol: 'UNI',
+    slug: 'uniswap',
+    id: '0xb3238af388ac05188e342b1801db79d358e4a162734511316c937b00c8687fe9',
+  },
+  {
     symbol: 'DAI',
     id: '0x0d9be25f6bef5c945ce44db64b33da9235fbf1a9f690298698d899ad550abae1',
   },
