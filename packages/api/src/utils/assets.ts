@@ -1,24 +1,24 @@
-export type Asset = {
+export type IAsset = {
   symbol: string;
   slug: string;
   id: string;
 };
 
-export type AssetMapById = {
+export type IAssetMapById = {
   [id: string]: {
     symbol: string;
     slug: string;
   };
 };
 
-export type AssetMapBySymbol = {
+export type IAssetMapBySymbol = {
   [symbol: string]: {
     slug: string;
     id: string;
   };
 };
 
-export const assets: Asset[] = [
+export const assets: IAsset[] = [
   {
     symbol: 'ETH',
     slug: 'ethereum',
@@ -46,7 +46,7 @@ export const assets: Asset[] = [
   },
 ];
 
-export const assetsMapById: AssetMapById = assets.reduce(
+export const assetsMapById: IAssetMapById = assets.reduce(
   (previousValue, currentValue) => {
     return {
       ...previousValue,
@@ -59,7 +59,7 @@ export const assetsMapById: AssetMapById = assets.reduce(
   {},
 );
 
-export const assetsMapBySymbol: AssetMapBySymbol = assets.reduce(
+export const assetsMapBySymbol: IAssetMapBySymbol = assets.reduce(
   (previousValue, currentValue) => {
     return {
       ...previousValue,
