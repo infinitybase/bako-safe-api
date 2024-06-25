@@ -9,7 +9,7 @@ const generateSlugParams = (balances: CoinQuantity[]): string => {
   return balances.reduce((acc, balance) => {
     const asset = assetsMapById[balance.assetId];
 
-    if (asset) {
+    if (asset && asset.slug) {
       acc += (acc ? ',' : '') + asset.slug;
     }
 

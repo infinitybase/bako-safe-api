@@ -1,19 +1,19 @@
 export type IAsset = {
   symbol: string;
-  slug: string;
+  slug?: string;
   id: string;
 };
 
 export type IAssetMapById = {
   [id: string]: {
     symbol: string;
-    slug: string;
+    slug?: string;
   };
 };
 
 export type IAssetMapBySymbol = {
   [symbol: string]: {
-    slug: string;
+    slug?: string;
     id: string;
   };
 };
@@ -36,12 +36,10 @@ export const assets: IAsset[] = [
   },
   {
     symbol: 'DAI',
-    slug: 'dai',
     id: '0x0d9be25f6bef5c945ce44db64b33da9235fbf1a9f690298698d899ad550abae1',
   },
   {
     symbol: 'sETH',
-    slug: 'seth',
     id: '0x1bdeed96ee1e5eca0bd1d7eeeb51d03b0202c1faf764fec1b276ba27d5d61d89',
   },
 ];
