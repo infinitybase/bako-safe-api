@@ -2,7 +2,7 @@ import { CoinQuantity, bn } from 'fuels';
 
 import app from '@src/server/app';
 
-const calculateBalanceUSD = async (balances: CoinQuantity[]): Promise<string> => {
+const calculateBalanceUSD = (balances: CoinQuantity[]): string => {
   let balanceUSD = 0;
 
   balances.forEach(balance => {

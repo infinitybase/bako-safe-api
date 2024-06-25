@@ -164,7 +164,7 @@ export class WorkspaceController {
 
       return successful(
         {
-          balanceUSD: await calculateBalanceUSD(availableAssetsBalance),
+          balanceUSD: calculateBalanceUSD(availableAssetsBalance),
           workspaceId: workspace.id,
           assetsBalance: availableAssetsBalance,
         },

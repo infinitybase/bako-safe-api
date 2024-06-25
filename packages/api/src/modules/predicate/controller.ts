@@ -160,7 +160,7 @@ export class PredicateController {
     try {
       const response = await Predicate.findOne({
         where: { predicateAddress: address },
-      })
+      });
 
       const _response = await this.predicateService.findById(
         response.id,
@@ -177,7 +177,7 @@ export class PredicateController {
     const { params, workspace } = req;
     const { name } = params;
     try {
-      if(!name || name.length === 0) return successful(false, Responses.Ok);
+      if (!name || name.length === 0) return successful(false, Responses.Ok);
 
       const response = await Predicate.createQueryBuilder('p')
         .leftJoin('p.workspace', 'w')
@@ -242,7 +242,7 @@ export class PredicateController {
 
       return successful(
         {
-          balanceUSD: await calculateBalanceUSD(balancesToConvert),
+          balanceUSD: calculateBalanceUSD(balancesToConvert),
           reservedCoins: response,
         },
         Responses.Ok,
@@ -273,19 +273,17 @@ export class PredicateController {
         })
         .list()
         .then((response: Workspace[]) => response[0]);
-      
 
       const hasSingle = singleWorkspace.id === workspace.id;
 
-      const _wk = hasSingle 
+      const _wk = hasSingle
         ? await new WorkspaceService()
-        .filter({
-          user: user.id,
-        })
-        .list()
-        .then((response: Workspace[]) => response.map(wk => wk.id)) 
+            .filter({
+              user: user.id,
+            })
+            .list()
+            .then((response: Workspace[]) => response.map(wk => wk.id))
         : [workspace.id];
-
 
       const response = await this.predicateService
         .filter({
