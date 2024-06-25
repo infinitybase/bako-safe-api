@@ -25,15 +25,20 @@ export class QuoteStorage {
 
   private async addQuotes(): Promise<void> {
     const params = this.generateParams(assets);
-    const quotes = await this.fetchQuotes(params);
 
-    quotes.forEach(quote => {
-      this.setQuote(quote.assetId, quote.price);
-    });
+    if (params) {
+      const quotes = await this.fetchQuotes(params);
+
+      quotes.forEach(quote => {
+        this.setQuote(quote.assetId, quote.price);
+      });
+    }
   }
 
-  private generateParams(assets: IAsset[]): string {
-    return assets.reduce((acc, asset) => {
+  private generateParams(assets?: IAsset[]): string {
+    if (!assets) return '';
+
+    const params = assets.reduce((acc, asset) => {
       const _asset = assetsMapById[asset.id];
 
       if (_asset && _asset.slug) {
@@ -42,6 +47,8 @@ export class QuoteStorage {
 
       return acc;
     }, '');
+
+    return params;
   }
 
   private async fetchQuotes(params: string): Promise<IQuote[]> {
