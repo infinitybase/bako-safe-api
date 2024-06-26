@@ -21,16 +21,14 @@ describe('[PREDICATE]', () => {
     'Create predicate without version code',
     async () => {
       const {
-        data: data_workspace,
         data_user1,
         data_user2,
-        USER_5,
       } = await generateWorkspacePayload(api);
       const members = [data_user1.address, data_user2.address];
       const { predicatePayload } = await PredicateMock.create(1, members);
       const { data } = await api.axios.post('/predicate', predicatePayload);
 
-      const { data: workspace, status: status_find } = await api.axios.get(
+      const { data: workspace } = await api.axios.get(
         `/workspace/${api.workspace.id}`,
       );
 
@@ -184,7 +182,7 @@ describe('[PREDICATE]', () => {
     });
   });
 
-  test('Find predicate by id', async () => {
+  test('Find predicate by id', async () => {    
     const auth = new AuthValidations(networks['local'], accounts['USER_3']);
     await auth.create();
     await auth.createSession();
@@ -201,15 +199,15 @@ describe('[PREDICATE]', () => {
     //create a new nicknames
     const { data: n_data5 } = await auth.axios.post('/address-book/', {
       address: USER_5.address,
-      nickname: `[TESTE]${USER_5.address}`,
+      nickname: `[TESTE]${USER_5.address}${new Date().getTime()}`,
     });
     const { data: n_data1 } = await auth.axios.post('/address-book/', {
       address: data_user1.address,
-      nickname: `[TESTE]${data_user1.address}`,
+      nickname: `[TESTE]${data_user1.address}${new Date().getTime()}`,
     });
     const { data: n_data2 } = await auth.axios.post('/address-book/', {
       address: data_user2.address,
-      nickname: `[TESTE]${data_user2.address}`,
+      nickname: `[TESTE]${data_user2.address}${new Date().getTime()}`,
     });
 
     //create a vault

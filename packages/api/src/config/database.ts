@@ -66,6 +66,9 @@ const test: ConnectionOptions = {
   entities: [entitiesDir],
   migrations: [migrationsDir, seedersDir],
   synchronize: false,
+  ssl: {
+    rejectUnauthorized: false,
+  },
   migrationsRun: true,
 };
 

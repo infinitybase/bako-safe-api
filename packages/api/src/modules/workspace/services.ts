@@ -9,8 +9,6 @@ import {
 } from '@src/models/Workspace';
 import {
   ErrorTypes,
-  Unauthorized,
-  UnauthorizedErrorTitles,
 } from '@src/utils/error';
 import GeneralError from '@src/utils/error/GeneralError';
 import Internal from '@src/utils/error/Internal';
@@ -56,8 +54,14 @@ export class WorkspaceService implements IWorkspaceService {
         .leftJoin('w.predicates', 'predicates')
         .select([
           'w', // Todos os campos de Workspace
-          'owner', // Todos os campos de User (relação owner)
-          'users', // Todos os campos de User (relação members)
+          'owner.id',
+          'owner.address',
+          'owner.name',
+          'owner.avatar',
+          'users.id',
+          'users.address', 
+          'users.name',
+          'users.avatar',
           'predicates.id', // Seleção específica: apenas o campo 'id' de Predicate com alias
         ]);
 
@@ -214,7 +218,20 @@ export class WorkspaceService implements IWorkspaceService {
     return { _members, _permissions };
   }
 
-  findById: (id: string) => Promise<Workspace>;
+  findById: (id: string) => Promise<Workspace> = async id => {
+    try {
+      return await Workspace.findOne({
+        where: { id },
+        relations: ['owner', 'members'],
+      });
+    } catch (error) {
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on workspace find',
+        detail: error,
+      });
+    }
+  };
 
   /**
    * Formatar o capo de permissões do workspace, inserindo o assinante

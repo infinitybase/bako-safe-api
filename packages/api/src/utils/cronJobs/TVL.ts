@@ -59,7 +59,6 @@ const TVLCronJob = cron.schedule('0 0 * * *', async () => {
         return data[convert.replace('-', '')].bid ?? 0.0;
       })
       .catch(e => {
-        console.log('[TVL_USD_REQUEST_ERROR]: ', e);
         return 0.0;
       });
 
