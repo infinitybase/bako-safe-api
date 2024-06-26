@@ -1,3 +1,5 @@
+import { IQuote } from '@src/server/storage';
+
 export type IAsset = {
   symbol: string;
   slug?: string;
@@ -74,3 +76,22 @@ export const assetsMapBySymbol: IAssetMapBySymbol = assets.reduce(
   },
   {},
 );
+
+export const QuotesMock: IQuote[] = [
+  {
+    assetId: assetsMapBySymbol['ETH'].id,
+    price: 3381.1556815779345,
+  },
+  {
+    assetId: assetsMapBySymbol['BTC'].id,
+    price: 61620.37310293032,
+  },
+  {
+    assetId: assetsMapBySymbol['USDC'].id,
+    price: 0.9998584312603784,
+  },
+  {
+    assetId: assetsMapBySymbol['UNI'].id,
+    price: 9.379567369214598,
+  },
+];

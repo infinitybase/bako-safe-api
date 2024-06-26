@@ -9,21 +9,23 @@ import { TVLCronJob } from '@src/utils';
 
 import { handleErrors } from '@middlewares/index';
 import { QuoteStorage, SessionStorage } from './storage';
+const { NODE_ENV } = process.env;
 
 class App {
   private readonly app: Express.Application;
+  private readonly isDevMode: boolean;
   private sessionCache: SessionStorage;
   private quoteCache: QuoteStorage;
 
   constructor() {
-    const isDevmode = process.env.NODE_ENV === 'development';
+    this.isDevMode = NODE_ENV === 'development';
 
     this.app = Express();
     this.initMiddlewares();
     this.initRoutes();
     this.initErrorHandler();
 
-    isDevmode && this.initCronJobs();
+    this.isDevMode && this.initCronJobs();
 
     this.sessionCache = new SessionStorage();
     this.quoteCache = new QuoteStorage();
@@ -53,7 +55,11 @@ class App {
   }
 
   private initQuotesJob() {
-    this._quoteCache.start();
+    if (this.isDevMode) {
+      this._quoteCache.startDev();
+    } else {
+      this._quoteCache.start();
+    }
   }
 
   get serverApp() {

@@ -1,8 +1,14 @@
-import { IAsset, assets, assetsMapById, assetsMapBySymbol } from '@src/utils';
+import {
+  IAsset,
+  QuotesMock,
+  assets,
+  assetsMapById,
+  assetsMapBySymbol,
+} from '@src/utils';
 import axios from 'axios';
 const { COIN_MARKET_CAP_API_KEY } = process.env;
 
-interface IQuote {
+export interface IQuote {
   assetId: string;
   price: number;
 }
@@ -21,6 +27,12 @@ export class QuoteStorage {
 
   private setQuote(assetId: string, price: number): void {
     this.data.set(assetId, price);
+  }
+
+  private addMockQuotes(): void {
+    QuotesMock.forEach(quote => {
+      this.setQuote(quote.assetId, quote.price);
+    });
   }
 
   private async addQuotes(): Promise<void> {
@@ -76,11 +88,17 @@ export class QuoteStorage {
     }
   }
 
+  public startDev() {
+    this.addMockQuotes();
+  }
+
   public start() {
     this.addQuotes();
 
+    const minToRefresh = 10;
+
     setInterval(() => {
       this.addQuotes();
-    }, 1000 * 60 * 10); // 10 minutes
+    }, 1000 * 60 * minToRefresh);
   }
 }
