@@ -1,24 +1,22 @@
 import { Request, Response, NextFunction } from 'express';
-import { request } from 'http';
 
 import { RecoverCode, RecoverCodeType } from '@src/models';
 import { PermissionRoles, Workspace } from '@src/models/Workspace';
-import { TokenUtils } from '@src/utils';
 import { validatePermissionGeneral } from '@src/utils/permissionValidate';
 
 import { ErrorTypes } from '@utils/error';
 import { Unauthorized, UnauthorizedErrorTitles } from '@utils/error/Unauthorized';
 
 import { IAuthRequest } from './types';
+import app from '@src/server/app';
 
 async function authMiddleware(req: Request, res: Response, next: NextFunction) {
   try {
     const requestAuth: IAuthRequest = req;
     const signature = requestAuth?.headers?.authorization;
-    const signerAddress = requestAuth.get('signerAddress');
     const isRecoverCode = !!signature && signature.includes('code');
-
-    if (!signature || !signerAddress) {
+    
+    if (!signature) {
       throw new Unauthorized({
         type: ErrorTypes.Unauthorized,
         title: UnauthorizedErrorTitles.MISSING_CREDENTIALS,
@@ -26,15 +24,13 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
       });
     }
 
-    if (isRecoverCode) return connectorMiddleware(req, res, next)
+    if (isRecoverCode) return connectorMiddleware(req, res, next);
+    const token = await app._sessionCache.getSession(signature);
 
-    const token = await TokenUtils.recoverToken(signature);
-    await TokenUtils.renewToken(token);
 
-    requestAuth.user = await TokenUtils.checkUserExists(signerAddress);
-    requestAuth.userToken = token;
-    requestAuth.workspace = await TokenUtils.findLoggedWorkspace(token);
-
+    requestAuth.user = token.user;
+    requestAuth.workspace = token.workspace;
+    
     return next();
   } catch (e) {
     return next(e);
@@ -46,7 +42,8 @@ function authPermissionMiddleware(permission?: PermissionRoles[]) {
   return async function (req: Request, res: Response, next: NextFunction) {
     try {
       const requestAuth: IAuthRequest = req;
-
+      
+      
       if (!permission || permission.length === 0) return next();
       const { user, workspace } = requestAuth;
 

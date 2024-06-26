@@ -88,7 +88,6 @@ export class WorkspaceController {
           return _balance;
         })
         .catch(e => {
-          console.log(e);
           throw new Internal({
             type: ErrorTypes.Internal,
             title: 'Error on get balance',
@@ -101,15 +100,9 @@ export class WorkspaceController {
       const priceUSD: number = await axios
         .get(`https://economia.awesomeapi.com.br/last/${convert}`)
         .then(({ data }) => {
-          // console.log(
-          //   data,
-          //   data[convert.replace('-', '')].bid ?? 0.0,
-          //   balance.format().toString(),
-          // );
           return data[convert.replace('-', '')].bid ?? 0.0;
         })
         .catch(e => {
-          console.log('[WORKSPACE_REQUEST_BALANCE_ERROR]: ', e);
           return 0.0;
         });
 
@@ -132,12 +125,7 @@ export class WorkspaceController {
     try {
       const { id } = req.params;
 
-      const response = await new WorkspaceService()
-        .filter({
-          id,
-        })
-        .list()
-        .then((response: Workspace[]) => response[0]);
+      const response = await new WorkspaceService().findById(id);
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
@@ -156,10 +144,7 @@ export class WorkspaceController {
           id,
         })
         .then(async () => {
-          return await new WorkspaceService()
-            .filter({ id })
-            .list()
-            .then(data => data[0]);
+          return await new WorkspaceService().findById(id);
         });
       return successful(response, Responses.Ok);
     } catch (e) {

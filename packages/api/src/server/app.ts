@@ -2,40 +2,32 @@ import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import Express from 'express';
-import http from 'http';
-import morgan from 'morgan';
-import pm2 from 'pm2';
-import process from 'process';
+import morgan from 'morgan';  
 
 import { router } from '@src/routes';
-import { Callback, TVLCronJob } from '@src/utils';
+import { TVLCronJob } from '@src/utils';
 
 import { handleErrors } from '@middlewares/index';
+import { SessionStorage } from './storage';
 
-const { API_PORT, PORT } = process.env;
 
 class App {
   private readonly app: Express.Application;
+  private sessionCache: SessionStorage;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  httpServer!: any;
 
   constructor() {
+    const isDevmode = process.env.NODE_ENV === 'development';
+
     this.app = Express();
     this.initMiddlewares();
     this.initRoutes();
     this.initErrorHandler();
-    this.initCronJobs();
-  }
-
-  async init() {
-    // App
-    const port = API_PORT || PORT || 3333;
-    console.log('[APP] Starting application.');
-    this.httpServer = http.createServer(this.app);
-    this.httpServer.listen(port, () => {
-      console.log(`[APP] Application running in http://localhost:${port}`);
-    });
+    
+    isDevmode && this.initCronJobs();
+    
+    this.sessionCache = new SessionStorage();
   }
 
   private initMiddlewares() {
@@ -62,6 +54,13 @@ class App {
   get serverApp() {
     return this.app;
   }
+  get _sessionCache() {
+    return this.sessionCache;
+  }
 }
 
-export default App;
+const app = new App();
+
+Object.freeze(app);
+
+export default app;
