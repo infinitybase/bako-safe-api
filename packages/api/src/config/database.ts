@@ -10,11 +10,21 @@ const {
   DATABASE_USERNAME,
   DATABASE_NAME,
   DATABASE_PORT,
-  NODE_ENV,
+  API_ENVIRONMENT,
 } = process.env;
 
-const environment: string = NODE_ENV;
+const environment: string = API_ENVIRONMENT;
 const entitiesDir = path.resolve(__dirname, '..', 'models', '**', '*{.ts,.js}');
+
+console.log('[DATABASE_CONNECTION]: ', {
+  DATABASE_PASSWORD,
+  DATABASE_HOST,
+  DATABASE_USERNAME,
+  DATABASE_NAME,
+  DATABASE_PORT,
+  API_ENVIRONMENT,
+})
+
 export const migrationsDir = path.resolve(
   __dirname,
   '..',
@@ -42,10 +52,6 @@ const development: ConnectionOptions = {
   database: DATABASE_NAME,
   entities: [entitiesDir],
   migrations: [migrationsDir, seedersDir],
-  cli: {
-    entitiesDir: './src/models/',
-    migrationsDir: './src/database/migrations/',
-  },
   synchronize: false,
   migrationsRun: true,
 };
@@ -59,11 +65,10 @@ const test: ConnectionOptions = {
   database: DATABASE_NAME,
   entities: [entitiesDir],
   migrations: [migrationsDir, seedersDir],
-  cli: {
-    entitiesDir: './src/models/',
-    migrationsDir: './src/database/migrations/',
-  },
   synchronize: false,
+  ssl: {
+    rejectUnauthorized: false,
+  },
   migrationsRun: true,
 };
 
@@ -76,11 +81,10 @@ const production: ConnectionOptions = {
   database: process.env.DATABASE_NAME,
   entities: [entitiesDir],
   migrations: [migrationsDir, seedersDir],
-  cli: {
-    entitiesDir: './src/models/',
-    migrationsDir: './src/database/migrations/',
-  },
   synchronize: false,
+  ssl: {
+    rejectUnauthorized: false,
+  },
   migrationsRun: true,
 };
 
@@ -93,11 +97,10 @@ const staging: ConnectionOptions = {
   database: process.env.DATABASE_NAME,
   entities: [entitiesDir],
   migrations: [migrationsDir, seedersDir],
-  cli: {
-    entitiesDir: './src/models/',
-    migrationsDir: './src/database/migrations/',
-  },
   synchronize: false,
+  ssl: {
+    rejectUnauthorized: false,
+  },
   migrationsRun: true,
 };
 

@@ -152,13 +152,9 @@ export class PredicateController {
 
   async findByAddress({ params: { address } }: IFindByHashRequest) {
     try {
-      const response = await this.predicateService
-        .filter({
-          address,
-        })
-        .paginate(undefined)
-        .list()
-        .then((data: Predicate[]) => data[0]);
+      const response = await Predicate.findOne({
+        where: { predicateAddress: address },
+      })
 
       const _response = await this.predicateService.findById(
         response.id,
@@ -174,16 +170,15 @@ export class PredicateController {
   async findByName(req: IFindByNameRequest) {
     const { params, workspace } = req;
     const { name } = params;
-
     try {
-      const response = await this.predicateService
-        .filter({
-          name,
-          workspace: [workspace.id],
-        })
-        .paginate(undefined)
-        .list()
-        .then((data: Predicate[]) => data[0]);
+      if(!name || name.length === 0) return successful(false, Responses.Ok);
+
+      const response = await Predicate.createQueryBuilder('p')
+        .leftJoin('p.workspace', 'w')
+        .addSelect(['w.id', 'w.name'])
+        .where('p.name = :name', { name })
+        .andWhere('w.id = :workspace', { workspace: workspace.id })
+        .getOne();
 
       return successful(!!response, Responses.Ok);
     } catch (e) {
@@ -218,7 +213,7 @@ export class PredicateController {
         });
 
       const predicate = await this.predicateService.findById(address, undefined);
-      // console.log(predicate);
+
       const instance = await this.predicateService.instancePredicate(predicate.id);
       const balance = await instance.getBalance();
 
@@ -228,15 +223,9 @@ export class PredicateController {
       const priceUSD: number = await axios
         .get(`https://economia.awesomeapi.com.br/last/${convert}`)
         .then(({ data }) => {
-          // console.log(
-          //   data,
-          //   data[convert.replace('-', '')].bid ?? 0.0,
-          //   balance.format().toString(),
-          // );
           return data[convert.replace('-', '')].bid ?? 0.0;
         })
         .catch(e => {
-          console.log('[WORKSPACE_REQUEST_BALANCE_ERROR]: ', e);
           return 0.0;
         });
 
@@ -276,15 +265,19 @@ export class PredicateController {
         })
         .list()
         .then((response: Workspace[]) => response[0]);
+      
 
-      const allWk = await new WorkspaceService()
+      const hasSingle = singleWorkspace.id === workspace.id;
+
+      const _wk = hasSingle 
+        ? await new WorkspaceService()
         .filter({
           user: user.id,
         })
         .list()
-        .then((response: Workspace[]) => response.map(wk => wk.id));
+        .then((response: Workspace[]) => response.map(wk => wk.id)) 
+        : [workspace.id];
 
-      const hasSingle = singleWorkspace.id === workspace.id;
 
       const response = await this.predicateService
         .filter({
@@ -292,7 +285,7 @@ export class PredicateController {
           provider,
           owner,
           q,
-          workspace: hasSingle ? allWk : [workspace.id],
+          workspace: _wk,
           signer: hasSingle ? user.address : undefined,
         })
         .ordination({ orderBy, sort })

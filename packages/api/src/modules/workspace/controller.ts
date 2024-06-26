@@ -74,34 +74,35 @@ export class WorkspaceController {
     try {
       const { workspace } = req;
       const predicateService = new PredicateService();
-      const balance = await Predicate.find({
-        where: {
-          workspace: workspace.id,
-        },
-        select: ['id'],
-      }).then(async (response: Predicate[]) => {
-        let _balance: BN = bn(0);
-        for await (const predicate of response) {
-          const vault = await predicateService.instancePredicate(predicate.id);
-          _balance = _balance.add(await vault.getBalance());
-        }
-        return _balance;
-      });
+      const balance = await predicateService
+        .filter({
+          workspace: [workspace.id],
+        })
+        .list()
+        .then(async (response: Predicate[]) => {
+          let _balance: BN = bn(0);
+          for await (const predicate of response) {
+            const vault = await predicateService.instancePredicate(predicate.id);
+            _balance = _balance.add(await vault.getBalance());
+          }
+          return _balance;
+        })
+        .catch(e => {
+          throw new Internal({
+            type: ErrorTypes.Internal,
+            title: 'Error on get balance',
+            detail: e,
+          });
+        });
 
       const convert = `ETH-USD`;
 
       const priceUSD: number = await axios
         .get(`https://economia.awesomeapi.com.br/last/${convert}`)
         .then(({ data }) => {
-          // console.log(
-          //   data,
-          //   data[convert.replace('-', '')].bid ?? 0.0,
-          //   balance.format().toString(),
-          // );
           return data[convert.replace('-', '')].bid ?? 0.0;
         })
         .catch(e => {
-          console.log('[WORKSPACE_REQUEST_BALANCE_ERROR]: ', e);
           return 0.0;
         });
 
@@ -124,12 +125,7 @@ export class WorkspaceController {
     try {
       const { id } = req.params;
 
-      const response = await new WorkspaceService()
-        .filter({
-          id,
-        })
-        .list()
-        .then((response: Workspace[]) => response[0]);
+      const response = await new WorkspaceService().findById(id);
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
@@ -138,7 +134,9 @@ export class WorkspaceController {
 
   async update(req: IUpdateRequest) {
     try {
-      const { id } = req.params;
+      const {
+        workspace: { id },
+      } = req;
 
       const response = await new WorkspaceService()
         .update({
@@ -146,10 +144,7 @@ export class WorkspaceController {
           id,
         })
         .then(async () => {
-          return await new WorkspaceService()
-            .filter({ id })
-            .list()
-            .then(data => data[0]);
+          return await new WorkspaceService().findById(id);
         });
       return successful(response, Responses.Ok);
     } catch (e) {
@@ -159,8 +154,11 @@ export class WorkspaceController {
 
   async updatePermissions(req: IUpdatePermissionsRequest) {
     try {
-      const { id, member } = req.params;
+      const { member } = req.params;
       const { permissions } = req.body;
+      const {
+        workspace: { id },
+      } = req;
 
       const response = await new WorkspaceService()
         .filter({ id })
@@ -205,7 +203,11 @@ export class WorkspaceController {
 
   async addMember(req: IUpdateMembersRequest) {
     try {
-      const { id, member } = req.params;
+      const { member } = req.params;
+      const {
+        workspace: { id },
+      } = req;
+
       const workspace = await new WorkspaceService()
         .filter({ id })
         .list()
@@ -218,6 +220,9 @@ export class WorkspaceController {
             });
           }
           return data[0];
+        })
+        .catch(e => {
+          throw e;
         });
 
       const _member =
@@ -250,7 +255,11 @@ export class WorkspaceController {
 
   async removeMember(req: IUpdateMembersRequest) {
     try {
-      const { id, member } = req.params;
+      const { member } = req.params;
+      const {
+        workspace: { id },
+      } = req;
+
       const workspace = await new WorkspaceService()
         .filter({ id })
         .list()

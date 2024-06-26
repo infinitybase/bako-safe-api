@@ -44,3 +44,13 @@ class Notification extends Base {
 }
 
 export { Notification };
+
+
+// -- Criação de índice para a coluna 'user_id'
+// CREATE INDEX idx_notifications_user_id ON notifications(user_id);
+
+// -- Criação de índice para a coluna 'title'
+// CREATE INDEX idx_notifications_title ON notifications(title);
+
+// -- Criação de índice para a coluna 'read'
+// CREATE INDEX idx_notifications_read ON notifications(read);

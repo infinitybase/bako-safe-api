@@ -1,6 +1,11 @@
 import { TypeUser, User } from '@src/models';
 
-import { error } from '@utils/error';
+import {
+  error,
+  ErrorTypes,
+  Unauthorized,
+  UnauthorizedErrorTitles,
+} from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
 
 import { IUserService } from '../user/types';
@@ -93,7 +98,16 @@ export class VaultTemplateController {
   async update(req: IUpdateVaultTemplateRequest) {
     try {
       const { id } = req.params;
-      const { body } = req;
+      const { body, user } = req;
+
+      const vaultTemplate = await this.vaultTemplateService.findById(id);
+      if (vaultTemplate.createdBy.id !== user.id) {
+        throw new Unauthorized({
+          type: ErrorTypes.Unauthorized,
+          title: UnauthorizedErrorTitles.INVALID_PERMISSION,
+          detail: `User not allowed to change vault template`,
+        });
+      }
 
       const response = await this.vaultTemplateService.update(id, body);
       return successful(response, Responses.Ok);

@@ -1,9 +1,10 @@
-import { txConfirm, txRequest } from './modules/transactions'
-import { SocketEvents } from './types'
-import express from 'express'
 import http from 'http'
+import express from 'express'
 import socketIo from 'socket.io'
-import { DatabaseClass } from './utils/database'
+
+import { txConfirm, txRequest } from '@modules/transactions'
+import { DatabaseClass } from '@utils/database'
+import { SocketEvents } from './types'
 
 const { PORT, TIMEOUT_DICONNECT, APP_NAME } = process.env
 
@@ -17,11 +18,10 @@ const io = new socketIo.Server(server, {
 	connectTimeout: Number(TIMEOUT_DICONNECT), // 30 mins
 })
 
-// Endpoint de teste para o Express
-app.get('/', (req, res) => {
-	res.status(200)
-	res.json({ message: `${APP_NAME} ${new Date()}` })
-})
+// Health Check
+app.get('/health', ({ res }) =>
+    res.status(200).send({ status: 'ok', message: `Health check ${process.env.APP_NAME} passed` }),
+);
 
 // Configuração do Socket.IO
 io.on(SocketEvents.CONNECT, async socket => {

@@ -15,10 +15,12 @@ export const generateInitialTransaction = async (): Promise<TTI> => {
       address: accounts['USER_1'].address,
     },
   });
-  const predicate = await Predicate.findOne({
+
+  const predicate = await Predicate.find({
     order: {
-      createdAt: 'ASC',
+      createdAt: 'DESC',
     },
+    take: 1,
   });
 
   const assets = await generateInitialAssets();
@@ -33,8 +35,8 @@ export const generateInitialTransaction = async (): Promise<TTI> => {
     resume: {
       status: TransactionStatus.AWAIT_REQUIREMENTS,
       predicate: {
-        id: predicate.id,
-        address: predicate.predicateAddress,
+        id: predicate[0].id,
+        address: predicate[0].predicateAddress,
       },
       totalSigners: 0,
       requiredSigners: 0,
@@ -43,7 +45,7 @@ export const generateInitialTransaction = async (): Promise<TTI> => {
       BakoSafeID: 'fake_BakoSafeID',
     },
     createdBy: user,
-    predicate,
+    predicate: predicate[0],
     assets,
     //witnesses,
   };

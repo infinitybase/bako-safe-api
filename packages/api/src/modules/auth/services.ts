@@ -11,6 +11,7 @@ import {
   IFindTokenParams,
   ISignInResponse,
 } from './types';
+import { LessThanOrEqual } from 'typeorm';
 
 export class AuthService implements IAuthService {
   async signIn(payload: ICreateUserTokenPayload): Promise<ISignInResponse> {
@@ -22,6 +23,7 @@ export class AuthService implements IAuthService {
           avatar: data.user.avatar,
           address: data.user.address,
           user_id: data.user.id,
+          expiredAt: data.expired_at,
           workspace: {
             id: data.workspace.id,
             name: data.workspace.name,
@@ -59,8 +61,20 @@ export class AuthService implements IAuthService {
 
   async findToken(params: IFindTokenParams): Promise<UserToken | undefined> {
     const queryBuilder = await UserToken.createQueryBuilder('ut')
-      .innerJoinAndSelect('ut.user', 'user')
-      .innerJoinAndSelect('ut.workspace', 'workspace');
+      .leftJoin('ut.user', 'user')
+      .leftJoin('ut.workspace', 'workspace')
+      .addSelect([
+        'user.id',
+        'user.avatar',
+        'user.address',
+        'user.type',
+        'user.webauthn',
+        'workspace.id',
+        'workspace.name',
+        'workspace.avatar',
+        'workspace.single',
+        'workspace.permissions',
+      ]);
 
     params.userId &&
       queryBuilder.where('ut.user = :userId', { userId: params.userId });
@@ -87,4 +101,20 @@ export class AuthService implements IAuthService {
         });
       });
   }
+
+  async clearExpiredTokens(): Promise<void> {
+    try {
+      await UserToken.delete({
+        expired_at: LessThanOrEqual(new Date()),
+      });
+    } catch (e) {
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on clear expired tokens',
+        detail: e,
+      });
+    }
+  }
+
+
 }
