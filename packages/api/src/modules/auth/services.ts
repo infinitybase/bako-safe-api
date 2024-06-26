@@ -11,6 +11,7 @@ import {
   IFindTokenParams,
   ISignInResponse,
 } from './types';
+import { LessThanOrEqual } from 'typeorm';
 
 export class AuthService implements IAuthService {
   async signIn(payload: ICreateUserTokenPayload): Promise<ISignInResponse> {
@@ -100,4 +101,20 @@ export class AuthService implements IAuthService {
         });
       });
   }
+
+  async clearExpiredTokens(): Promise<void> {
+    try {
+      await UserToken.delete({
+        expired_at: LessThanOrEqual(new Date()),
+      });
+    } catch (e) {
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on clear expired tokens',
+        detail: e,
+      });
+    }
+  }
+
+
 }
