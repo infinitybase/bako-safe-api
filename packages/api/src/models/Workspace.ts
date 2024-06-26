@@ -127,3 +127,15 @@ class Workspace extends Base {
 }
 
 export { Workspace };
+
+// -- Criação de índice para a coluna 'owner_id' na tabela 'workspace'
+// CREATE INDEX idx_workspace_owner_id ON workspace(owner_id);
+
+// -- Criação de índice para a coluna 'workspace_id' na tabela 'predicates'
+// CREATE INDEX idx_predicates_workspace_id ON predicates(workspace_id);
+
+// -- Criação de índice para a coluna 'workspace_id' na tabela 'workspace_users'
+// CREATE INDEX idx_workspace_users_workspace_id ON workspace_users(workspace_id);
+
+// -- Criação de índice para a coluna 'user_id' na tabela 'workspace_users'
+// CREATE INDEX idx_workspace_users_user_id ON workspace_users(user_id);
