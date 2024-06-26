@@ -84,6 +84,12 @@ export interface ITransactionFilterParams {
   endDate?: string;
   createdBy?: string;
   id?: string;
+  byMonth?: boolean;
+}
+
+export interface ITransactionsGroupedByMonth {
+  monthYear: string;
+  transactions: Transaction[];
 }
 
 export type ICloseTransactionBody = {
@@ -160,6 +166,7 @@ interface IListRequestSchema extends ValidatedRequestSchema {
     perPage: string;
     limit: number;
     id: string;
+    byMonth?: boolean;
   };
 }
 export interface ITCreateService
@@ -200,7 +207,12 @@ export interface ITransactionService {
   sendToChain: (transactionId: string) => Promise<ITransactionResume>;
   create: (payload: ITCreateService) => Promise<Transaction>;
   update: (id: string, payload: IUpdateTransactionPayload) => Promise<Transaction>;
-  list: () => Promise<IPagination<Transaction> | Transaction[]>;
+  list: () => Promise<
+    | IPagination<Transaction>
+    | Transaction[]
+    | IPagination<ITransactionsGroupedByMonth>
+    | ITransactionsGroupedByMonth
+  >;
   findById: (id: string) => Promise<Transaction>;
   delete: (id: string) => Promise<boolean>;
 }

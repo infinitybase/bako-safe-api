@@ -34,8 +34,10 @@ import {
   ICreateTransactionPayload,
   ITransactionFilterParams,
   ITransactionService,
+  ITransactionsGroupedByMonth,
   IUpdateTransactionPayload,
 } from './types';
+import { groupedTransactions } from './utils';
 
 export class TransactionService implements ITransactionService {
   private _ordination: IOrdination<Transaction> = {
@@ -121,7 +123,12 @@ export class TransactionService implements ITransactionService {
 
   //todo: melhorar a valocidade de processamento dessa query
   //caso trocar inner por left atrapalha muito a performance
-  async list(): Promise<IPagination<Transaction> | Transaction[]> {
+  async list(): Promise<
+    | IPagination<Transaction>
+    | Transaction[]
+    | IPagination<ITransactionsGroupedByMonth>
+    | ITransactionsGroupedByMonth
+  > {
     const hasPagination = this._pagination?.page && this._pagination?.perPage;
     const queryBuilder = Transaction.createQueryBuilder('t')
       .select([
@@ -136,6 +143,7 @@ export class TransactionService implements ITransactionService {
         't.status',
         't.summary',
         't.updatedAt',
+        't.type',
       ])
       .leftJoin('t.assets', 'assets')
       .leftJoin('t.witnesses', 'witnesses')
@@ -265,17 +273,19 @@ export class TransactionService implements ITransactionService {
       });
     };
 
-    return hasPagination
-      ? Pagination.create(queryBuilder)
+    const transactions = hasPagination
+      ? await Pagination.create(queryBuilder)
           .paginate(this._pagination)
           .then(paginationResult => paginationResult)
           .catch(handleInternalError)
-      : queryBuilder
+      : await queryBuilder
           .getMany()
           .then(transactions => {
             return transactions ?? [];
           })
           .catch(handleInternalError);
+
+    return this._filter.byMonth ? groupedTransactions(transactions) : transactions;
   }
 
   async delete(id: string): Promise<boolean> {

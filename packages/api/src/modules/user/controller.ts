@@ -91,6 +91,7 @@ export class UserController {
         .filter({
           workspaceId: workspaceList,
           signer: hasSingle ? user.address : undefined,
+          byMonth: true,
         })
         .paginate({ page: '0', perPage: '6' })
         .ordination({ orderBy: 'createdAt', sort: 'DESC' })

@@ -37,15 +37,17 @@ export interface IPredicateMemberPayload {
   predicate_id: string;
 }
 
+export interface IDeposit {
+  date: Date;
+  id: string;
+  operations: Operation[];
+  gasUsed: string;
+  txData: TransactionRequest;
+}
+
 export interface IExtendedPredicate {
   predicate: Predicate;
-  missingDeposits: {
-    date: Date;
-    id: string;
-    operations: Operation[];
-    gasUsed: string;
-    txData: TransactionRequest;
-  }[];
+  missingDeposits: IDeposit[];
 }
 
 export interface IPredicateFilterParams {
@@ -69,6 +71,7 @@ export interface IEndCursorPayload {
     transactionsByOwner: {
       pageInfo: {
         endCursor: string;
+        hasNextPage: boolean;
       };
     };
   };

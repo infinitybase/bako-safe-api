@@ -137,16 +137,12 @@ export class PredicateService implements IPredicateService {
       const missingDeposits = deposits.filter(
         deposit =>
           !getPredicateTransactions.some(
-            transaction => transaction.id === deposit.id,
+            // Essa condição pode ser revista. Não da pra comprar o Id da transações salvas no banco, porque é um UUID gerado pelo próprio Postgres
+            // Enquanto o Id do depósito, é um id da chain (0x e lá vai paulada). Solução temporária, hoje o depósito quando salvo no banco, a hash é setada como o ID,
+            // então comparar o hash do depósito salvo (que é o id da chain), com o id do depósito pego na chain, é a meneira certa.
+            transaction => transaction.hash === deposit.id,
           ),
       );
-
-      // console.log(
-      //   'deposits:',
-      //   deposits,
-      // );
-
-      // console.log('missingDeposits:', missingDeposits);
 
       return { predicate, missingDeposits };
     } catch (e) {
@@ -170,6 +166,7 @@ export class PredicateService implements IPredicateService {
       transactionsByOwner(owner: $address, first: $first) {
         pageInfo {
           endCursor
+          hasNextPage
         }
       }
     }
@@ -182,13 +179,14 @@ export class PredicateService implements IPredicateService {
       variables: { address, first: txQuantityRange },
     });
     const endCursor = data.transactionsByOwner.pageInfo.endCursor;
+    const hasNextPage = data.transactionsByOwner.pageInfo.hasNextPage;
 
-    return endCursor;
+    return { endCursor, hasNextPage };
   }
 
   async getPredicateHistory(address: string, providerUrl: string) {
     const provider = await Provider.create(providerUrl);
-    const endCursor = await this.getEndCursor({
+    const { endCursor, hasNextPage } = await this.getEndCursor({
       providerUrl,
       address,
       txQuantityRange: 100,
@@ -198,8 +196,7 @@ export class PredicateService implements IPredicateService {
       provider,
       filters: {
         owner: address,
-        last: 10,
-        before: endCursor,
+        ...(hasNextPage ? { last: 5, before: endCursor } : { first: 5 }),
       },
     });
 

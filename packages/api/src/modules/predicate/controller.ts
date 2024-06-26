@@ -11,7 +11,6 @@ import {
   Asset,
   NotificationTitle,
   Transaction,
-  TransactionType,
   TypeUser,
   User,
 } from '@models/index';
@@ -33,6 +32,7 @@ import {
   IPredicateService,
 } from './types';
 import { IPredicateVersionService } from '../predicateVersion/types';
+import { formatPayloadToCreateTransaction } from '../transaction/utils';
 
 export class PredicateController {
   private userService: IUserService;
@@ -148,58 +148,36 @@ export class PredicateController {
         user.address,
       );
 
+      // const configurable: IConfVault = {
+      //   ...JSON.parse(predicate.configurable),
+      // };
+      // const vault = await Vault.create({
+      //   configurable,
+      //   version: predicate.version.code,
+      // });
       if (missingDeposits.length >= 1) {
         for (const deposit of missingDeposits) {
-          console.log('Processing deposit:', deposit);
-
           try {
-            await this.transactionService.create({
-              // em transaction "normal" o nome do campo é id, nos depositos é TXID
-              txData: deposit.txData,
-              type: TransactionType.DEPOSIT,
-              // verificar name e hash, esse são valores provisórios
-              name: deposit.id,
-              hash: deposit.id,
-              sendTime: deposit.date,
-              gasUsed: deposit.gasUsed,
-              predicateId: predicate.id,
-              status: TransactionStatus.SUCCESS,
-              resume: {
-                // verificar hash
-                hash: deposit.id,
-                status: TransactionStatus.SUCCESS,
-                witnesses: [predicate.owner.address],
-                // Corrigir tipagem
-                // @ts-ignore
-                outputs: deposit.operations.map(({ assetsSent, to, from }) => ({
-                  // Corrigir tipagem
-                  // @ts-ignore
-                  amount: String(assetsSent[0].amount.format()),
-                  to,
-                  from,
-                  assetId: assetsSent[0].assetId,
-                })),
-                requiredSigners: predicate.minSigners,
-                totalSigners: predicate.members.length,
-                predicate: {
-                  id: predicate.id,
-                  address: predicate.predicateAddress,
-                },
-                BakoSafeID: '',
-              },
-              witnesses: [
-                {
-                  ...predicate.owner,
-                  account: predicate.owner.id,
-                  createdAt: deposit.date,
-                },
-              ],
+            // Tentativa de usar o txScript para salvar transação
+            // Deu alguns erros além de duplicar as trasações algumas vezes, deixei de lado por enquanto para focar nas funcionalidades, já que estamo conseguindo salvar de outra forma
+            // await vault.BakoSafeIncludeTransaction({
+            //   // type: deposit.txData.type,
+            //   assets: deposit.operations.map(({ assetsSent, to }) => ({
+            //     // @ts-ignore
+            //     amount: String(assetsSent[0].amount.format()),
+            //     to: to.address,
+            //     assetId: assetsSent[0].assetId,
+            //   })),
+            //   name: `DEPOSIT_${deposit.id}`,
+            //   witnesses: [predicate.owner.address],
+            // });
+            const formattedPayload = formatPayloadToCreateTransaction(
+              deposit,
               predicate,
-              createdBy: predicate.owner,
-              summary: null,
-            });
+            );
+            await this.transactionService.create(formattedPayload);
           } catch (error) {
-            console.error('Error saving deposit:', deposit, error);
+            console.error('Error saving deposit:', error);
           }
         }
       }
