@@ -59,12 +59,23 @@ export const formatPayloadToCreateTransaction = (
   deposit: IDeposit,
   predicate: Predicate,
 ): ITCreateService => {
+  const formattedAssets = deposit.operations
+    .map(operation =>
+      operation.assetsSent.map(asset => ({
+        to: operation.to.address,
+        from: operation.from.address,
+        assetId: asset.assetId,
+        //@ts-ignore
+        amount: asset.amount.format(),
+      })),
+    )
+    .flat();
+
   const payload = {
     txData: deposit.txData,
     type: TransactionType.DEPOSIT,
-    // verificar name e hash, esse são valores provisórios
     name: `DEPOSIT_${deposit.id}`,
-    hash: deposit.id,
+    hash: deposit.id.slice(2),
     sendTime: deposit.date,
     gasUsed: deposit.gasUsed,
     predicateId: predicate.id,
@@ -73,13 +84,7 @@ export const formatPayloadToCreateTransaction = (
       hash: deposit.id,
       status: TransactionStatus.SUCCESS,
       witnesses: [predicate.owner.address],
-      outputs: deposit.operations.map(({ assetsSent, to, from }) => ({
-        // @ts-ignore
-        amount: String(assetsSent[0].amount.format()),
-        to: to.address,
-        from,
-        assetId: assetsSent[0].assetId,
-      })),
+      outputs: formattedAssets,
       requiredSigners: predicate.minSigners,
       totalSigners: predicate.members.length,
       predicate: {
@@ -88,13 +93,7 @@ export const formatPayloadToCreateTransaction = (
       },
       BakoSafeID: '',
     },
-    assets: deposit.operations.map(({ assetsSent, to, from }) => ({
-      // @ts-ignore
-      amount: String(assetsSent[0].amount.format()),
-      to: to.address,
-      from,
-      assetId: assetsSent[0].assetId,
-    })),
+    assets: formattedAssets,
     witnesses: [
       {
         ...predicate.owner,

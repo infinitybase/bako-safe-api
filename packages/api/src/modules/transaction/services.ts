@@ -255,6 +255,11 @@ export class TransactionService implements ITransactionService {
         id: this._filter.id,
       });
 
+    this._filter.type &&
+      queryBuilder.andWhere('t.type = :type', {
+        type: this._filter.type,
+      });
+
     /* *
      * TODO: Not best solution for performance, "take" dont limit this method
      *       just find all and create an array with length. The best way is use

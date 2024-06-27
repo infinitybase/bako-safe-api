@@ -137,10 +137,7 @@ export class PredicateService implements IPredicateService {
       const missingDeposits = deposits.filter(
         deposit =>
           !getPredicateTransactions.some(
-            // Essa condição pode ser revista. Não da pra comprar o Id da transações salvas no banco, porque é um UUID gerado pelo próprio Postgres
-            // Enquanto o Id do depósito, é um id da chain (0x e lá vai paulada). Solução temporária, hoje o depósito quando salvo no banco, a hash é setada como o ID,
-            // então comparar o hash do depósito salvo (que é o id da chain), com o id do depósito pego na chain, é a meneira certa.
-            transaction => transaction.hash === deposit.id,
+            transaction => transaction.hash === `${deposit.id.slice(2)}`,
           ),
       );
 

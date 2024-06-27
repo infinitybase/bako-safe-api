@@ -71,6 +71,7 @@ export class UserController {
 
   async me(req: IMeRequest) {
     try {
+      const { type } = req.query;
       //list all 8 last vaults of user
       const { workspace, user } = req;
       const { workspaceList, hasSingle } = await new UserService().workspacesByUser(
@@ -92,6 +93,7 @@ export class UserController {
           workspaceId: workspaceList,
           signer: hasSingle ? user.address : undefined,
           byMonth: true,
+          type,
         })
         .paginate({ page: '0', perPage: '6' })
         .ordination({ orderBy: 'createdAt', sort: 'DESC' })

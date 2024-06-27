@@ -8,7 +8,7 @@ import {
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 import { Provider, TransactionRequest } from 'fuels';
 
-import { Asset, Transaction, Witness } from '@models/index';
+import { Asset, Transaction, TransactionType, Witness } from '@models/index';
 
 import { AuthValidatedRequest } from '@middlewares/auth/types';
 
@@ -85,6 +85,7 @@ export interface ITransactionFilterParams {
   createdBy?: string;
   id?: string;
   byMonth?: boolean;
+  type?: TransactionType;
 }
 
 export interface ITransactionsGroupedByMonth {
@@ -167,6 +168,7 @@ interface IListRequestSchema extends ValidatedRequestSchema {
     limit: number;
     id: string;
     byMonth?: boolean;
+    type: TransactionType;
   };
 }
 export interface ITCreateService

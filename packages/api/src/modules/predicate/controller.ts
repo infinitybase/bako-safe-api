@@ -148,36 +148,16 @@ export class PredicateController {
         user.address,
       );
 
-      // const configurable: IConfVault = {
-      //   ...JSON.parse(predicate.configurable),
-      // };
-      // const vault = await Vault.create({
-      //   configurable,
-      //   version: predicate.version.code,
-      // });
       if (missingDeposits.length >= 1) {
         for (const deposit of missingDeposits) {
           try {
-            // Tentativa de usar o txScript para salvar transação
-            // Deu alguns erros além de duplicar as trasações algumas vezes, deixei de lado por enquanto para focar nas funcionalidades, já que estamo conseguindo salvar de outra forma
-            // await vault.BakoSafeIncludeTransaction({
-            //   // type: deposit.txData.type,
-            //   assets: deposit.operations.map(({ assetsSent, to }) => ({
-            //     // @ts-ignore
-            //     amount: String(assetsSent[0].amount.format()),
-            //     to: to.address,
-            //     assetId: assetsSent[0].assetId,
-            //   })),
-            //   name: `DEPOSIT_${deposit.id}`,
-            //   witnesses: [predicate.owner.address],
-            // });
             const formattedPayload = formatPayloadToCreateTransaction(
               deposit,
               predicate,
             );
             await this.transactionService.create(formattedPayload);
           } catch (error) {
-            console.error('Error saving deposit:', error);
+            console.error('Error saving deposit:', deposit, error);
           }
         }
       }
