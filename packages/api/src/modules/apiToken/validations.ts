@@ -10,3 +10,9 @@ export const validateCreateAPITokenPayload = validator.body(
     }),
   }),
 );
+
+export const validateCreateAPITokenParams = validator.params(
+  Joi.object({
+    predicateId: Joi.string().uuid(),
+  }),
+);

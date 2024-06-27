@@ -1,11 +1,14 @@
 import { Router } from 'express';
-import { authMiddleware, authPermissionMiddleware } from '@src/middlewares';
+import { authMiddleware, predicatePermissionMiddleware } from '@src/middlewares';
 import { PermissionRoles } from '@src/models';
 import { APITokenController } from '@modules/apiToken/controller';
 import { handleResponse } from '@src/utils';
 import { APITokenService } from '@modules/apiToken/service';
 import { PredicateService } from '@modules/predicate/services';
-import { validateCreateAPITokenPayload } from '@modules/apiToken/validations';
+import {
+  validateCreateAPITokenParams,
+  validateCreateAPITokenPayload,
+} from '@modules/apiToken/validations';
 
 const router = Router();
 
@@ -15,15 +18,20 @@ const { create } = new APITokenController(
 );
 
 router.use(authMiddleware);
-router.use(
-  authPermissionMiddleware([
-    PermissionRoles.OWNER,
-    PermissionRoles.ADMIN,
-    PermissionRoles.MANAGER,
-  ]),
-);
 
-router.post('/:predicateId', validateCreateAPITokenPayload, handleResponse(create));
-router.get('/:predicateId');
+router.post(
+  '/:predicateId',
+  validateCreateAPITokenParams,
+  validateCreateAPITokenPayload,
+  predicatePermissionMiddleware({
+    permissions: [
+      PermissionRoles.OWNER,
+      PermissionRoles.ADMIN,
+      PermissionRoles.MANAGER,
+    ],
+    predicateSelector: req => req.params.predicateId,
+  }),
+  handleResponse(create),
+);
 
 export default router;

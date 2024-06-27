@@ -1,10 +1,11 @@
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosError, AxiosInstance } from 'axios';
 import { IBakoSafeApi } from 'bakosafe';
 import { Provider, Wallet } from 'fuels';
 
 import { TypeUser } from '@src/models';
 
 import { IDefaultAccount } from '../../mocks/accounts';
+import GeneralError from '@utils/error/GeneralError';
 
 const { API_URL } = process.env;
 
@@ -91,3 +92,22 @@ export class AuthValidations {
     return await signer.signMessage(message);
   }
 }
+
+class CatchError extends Error {
+  constructor() {
+    super('Expected an error');
+  }
+}
+
+export const catchApplicationError = async (fn: Promise<unknown>) => {
+  try {
+    await fn;
+    throw new CatchError();
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      return error.response.data;
+    }
+
+    throw error;
+  }
+};
