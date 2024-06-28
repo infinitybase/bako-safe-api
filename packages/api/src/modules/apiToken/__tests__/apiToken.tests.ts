@@ -231,5 +231,46 @@ describe('[API TOKEN]', () => {
       expect(token.id).toBeDefined();
       expect(token.token).not.toBeDefined();
     });
+
+    test('Not a member of workspace', async () => {
+      const notWorkspaceMember = new AuthValidations(
+        networks['local'],
+        accounts['USER_2'],
+      );
+      await notWorkspaceMember.create();
+      await notWorkspaceMember.createSession();
+
+      const notWorkspaceMemberError = await catchApplicationError(
+        notWorkspaceMember.axios.get(`/api-token/${predicate.id}`),
+      );
+
+      expect(notWorkspaceMemberError.origin).toBe('app');
+      expect(notWorkspaceMemberError.errors).toEqual({
+        type: 'Unauthorized',
+        title: 'Missing permission',
+        detail: 'You do not have permission to access this resource',
+      });
+    });
+
+    test('Not found permission in workspace', async () => {
+      // Error on not allowed predicate
+      const notFoundPermission = new AuthValidations(
+        networks['local'],
+        accounts['USER_3'],
+      );
+      await notFoundPermission.create();
+      await notFoundPermission.createSession();
+      await notFoundPermission.selectWorkspace(predicate.workspace.id);
+
+      const notFoundPermissionError = await catchApplicationError(
+        notFoundPermission.axios.get(`/api-token/${predicate.id}`),
+      );
+      expect(notFoundPermissionError.origin).toBe('app');
+      expect(notFoundPermissionError.errors).toEqual({
+        type: 'Unauthorized',
+        title: 'Missing permission',
+        detail: 'You do not have permission to access this resource',
+      });
+    });
   });
 });
