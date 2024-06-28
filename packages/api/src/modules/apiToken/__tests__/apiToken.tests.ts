@@ -1,9 +1,11 @@
-import { AuthValidations, catchApplicationError } from '@utils/testUtils/Auth';
+import { AuthValidations } from '@utils/testUtils/Auth';
 import { networks } from '@mocks/networks';
 import { accounts } from 'bakosafe';
 import { DEFAULT_TRANSACTION_TITLE, Predicate } from '@src/models';
 import { PredicateMock } from '@mocks/predicate';
 import { generateWorkspacePayload } from '@utils/testUtils/Workspace';
+import { TestError, catchApplicationError } from '@utils/testUtils/Errors';
+import { SetupApiTokenTest } from '@modules/apiToken/__tests__/utils/setup';
 
 const tokenMock = {
   name: 'Test API Token',
@@ -15,24 +17,16 @@ const tokenMock = {
 describe('[API TOKEN]', () => {
   let api: AuthValidations;
   let predicate: Predicate;
+  let notWorkspaceMemberApi: AuthValidations;
+  let notFoundPermissionApi: AuthValidations;
 
   beforeAll(async () => {
-    api = new AuthValidations(networks['local'], accounts['USER_1']);
+    const setup = await SetupApiTokenTest.setup();
 
-    await api.create();
-    await api.createSession();
-
-    const {
-      data_user1,
-      data_user2,
-      data: workspace,
-    } = await generateWorkspacePayload(api);
-    await api.selectWorkspace(workspace.id);
-    const members = [data_user1.address, data_user2.address];
-    const { predicatePayload } = await PredicateMock.create(1, members);
-    const { data } = await api.axios.post('/predicate', predicatePayload);
-
-    predicate = data;
+    api = setup.api;
+    predicate = setup.predicate;
+    notWorkspaceMemberApi = setup.notWorkspaceMemberApi;
+    notFoundPermissionApi = setup.notFoundPermissionApi;
   });
 
   describe('Create', () => {
@@ -73,27 +67,21 @@ describe('[API TOKEN]', () => {
       const payloadError = await catchApplicationError(
         api.axios.post(`/api-token/${predicate.id}`, {}),
       );
-      expect(payloadError.origin).toBe('body');
-      expect(payloadError.errors).toEqual([
-        {
-          type: 'any.required',
-          title: '"name" is required',
-          detail: '"name" is required',
-        },
-      ]);
+      TestError.expectValidation(payloadError, {
+        type: 'any.required',
+        field: 'name',
+        origin: 'body',
+      });
 
       // Error on invalid predicate id
       const predicateError = await catchApplicationError(
         api.axios.post(`/api-token/invalid-id`, tokenMock),
       );
-      expect(predicateError.origin).toBe('params');
-      expect(predicateError.errors).toEqual([
-        {
-          type: 'string.guid',
-          title: '"predicateId" must be a valid GUID',
-          detail: '"predicateId" must be a valid GUID',
-        },
-      ]);
+      TestError.expectValidation(predicateError, {
+        type: 'string.guid',
+        field: 'predicateId',
+        origin: 'params',
+      });
     });
 
     test('Permissions on create api token', async () => {
@@ -104,50 +92,19 @@ describe('[API TOKEN]', () => {
           tokenMock,
         ),
       );
-
-      expect(notFoundError.origin).toBe('app');
-      expect(notFoundError.errors).toEqual({
-        detail: 'Predicate with id 9328ed43-31c7-428a-bb73-c03534bf34f0 not found',
-        title: 'Predicate not found',
-        type: 'NotFound',
-      });
+      TestError.expectNotFound(notFoundError);
 
       // Error on not allowed predicate
-      const notWorkspaceMember = new AuthValidations(
-        networks['local'],
-        accounts['USER_2'],
-      );
-      await notWorkspaceMember.create();
-      await notWorkspaceMember.createSession();
-
       const notWorkspaceMemberError = await catchApplicationError(
-        notWorkspaceMember.axios.post(`/api-token/${predicate.id}`, tokenMock),
+        notWorkspaceMemberApi.axios.post(`/api-token/${predicate.id}`, tokenMock),
       );
-      expect(notWorkspaceMemberError.origin).toBe('app');
-      expect(notWorkspaceMemberError.errors).toEqual({
-        type: 'Unauthorized',
-        title: 'Missing permission',
-        detail: 'You do not have permission to access this resource',
-      });
+      TestError.expectUnauthorized(notWorkspaceMemberError);
 
       // Error on not allowed predicate
-      const notFoundPermission = new AuthValidations(
-        networks['local'],
-        accounts['USER_3'],
-      );
-      await notFoundPermission.create();
-      await notFoundPermission.createSession();
-      await notFoundPermission.selectWorkspace(predicate.workspace.id);
-
       const notFoundPermissionError = await catchApplicationError(
-        notFoundPermission.axios.post(`/api-token/${predicate.id}`, tokenMock),
+        notFoundPermissionApi.axios.post(`/api-token/${predicate.id}`, tokenMock),
       );
-      expect(notFoundPermissionError.origin).toBe('app');
-      expect(notFoundPermissionError.errors).toEqual({
-        type: 'Unauthorized',
-        title: 'Missing permission',
-        detail: 'You do not have permission to access this resource',
-      });
+      TestError.expectUnauthorized(notFoundPermissionError);
     });
   });
 
@@ -171,25 +128,12 @@ describe('[API TOKEN]', () => {
         tokenMock,
       );
 
-      const notWorkspaceMember = new AuthValidations(
-        networks['local'],
-        accounts['USER_2'],
-      );
-      await notWorkspaceMember.create();
-      await notWorkspaceMember.createSession();
-
       const notWorkspaceMemberError = await catchApplicationError(
-        notWorkspaceMember.axios.delete(
+        notWorkspaceMemberApi.axios.delete(
           `/api-token/${predicate.id}/${apiToken.id}`,
         ),
       );
-
-      expect(notWorkspaceMemberError.origin).toBe('app');
-      expect(notWorkspaceMemberError.errors).toEqual({
-        type: 'Unauthorized',
-        title: 'Missing permission',
-        detail: 'You do not have permission to access this resource',
-      });
+      TestError.expectUnauthorized(notWorkspaceMemberError);
     });
 
     test('Not found permission in workspace', async () => {
@@ -199,25 +143,12 @@ describe('[API TOKEN]', () => {
       );
 
       // Error on not allowed predicate
-      const notFoundPermission = new AuthValidations(
-        networks['local'],
-        accounts['USER_3'],
-      );
-      await notFoundPermission.create();
-      await notFoundPermission.createSession();
-      await notFoundPermission.selectWorkspace(predicate.workspace.id);
-
       const notFoundPermissionError = await catchApplicationError(
-        notFoundPermission.axios.delete(
+        notFoundPermissionApi.axios.delete(
           `/api-token/${predicate.id}/${apiToken.id}`,
         ),
       );
-      expect(notFoundPermissionError.origin).toBe('app');
-      expect(notFoundPermissionError.errors).toEqual({
-        type: 'Unauthorized',
-        title: 'Missing permission',
-        detail: 'You do not have permission to access this resource',
-      });
+      TestError.expectUnauthorized(notFoundPermissionError);
     });
   });
 
@@ -233,44 +164,19 @@ describe('[API TOKEN]', () => {
     });
 
     test('Not a member of workspace', async () => {
-      const notWorkspaceMember = new AuthValidations(
-        networks['local'],
-        accounts['USER_2'],
-      );
-      await notWorkspaceMember.create();
-      await notWorkspaceMember.createSession();
-
       const notWorkspaceMemberError = await catchApplicationError(
-        notWorkspaceMember.axios.get(`/api-token/${predicate.id}`),
+        notWorkspaceMemberApi.axios.get(`/api-token/${predicate.id}`),
       );
 
-      expect(notWorkspaceMemberError.origin).toBe('app');
-      expect(notWorkspaceMemberError.errors).toEqual({
-        type: 'Unauthorized',
-        title: 'Missing permission',
-        detail: 'You do not have permission to access this resource',
-      });
+      TestError.expectUnauthorized(notWorkspaceMemberError);
     });
 
     test('Not found permission in workspace', async () => {
-      // Error on not allowed predicate
-      const notFoundPermission = new AuthValidations(
-        networks['local'],
-        accounts['USER_3'],
-      );
-      await notFoundPermission.create();
-      await notFoundPermission.createSession();
-      await notFoundPermission.selectWorkspace(predicate.workspace.id);
-
       const notFoundPermissionError = await catchApplicationError(
-        notFoundPermission.axios.get(`/api-token/${predicate.id}`),
+        notFoundPermissionApi.axios.get(`/api-token/${predicate.id}`),
       );
-      expect(notFoundPermissionError.origin).toBe('app');
-      expect(notFoundPermissionError.errors).toEqual({
-        type: 'Unauthorized',
-        title: 'Missing permission',
-        detail: 'You do not have permission to access this resource',
-      });
+
+      TestError.expectUnauthorized(notFoundPermissionError);
     });
   });
 });

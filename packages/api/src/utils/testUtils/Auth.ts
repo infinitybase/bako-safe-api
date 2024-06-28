@@ -15,6 +15,15 @@ export type IUserAuth = {
   address: string;
 };
 
+type AuthenticateUser = {
+  provider: string;
+  account: IDefaultAccount;
+};
+
+type AuthenticateWorkspace = AuthenticateUser & {
+  workspaceId: string;
+};
+
 //todo: repply this class on SDK to user autentication resource
 export class AuthValidations {
   public user: IUserAuth;
@@ -35,6 +44,20 @@ export class AuthValidations {
       baseURL: API_URL,
     });
   }
+
+  static async authenticateUser(params: AuthenticateUser) {
+    const auth = new AuthValidations(params.provider, params.account);
+    await auth.create();
+    await auth.createSession();
+    return auth;
+  }
+
+  static async authenticateWorkspace(params: AuthenticateWorkspace) {
+    const auth = await this.authenticateUser(params);
+    await auth.selectWorkspace(params.workspaceId);
+    return auth;
+  }
+
   async create() {
     const { data } = await this.axios.post('/user', {
       address: this.account.address,
@@ -92,22 +115,3 @@ export class AuthValidations {
     return await signer.signMessage(message);
   }
 }
-
-class CatchError extends Error {
-  constructor() {
-    super('Expected an error');
-  }
-}
-
-export const catchApplicationError = async (fn: Promise<unknown>) => {
-  try {
-    await fn;
-    throw new CatchError();
-  } catch (error) {
-    if (error instanceof AxiosError) {
-      return error.response.data;
-    }
-
-    throw error;
-  }
-};
