@@ -190,9 +190,6 @@ describe('[TRANSACTION]', () => {
   test(
     'Should save missing deposits in db',
     async () => {
-      // ativar o ccadastro do depósito (findById)
-      // listar transações desse predicate, validar depósito
-
       // Gerando autenticação
       const auth = new AuthValidations(networks['local'], accounts['USER_1']);
       await auth.create();
