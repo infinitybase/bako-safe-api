@@ -25,7 +25,6 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
     }
 
     if (isRecoverCode) return connectorMiddleware(req, res, next);
-    
     const token = await app._sessionCache.getSession(signature);
 
 
@@ -152,8 +151,5 @@ const connectorMiddleware = async (req: Request, res: Response, next: NextFuncti
 
   return next();
 }
-
-
-
 
 export { authMiddleware, authPermissionMiddleware };

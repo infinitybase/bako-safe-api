@@ -34,6 +34,12 @@ export const txConfirm = async ({ data, socket, database }: IEvent<IEventTX_CONF
 	try {
 		// ------------------------------ [VALIDACOES] ------------------------------
 		// validar se o origin é diferente da url usada no front...adicionar um .env pra isso
+		console.log('[TX_CONFIRM]', {
+			origin,
+			BAKO_URL_UI,
+			room
+		})
+
 
 		if (origin != BAKO_URL_UI) return
 

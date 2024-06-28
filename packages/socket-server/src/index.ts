@@ -18,11 +18,10 @@ const io = new socketIo.Server(server, {
 	connectTimeout: Number(TIMEOUT_DICONNECT), // 30 mins
 })
 
-// Endpoint de teste para o Express
-app.get('/', (req, res) => {
-	res.status(200)
-	res.json({ message: `${APP_NAME} ${new Date()}` })
-})
+// Health Check
+app.get('/health', ({ res }) =>
+    res.status(200).send({ status: 'ok', message: `Health check ${process.env.APP_NAME} passed` }),
+);
 
 // Configuração do Socket.IO
 io.on(SocketEvents.CONNECT, async socket => {
