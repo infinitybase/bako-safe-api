@@ -30,9 +30,10 @@ export class QuoteStorage {
   }
 
   private addMockQuotes(): void {
-    QuotesMock.forEach(quote => {
-      this.setQuote(quote.assetId, quote.price);
-    });
+    QuotesMock &&
+      QuotesMock.forEach(quote => {
+        this.setQuote(quote.assetId, quote.price);
+      });
   }
 
   private async addQuotes(): Promise<void> {

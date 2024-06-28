@@ -13,24 +13,21 @@ const { NODE_ENV } = process.env;
 
 class App {
   private readonly app: Express.Application;
-  private readonly isDevMode: boolean;
   private sessionCache: SessionStorage;
   private quoteCache: QuoteStorage;
 
   constructor() {
-    this.isDevMode = NODE_ENV === 'development';
+    const isDevMode = NODE_ENV === 'development' || NODE_ENV === 'test';
 
     this.app = Express();
     this.initMiddlewares();
     this.initRoutes();
     this.initErrorHandler();
 
-    this.isDevMode && this.initCronJobs();
-
     this.sessionCache = new SessionStorage();
     this.quoteCache = new QuoteStorage();
 
-    this.initQuotesJob();
+    isDevMode ? this.initDevJobs() : this.initProdJobs();
   }
 
   private initMiddlewares() {
@@ -50,16 +47,13 @@ class App {
     this.app.use(handleErrors);
   }
 
-  private initCronJobs() {
-    TVLCronJob.start();
+  private initDevJobs() {
+    this._quoteCache.startDev();
   }
 
-  private initQuotesJob() {
-    if (this.isDevMode) {
-      this._quoteCache.startDev();
-    } else {
-      this._quoteCache.start();
-    }
+  private initProdJobs() {
+    this._quoteCache.start();
+    TVLCronJob.start();
   }
 
   get serverApp() {
