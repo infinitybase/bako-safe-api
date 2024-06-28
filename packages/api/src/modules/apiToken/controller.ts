@@ -34,7 +34,7 @@ export class APITokenController {
         config,
         predicate,
       });
-      const userToken = this.apiTokenService.generateUserToken(
+      const cliToken = this.apiTokenService.generateCLIToken(
         apiToken.token,
         user.id,
       );
@@ -43,7 +43,7 @@ export class APITokenController {
         {
           id: apiToken.id,
           name: apiToken.name,
-          token: userToken,
+          token: cliToken,
           config: apiToken.config,
         },
         Responses.Ok,

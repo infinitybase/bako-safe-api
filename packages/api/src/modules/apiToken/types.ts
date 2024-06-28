@@ -12,6 +12,11 @@ export interface IDefaultAPITokenParams {
   id: string;
 }
 
+export interface ICLIToken {
+  apiToken: string;
+  userId: string;
+}
+
 export type IDeleteAPITokenPayload = IDefaultAPITokenParams;
 export type IListAPITokenPayload = Pick<IDefaultAPITokenParams, 'predicateId'>;
 
@@ -22,10 +27,15 @@ interface ICreateAPITokenRequestSchema extends ValidatedRequestSchema {
 
 export type ICreateAPITokenRequest = AuthValidatedRequest<ICreateAPITokenRequestSchema>;
 
+export interface ITokenCoder<D> {
+  encode(...data: string[]): string;
+  decode(data: string): D;
+}
+
 export interface IAPITokenService {
   create(payload: Partial<APIToken>): Promise<APIToken>;
   delete(params: IDeleteAPITokenPayload): Promise<void>;
   list(params: IListAPITokenPayload): Promise<APIToken[]>;
 
-  generateUserToken(apiToken: string, userId: string): string;
+  generateCLIToken(apiToken: string, userId: string): string;
 }
