@@ -13,6 +13,7 @@ export interface IDefaultAPITokenParams {
 }
 
 export type IDeleteAPITokenPayload = IDefaultAPITokenParams;
+export type IListAPITokenPayload = Pick<IDefaultAPITokenParams, 'predicateId'>;
 
 interface ICreateAPITokenRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Params]: Pick<IDefaultAPITokenParams, 'predicateId'>;
@@ -23,6 +24,8 @@ export type ICreateAPITokenRequest = AuthValidatedRequest<ICreateAPITokenRequest
 
 export interface IAPITokenService {
   create(payload: Partial<APIToken>): Promise<APIToken>;
-  delete(payload: IDeleteAPITokenPayload): Promise<void>;
+  delete(params: IDeleteAPITokenPayload): Promise<void>;
+  list(params: IListAPITokenPayload): Promise<APIToken[]>;
+
   generateUserToken(apiToken: string, userId: string): string;
 }

@@ -220,4 +220,16 @@ describe('[API TOKEN]', () => {
       });
     });
   });
+
+  describe('List', () => {
+    test('List api tokens', async () => {
+      await api.axios.post(`/api-token/${predicate.id}`, tokenMock);
+
+      const { data } = await api.axios.get(`/api-token/${predicate.id}`);
+      const [token] = data;
+
+      expect(token.id).toBeDefined();
+      expect(token.token).not.toBeDefined();
+    });
+  });
 });

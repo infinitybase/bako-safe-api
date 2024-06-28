@@ -53,6 +53,18 @@ export class APITokenController {
     }
   }
 
+  async list(req: Request) {
+    const { params } = req;
+    const { predicateId } = params;
+
+    try {
+      const tokens = await this.apiTokenService.list({ predicateId });
+      return successful(tokens, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
   async delete(req: Request) {
     const { params } = req;
     const { predicateId, id } = params;

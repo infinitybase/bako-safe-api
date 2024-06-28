@@ -1,5 +1,9 @@
 import crypto from 'crypto';
-import { IAPITokenService, IDeleteAPITokenPayload } from '@modules/apiToken/types';
+import {
+  IAPITokenService,
+  IDeleteAPITokenPayload,
+  IListAPITokenPayload,
+} from '@modules/apiToken/types';
 import { APIToken } from '@src/models';
 import Internal from '../../utils/error/Internal';
 import { ErrorTypes } from '@utils/error';
@@ -33,6 +37,23 @@ export class APITokenService implements IAPITokenService {
       throw new Internal({
         type: ErrorTypes.Internal,
         title: 'Error on create API Token',
+        detail: e,
+      });
+    }
+  }
+
+  async list(params: IListAPITokenPayload) {
+    try {
+      return APIToken.find({
+        where: {
+          predicate: { id: params.predicateId },
+          deletedAt: null,
+        },
+      });
+    } catch (e) {
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on list API Token',
         detail: e,
       });
     }

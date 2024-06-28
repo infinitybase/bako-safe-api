@@ -23,3 +23,9 @@ export const validateDeleteAPITokenParams = validator.params(
     id: Joi.string().uuid(),
   }),
 );
+
+export const validateListAPITokenParams = validator.params(
+  Joi.object({
+    predicateId: Joi.string().uuid(),
+  }),
+);

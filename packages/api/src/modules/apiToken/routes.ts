@@ -9,11 +9,20 @@ import {
   validateCreateAPITokenParams,
   validateCreateAPITokenPayload,
   validateDeleteAPITokenParams,
+  validateListAPITokenParams,
 } from '@modules/apiToken/validations';
 
 const router = Router();
+const permissionMiddleware = predicatePermissionMiddleware({
+  permissions: [
+    PermissionRoles.OWNER,
+    PermissionRoles.ADMIN,
+    PermissionRoles.MANAGER,
+  ],
+  predicateSelector: req => req.params.predicateId,
+});
 
-const { create, delete: deleteAPIToken } = new APITokenController(
+const { create, list, delete: deleteAPIToken } = new APITokenController(
   new APITokenService(),
   new PredicateService(),
 );
@@ -24,29 +33,22 @@ router.post(
   '/:predicateId',
   validateCreateAPITokenParams,
   validateCreateAPITokenPayload,
-  predicatePermissionMiddleware({
-    permissions: [
-      PermissionRoles.OWNER,
-      PermissionRoles.ADMIN,
-      PermissionRoles.MANAGER,
-    ],
-    predicateSelector: req => req.params.predicateId,
-  }),
+  permissionMiddleware,
   handleResponse(create),
 );
 
 router.delete(
   '/:predicateId/:id',
   validateDeleteAPITokenParams,
-  predicatePermissionMiddleware({
-    permissions: [
-      PermissionRoles.OWNER,
-      PermissionRoles.ADMIN,
-      PermissionRoles.MANAGER,
-    ],
-    predicateSelector: req => req.params.predicateId,
-  }),
+  permissionMiddleware,
   handleResponse(deleteAPIToken),
+);
+
+router.get(
+  '/:predicateId',
+  validateListAPITokenParams,
+  permissionMiddleware,
+  handleResponse(list),
 );
 
 export default router;
