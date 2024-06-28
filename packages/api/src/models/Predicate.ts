@@ -68,3 +68,13 @@ class Predicate extends Base {
 }
 
 export { Predicate };
+
+// -- Criação de índice para a coluna 'owner_id' na tabela 'predicates'
+// CREATE INDEX idx_predicates_owner_id ON predicates(owner_id);
+
+// -- Criação de índice para a coluna 'workspace_id' na tabela 'predicates'
+// CREATE INDEX idx_predicates_workspace_id ON predicates(workspace_id);
+
+// -- Criação de índice para a coluna 'version_id' na tabela 'predicates'
+// CREATE INDEX idx_predicates_version_id ON predicates(version_id);
+

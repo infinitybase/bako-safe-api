@@ -1,6 +1,7 @@
 import { User } from "@src/models";
 import UserToken from "@src/models/UserToken";
 import { Workspace } from "@src/models/Workspace";
+import { AuthService } from "@src/modules/auth/services";
 import { TokenUtils } from "@src/utils";
 import { isPast } from "date-fns";
 
@@ -72,6 +73,7 @@ export class SessionStorage {
                     this.data.delete(sessionId);
                 }
             }
+            new AuthService().clearExpiredTokens();
             this.nextClear = new Date().getTime() + CLEAR_TIME;
     }
 

@@ -70,6 +70,28 @@ export class UserController {
     );
   }
 
+  async meTransactions(req: IMeRequest) {
+    try {
+      const { type } = req.query;
+      const transactions = await new TransactionService()
+        .filter({
+          byMonth: true,
+          type,
+        })
+        .paginate({ page: '0', perPage: '6' })
+        .ordination({ orderBy: 'createdAt', sort: 'DESC' })
+        .list();
+
+      return successful(
+        transactions,
+
+        Responses.Ok,
+      );
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
   async me(req: IMeRequest) {
     try {
       //list all 8 last vaults of user
@@ -88,15 +110,6 @@ export class UserController {
         .ordination({ orderBy: 'updatedAt', sort: 'DESC' })
         .list();
 
-      const transactions = await new TransactionService()
-        .filter({
-          workspaceId: workspaceList,
-          signer: hasSingle ? user.address : undefined,
-        })
-        .paginate({ page: '0', perPage: '6' })
-        .ordination({ orderBy: 'createdAt', sort: 'DESC' })
-        .list();
-
       return successful(
         {
           workspace: {
@@ -107,7 +120,6 @@ export class UserController {
             description: workspace.description,
           },
           predicates,
-          transactions,
         },
         Responses.Ok,
       );

@@ -13,6 +13,10 @@ import { Base } from './Base';
 import { Predicate } from './Predicate';
 import { Witness } from './Witness';
 
+export enum TransactionType {
+  TRANSACTION_SCRIPT = 'TRANSACTION_SCRIPT',
+  DEPOSIT = 'DEPOSIT',
+}
 @Entity('transactions')
 class Transaction extends Base {
   @Column()
@@ -20,6 +24,14 @@ class Transaction extends Base {
 
   @Column()
   hash: string;
+
+  @Column({
+    name: 'type',
+    type: 'enum',
+    enum: TransactionType,
+    default: TransactionType.TRANSACTION_SCRIPT,
+  })
+  type: TransactionType;
 
   @Column({
     type: 'jsonb',
@@ -70,3 +82,15 @@ class Transaction extends Base {
 }
 
 export { Transaction };
+
+// -- Criação de índice para a coluna 'transaction_id' na tabela 'assets'
+// CREATE INDEX idx_assets_transaction_id ON assets(transaction_id);
+
+// -- Criação de índice para a coluna 'transaction_id' na tabela 'witnesses'
+// CREATE INDEX idx_witnesses_transaction_id ON witnesses(transaction_id);
+
+// -- Criação de índice para a coluna 'predicate_id' na tabela 'transactions'
+// CREATE INDEX idx_transactions_predicate_id ON transactions(predicate_id);
+
+// -- Criação de índice para a coluna 'created_by' na tabela 'transactions'
+// CREATE INDEX idx_transactions_created_by ON transactions(created_by);

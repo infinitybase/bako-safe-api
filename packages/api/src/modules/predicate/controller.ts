@@ -38,6 +38,7 @@ import {
   IPredicateService,
 } from './types';
 import { IPredicateVersionService } from '../predicateVersion/types';
+import { formatPayloadToCreateTransaction } from '../transaction/utils';
 
 export class PredicateController {
   private userService: IUserService;
@@ -148,7 +149,24 @@ export class PredicateController {
 
   async findById({ params: { id }, user }: IFindByIdRequest) {
     try {
-      const predicate = await this.predicateService.findById(id, user.address);
+      const { predicate, missingDeposits } = await this.predicateService.findById(
+        id,
+        user.address,
+      );
+
+      if (missingDeposits.length >= 1) {
+        for (const deposit of missingDeposits) {
+          try {
+            const formattedPayload = formatPayloadToCreateTransaction(
+              deposit,
+              predicate,
+            );
+            await this.transactionService.create(formattedPayload);
+          } catch (error) {
+            console.error('Error saving deposit:', deposit, error);
+          }
+        }
+      }
 
       return successful(predicate, Responses.Ok);
     } catch (e) {
@@ -162,12 +180,12 @@ export class PredicateController {
         where: { predicateAddress: address },
       });
 
-      const _response = await this.predicateService.findById(
+      const { predicate } = await this.predicateService.findById(
         response.id,
         undefined,
       );
 
-      return successful(_response, Responses.Ok);
+      return successful(predicate, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }
@@ -232,7 +250,13 @@ export class PredicateController {
           ] as CoinQuantity[];
         });
 
-      const predicate = await this.predicateService.findById(address, undefined);
+
+      const { predicate } = await this.predicateService.findById(
+        address,
+        undefined,
+      );
+
+
       const instance = await this.predicateService.instancePredicate(predicate.id);
       const balances = await instance.getBalances();
       const balancesToConvert =
