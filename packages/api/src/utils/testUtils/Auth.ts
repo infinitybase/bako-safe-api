@@ -1,10 +1,11 @@
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosError, AxiosInstance } from 'axios';
 import { IBakoSafeApi } from 'bakosafe';
 import { Provider, Wallet } from 'fuels';
 
 import { TypeUser } from '@src/models';
 
 import { IDefaultAccount } from '../../mocks/accounts';
+import GeneralError from '@utils/error/GeneralError';
 
 const { API_URL } = process.env;
 
@@ -12,6 +13,15 @@ export type IUserAuth = {
   id: string;
   avatar: string;
   address: string;
+};
+
+type AuthenticateUser = {
+  provider: string;
+  account: IDefaultAccount;
+};
+
+type AuthenticateWorkspace = AuthenticateUser & {
+  workspaceId: string;
 };
 
 //todo: repply this class on SDK to user autentication resource
@@ -34,6 +44,20 @@ export class AuthValidations {
       baseURL: API_URL,
     });
   }
+
+  static async authenticateUser(params: AuthenticateUser) {
+    const auth = new AuthValidations(params.provider, params.account);
+    await auth.create();
+    await auth.createSession();
+    return auth;
+  }
+
+  static async authenticateWorkspace(params: AuthenticateWorkspace) {
+    const auth = await this.authenticateUser(params);
+    await auth.selectWorkspace(params.workspaceId);
+    return auth;
+  }
+
   async create() {
     const { data } = await this.axios.post('/user', {
       address: this.account.address,

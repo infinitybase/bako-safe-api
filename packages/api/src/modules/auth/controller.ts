@@ -7,12 +7,7 @@ import GeneralError, { ErrorTypes } from '@src/utils/error/GeneralError';
 
 import { IAuthRequest } from '@middlewares/auth/types';
 
-import {
-  NotFound,
-  Unauthorized,
-  UnauthorizedErrorTitles,
-  error,
-} from '@utils/error';
+import { NotFound, error } from '@utils/error';
 import { Responses, successful, bindMethods, TokenUtils } from '@utils/index';
 
 import { RecoverCodeService } from '../recoverCode/services';
@@ -37,7 +32,7 @@ export class AuthController {
     try {
       const { digest, encoder, signature } = req.body;
 
-      const {userToken, signin} = await TokenUtils.createAuthToken(
+      const { userToken, signin } = await TokenUtils.createAuthToken(
         signature,
         digest,
         encoder,

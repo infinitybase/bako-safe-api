@@ -11,6 +11,7 @@ import predicateVersions from '@modules/predicateVersion/routes';
 import transactions from '@modules/transaction/routes';
 import vaultTemplate from '@modules/vaultTemplate/routes';
 import workspace from '@modules/workspace/routes';
+import apiToken from '@modules/apiToken/routes';
 
 const router = Router();
 
@@ -24,6 +25,7 @@ router.use('/address-book', addressBook);
 router.use('/connections', dApp);
 router.use('/notifications', notifications);
 router.use('/workspace', workspace);
+router.use('/api-token', apiToken);
 
 // ping route
 router.get('/ping', ({ res }) =>
@@ -31,8 +33,6 @@ router.get('/ping', ({ res }) =>
 );
 
 // healthcheck route
-router.get('/healthcheck', ({ res }) =>
-  res.status(200).send({ status: 'ok' })
-);
+router.get('/healthcheck', ({ res }) => res.status(200).send({ status: 'ok' }));
 
 export { router };
