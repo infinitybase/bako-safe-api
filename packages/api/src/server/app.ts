@@ -2,32 +2,32 @@ import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import Express from 'express';
-import morgan from 'morgan';  
+import morgan from 'morgan';
 
 import { router } from '@src/routes';
 import { TVLCronJob } from '@src/utils';
 
 import { handleErrors } from '@middlewares/index';
-import { SessionStorage } from './storage';
-
+import { QuoteStorage, SessionStorage } from './storage';
+const { NODE_ENV } = process.env;
 
 class App {
   private readonly app: Express.Application;
   private sessionCache: SessionStorage;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private quoteCache: QuoteStorage;
 
   constructor() {
-    const isDevmode = process.env.NODE_ENV === 'development';
+    const isDevMode = NODE_ENV === 'development' || NODE_ENV === 'test';
 
     this.app = Express();
     this.initMiddlewares();
     this.initRoutes();
     this.initErrorHandler();
-    
-    isDevmode && this.initCronJobs();
-    
+
     this.sessionCache = new SessionStorage();
+    this.quoteCache = new QuoteStorage();
+
+    isDevMode ? this.initDevJobs() : this.initProdJobs();
   }
 
   private initMiddlewares() {
@@ -47,15 +47,25 @@ class App {
     this.app.use(handleErrors);
   }
 
-  private initCronJobs() {
+  private initDevJobs() {
+    this._quoteCache.startDev();
+  }
+
+  private initProdJobs() {
+    this._quoteCache.start();
     TVLCronJob.start();
   }
 
   get serverApp() {
     return this.app;
   }
+
   get _sessionCache() {
     return this.sessionCache;
+  }
+
+  get _quoteCache() {
+    return this.quoteCache;
   }
 }
 

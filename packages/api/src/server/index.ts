@@ -5,18 +5,17 @@ import Bootstrap from './bootstrap';
 
 const { API_PORT, PORT } = process.env;
 
-
 const start = async () => {
   const port = API_PORT || PORT || 3333;
 
   app.serverApp.listen(port, () => {
     console.log(`[APP] Application running in http://localhost:${port}`);
-  })
+  });
 
   await Bootstrap.start();
 
   console.log('[APP] Application started', app._sessionCache);
-  
+  console.log('[APP] Application started', app._quoteCache);
 };
 
 BakoSafe.setProviders({
