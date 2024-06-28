@@ -9,7 +9,7 @@ services:
       context: .
     working_dir: /api
     environment:
-      - NODE_ENV=${API_ENVIRONMENT}
+      - API_ENVIRONMENT=${API_ENVIRONMENT}
       # DATABASE
       - DATABASE_HOST=${DATABASE_HOST}
       - DATABASE_PORT=${DATABASE_PORT}

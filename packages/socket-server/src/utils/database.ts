@@ -20,14 +20,18 @@ interface ConnectionConfig {
   };
 }
 
+const isLocal = DATABASE_HOST === '127.0.0.1'
+
 export const defaultConnection: ConnectionConfig = {
   user: DATABASE_USERNAME,
   password: DATABASE_PASSWORD,
   database: DATABASE_NAME,
   host: DATABASE_HOST,
   port: Number(DATABASE_PORT),
-  ssl: {
-    rejectUnauthorized: false,
+  ...!isLocal && {
+    ssl: {
+      rejectUnauthorized: false
+    }
   },
 }
 
@@ -39,6 +43,7 @@ export class DatabaseClass {
   }
 
   static async connect (connection: ConnectionConfig = defaultConnection): Promise<DatabaseClass> {
+    console.log('[CONNECT_DATABASE]: ', defaultConnection)
     if (!this.instance) {
       const cl = new Client(connection)
       await cl.connect();

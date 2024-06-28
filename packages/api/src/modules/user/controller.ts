@@ -1,7 +1,7 @@
 import { addMinutes } from 'date-fns';
 
 import { RecoverCode, RecoverCodeType } from '@src/models';
-import { User } from '@src/models/User';
+import { TypeUser, User } from '@src/models/User';
 import { bindMethods } from '@src/utils/bindMethods';
 
 import {
@@ -29,6 +29,7 @@ import {
   IUpdateRequest,
   IUserService,
 } from './types';
+import { Not } from 'typeorm';
 
 export class UserController {
   private userService: IUserService;
@@ -231,6 +232,7 @@ export class UserController {
     try {
       const { user } = req;
       const { id } = req.params;
+      const { name } = req.body;
 
       if (user.id !== id) {
         throw new Unauthorized({
@@ -240,13 +242,26 @@ export class UserController {
         });
       }
 
+      if (name) {
+        const existingUser = await User.findOne({
+          where: { name, id: Not(user.id) },
+        });
+
+        if (existingUser) {
+          throw new BadRequest({
+            type: ErrorTypes.Update,
+            title: 'Error on user update',
+            detail: `User with name ${name} already exists`,
+          });
+        }
+      }
+
       const response = await this.userService.update(id, {
         ...req.body,
       });
 
       return successful(response, Responses.Ok);
     } catch (e) {
-      console.log(e);
       return error(e.error, e.statusCode);
     }
   }

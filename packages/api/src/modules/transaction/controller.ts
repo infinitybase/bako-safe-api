@@ -362,6 +362,14 @@ export class TransactionController {
       }
 
       if (witness) {
+        if (witness.status !== WitnessesStatus.PENDING) {
+          throw new NotFound({
+            detail: 'Transaction was already declined.',
+            title: UnauthorizedErrorTitles.INVALID_SIGNATURE,
+            type: ErrorTypes.NotFound,
+          });
+        }
+
         await this.witnessService.update(witness.id, {
           signature: signer,
           status: confirm ? WitnessesStatus.DONE : WitnessesStatus.REJECTED,
@@ -457,21 +465,25 @@ export class TransactionController {
       const { workspace, user } = req;
 
       const singleWorkspace = await new WorkspaceService()
-        .filter({
-          user: user.id,
-          single: true,
-        })
-        .list()
-        .then((response: Workspace[]) => response[0]);
+      .filter({
+        user: user.id,
+        single: true,
+      })
+      .list()
+      .then((response: Workspace[]) => response[0]);
+    
 
-      const allWk = await new WorkspaceService()
-        .filter({
-          user: user.id,
-        })
-        .list()
-        .then((response: Workspace[]) => response.map(wk => wk.id));
+    const hasSingle = singleWorkspace.id === workspace.id;
 
-      const hasSingle = singleWorkspace.id === workspace.id;
+    const _wk = hasSingle 
+      ? await new WorkspaceService()
+      .filter({
+        user: user.id,
+      })
+      .list()
+      .then((response: Workspace[]) => response.map(wk => wk.id)) 
+      : [workspace.id];
+
 
       const result = await new TransactionService()
         .filter({
@@ -480,7 +492,7 @@ export class TransactionController {
           status: status ?? undefined,
           createdBy,
           name,
-          workspaceId: hasSingle ? allWk : [workspace.id],
+          workspaceId: _wk,
           signer: hasSingle ? user.address : undefined,
           predicateId: predicateId ?? undefined,
           byMonth,

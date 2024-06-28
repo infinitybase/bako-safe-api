@@ -23,6 +23,7 @@ import {
   ICreateRecoverCodeRequest,
   ISignInRequest,
 } from './types';
+import app from '@src/server/app';
 
 export class AuthController {
   private authService: IAuthService;
@@ -36,13 +37,14 @@ export class AuthController {
     try {
       const { digest, encoder, signature } = req.body;
 
-      const userToken = await TokenUtils.createAuthToken(
+      const {userToken, signin} = await TokenUtils.createAuthToken(
         signature,
         digest,
         encoder,
       );
 
-      return successful(userToken, Responses.Ok);
+      await app._sessionCache.addSession(userToken.token, userToken);
+      return successful(signin, Responses.Ok);
     } catch (e) {
       if (e instanceof GeneralError) throw e;
 
@@ -56,7 +58,7 @@ export class AuthController {
 
       return successful(response, Responses.Ok);
     } catch (e) {
-      return error(e.error[0], e.statusCode);
+      return error(e.error, e.statusCode);
     }
   }
 
@@ -75,7 +77,7 @@ export class AuthController {
 
       return successful(response, Responses.Ok);
     } catch (e) {
-      return error(e.error[0], e.statusCode);
+      return error(e.error, e.statusCode);
     }
   }
 
@@ -96,13 +98,13 @@ export class AuthController {
 
       const isUserMember = workspace.members.find(m => m.id === user);
 
-      const token = await this.authService.findToken({
-        userId: user,
-      });
+      const token = await TokenUtils.getTokenBySignature(req.headers.authorization);
 
       if (isUserMember) {
         token.workspace = workspace;
       }
+
+      await app._sessionCache.addSession(token.token, token);
 
       return successful(
         await token.save().then(({ workspace, token, user }: UserToken) => {

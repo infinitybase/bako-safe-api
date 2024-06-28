@@ -112,11 +112,6 @@ export class AddressBookService implements IAddressBookService {
         ),
       );
 
-    //todo: add new subquery to order by, because the select is required distinct mode
-    // console.log('this._filter', this._filter, this._ordination);
-    // hasOrdination &&
-    //   queryBuilder.orderBy(`ab.${this._ordination.orderBy}`, this._ordination.sort);
-
     return hasPagination
       ? Pagination.create(queryBuilder)
           .paginate(this._pagination)

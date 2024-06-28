@@ -189,7 +189,6 @@ export class TransactionService implements ITransactionService {
         }),
       );
     // =============== specific for workspace ===============
-    //console.log('[transaction_FILTER]: ', this._filter);
 
     // =============== specific for home ===============
     (this._filter.workspaceId || this._filter.signer) &&
@@ -418,8 +417,6 @@ export class TransactionService implements ITransactionService {
         return resume;
       })
       .catch(e => {
-        console.log('[ERRO_SEND_TOCHAIN]: ', e);
-
         throw new Internal({
           type: ErrorTypes.Internal,
           title: 'Error on transaction sendToChain',
@@ -487,8 +484,6 @@ export class TransactionService implements ITransactionService {
           }
         }
       }
-
-      //console.log('[DENTRO_ELSE_IF]', _api_transaction, resume, a);
       return resume;
     }
 
