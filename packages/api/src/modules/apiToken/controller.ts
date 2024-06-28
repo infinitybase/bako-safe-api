@@ -1,3 +1,4 @@
+import { Request } from 'express';
 import { successful, Responses, bindMethods } from '@src/utils';
 import { IAPITokenService, ICreateAPITokenRequest } from '@modules/apiToken/types';
 import { IPredicateService } from '@modules/predicate/types';
@@ -40,14 +41,26 @@ export class APITokenController {
 
       return successful(
         {
-          token: userToken,
+          id: apiToken.id,
           name: apiToken.name,
+          token: userToken,
           config: apiToken.config,
         },
         Responses.Ok,
       );
     } catch (e) {
-      console.log(e);
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async delete(req: Request) {
+    const { params } = req;
+    const { predicateId, id } = params;
+
+    try {
+      await this.apiTokenService.delete({ id, predicateId });
+      return successful(null, Responses.Created);
+    } catch (e) {
       return error(e.error, e.statusCode);
     }
   }

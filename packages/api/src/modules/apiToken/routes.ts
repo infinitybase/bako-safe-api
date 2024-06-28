@@ -8,11 +8,12 @@ import { PredicateService } from '@modules/predicate/services';
 import {
   validateCreateAPITokenParams,
   validateCreateAPITokenPayload,
+  validateDeleteAPITokenParams,
 } from '@modules/apiToken/validations';
 
 const router = Router();
 
-const { create } = new APITokenController(
+const { create, delete: deleteAPIToken } = new APITokenController(
   new APITokenService(),
   new PredicateService(),
 );
@@ -32,6 +33,20 @@ router.post(
     predicateSelector: req => req.params.predicateId,
   }),
   handleResponse(create),
+);
+
+router.delete(
+  '/:predicateId/:id',
+  validateDeleteAPITokenParams,
+  predicatePermissionMiddleware({
+    permissions: [
+      PermissionRoles.OWNER,
+      PermissionRoles.ADMIN,
+      PermissionRoles.MANAGER,
+    ],
+    predicateSelector: req => req.params.predicateId,
+  }),
+  handleResponse(deleteAPIToken),
 );
 
 export default router;

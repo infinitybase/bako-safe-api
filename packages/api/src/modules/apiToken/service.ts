@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { IAPITokenService } from '@modules/apiToken/types';
+import { IAPITokenService, IDeleteAPITokenPayload } from '@modules/apiToken/types';
 import { APIToken } from '@src/models';
 import Internal from '../../utils/error/Internal';
 import { ErrorTypes } from '@utils/error';
@@ -33,6 +33,24 @@ export class APITokenService implements IAPITokenService {
       throw new Internal({
         type: ErrorTypes.Internal,
         title: 'Error on create API Token',
+        detail: e,
+      });
+    }
+  }
+
+  async delete(payload: IDeleteAPITokenPayload) {
+    try {
+      await APIToken.update(
+        {
+          id: payload.id,
+          predicate: { id: payload.predicateId },
+        },
+        { deletedAt: new Date() },
+      );
+    } catch (e) {
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on delete API Token',
         detail: e,
       });
     }
