@@ -1,7 +1,7 @@
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 
 import { AuthValidatedRequest, UnloggedRequest } from '@src/middlewares/auth/types';
-import { TypeUser, User } from '@src/models';
+import { TransactionType, TypeUser, User } from '@src/models';
 import { IDefaultOrdination, IOrdination } from '@src/utils/ordination';
 import { IPagination, PaginationParams } from '@src/utils/pagination';
 
@@ -28,6 +28,7 @@ export interface IFilterParams {
   nickname?: string;
   address?: string;
   workspace?: string;
+  type: TransactionType;
 }
 
 interface ICreateRequestSchema extends ValidatedRequestSchema {
