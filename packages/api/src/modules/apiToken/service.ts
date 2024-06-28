@@ -27,15 +27,19 @@ export class CLITokenCoder implements ITokenCoder<ICLIToken> {
   }
 
   decode(token: string) {
-    const decipher = crypto.createDecipheriv(
-      this.algorithm,
-      Buffer.from(token),
-      Buffer.alloc(16, 0),
-    );
-    let decrypted = decipher.update(token, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-    const [apiToken, userId] = decrypted.split('.');
-    return { apiToken, userId };
+    try {
+      const decipher = crypto.createDecipheriv(
+        this.algorithm,
+        Buffer.from(API_TOKEN_SECRET_KEY),
+        Buffer.from(API_TOKEN_SECRET_IV),
+      );
+      let decrypted = decipher.update(token, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+      const [apiToken, userId] = decrypted.split('.');
+      return { apiToken, userId };
+    } catch (e) {
+      throw new Error('Invalid token');
+    }
   }
 }
 
