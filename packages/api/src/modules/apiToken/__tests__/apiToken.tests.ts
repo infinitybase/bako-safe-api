@@ -1,9 +1,5 @@
 import { AuthValidations } from '@utils/testUtils/Auth';
-import { networks } from '@mocks/networks';
-import { accounts } from 'bakosafe';
 import { DEFAULT_TRANSACTION_TITLE, Predicate } from '@src/models';
-import { PredicateMock } from '@mocks/predicate';
-import { generateWorkspacePayload } from '@utils/testUtils/Workspace';
 import { TestError, catchApplicationError } from '@utils/testUtils/Errors';
 import { SetupApiTokenTest } from '@modules/apiToken/__tests__/utils/setup';
 
