@@ -27,13 +27,12 @@ export class Database {
   }
 
   static async connect (connection: ConnectionConfig = defaultConnection): Promise<Database> {
-    console.log('[CONNECT_DATABASE]: ', defaultConnection)
     if (!this.instance) {
       const cl = new Client(connection)
       await cl.connect();
       this.instance = new Database(cl);
     }
-
+    console.log('[DATABASE] Connected!')
     return this.instance;
   }
 

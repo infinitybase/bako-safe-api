@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "ts-node-dev -r tsconfig-paths/register -r dotenv/config ./src/index.ts",
     "build:lib": "pnpm codegen:fuel && pnpm codegen:app",
-    "fix:generated": "node ./scripts/fix-generated.mjs",
     "codegen:app": "gql-gen -r dotenv/config --config codegen.ts",
     "codegen:fuel": "gql-gen -r dotenv/config --config codegen.fuel.ts",
     "prepare": "pnpm build:lib"
@@ -20,13 +19,14 @@
     "@graphql-tools/schema": "^10.0.4",
     "@graphql-tools/utils": "^10.2.2",
     "@graphql-tools/wrap": "^10.0.5",
-    "bakosafe": "link:/Users/luisburigo/Documents/dev/infinity/bako/bako-safe/packages/sdk",
     "cors": "2.8.5",
     "dotenv": "16.4.5",
     "express": "4.17.1",
     "fuels": "0.88.1",
     "graphql": "^16.9.0",
     "graphql-http": "^1.22.1",
+    "graphql-playground-middleware-express": "^1.7.23",
+    "graphql-sse": "^2.5.3",
     "pg": "^8.12.0",
     "tai64": "^1.0.0",
     "ts-node": "^10.9.2",
@@ -39,6 +39,8 @@
     "@types/express": "4.17.11",
     "@types/node": "20.6.0",
     "@types/pg": "^8.11.6",
+    "graphql-import-node": "^0.0.5",
+    "ts-gql-plugin": "^1.5.1",
     "ts-node-dev": "2.0.0",
     "tsconfig-paths": "^4.2.0"
   }

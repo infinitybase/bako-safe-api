@@ -1,3 +1,5 @@
+import "graphql-import-node";
+
 import { GatewayServer } from "@/server";
 import { Database } from '@/database';
 
@@ -10,6 +12,6 @@ const main = async () => {
 }
 
 main().catch((reason) => {
-  console.error('[GATEWAY] Failed to start server', reason);
+  console.error('[GATEWAY SERVER] Failed to start server', reason);
   process.exit(1);
 });

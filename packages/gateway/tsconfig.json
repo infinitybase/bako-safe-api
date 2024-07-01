@@ -1,18 +1,19 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "CommonJS",
-    "outDir": "build",
+    "outDir": "./build",
     "baseUrl": "./src",
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
+    "isolatedModules": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
-    "skipLibCheck": true,
     "paths": {
       "@/*": ["./*"]
-    }
+    },
+    "plugins": [
+      {
+        "name": "ts-gql-plugin"
+      }
+    ]
   },
-  "include": ["src/**/*", "src/*"],
+  "include": ["src/**/*", "src/*", "**/*.graphql"],
   "exclude": ["node_modules"]
 }
