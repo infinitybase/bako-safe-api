@@ -5,12 +5,22 @@ import { Address } from 'fuels';
 
 import { generateInitialUsers } from '@src/mocks/initialSeeds/initialUsers';
 import { networks } from '@src/mocks/networks';
-import { RecoverCodeType, TypeUser } from '@src/models';
+import { RecoverCodeType, Transaction, TypeUser } from '@src/models';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
 
 import { accounts } from '../../../mocks/accounts';
 
 const { API_URL, UI_URL } = process.env;
+
+interface Response {
+  currentPage: number;
+  totalPages: number;
+  nextPage: number;
+  prevPage: number;
+  perPage: number;
+  total: number;
+  data: { monthYear: string; transactions: Transaction[] }[];
+}
 
 describe('[USER]', () => {
   let api = beforeAll(() => {
@@ -58,6 +68,19 @@ describe('[USER]', () => {
     },
     10 * 1000,
   );
+
+  test('Home Transactions endpoint', async () => {
+    const auth = new AuthValidations(networks['local'], accounts['USER_1']);
+    await auth.create();
+    await auth.createSession();
+
+    //list all transactions by month,
+    await auth.axios.get('user/me/transactions').then(({ data, status }) => {
+      expect(status).toBe(200);
+      expect(data).toHaveProperty('data');
+      expect(data.data).toBeInstanceOf(Array);
+    });
+  });
 
   test('Update user', async () => {
     const auth = new AuthValidations(networks['local'], accounts['USER_1']);
