@@ -5,22 +5,12 @@ import { Address } from 'fuels';
 
 import { generateInitialUsers } from '@src/mocks/initialSeeds/initialUsers';
 import { networks } from '@src/mocks/networks';
-import { RecoverCodeType, Transaction, TypeUser } from '@src/models';
+import { RecoverCodeType, TypeUser } from '@src/models';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
 
 import { accounts } from '../../../mocks/accounts';
 
 const { API_URL, UI_URL } = process.env;
-
-interface Response {
-  currentPage: number;
-  totalPages: number;
-  nextPage: number;
-  prevPage: number;
-  perPage: number;
-  total: number;
-  data: { monthYear: string; transactions: Transaction[] }[];
-}
 
 describe('[USER]', () => {
   let api = beforeAll(() => {
