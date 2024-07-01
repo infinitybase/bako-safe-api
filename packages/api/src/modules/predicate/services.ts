@@ -12,7 +12,6 @@ import Internal from '@utils/error/Internal';
 
 import {
   IEndCursorPayload,
-  IExtendedPredicate,
   IGetTxEndCursorQueryProps,
   IPredicateFilterParams,
   IPredicatePayload,

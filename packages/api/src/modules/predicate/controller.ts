@@ -38,7 +38,6 @@ import {
   IPredicateService,
 } from './types';
 import { IPredicateVersionService } from '../predicateVersion/types';
-import { formatPayloadToCreateTransaction } from '../transaction/utils';
 
 export class PredicateController {
   private userService: IUserService;
