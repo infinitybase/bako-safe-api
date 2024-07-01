@@ -5,10 +5,10 @@ import { BakoSafe } from 'bakosafe';
 import { GatewayServer } from "@/server";
 import { Database } from '@/lib';
 
-const { PORT, FUEL_PROVIDER } = process.env;
+const { PORT, FUEL_PROVIDER, BAKO_SERVER } = process.env;
 
 BakoSafe.setProviders({
-  SERVER_URL: 'http://localhost:3333',
+  SERVER_URL: BAKO_SERVER,
   CHAIN_URL: FUEL_PROVIDER
 });
 
