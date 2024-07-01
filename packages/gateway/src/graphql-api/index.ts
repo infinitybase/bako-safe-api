@@ -1,13 +1,13 @@
 import { createGraphqlFetch } from "@/lib";
-import { defaultSchema, executableSchema } from "./schema";
+import { executableSchema, defaultSchema } from "./schema";
 import { resolvers } from "./resolvers";
 
 const httpExecutor = createGraphqlFetch();
 
-export const appSchema = defaultSchema({
+// Schema for overrides subscriptions
+export const subscriptionSchema = defaultSchema({
   resolvers,
 });
 
-export const fuelSchema = executableSchema(httpExecutor, {
-  resolvers,
-});
+// Schema for overrides mutations and queries
+export const defaultSchemas = executableSchema(httpExecutor, { resolvers });

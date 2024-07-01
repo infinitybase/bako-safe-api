@@ -2,6 +2,7 @@ import {
   HttpError,
   RESULT_TYPE,
   stopAsyncIteration,
+  getGraphQLParameters,
 } from '@graphql-sse/server';
 import {
   GraphQLError,
@@ -125,11 +126,12 @@ export const createSubscriptionHandler = ({ schema }) => {
       variables: graphQLParameters.variables,
       schema,
       // @ts-ignore
-      context: req.context,
+      context: {...req.context, schema},
     });
 
     if (result.type === RESULT_TYPE.EVENT_STREAM) {
       result.subscribe((data) => {
+        console.log(data);
         res.write(`data: ${JSON.stringify(data)}\n\n`);
       });
 

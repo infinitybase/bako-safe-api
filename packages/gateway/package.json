@@ -26,6 +26,7 @@
     "graphql": "^16.9.0",
     "graphql-http": "^1.22.1",
     "graphql-playground-middleware-express": "^1.7.23",
+    "bakosafe": "link:/Users/luisburigo/Documents/dev/infinity/bako/bako-safe/packages/sdk",
     "graphql-sse": "^2.5.3",
     "pg": "^8.12.0",
     "tai64": "^1.0.0",

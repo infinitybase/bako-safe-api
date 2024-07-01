@@ -1,15 +1,15 @@
-import express from "express";
-import cors from "cors";
-import { Server } from "http";
-import { createHandler as createHttpHandler } from "graphql-http/lib/use/express";
-import expressPlayground from "graphql-playground-middleware-express";
-import { createSubscriptionHandler } from "@/lib/subscription";
-import { appSchema, fuelSchema } from "@/graphql-api";
+import express from 'express';
+import cors from 'cors';
+import { Server } from 'http';
+import expressPlayground from 'graphql-playground-middleware-express';
+
+import { subscriptionSchema, defaultSchemas } from '@/graphql-api';
+import { createGraphqlHttpHandler, createSubscriptionHandler } from '@/lib';
 
 export class GatewayServer {
   private static ROUTES_PATHS = {
-    graphql: "/v1/graphql",
-    graphqlSub: "/v1/graphql-sub",
+    graphql: '/v1/graphql',
+    graphqlSub: '/v1/graphql-sub',
   };
 
   private readonly app: express.Application;
@@ -48,23 +48,18 @@ export class GatewayServer {
         endpoint: GatewayServer.ROUTES_PATHS.graphql,
         subscriptionEndpoint: GatewayServer.ROUTES_PATHS.graphqlSub,
         settings: {
-          "schema.polling.enable": false,
+          'schema.polling.enable': false,
         },
-      })
+      }),
     );
 
     this.app.post(
       GatewayServer.ROUTES_PATHS.graphqlSub,
-      createSubscriptionHandler({ schema: appSchema })
+      createSubscriptionHandler({ schema: subscriptionSchema }),
     );
-    this.app.post(GatewayServer.ROUTES_PATHS.graphql, (req, res, next) => {
-      const handler = createHttpHandler({
-        schema: fuelSchema,
-        // @ts-ignore
-        context: req.context,
-      });
-
-      return handler(req, res, next);
-    });
+    this.app.post(GatewayServer.ROUTES_PATHS.graphql, createGraphqlHttpHandler({
+      appSchema: defaultSchemas.appSchema,
+      fuelSchema: defaultSchemas.fuelSchema,
+    }));
   }
 }
