@@ -3,19 +3,21 @@ import { BakoSafe } from 'bakosafe';
 import app from './app';
 import Bootstrap from './bootstrap';
 
-const { API_PORT, PORT } = process.env;
+const { API_PORT, PORT, API_ENVIRONMENT } = process.env;
 
 const start = async () => {
   const port = API_PORT || PORT || 3333;
 
-  app.serverApp.listen(port, () => {
-    console.log(`[APP] Application running in http://localhost:${port}`);
-  });
-
   await Bootstrap.start();
 
-  console.log('[APP] Application started', app._sessionCache);
-  console.log('[APP] Application started', app._quoteCache);
+  console.log('[APP] Storages started', {
+    active_sessions: app._sessionCache.getActiveSessions(),
+    active_quotes: app._quoteCache.getActiveQuotes(),
+  });
+
+  app.serverApp.listen(port, () => {
+    console.log(`[APP] Application running in http://localhost:${port} mode ${API_ENVIRONMENT}`);
+  });
 };
 
 BakoSafe.setProviders({

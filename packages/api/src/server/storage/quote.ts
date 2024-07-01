@@ -4,19 +4,25 @@ import {
   assets,
   assetsMapById,
   assetsMapBySymbol,
+  isDevMode,
 } from '@src/utils';
 import axios from 'axios';
+
 const { COIN_MARKET_CAP_API_KEY } = process.env;
+
 
 export interface IQuote {
   assetId: string;
   price: number;
 }
 
+const REFRESH_TIME = 1000 * 2;// * 60 * 0.5;  // 10 minutes
+
 export class QuoteStorage {
   private data = new Map<string, number>();
+  
 
-  constructor() {
+  protected constructor() {
     this.data = new Map<string, number>();
   }
 
@@ -37,6 +43,11 @@ export class QuoteStorage {
   }
 
   private async addQuotes(): Promise<void> {
+    if (isDevMode()) {
+      this.addMockQuotes();
+      return;
+    }
+
     const params = this.generateParams(assets);
 
     if (params) {
@@ -84,22 +95,24 @@ export class QuoteStorage {
 
       return formattedData;
     } catch (e) {
-      console.log('[GET_ASSET_PRICE_USD_ERROR]: ', e);
+      console.log('[STORAGE_QUOTE] Get quots value: ', e.message);
       return [];
     }
   }
 
-  public startDev() {
-    this.addMockQuotes();
+  public getActiveQuotes() {
+    return Array.from(this.data).length
+  
   }
 
-  public start() {
-    this.addQuotes();
-
-    const minToRefresh = 10;
-
+  static start() {
+    const _this = new QuoteStorage();
+    _this.addQuotes();
+    
     setInterval(() => {
-      this.addQuotes();
-    }, 1000 * 60 * minToRefresh);
+      _this.addQuotes();
+    }, REFRESH_TIME);
+
+    return _this;
   }
 }

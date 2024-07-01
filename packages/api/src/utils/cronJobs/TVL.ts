@@ -6,7 +6,7 @@ import app from '@src/server/app';
 
 // Executa todos os dias a meia-noite
 const TVLCronJob = cron.schedule('0 0 * * *', async () => {
-  console.log('[TVL CRON JOB] running');
+  console.log('[CRON_JOB]: TVL - running');
   try {
     //Validação para limitar apenas um registro diário
     const savedTVL = await TotalValueLocked.createQueryBuilder('tvl')
@@ -15,7 +15,7 @@ const TVLCronJob = cron.schedule('0 0 * * *', async () => {
       .getOne();
 
     if (savedTVL) {
-      console.log('[TVL CRON JOB] has already been executed on the current date');
+      console.log('[CRON_JOB]: TVL - has already been executed on the current date');
       return;
     }
 
@@ -86,7 +86,7 @@ const TVLCronJob = cron.schedule('0 0 * * *', async () => {
     }
 
     console.log(
-      `[TVL CRON JOB] successfully executed on ${new Date().toISOString()}`,
+      `[CRON_JOB]: TVL - successfully executed on ${new Date().toISOString()}`,
     );
   } catch (e) {
     console.log(e);
