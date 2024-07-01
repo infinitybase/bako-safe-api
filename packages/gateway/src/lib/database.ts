@@ -26,17 +26,17 @@ export class Database {
     this.client = client
   }
 
-  static async connect (connection: ConnectionConfig = defaultConnection): Promise<Database> {
+  static async connect(connection: ConnectionConfig = defaultConnection): Promise<Database> {
     if (!this.instance) {
       const cl = new Client(connection)
       await cl.connect();
+      console.log('[DATABASE] Connected!')
       this.instance = new Database(cl);
     }
-    console.log('[DATABASE] Connected!')
     return this.instance;
   }
 
-  async query (query: string, params?: string[]): Promise<any> {
+  async query(query: string, params?: string[]): Promise<any> {
     try {
       const { rows }: QueryResult = await this.client.query(query, params)
       if (rows.length === 1) return rows[0]

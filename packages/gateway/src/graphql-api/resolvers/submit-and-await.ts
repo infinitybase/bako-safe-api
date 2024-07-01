@@ -1,42 +1,36 @@
-import { type DeployTransfer, Vault } from 'bakosafe';
-import { hash, TransactionType, ZeroBytes32 } from 'fuels';
+import { type DeployTransfer } from 'bakosafe';
+import { TransactionType, ZeroBytes32 } from 'fuels';
 import { TAI64 } from 'tai64';
 
 import { toTransaction } from '@/utils';
 import { SuccessStatus } from '@/generated';
+import { AuthService } from '@/service';
 
 export const submitAndAwait = {
   subscribe: async function* (_, args, context) {
-    const { apiToken, vaultId } = context;
+    const { apiToken, userId } = context;
 
-    // const tx = toTransaction(args.tx);
-    //
-    // try {
-    //   if (tx.type !== TransactionType.Create) {
-    //     throw new Error('Only TransactionType.Create are supported');
-    //   }
-    //
-    //   const vault = await Vault.create({
-    //     id: vaultId,
-    //     ...apiToken,
-    //   });
-    //   tx.witnesses = [tx.witnesses.at(tx.bytecodeWitnessIndex)];
-    //   const deployTransfer = await vault.BakoSafeDeployContract(tx);
-    //
-    //   console.log(
-    //     'Transaction submitted to BAKO: ',
-    //     deployTransfer.getHashTxId(),
-    //   );
-    //
-    //   yield deployTransfer;
-    // } catch (error) {
-    //   console.error(error);
-    //   throw error;
-    // }
+    const transaction = toTransaction(args.tx);
 
-    console.log('Transaction submitted to BAKO: ', '0x1234567890');
-    yield {
-      getHashTxId: () => `37cda821d98091066afab7b7ce0d1e044064a8638d342805648476842ee2ea90`
+    try {
+      if (transaction.type !== TransactionType.Create) {
+        throw new Error('Only TransactionType.Create are supported');
+      }
+
+      const authService = await AuthService.instance();
+      const vault = await authService.getVaultFromApiToken(apiToken, userId);
+      console.log('[INFO] Vault', {
+        id: vault.BakoSafeVaultId,
+        address: vault.address.toB256(),
+        vaultProvider: vault.provider.url,
+      });
+      transaction.witnesses = [transaction.witnesses.at(transaction.bytecodeWitnessIndex)];
+      const deployTransfer = await vault.BakoSafeDeployContract(transaction);
+
+      yield deployTransfer;
+    } catch (error) {
+      console.error(error);
+      throw error;
     }
   },
   resolve: (payload: DeployTransfer) => {

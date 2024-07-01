@@ -13,6 +13,7 @@ import {
 } from 'graphql';
 import { type ExecutionResult, isAsyncIterable } from 'graphql-sse';
 import express from 'express';
+import { CLITokenCoder } from '@/lib';
 
 // https://github.com/faboulaws/graphql-sse/blob/main/libs/server/src/process-subscription.ts
 async function processSubscription({
@@ -110,34 +111,37 @@ async function processSubscription({
 
 export const createSubscriptionHandler = ({ schema }) => {
   return async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    // @ts-ignore
-    const graphQLParameters = getGraphQLParameters(req);
-
-    if (!graphQLParameters.query) return next();
-
-    res.setHeader("Content-Type", "text/event-stream");
-    res.setHeader("Cache-Control", "no-cache");
-    res.setHeader("Connection", "keep-alive");
-    res.flushHeaders();
-
-    const result = await processSubscription({
-      operationName: graphQLParameters.operationName,
-      query: graphQLParameters.query,
-      variables: graphQLParameters.variables,
-      schema,
+    try {
       // @ts-ignore
-      context: {...req.context, schema},
-    });
+      const graphQLParameters = getGraphQLParameters(req);
 
-    if (result.type === RESULT_TYPE.EVENT_STREAM) {
-      result.subscribe((data) => {
-        console.log(data);
-        res.write(`data: ${JSON.stringify(data)}\n\n`);
+      if (!graphQLParameters.query) return next();
+
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+      res.flushHeaders();
+
+      const result = await processSubscription({
+        operationName: graphQLParameters.operationName,
+        query: graphQLParameters.query,
+        variables: graphQLParameters.variables,
+        schema,
+        // @ts-ignore
+        context: {schema, ...req.context},
       });
 
-      req.on("close", () => {
-        result.unsubscribe();
-      });
+      if (result.type === RESULT_TYPE.EVENT_STREAM) {
+        result.subscribe((data) => {
+          res.write(`data: ${JSON.stringify(data)}\n\n`);
+        });
+
+        req.on("close", () => {
+          result.unsubscribe();
+        });
+      }
+    } catch (e) {
+      return next(e);
     }
   };
 };
