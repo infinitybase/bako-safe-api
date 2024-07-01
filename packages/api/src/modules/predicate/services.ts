@@ -23,9 +23,9 @@ import axios, { AxiosResponse } from 'axios';
 import { formatPayloadToCreateTransaction } from '../transaction/utils';
 import { TransactionService } from '../transaction/services';
 
-const FAUCET_ADDRESS = [
-  '0xd205d74dc2a0ffd70458ef19f0fa81f05ac727e63bf671d344c590ab300e134f',
-];
+// const FAUCET_ADDRESS = [
+//   '0xd205d74dc2a0ffd70458ef19f0fa81f05ac727e63bf671d344c590ab300e134f',
+// ];
 export class PredicateService implements IPredicateService {
   private _ordination: IOrdination<Predicate> = {
     orderBy: 'updatedAt',
@@ -106,7 +106,6 @@ export class PredicateService implements IPredicateService {
           'adb_workspace.id',
         ])
         .getOne();
-
     } catch (e) {
       if (e instanceof GeneralError) {
         throw e;
@@ -147,7 +146,7 @@ export class PredicateService implements IPredicateService {
       })
       .orderBy('t.createdAt', 'DESC')
       .take(5)
-      .getMany()
+      .getMany();
 
     const missingDeposits = deposits.filter(
       deposit =>
@@ -160,7 +159,7 @@ export class PredicateService implements IPredicateService {
       const formattedPayload = formatPayloadToCreateTransaction(
         deposit,
         predicate,
-        rawPredicateAddresss
+        rawPredicateAddresss,
       );
 
       await new TransactionService().create(formattedPayload);
@@ -211,11 +210,11 @@ export class PredicateService implements IPredicateService {
 
     const deposits = txSummaries.transactions.reduce((deposit, transaction) => {
       const operations = transaction?.operations.filter(
-        filteredTx =>
-          filteredTx.to?.address === address &&
-          // these two last validation is due the faucet
-          !FAUCET_ADDRESS.includes(filteredTx.to?.address) &&
-          filteredTx.to?.address !== filteredTx.from?.address,
+        filteredTx => filteredTx.to?.address === address,
+        // &&
+        // // these two last validation is due the faucet
+        // !FAUCET_ADDRESS.includes(filteredTx.to?.address) &&
+        // filteredTx.to?.address !== filteredTx.from?.address,
       );
 
       const {
