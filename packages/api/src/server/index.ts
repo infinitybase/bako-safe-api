@@ -27,8 +27,8 @@ BakoSafe.setProviders({
 });
 
 BakoSafe.setGasConfig({
-  GAS_LIMIT: Number(process.env.GAS_LIMIT) ?? 1000000,
-  MAX_FEE: Number(process.env.MAX_FEE) ?? 10000,
+  GAS_LIMIT: Number(process.env.GAS_LIMIT) ?? 10000000,
+  MAX_FEE: Number(process.env.MAX_FEE) ?? 1000000,
 });
 
 try {
