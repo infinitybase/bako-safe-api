@@ -21,6 +21,8 @@ import {
 
 import { Address, Provider, bn, getTransactionsSummaries } from 'fuels';
 import axios, { AxiosResponse } from 'axios';
+import { formatPayloadToCreateTransaction } from '../transaction/utils';
+import { TransactionService } from '../transaction/services';
 
 const FAUCET_ADDRESS = [
   '0xd205d74dc2a0ffd70458ef19f0fa81f05ac727e63bf671d344c590ab300e134f',
@@ -75,9 +77,9 @@ export class PredicateService implements IPredicateService {
     }
   }
 
-  async findById(id: string, signer?: string): Promise<IExtendedPredicate> {
+  async findById(id: string): Promise<Predicate> {
     try {
-      const predicate = await Predicate.createQueryBuilder('p')
+      return await Predicate.createQueryBuilder('p')
         .where({ id })
         .leftJoinAndSelect('p.members', 'members')
         .leftJoinAndSelect('p.owner', 'owner')
@@ -106,42 +108,6 @@ export class PredicateService implements IPredicateService {
         ])
         .getOne();
 
-      if (!predicate) {
-        throw new NotFound({
-          type: ErrorTypes.NotFound,
-          title: 'Predicate not found',
-          detail: `Predicate with id ${id} not found`,
-        });
-      }
-
-      const predicateProvider = predicate.provider;
-      const rawPredicateAddresss = Address.fromString(
-        predicate.predicateAddress,
-      ).toB256();
-
-      const deposits = await this.getPredicateHistory(
-        rawPredicateAddresss,
-        predicateProvider,
-      );
-
-      const getPredicateTransactions = await Transaction.createQueryBuilder('t')
-        .leftJoin('t.predicate', 'p')
-        .select(['t.id', 't.predicate', 't.hash', 'p.id', 't.createdAt'])
-        .where('p.id = :predicate', {
-          predicate: predicate.id,
-        })
-        .orderBy('t.createdAt', 'DESC')
-        .take(5)
-        .getMany();
-
-      const missingDeposits = deposits.filter(
-        deposit =>
-          !getPredicateTransactions.some(
-            transaction => transaction.hash === `${deposit.id.slice(2)}`,
-          ),
-      );
-
-      return { predicate, missingDeposits };
     } catch (e) {
       if (e instanceof GeneralError) {
         throw e;
@@ -152,6 +118,53 @@ export class PredicateService implements IPredicateService {
         title: 'Error on predicate findById',
         detail: e,
       });
+    }
+  }
+
+  async getMissingDeposits(predicate: Predicate) {
+    if (!predicate) {
+      throw new NotFound({
+        type: ErrorTypes.NotFound,
+        title: 'Predicate not found',
+        detail: `Predicate with id ${predicate.id} not found`,
+      });
+    }
+
+    const predicateProvider = predicate.provider;
+    const rawPredicateAddresss = Address.fromString(
+      predicate.predicateAddress,
+    ).toB256();
+
+    const deposits = await this.getPredicateHistory(
+      rawPredicateAddresss,
+      predicateProvider,
+    );
+
+    const getPredicateTransactions = await Transaction.createQueryBuilder('t')
+      .leftJoin('t.predicate', 'p')
+      .select(['t.id', 't.hash', 'p.id', 't.createdAt'])
+      .where('p.id = :predicate', {
+        predicate: predicate.id,
+      })
+      .orderBy('t.createdAt', 'DESC')
+      .take(5)
+      .getMany()
+
+    const missingDeposits = deposits.filter(
+      deposit =>
+        !getPredicateTransactions.some(
+          transaction => transaction.hash === `${deposit.id.slice(2)}`,
+        ),
+    );
+
+    for (const deposit of missingDeposits) {
+      const formattedPayload = formatPayloadToCreateTransaction(
+        deposit,
+        predicate,
+        rawPredicateAddresss
+      );
+
+      await new TransactionService().create(formattedPayload);
     }
   }
 
@@ -383,7 +396,7 @@ export class PredicateService implements IPredicateService {
         });
       }
 
-      return updatedPredicate.predicate;
+      return updatedPredicate;
     } catch (e) {
       if (e instanceof NotFound) throw e;
       throw new Internal({
@@ -421,7 +434,7 @@ export class PredicateService implements IPredicateService {
   }
 
   async instancePredicate(predicateId: string): Promise<Vault> {
-    const { predicate } = await this.findById(predicateId);
+    const predicate = await this.findById(predicateId);
 
     const configurable: IConfVault = {
       ...JSON.parse(predicate.configurable),

@@ -8,7 +8,7 @@ import {
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 import { Provider, TransactionRequest } from 'fuels';
 
-import { Asset, Transaction, TransactionType, Witness } from '@models/index';
+import { Asset, Predicate, Transaction, TransactionType, Witness } from '@models/index';
 
 import { AuthValidatedRequest } from '@middlewares/auth/types';
 

@@ -5,7 +5,7 @@
   "license": "Apache-2.0",
   "scripts": {
     "dev": "NODE_ENV=development ts-node-dev --respawn --transpile-only -r tsconfig-paths/register -r dotenv/config src/server/index.ts",
-    "test": "NODE_ENV=test node --experimental-vm-modules ./node_modules/jest/bin/jest.js --setupFiles dotenv/config --runInBand",
+    "test": "NODE_ENV=test node --experimental-vm-modules ./node_modules/jest/bin/jest.js --setupFiles dotenv/config --runInBand --silent",
     "start": "pm2-runtime start ./build/server/index.js",
     "build": "tsc --project . && tscpaths -p tsconfig.json -s ./src -o ./build",
     "copyFiles": "copyfiles --error --up 1 src/**/*.html build",

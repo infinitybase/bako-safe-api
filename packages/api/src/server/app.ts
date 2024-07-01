@@ -22,11 +22,11 @@ class App {
     this.initMiddlewares();
     this.initRoutes();
     this.initErrorHandler();
+    this.initJobs();
 
     this.sessionCache = SessionStorage.start();
     this.quoteCache = QuoteStorage.start();
 
-    this.initJobs();
   }
 
   private initMiddlewares() {
@@ -47,9 +47,10 @@ class App {
   }
 
   private initJobs() {
-    console.log('[APP] Cron Jobs started')
+    const isValid = (!!isDevMode && !isDevMode) ?? false;
+    
     // run only production
-    if(isDevMode()){
+    if(isValid){
       TVLCronJob.start();
     }
   }

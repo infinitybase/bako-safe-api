@@ -147,26 +147,12 @@ export class PredicateController {
     }
   }
 
-  async findById({ params: { id }, user }: IFindByIdRequest) {
+  async findById({ params: { id } }: IFindByIdRequest) {
     try {
-      const { predicate, missingDeposits } = await this.predicateService.findById(
-        id,
-        user.address,
+      const predicate = await this.predicateService.findById(
+        id
       );
-
-      if (missingDeposits.length >= 1) {
-        for (const deposit of missingDeposits) {
-          try {
-            const formattedPayload = formatPayloadToCreateTransaction(
-              deposit,
-              predicate,
-            );
-            await this.transactionService.create(formattedPayload);
-          } catch (error) {
-            console.error('Error saving deposit:', deposit, error);
-          }
-        }
-      }
+      this.predicateService.getMissingDeposits(predicate);
 
       return successful(predicate, Responses.Ok);
     } catch (e) {
@@ -180,11 +166,11 @@ export class PredicateController {
         where: { predicateAddress: address },
       });
 
-      const { predicate } = await this.predicateService.findById(
+      const predicate = await this.predicateService.findById(
         response.id,
         undefined,
       );
-
+      
       return successful(predicate, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
@@ -251,7 +237,7 @@ export class PredicateController {
         });
 
 
-      const { predicate } = await this.predicateService.findById(
+      const predicate = await this.predicateService.findById(
         address,
         undefined,
       );

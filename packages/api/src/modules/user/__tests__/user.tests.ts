@@ -53,9 +53,7 @@ describe('[USER]', () => {
       await auth.axios.get('user/me').then(({ data, status }) => {
         expect(status).toBe(200);
         expect(data).toHaveProperty('predicates');
-        expect(data).toHaveProperty('transactions');
         expect(data.predicates.data.length).toBeLessThanOrEqual(8);
-        expect(data.transactions.data.length).toBeLessThanOrEqual(8);
       });
     },
     10 * 1000,

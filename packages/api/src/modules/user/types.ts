@@ -28,7 +28,7 @@ export interface IFilterParams {
   nickname?: string;
   address?: string;
   workspace?: string;
-  type: TransactionType;
+  type?: TransactionType;
 }
 
 interface ICreateRequestSchema extends ValidatedRequestSchema {
@@ -43,6 +43,7 @@ interface IListRequestSchema extends ValidatedRequestSchema {
     perPage: string;
     sort: 'ASC' | 'DESC';
     orderBy: 'name' | IDefaultOrdination;
+    type: TransactionType;
   };
 }
 

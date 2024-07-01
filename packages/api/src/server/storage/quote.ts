@@ -43,7 +43,7 @@ export class QuoteStorage {
   }
 
   private async addQuotes(): Promise<void> {
-    if (isDevMode()) {
+    if (isDevMode) {
       this.addMockQuotes();
       return;
     }

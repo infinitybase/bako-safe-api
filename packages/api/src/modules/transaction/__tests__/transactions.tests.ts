@@ -7,7 +7,7 @@ import { PredicateMock } from '@src/mocks/predicate';
 import { transactionMock } from '@src/mocks/transaction';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
 import { generateWorkspacePayload } from '@src/utils/testUtils/Workspace';
-import { assets } from '@src/mocks/assets';
+import { assetsMapBySymbol } from '@src/utils/assets';
 import { signBypK } from '@src/utils/testUtils/Wallet';
 
 describe('[TRANSACTION]', () => {
@@ -59,7 +59,6 @@ describe('[TRANSACTION]', () => {
       const {
         data_user1,
         data_user2,
-        USER_5,
         data: workspace,
       } = await generateWorkspacePayload(auth);
       await auth.selectWorkspace(workspace.id);
@@ -211,12 +210,12 @@ describe('[TRANSACTION]', () => {
 
       // Usando conta genesis para enviar transação para esse predicate
       const wallet = Wallet.fromPrivateKey(accounts['FULL'].privateKey, provider);
-
+      
       // Transferindo moedas para o predicate recem criado pela genesis wallet
       const transfer1 = await wallet.transfer(
         vault.address,
         bn.parseUnits('0.10'),
-        assets['ETH'],
+        assetsMapBySymbol['ETH'].id,
         {
           maxFee: BakoSafe.getGasConfig('MAX_FEE'),
           gasLimit: BakoSafe.getGasConfig('GAS_LIMIT'),
@@ -226,7 +225,7 @@ describe('[TRANSACTION]', () => {
       const transfer2 = await wallet.transfer(
         vault.address,
         bn.parseUnits('0.10'),
-        assets['BTC'],
+        assetsMapBySymbol['BTC'].id,
         {
           maxFee: BakoSafe.getGasConfig('MAX_FEE'),
           gasLimit: BakoSafe.getGasConfig('GAS_LIMIT'),
@@ -242,12 +241,12 @@ describe('[TRANSACTION]', () => {
         assets: [
           {
             amount: '0.01',
-            assetId: assets['ETH'],
+            assetId: assetsMapBySymbol['ETH'].id,
             to: vault.address.toB256(),
           },
           {
             amount: '0.01',
-            assetId: assets['BTC'],
+            assetId: assetsMapBySymbol['BTC'].id,
             to: vault.address.toB256(),
           },
         ],
@@ -263,8 +262,7 @@ describe('[TRANSACTION]', () => {
       await tx.send();
       await tx.wait();
 
-      //@ts-ignore
-      const id_vault = vault.BakoSafeVault.predicate.id;
+      const id_vault = vault.BakoSafeVault.id;
 
       // Buscando as transações desse novo vault, deve ter apenas 1 (const tx)
       const { data: transactions } = await auth.axios.get('/transaction', {
@@ -308,6 +306,7 @@ describe('[TRANSACTION]', () => {
         checkTransactionName(transactionsAfterDeposit, transfer2Id),
       ).toBeTruthy();
       expect(checkTransactionName(transactionsAfterDeposit, tx.name)).toBeTruthy();
+      });
 
       
      test(
