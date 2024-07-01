@@ -59,6 +59,19 @@ describe('[USER]', () => {
     10 * 1000,
   );
 
+  test('Home Transactions endpoint', async () => {
+    const auth = new AuthValidations(networks['local'], accounts['USER_1']);
+    await auth.create();
+    await auth.createSession();
+
+    //list all transactions by month,
+    await auth.axios.get('user/me/transactions').then(({ data, status }) => {
+      expect(status).toBe(200);
+      expect(data).toHaveProperty('data');
+      expect(data.data).toBeInstanceOf(Array);
+    });
+  });
+
   test('Update user', async () => {
     const auth = new AuthValidations(networks['local'], accounts['USER_1']);
     await auth.create();
