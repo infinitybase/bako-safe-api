@@ -1,18 +1,18 @@
-import { Vault } from 'bakosafe';
-import { Address } from 'fuels';
+import { IBakoSafeAuth, Vault } from "bakosafe";
+import { Address } from "fuels";
 
-import { Database } from '@/lib';
+import { Database } from "@/lib";
 
 type GetApiToken = {
   apiToken: string;
   userId: string;
-}
+};
 
 type GetVault = {
   code: string;
-  vaultId: string,
+  vaultId: string;
   userAddress: string;
-}
+};
 
 export class AuthService {
   constructor(private db: Database) {}
@@ -22,9 +22,15 @@ export class AuthService {
   }
 
   async getVaultFromApiToken(apiToken: string, userId: string) {
-    const { vaultId, provider, userAddress } = await this.getTokenData({ apiToken, userId });
-    const code = await this.createSession(userId);
-    return this.getVault({ code, vaultId, userAddress });
+    const { vaultId, provider, userAddress } = await this.getTokenData({
+      apiToken,
+      userId,
+    });
+    const { code, codeId } = await this.createSession(userId);
+    return {
+      vault: await this.getVault({ code, vaultId, userAddress }),
+      codeId,
+    };
   }
 
   async getVault(params: GetVault) {
@@ -57,7 +63,7 @@ export class AuthService {
     const result = await this.db.query(query, [apiToken, userId]);
 
     if (!result || !result.predicate_id) {
-      throw new Error('Invalid token');
+      throw new Error("Invalid token");
     }
 
     return {
@@ -71,9 +77,23 @@ export class AuthService {
     const code = `cli${Address.fromRandom().toB256()}`;
     const query = `
       INSERT INTO recover_codes(origin, type, owner, code, used, valid_at, metadata)
-      VALUES ($1, 'AUTH_ONCE', $2, $3, false, now(), $4)
+      VALUES ('CLI', 'AUTH_ONCE', $1, $2, false, NOW() + INTERVAL '2 minutes', $3)
+      RETURNING id;
     `;
-    await this.db.query(query, ['CLI', user, code, JSON.stringify({ uses: 0 })]);
-    return code;
+    const result = await this.db.query(query, [
+      user,
+      code,
+      JSON.stringify({ uses: 0 }),
+    ]);
+    return { code, codeId: result.id };
+  }
+
+  async closeSession(id: string) {
+    const query = `
+      UPDATE recover_codes
+      SET used = true
+      WHERE id = $1 AND used = false
+    `;
+    await this.db.query(query, [id]);
   }
 }

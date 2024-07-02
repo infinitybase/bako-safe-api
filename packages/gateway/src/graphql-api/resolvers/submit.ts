@@ -18,11 +18,18 @@ export const submit: MutationResolvers["submit"] = async (
 
   if (transaction.type === TransactionType.Create) {
     const authService = await AuthService.instance();
-    const vault = await authService.getVaultFromApiToken(apiToken, userId);
+    const { vault, codeId } = await authService.getVaultFromApiToken(apiToken, userId);
     transaction.witnesses = [
       transaction.witnesses.at(transaction.bytecodeWitnessIndex),
     ];
     const deployTransfer = await vault.BakoSafeDeployContract(transaction);
+    await authService.closeSession(codeId);
+
+    console.log('[MUTATION] Transaction sent to Bako', {
+      vault: vault.BakoSafeVaultId,
+      address: vault.address.toAddress(),
+      transactionId: deployTransfer.getHashTxId(),
+    });
 
     return {
       id: `0x${deployTransfer.getHashTxId()}`,

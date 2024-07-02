@@ -18,14 +18,16 @@ export const submitAndAwait = {
       }
 
       const authService = await AuthService.instance();
-      const vault = await authService.getVaultFromApiToken(apiToken, userId);
-      console.log('[INFO] Vault', {
-        id: vault.BakoSafeVaultId,
-        address: vault.address.toB256(),
-        vaultProvider: vault.provider.url,
-      });
+      const { vault, codeId } = await authService.getVaultFromApiToken(apiToken, userId);
       transaction.witnesses = [transaction.witnesses.at(transaction.bytecodeWitnessIndex)];
       const deployTransfer = await vault.BakoSafeDeployContract(transaction);
+      await authService.closeSession(codeId);
+
+      console.log('[SUBSCRIPTION] Transaction sent to Bako', {
+        vault: vault.BakoSafeVaultId,
+        address: vault.address.toAddress(),
+        transactionId: deployTransfer.getHashTxId(),
+      });
 
       yield deployTransfer;
     } catch (error) {
