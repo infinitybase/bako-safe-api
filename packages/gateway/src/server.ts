@@ -5,15 +5,16 @@ import expressPlayground from "graphql-playground-middleware-express";
 
 import { defaultSchemas, subscriptionSchema } from "@/graphql-api";
 import {
-  CLITokenCoder,
   createGraphqlHttpHandler,
   createSubscriptionHandler,
 } from "@/lib";
+import { handleErrorMiddleware, tokenDecodeMiddleware } from '@/middlewares';
 
 export class GatewayServer {
   private static ROUTES_PATHS = {
     graphql: "/v1/graphql",
     graphqlSub: "/v1/graphql-sub",
+    healthCheck: '/v1/health-check',
   };
 
   private readonly app: express.Application;
@@ -26,8 +27,9 @@ export class GatewayServer {
   }
 
   start() {
-    this.middlewares();
+    this.beforeAllMiddlewares();
     this.routes();
+    this.afterAllMiddlewares();
     this.server = this.app.listen(this.port, () => {
       console.log(
         `[GATEWAY_SERVER] Listening on http://localhost:${this.port}`
@@ -48,46 +50,24 @@ export class GatewayServer {
     this.server.close();
   }
 
-  private middlewares() {
+  private beforeAllMiddlewares() {
     this.app.use(express.json());
     this.app.use(cors());
-    this.app.use(async (req, _, next) => {
-      try {
-        const { api_token: apiToken } = req.query;
-        const tokenCoder = new CLITokenCoder("aes-256-cbc");
-        const decodedToken = tokenCoder.decode(apiToken as string);
+  }
 
-        // @ts-ignore
-        req.context = {
-          apiToken: decodedToken.apiToken,
-          userId: decodedToken.userId,
-        };
-
-        return next();
-      } catch (e) {
-        return next(e);
-      }
-    });
+  private afterAllMiddlewares() {
+    this.app.use(handleErrorMiddleware);
   }
 
   private routes() {
-    this.app.get(
-      GatewayServer.ROUTES_PATHS.graphql,
-      expressPlayground({
-        endpoint: GatewayServer.ROUTES_PATHS.graphql,
-        subscriptionEndpoint: GatewayServer.ROUTES_PATHS.graphqlSub,
-        settings: {
-          "schema.polling.enable": false,
-        },
-      })
-    );
-
     this.app.post(
       GatewayServer.ROUTES_PATHS.graphqlSub,
+      tokenDecodeMiddleware,
       createSubscriptionHandler({ schema: subscriptionSchema })
     );
     this.app.post(
       GatewayServer.ROUTES_PATHS.graphql,
+      tokenDecodeMiddleware,
       createGraphqlHttpHandler({
         appSchema: defaultSchemas.appSchema,
         fuelSchema: defaultSchemas.fuelSchema,
