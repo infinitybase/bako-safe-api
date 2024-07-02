@@ -11,8 +11,8 @@ export const handleErrorMiddleware = (
     errors: [
       {
         message: error.message,
-        locations: [],
-        path: ''
+        locations: 'locations' in error ? error.locations : [],
+        path: 'path' in error ? error.path : null,
       },
     ],
   });

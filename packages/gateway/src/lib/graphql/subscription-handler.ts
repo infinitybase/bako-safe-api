@@ -111,16 +111,14 @@ async function processSubscription({
 
 export const createSubscriptionHandler = ({ schema }) => {
   return async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    // @ts-ignore
+    const graphQLParameters = getGraphQLParameters(req);
+    if (!graphQLParameters.query) return next();
+
     try {
-      // @ts-ignore
-      const graphQLParameters = getGraphQLParameters(req);
-
-      if (!graphQLParameters.query) return next();
-
       res.setHeader("Content-Type", "text/event-stream");
       res.setHeader("Cache-Control", "no-cache");
       res.setHeader("Connection", "keep-alive");
-      res.flushHeaders();
 
       const result = await processSubscription({
         operationName: graphQLParameters.operationName,
@@ -132,16 +130,21 @@ export const createSubscriptionHandler = ({ schema }) => {
       });
 
       if (result.type === RESULT_TYPE.EVENT_STREAM) {
-        result.subscribe((data) => {
+        const subscription = result.subscribe((data) => {
           res.write(`data: ${JSON.stringify(data)}\n\n`);
         });
 
         req.on("close", () => {
           result.unsubscribe();
         });
+
+        await subscription;
       }
     } catch (e) {
-      return next(e);
+      // req.emit('close');
+      return next(new GraphQLError(e.message, {
+        path: [graphQLParameters.operationName]
+      }));
     }
   };
 };
