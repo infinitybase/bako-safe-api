@@ -4,17 +4,14 @@ import { Server } from "http";
 import expressPlayground from "graphql-playground-middleware-express";
 
 import { defaultSchemas, subscriptionSchema } from "@/graphql-api";
-import {
-  createGraphqlHttpHandler,
-  createSubscriptionHandler,
-} from "@/lib";
-import { handleErrorMiddleware, tokenDecodeMiddleware } from '@/middlewares';
+import { createGraphqlHttpHandler, createSubscriptionHandler } from "@/lib";
+import { handleErrorMiddleware, tokenDecodeMiddleware } from "@/middlewares";
 
 export class GatewayServer {
   private static ROUTES_PATHS = {
     graphql: "/v1/graphql",
     graphqlSub: "/v1/graphql-sub",
-    healthCheck: '/v1/health-check',
+    healthCheck: "/v1/health-check",
   };
 
   private readonly app: express.Application;
@@ -33,9 +30,6 @@ export class GatewayServer {
     this.server = this.app.listen(this.port, () => {
       console.log(
         `[GATEWAY_SERVER] Listening on http://localhost:${this.port}`
-      );
-      console.log(
-        `- GraphQL Playground: http://localhost:${this.port}${GatewayServer.ROUTES_PATHS.graphql}`
       );
       console.log(
         `- GraphQL: http://localhost:${this.port}${GatewayServer.ROUTES_PATHS.graphql}`
@@ -72,6 +66,9 @@ export class GatewayServer {
         appSchema: defaultSchemas.appSchema,
         fuelSchema: defaultSchemas.fuelSchema,
       })
+    );
+    this.app.get(GatewayServer.ROUTES_PATHS.healthCheck, ({ res }) =>
+      res.status(200).send({ status: "ok" })
     );
   }
 }
