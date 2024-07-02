@@ -5,6 +5,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "ts-node-dev -r tsconfig-paths/register -r dotenv/config ./src/index.ts",
+    "build": "tsc --project . && tscpaths -p tsconfig.json -s ./src -o ./build",
+    "start": "pm2-runtime start ./build/index.js",
     "build:lib": "pnpm codegen:fuel && pnpm codegen:app",
     "codegen:app": "gql-gen -r dotenv/config --config codegen.ts",
     "codegen:fuel": "gql-gen -r dotenv/config --config codegen.fuel.ts",
@@ -30,6 +32,7 @@
     "graphql-playground-middleware-express": "^1.7.23",
     "graphql-sse": "^2.5.3",
     "pg": "^8.12.0",
+    "pm2": "5.3.0",
     "tai64": "^1.0.0",
     "ts-node": "^10.9.2",
     "typescript": "4.9.5"
@@ -44,6 +47,7 @@
     "graphql-import-node": "^0.0.5",
     "ts-gql-plugin": "^1.5.1",
     "ts-node-dev": "2.0.0",
-    "tsconfig-paths": "^4.2.0"
+    "tsconfig-paths": "^4.2.0",
+    "tscpaths": "0.0.9"
   }
 }
