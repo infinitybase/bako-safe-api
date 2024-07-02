@@ -8,14 +8,16 @@ import { ErrorTypes } from '@utils/error';
 import { Unauthorized, UnauthorizedErrorTitles } from '@utils/error/Unauthorized';
 
 import { IAuthRequest } from './types';
-import app from '@src/server/app';
+import { AuthStrategyFactory } from './methods';
 
-async function authMiddleware(req: Request, res: Response, next: NextFunction) {
+async function authMiddleware(
+  req: IAuthRequest,
+  res: Response,
+  next: NextFunction,
+) {
   try {
-    const requestAuth: IAuthRequest = req;
-    const signature = requestAuth?.headers?.authorization;
-    const isRecoverCode = !!signature && signature.includes('code');
-    
+    const signature = req?.headers?.authorization;
+
     if (!signature) {
       throw new Unauthorized({
         type: ErrorTypes.Unauthorized,
@@ -24,13 +26,12 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
       });
     }
 
-    if (isRecoverCode) return connectorMiddleware(req, res, next);
-    const token = await app._sessionCache.getSession(signature);
+    const authStrategy = AuthStrategyFactory.createStrategy(signature);
+    const { user, workspace } = await authStrategy.authenticate(req);
 
+    req.user = user;
+    req.workspace = workspace;
 
-    requestAuth.user = token.user;
-    requestAuth.workspace = token.workspace;
-    
     return next();
   } catch (e) {
     return next(e);
@@ -42,8 +43,7 @@ function authPermissionMiddleware(permission?: PermissionRoles[]) {
   return async function (req: Request, res: Response, next: NextFunction) {
     try {
       const requestAuth: IAuthRequest = req;
-      
-      
+
       if (!permission || permission.length === 0) return next();
       const { user, workspace } = requestAuth;
 
@@ -104,7 +104,11 @@ function authPermissionMiddleware(permission?: PermissionRoles[]) {
   };
 }
 
-const connectorMiddleware = async (req: Request, res: Response, next: NextFunction) => {
+const connectorMiddleware = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   const requestAuth: IAuthRequest = req;
   const signature = requestAuth?.headers?.authorization;
   const recover = await RecoverCode.findOne({
@@ -141,15 +145,15 @@ const connectorMiddleware = async (req: Request, res: Response, next: NextFuncti
 
   recover.metadata.uses = Number(recover.metadata.uses) + 1;
   await recover.save();
-  
+
   requestAuth.user = recover.owner;
   requestAuth.workspace = await Workspace.findOne({
     where: {
       owner: recover.owner,
     },
-  })
+  });
 
   return next();
-}
+};
 
 export { authMiddleware, authPermissionMiddleware };
