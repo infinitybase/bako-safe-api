@@ -1,5 +1,10 @@
 import { ITransactionResume, TransactionStatus } from 'bakosafe';
-import { Provider, Signer, hashMessage } from 'fuels';
+import {
+  hashMessage,
+  Provider,
+  Signer,
+  TransactionType as FuelTransactionType,
+} from 'fuels';
 
 import { PermissionRoles, Workspace } from '@src/models/Workspace';
 import {
@@ -12,14 +17,15 @@ import {
   NotificationTitle,
   Predicate,
   Transaction,
+  TransactionType,
   WitnessesStatus,
 } from '@models/index';
 
 import { IPredicateService } from '@modules/predicate/types';
 import { IWitnessService } from '@modules/witness/types';
 
-import { ErrorTypes, NotFound, error } from '@utils/error';
-import { Responses, bindMethods, successful } from '@utils/index';
+import { error, ErrorTypes, NotFound } from '@utils/error';
+import { bindMethods, Responses, successful } from '@utils/index';
 
 import { IAddressBookService } from '../addressBook/types';
 import { IAssetService } from '../asset/types';
@@ -140,6 +146,7 @@ export class TransactionController {
 
       const newTransaction = await this.transactionService.create({
         ...transaction,
+        type: Transaction.getTypeFromTransactionRequest(transaction.txData),
         status: TransactionStatus.AWAIT_REQUIREMENTS,
         resume: {
           hash: transaction.hash,
@@ -465,25 +472,23 @@ export class TransactionController {
       const { workspace, user } = req;
 
       const singleWorkspace = await new WorkspaceService()
-      .filter({
-        user: user.id,
-        single: true,
-      })
-      .list()
-      .then((response: Workspace[]) => response[0]);
-    
+        .filter({
+          user: user.id,
+          single: true,
+        })
+        .list()
+        .then((response: Workspace[]) => response[0]);
 
-    const hasSingle = singleWorkspace.id === workspace.id;
+      const hasSingle = singleWorkspace.id === workspace.id;
 
-    const _wk = hasSingle 
-      ? await new WorkspaceService()
-      .filter({
-        user: user.id,
-      })
-      .list()
-      .then((response: Workspace[]) => response.map(wk => wk.id)) 
-      : [workspace.id];
-
+      const _wk = hasSingle
+        ? await new WorkspaceService()
+            .filter({
+              user: user.id,
+            })
+            .list()
+            .then((response: Workspace[]) => response.map(wk => wk.id))
+        : [workspace.id];
 
       const result = await new TransactionService()
         .filter({
