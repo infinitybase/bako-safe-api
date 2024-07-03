@@ -5,21 +5,26 @@ import { NotFound } from '@src/utils/error';
 import { IOrdination, setOrdination } from '@src/utils/ordination';
 import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination';
 
-import { Predicate } from '@models/index';
+import { Predicate, Transaction } from '@models/index';
 
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
 
 import {
+  IEndCursorPayload,
+  IExtendedPredicate,
+  IGetTxEndCursorQueryProps,
   IPredicateFilterParams,
   IPredicatePayload,
   IPredicateService,
 } from './types';
-import {
-  Unauthorized,
-  UnauthorizedErrorTitles,
-} from '@src/utils/error/Unauthorized';
 
+import { Address, Provider, bn, getTransactionsSummaries } from 'fuels';
+import axios, { AxiosResponse } from 'axios';
+
+const FAUCET_ADDRESS = [
+  '0xd205d74dc2a0ffd70458ef19f0fa81f05ac727e63bf671d344c590ab300e134f',
+];
 export class PredicateService implements IPredicateService {
   private _ordination: IOrdination<Predicate> = {
     orderBy: 'updatedAt',
@@ -70,7 +75,7 @@ export class PredicateService implements IPredicateService {
     }
   }
 
-  async findById(id: string, signer?: string): Promise<Predicate> {
+  async findById(id: string, signer?: string): Promise<IExtendedPredicate> {
     try {
       const predicate = await Predicate.createQueryBuilder('p')
         .where({ id })
@@ -109,7 +114,41 @@ export class PredicateService implements IPredicateService {
         });
       }
 
-      return predicate;
+      const predicateProvider = predicate.provider;
+      const rawPredicateAddresss = Address.fromString(
+        predicate.predicateAddress,
+      ).toB256();
+
+      const deposits = await this.getPredicateHistory(
+        rawPredicateAddresss,
+        predicateProvider,
+      );
+
+      const getPredicateTransactions = await Transaction.createQueryBuilder('t')
+        .leftJoin('t.predicate', 'p')
+        .select(['t.id', 't.predicate', 't.hash', 'p.id', 't.createdAt'])
+        .where('p.id = :predicate', {
+          predicate: predicate.id,
+        })
+        .orderBy('t.createdAt', 'DESC')
+        .take(5)
+        .getMany();
+
+      const missingDeposits = deposits.filter(
+        deposit =>
+          !getPredicateTransactions.some(
+            transaction => transaction.id === deposit.id,
+          ),
+      );
+
+      // console.log(
+      //   'deposits:',
+      //   deposits,
+      // );
+
+      // console.log('missingDeposits:', missingDeposits);
+
+      return { predicate, missingDeposits };
     } catch (e) {
       if (e instanceof GeneralError) {
         throw e;
@@ -121,6 +160,92 @@ export class PredicateService implements IPredicateService {
         detail: e,
       });
     }
+  }
+
+  async getEndCursor(endCursorParams: IGetTxEndCursorQueryProps) {
+    const { providerUrl, address, txQuantityRange } = endCursorParams;
+
+    const getEndCursorQuery = `
+     query Transactions($address: Address, $first: Int) {
+      transactionsByOwner(owner: $address, first: $first) {
+        pageInfo {
+          endCursor
+        }
+      }
+    }
+    `;
+
+    const {
+      data: { data },
+    }: AxiosResponse<IEndCursorPayload> = await axios.post(providerUrl, {
+      query: getEndCursorQuery,
+      variables: { address, first: txQuantityRange },
+    });
+    const endCursor = data.transactionsByOwner.pageInfo.endCursor;
+
+    return endCursor;
+  }
+
+  async getPredicateHistory(address: string, providerUrl: string) {
+    const provider = await Provider.create(providerUrl);
+    const endCursor = await this.getEndCursor({
+      providerUrl,
+      address,
+      txQuantityRange: 100,
+    });
+
+    const txSummaries = await getTransactionsSummaries({
+      provider,
+      filters: {
+        owner: address,
+        last: 10,
+        before: endCursor,
+      },
+    });
+
+    const deposits = txSummaries.transactions.reduce((deposit, transaction) => {
+      const operations = transaction?.operations.filter(
+        filteredTx =>
+          filteredTx.to?.address === address &&
+          // these two last validation is due the faucet
+          !FAUCET_ADDRESS.includes(filteredTx.to?.address) &&
+          filteredTx.to?.address !== filteredTx.from?.address,
+      );
+
+      const {
+        gasPrice,
+        scriptGasLimit,
+        script,
+        scriptData,
+        type,
+        witnesses,
+        outputs,
+        inputs,
+      } = transaction.transaction;
+
+      if (operations.length > 0) {
+        deposit.push({
+          date: new Date(transaction.date),
+          id: transaction.id,
+          operations,
+          gasUsed: transaction.gasUsed.format(),
+          txData: {
+            gasPrice,
+            scriptGasLimit,
+            script,
+            scriptData,
+            type,
+            witnesses,
+            outputs,
+            inputs,
+          },
+        });
+      }
+
+      return deposit;
+    }, []);
+
+    return deposits;
   }
 
   async list(): Promise<IPagination<Predicate> | Predicate[]> {
@@ -264,7 +389,7 @@ export class PredicateService implements IPredicateService {
         });
       }
 
-      return updatedPredicate;
+      return updatedPredicate.predicate;
     } catch (e) {
       if (e instanceof NotFound) throw e;
       throw new Internal({
@@ -302,7 +427,7 @@ export class PredicateService implements IPredicateService {
   }
 
   async instancePredicate(predicateId: string): Promise<Vault> {
-    const predicate = await this.findById(predicateId);
+    const { predicate } = await this.findById(predicateId);
 
     const configurable: IConfVault = {
       ...JSON.parse(predicate.configurable),
