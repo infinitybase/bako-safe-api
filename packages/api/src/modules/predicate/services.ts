@@ -137,16 +137,9 @@ export class PredicateService implements IPredicateService {
       const missingDeposits = deposits.filter(
         deposit =>
           !getPredicateTransactions.some(
-            transaction => transaction.id === deposit.id,
+            transaction => transaction.hash === `${deposit.id.slice(2)}`,
           ),
       );
-
-      // console.log(
-      //   'deposits:',
-      //   deposits,
-      // );
-
-      // console.log('missingDeposits:', missingDeposits);
 
       return { predicate, missingDeposits };
     } catch (e) {
@@ -170,6 +163,7 @@ export class PredicateService implements IPredicateService {
       transactionsByOwner(owner: $address, first: $first) {
         pageInfo {
           endCursor
+          hasNextPage
         }
       }
     }
@@ -182,13 +176,14 @@ export class PredicateService implements IPredicateService {
       variables: { address, first: txQuantityRange },
     });
     const endCursor = data.transactionsByOwner.pageInfo.endCursor;
+    const hasNextPage = data.transactionsByOwner.pageInfo.hasNextPage;
 
-    return endCursor;
+    return { endCursor, hasNextPage };
   }
 
   async getPredicateHistory(address: string, providerUrl: string) {
     const provider = await Provider.create(providerUrl);
-    const endCursor = await this.getEndCursor({
+    const { endCursor, hasNextPage } = await this.getEndCursor({
       providerUrl,
       address,
       txQuantityRange: 100,
@@ -198,8 +193,7 @@ export class PredicateService implements IPredicateService {
       provider,
       filters: {
         owner: address,
-        last: 10,
-        before: endCursor,
+        ...(hasNextPage ? { last: 5, before: endCursor } : { first: 5 }),
       },
     });
 
