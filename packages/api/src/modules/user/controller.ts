@@ -135,6 +135,15 @@ export class UserController {
     }
   }
 
+  async tokensUSDAmount() {
+    try {
+      const response = await this.userService.tokensUSDAmount();
+      return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
   /* - add new request veryfi name disponibility /user/name:name
    *      - returns true if exists or false if not
    */

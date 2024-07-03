@@ -17,6 +17,7 @@ import { IconUtils } from '@utils/icons';
 
 import { WorkspaceService } from '../workspace/services';
 import { IFilterParams, IUserService, IUserPayload } from './types';
+import app from '@src/server/app';
 
 const { UI_URL } = process.env;
 
@@ -177,6 +178,11 @@ export class UserService implements IUserService {
     const avatars = avatars_json.values;
     const random = Math.floor(Math.random() * avatars.length);
     return `${url}/${avatars[random]}`;
+  }
+
+  async tokensUSDAmount() {
+    const tokensQuote = app._quoteCache.getActiveQuotesValues();
+    return tokensQuote;
   }
 
   async workspacesByUser(workspace: Workspace, user: User) {
