@@ -10,17 +10,15 @@ import axios from 'axios';
 
 const { COIN_MARKET_CAP_API_KEY } = process.env;
 
-
 export interface IQuote {
   assetId: string;
   price: number;
 }
 
-const REFRESH_TIME = 1000 * 2;// * 60 * 0.5;  // 10 minutes
+const REFRESH_TIME = 1000 * 2; // * 60 * 0.5;  // 10 minutes
 
 export class QuoteStorage {
   private data = new Map<string, number>();
-  
 
   protected constructor() {
     this.data = new Map<string, number>();
@@ -101,14 +99,17 @@ export class QuoteStorage {
   }
 
   public getActiveQuotes() {
-    return Array.from(this.data).length
-  
+    return Array.from(this.data).length;
+  }
+
+  public getActiveQuotesValues() {
+    return Array.from(this.data);
   }
 
   static start() {
     const _this = new QuoteStorage();
     _this.addQuotes();
-    
+
     setInterval(() => {
       _this.addQuotes();
     }, REFRESH_TIME);

@@ -161,4 +161,16 @@ describe('[USER]', () => {
     },
     3 * 1000,
   );
+
+  test('Get token usd amount endpoint', async () => {
+    const auth = new AuthValidations(networks['local'], accounts['USER_1']);
+    await auth.create();
+    await auth.createSession();
+
+    //list all tokensIDS and usd quote,
+    await auth.axios.get('user/me/tokens').then(({ data, status }) => {
+      expect(status).toBe(200);
+      expect(data).toBeInstanceOf(Array);
+    });
+  });
 });

@@ -99,4 +99,5 @@ export interface IUserService {
   randomAvatar(): Promise<string>;
   update(id: string, payload: IUserPayload): Promise<User>;
   delete(id: string): Promise<boolean>;
+  tokensUSDAmount(): Promise<[string, number][]>;
 }
