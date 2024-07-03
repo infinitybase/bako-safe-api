@@ -5,7 +5,7 @@ import { NotFound } from '@src/utils/error';
 import { IOrdination, setOrdination } from '@src/utils/ordination';
 import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination';
 
-import { Predicate, Transaction } from '@models/index';
+import { Predicate, Transaction, TransactionType } from '@models/index';
 
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
@@ -138,22 +138,25 @@ export class PredicateService implements IPredicateService {
       predicateProvider,
     );
 
-    const getPredicateTransactions = await Transaction.createQueryBuilder('t')
+    const depositHashes = deposits.map(deposit => `${deposit.id.slice(2)}`);
+
+    const predicateTransactions = await Transaction.createQueryBuilder('t')
       .leftJoin('t.predicate', 'p')
-      .select(['t.id', 't.hash', 'p.id', 't.createdAt'])
+      .select(['t.id', 't.hash', 'p.id', 't.createdAt', 't.status'])
       .where('p.id = :predicate', {
         predicate: predicate.id,
       })
+      .andWhere('t.type = :type', {
+        type: TransactionType.DEPOSIT,
+      })
+      .andWhere('t.hash IN (:...hashes)', {
+        hashes: depositHashes,
+      })
       .orderBy('t.createdAt', 'DESC')
-      .take(5)
       .getMany();
 
-    const missingDeposits = deposits.filter(
-      deposit =>
-        !getPredicateTransactions.some(
-          transaction => transaction.hash === `${deposit.id.slice(2)}`,
-        ),
-    );
+    const transactionHashes = new Set(predicateTransactions.map(tx => tx.hash));
+    const missingDeposits = deposits.filter(dep => !transactionHashes.has(dep.id.slice(2)));
 
     for (const deposit of missingDeposits) {
       const formattedPayload = formatPayloadToCreateTransaction(
@@ -204,17 +207,13 @@ export class PredicateService implements IPredicateService {
       provider,
       filters: {
         owner: address,
-        ...(hasNextPage ? { last: 5, before: endCursor } : { first: 5 }),
+        ...(hasNextPage ? { last: 17, before: endCursor } : { first: 17 }),
       },
     });
 
     const deposits = txSummaries.transactions.reduce((deposit, transaction) => {
       const operations = transaction?.operations.filter(
-        filteredTx => filteredTx.to?.address === address,
-        // &&
-        // // these two last validation is due the faucet
-        // !FAUCET_ADDRESS.includes(filteredTx.to?.address) &&
-        // filteredTx.to?.address !== filteredTx.from?.address,
+        filteredTx => filteredTx.to?.address === address
       );
 
       const {

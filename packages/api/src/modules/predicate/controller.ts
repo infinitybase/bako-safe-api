@@ -148,10 +148,8 @@ export class PredicateController {
 
   async findById({ params: { id } }: IFindByIdRequest) {
     try {
-      const predicate = await this.predicateService.findById(
-        id
-      );
-      this.predicateService.getMissingDeposits(predicate);
+      const predicate = await this.predicateService.findById(id);
+      await this.predicateService.getMissingDeposits(predicate);
 
       return successful(predicate, Responses.Ok);
     } catch (e) {
@@ -169,7 +167,7 @@ export class PredicateController {
         response.id,
         undefined,
       );
-      
+
       return successful(predicate, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
@@ -235,12 +233,7 @@ export class PredicateController {
           ] as CoinQuantity[];
         });
 
-
-      const predicate = await this.predicateService.findById(
-        address,
-        undefined,
-      );
-
+      const predicate = await this.predicateService.findById(address, undefined);
 
       const instance = await this.predicateService.instancePredicate(predicate.id);
       const balances = await instance.getBalances();
