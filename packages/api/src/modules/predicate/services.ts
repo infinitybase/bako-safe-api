@@ -120,53 +120,55 @@ export class PredicateService implements IPredicateService {
   }
 
   async getMissingDeposits(predicate: Predicate) {
-    if (!predicate) {
-      throw new NotFound({
-        type: ErrorTypes.NotFound,
-        title: 'Predicate not found',
-        detail: `Predicate with id ${predicate.id} not found`,
-      });
-    }
-
-    const predicateProvider = predicate.provider;
-    const rawPredicateAddresss = Address.fromString(
-      predicate.predicateAddress,
-    ).toB256();
-
-    const deposits = await this.getPredicateHistory(
-      rawPredicateAddresss,
-      predicateProvider,
-    );
-
-    const depositHashes = deposits.map(deposit => `${deposit.id.slice(2)}`);
-
-    const predicateTransactions = await Transaction.createQueryBuilder('t')
-      .leftJoin('t.predicate', 'p')
-      .select(['t.id', 't.hash', 'p.id', 't.createdAt', 't.status'])
-      .where('p.id = :predicate', {
-        predicate: predicate.id,
-      })
-      .andWhere('t.type = :type', {
-        type: TransactionType.DEPOSIT,
-      })
-      .andWhere('t.hash IN (:...hashes)', {
-        hashes: depositHashes,
-      })
-      .orderBy('t.createdAt', 'DESC')
-      .getMany();
-
-    const transactionHashes = new Set(predicateTransactions.map(tx => tx.hash));
-    const missingDeposits = deposits.filter(dep => !transactionHashes.has(dep.id.slice(2)));
-
-    for (const deposit of missingDeposits) {
-      const formattedPayload = formatPayloadToCreateTransaction(
-        deposit,
-        predicate,
+      if (!predicate) {
+        throw new NotFound({
+          type: ErrorTypes.NotFound,
+          title: 'Predicate not found',
+          detail: `Predicate with id ${predicate.id} not found`,
+        });
+      }
+  
+      const predicateProvider = predicate.provider;
+      const rawPredicateAddresss = Address.fromString(
+        predicate.predicateAddress,
+      ).toB256();
+  
+      const deposits = await this.getPredicateHistory(
         rawPredicateAddresss,
+        predicateProvider,
       );
+  
+      const depositHashes = deposits.map(deposit => `${deposit.id.slice(2)}`);
+  
 
-      await new TransactionService().create(formattedPayload);
-    }
+      const predicateTransactions = depositHashes.length > 0 ? await Transaction.createQueryBuilder('t')
+        .leftJoin('t.predicate', 'p')
+        .select(['t.id', 't.hash', 'p.id', 't.createdAt', 't.status'])
+        .where('p.id = :predicate', {
+          predicate: predicate.id,
+        })
+        .andWhere('t.type = :type', {
+          type: TransactionType.DEPOSIT,
+        })
+        .andWhere('t.hash IN (:...hashes)', {
+          hashes: depositHashes,
+        })
+        .orderBy('t.createdAt', 'DESC')
+        .getMany()
+        : [];
+  
+      const transactionHashes = new Set(predicateTransactions.map(tx => tx.hash));
+      const missingDeposits = deposits.filter(dep => !transactionHashes.has(dep.id.slice(2)));
+  
+      for (const deposit of missingDeposits) {
+        const formattedPayload = formatPayloadToCreateTransaction(
+          deposit,
+          predicate,
+          rawPredicateAddresss,
+        );
+  
+        await new TransactionService().create(formattedPayload);
+      }
   }
 
   async getEndCursor(endCursorParams: IGetTxEndCursorQueryProps) {
