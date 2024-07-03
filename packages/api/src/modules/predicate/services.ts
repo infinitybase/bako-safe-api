@@ -27,7 +27,6 @@ import { TransactionService } from '../transaction/services';
 //   '0xd205d74dc2a0ffd70458ef19f0fa81f05ac727e63bf671d344c590ab300e134f',
 // ];
 export class PredicateService implements IPredicateService {
-  private lock: { [key: string]: boolean } = {};
   private _ordination: IOrdination<Predicate> = {
     orderBy: 'updatedAt',
     sort: 'DESC',
@@ -129,74 +128,66 @@ export class PredicateService implements IPredicateService {
       });
     }
 
-    if (this.lock[predicate.id]) {
-      console.log(`Already processing predicate ${predicate.id}`);
-      return;
-    }
+    const predicateProvider = predicate.provider;
+    const rawPredicateAddresss = Address.fromString(
+      predicate.predicateAddress,
+    ).toB256();
 
-    this.lock[predicate.id] = true;
+    const deposits = await this.getPredicateHistory(
+      rawPredicateAddresss,
+      predicateProvider,
+    );
 
-    try {
-      const predicateProvider = predicate.provider;
-      const rawPredicateAddresss = Address.fromString(
-        predicate.predicateAddress,
-      ).toB256();
+    const getPredicateTransactions = await Transaction.createQueryBuilder('t')
+      .leftJoin('t.predicate', 'p')
+      .select(['t.id', 't.hash', 'p.id', 't.createdAt', 't.status'])
+      .where('p.id = :predicate', {
+        predicate: predicate.id,
+      })
 
-      const deposits = await this.getPredicateHistory(
-        rawPredicateAddresss,
-        predicateProvider,
-      );
+      .orderBy('t.createdAt', 'DESC')
+      .take(5)
+      .getMany();
 
-      const getPredicateTransactions = await Transaction.createQueryBuilder('t')
+    const missingDeposits = deposits.filter(
+      deposit =>
+        !getPredicateTransactions.some(
+          transaction =>
+            transaction.hash === `${deposit.id.slice(2)}` &&
+            transaction.status !== TransactionStatus.SUCCESS,
+        ),
+    );
+
+    console.log('[missingDeposits]:', missingDeposits);
+
+    for (const deposit of missingDeposits) {
+      const hash = `${deposit.id.slice(2)}`;
+
+      const existingTransaction = await Transaction.createQueryBuilder('t')
         .leftJoin('t.predicate', 'p')
-        .select(['t.id', 't.hash', 'p.id', 't.createdAt', 't.status'])
-        .where('p.id = :predicate', {
-          predicate: predicate.id,
-        })
-        .orderBy('t.createdAt', 'DESC')
-        .take(5)
-        .getMany();
+        .select(['t.type', 'p.id'])
+        .where('t.hash = :hash', { hash })
+        .getOne();
 
-      const missingDeposits = deposits.filter(
-        deposit =>
-          !getPredicateTransactions.some(
-            transaction =>
-              transaction.hash === `${deposit.id.slice(2)}` ||
-              transaction.status !== TransactionStatus.SUCCESS,
-          ),
+      const isTransactionCreator =
+        existingTransaction && existingTransaction.predicate.id === predicate.id;
+
+      if (
+        isTransactionCreator ||
+        (existingTransaction &&
+          existingTransaction.type === TransactionType.DEPOSIT)
+      ) {
+        console.log(`Transaction with hash ${hash} already exists`);
+        continue;
+      }
+
+      const formattedPayload = formatPayloadToCreateTransaction(
+        deposit,
+        predicate,
+        rawPredicateAddresss,
       );
 
-      for (const deposit of missingDeposits) {
-        const hash = `${deposit.id.slice(2)}`;
-
-        const existingTransaction = await Transaction.createQueryBuilder('t')
-          .leftJoin('t.predicate', 'p')
-          .select(['t.type', 'p.id'])
-          .where('t.hash = :hash', { hash })
-          .getOne();
-
-        const isTransactionCreator =
-          existingTransaction && existingTransaction.predicate.id === predicate.id;
-
-        if (
-          isTransactionCreator ||
-          (existingTransaction &&
-            existingTransaction.type === TransactionType.DEPOSIT)
-        ) {
-          console.log(`Transaction with hash ${hash} already exists`);
-          continue;
-        }
-
-        const formattedPayload = formatPayloadToCreateTransaction(
-          deposit,
-          predicate,
-          rawPredicateAddresss,
-        );
-
-        await new TransactionService().create(formattedPayload);
-      }
-    } finally {
-      this.lock[predicate.id] = false;
+      await new TransactionService().create(formattedPayload);
     }
   }
 
@@ -233,8 +224,6 @@ export class PredicateService implements IPredicateService {
       address,
       txQuantityRange: 100,
     });
-
-    console.log('hasNextPage:', hasNextPage);
 
     const txSummaries = await getTransactionsSummaries({
       provider,
