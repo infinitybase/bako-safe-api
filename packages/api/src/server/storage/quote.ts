@@ -15,7 +15,7 @@ export interface IQuote {
   price: number;
 }
 
-const REFRESH_TIME = 1000 * 2; // * 60 * 0.5;  // 10 minutes
+const REFRESH_TIME = 1000 * 60 * 10;  // 10 minutes
 
 export class QuoteStorage {
   private data = new Map<string, number>();
