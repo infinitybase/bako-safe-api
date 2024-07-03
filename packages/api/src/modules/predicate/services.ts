@@ -1,4 +1,4 @@
-import { IConfVault, Vault, TransactionStatus } from 'bakosafe';
+import { IConfVault, Vault } from 'bakosafe';
 import { Brackets } from 'typeorm';
 
 import { NotFound } from '@src/utils/error';
@@ -138,49 +138,27 @@ export class PredicateService implements IPredicateService {
       predicateProvider,
     );
 
-    const getPredicateTransactions = await Transaction.createQueryBuilder('t')
+    const depositHashes = deposits.map(deposit => `${deposit.id.slice(2)}`);
+
+    const predicateTransactions = await Transaction.createQueryBuilder('t')
       .leftJoin('t.predicate', 'p')
       .select(['t.id', 't.hash', 'p.id', 't.createdAt', 't.status'])
       .where('p.id = :predicate', {
         predicate: predicate.id,
       })
-
+      .andWhere('t.type = :type', {
+        type: TransactionType.DEPOSIT,
+      })
+      .andWhere('t.hash IN (:...hashes)', {
+        hashes: depositHashes,
+      })
       .orderBy('t.createdAt', 'DESC')
-      .take(5)
       .getMany();
 
-    const missingDeposits = deposits.filter(
-      deposit =>
-        !getPredicateTransactions.some(
-          transaction =>
-            transaction.hash === `${deposit.id.slice(2)}` &&
-            transaction.status !== TransactionStatus.SUCCESS,
-        ),
-    );
-
-    console.log('[missingDeposits]:', missingDeposits);
+    const transactionHashes = new Set(predicateTransactions.map(tx => tx.hash));
+    const missingDeposits = deposits.filter(dep => !transactionHashes.has(dep.id.slice(2)));
 
     for (const deposit of missingDeposits) {
-      const hash = `${deposit.id.slice(2)}`;
-
-      const existingTransaction = await Transaction.createQueryBuilder('t')
-        .leftJoin('t.predicate', 'p')
-        .select(['t.type', 'p.id'])
-        .where('t.hash = :hash', { hash })
-        .getOne();
-
-      const isTransactionCreator =
-        existingTransaction && existingTransaction.predicate.id === predicate.id;
-
-      if (
-        isTransactionCreator ||
-        (existingTransaction &&
-          existingTransaction.type === TransactionType.DEPOSIT)
-      ) {
-        console.log(`Transaction with hash ${hash} already exists`);
-        continue;
-      }
-
       const formattedPayload = formatPayloadToCreateTransaction(
         deposit,
         predicate,
@@ -229,17 +207,13 @@ export class PredicateService implements IPredicateService {
       provider,
       filters: {
         owner: address,
-        ...(hasNextPage ? { last: 10, before: endCursor } : { first: 10 }),
+        ...(hasNextPage ? { last: 17, before: endCursor } : { first: 17 }),
       },
     });
 
     const deposits = txSummaries.transactions.reduce((deposit, transaction) => {
       const operations = transaction?.operations.filter(
-        filteredTx => filteredTx.to?.address === address,
-        // &&
-        // // these two last validation is due the faucet
-        // !FAUCET_ADDRESS.includes(filteredTx.to?.address) &&
-        // filteredTx.to?.address !== filteredTx.from?.address,
+        filteredTx => filteredTx.to?.address === address
       );
 
       const {
