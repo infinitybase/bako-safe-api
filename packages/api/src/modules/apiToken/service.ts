@@ -104,4 +104,8 @@ export class APITokenService implements IAPITokenService {
   generateCLIToken(apiToken: string, userId: string) {
     return this.tokenCoder.encode(apiToken, userId);
   }
+
+  decodeCLIToken(token: string): ICLIToken {
+    return this.tokenCoder.decode(token);
+  }
 }

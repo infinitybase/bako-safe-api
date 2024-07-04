@@ -1,21 +1,22 @@
 import { Request, Response, NextFunction } from 'express';
 
-import { RecoverCode, RecoverCodeType } from '@src/models';
-import { PermissionRoles, Workspace } from '@src/models/Workspace';
+import { PermissionRoles } from '@src/models/Workspace';
 import { validatePermissionGeneral } from '@src/utils/permissionValidate';
 
 import { ErrorTypes } from '@utils/error';
 import { Unauthorized, UnauthorizedErrorTitles } from '@utils/error/Unauthorized';
 
 import { IAuthRequest } from './types';
-import app from '@src/server/app';
+import { AuthStrategyFactory } from './methods';
 
-async function authMiddleware(req: Request, res: Response, next: NextFunction) {
+async function authMiddleware(
+  req: IAuthRequest,
+  res: Response,
+  next: NextFunction,
+) {
   try {
-    const requestAuth: IAuthRequest = req;
-    const signature = requestAuth?.headers?.authorization;
-    const isRecoverCode = !!signature && signature.includes('code');
-    
+    const signature = req?.headers?.authorization;
+
     if (!signature) {
       throw new Unauthorized({
         type: ErrorTypes.Unauthorized,
@@ -24,12 +25,11 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
       });
     }
 
-    if (isRecoverCode) return connectorMiddleware(req, res, next);
-    const token = await app._sessionCache.getSession(signature);
+    const authStrategy = AuthStrategyFactory.createStrategy(signature);
+    const { user, workspace } = await authStrategy.authenticate(req);
 
-    requestAuth.user = token.user;
-    requestAuth.workspace = token.workspace;
-    
+    req.user = user;
+    req.workspace = workspace;
     return next();
   } catch (e) {
     return next(e);
@@ -41,8 +41,7 @@ function authPermissionMiddleware(permission?: PermissionRoles[]) {
   return async function (req: Request, res: Response, next: NextFunction) {
     try {
       const requestAuth: IAuthRequest = req;
-      
-      
+
       if (!permission || permission.length === 0) return next();
       const { user, workspace } = requestAuth;
 
@@ -76,54 +75,6 @@ function authPermissionMiddleware(permission?: PermissionRoles[]) {
       return next(e);
     }
   };
-}
-
-const connectorMiddleware = async (req: Request, res: Response, next: NextFunction) => {
-  const requestAuth: IAuthRequest = req;
-  const signature = requestAuth?.headers?.authorization;
-  const recover = await RecoverCode.findOne({
-    where: {
-      code: signature,
-      type: RecoverCodeType.AUTH_ONCE,
-    },
-    relations: ['owner'],
-  });
-
-  if (!recover) {
-    throw new Unauthorized({
-      type: ErrorTypes.Unauthorized,
-      title: UnauthorizedErrorTitles.INVALID_RECOVER_CODE,
-      detail: 'The provided recover code is invalid',
-    });
-  }
-
-  const isOld = recover.validAt < new Date();
-  const isUsed = recover.used;
-
-  if (isOld || isUsed) {
-    throw new Unauthorized({
-      type: ErrorTypes.Unauthorized,
-      title: UnauthorizedErrorTitles.INVALID_RECOVER_CODE,
-      detail: 'The provided recover code is expired',
-    });
-  }
-
-  if (Number(recover.metadata.uses) >= 3) {
-    //todo: change this number to dynamic
-    recover.used = true;
-  }
-
-  recover.metadata.uses = Number(recover.metadata.uses) + 1;
-  await recover.save();
-  
-  requestAuth.user = recover.owner;
-  requestAuth.workspace = await Workspace.findOne({
-    where: {
-      owner: recover.owner,
-    },
-  })
-
-  return next();
 }
 
 export { authMiddleware, authPermissionMiddleware };

@@ -37,5 +37,6 @@ export interface IAPITokenService {
   delete(params: IDeleteAPITokenPayload): Promise<void>;
   list(params: IListAPITokenPayload): Promise<APIToken[]>;
 
+  decodeCLIToken(token: string): ICLIToken;
   generateCLIToken(apiToken: string, userId: string): string;
 }
