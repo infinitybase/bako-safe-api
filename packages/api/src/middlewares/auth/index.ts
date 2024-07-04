@@ -27,7 +27,6 @@ async function authMiddleware(req: Request, res: Response, next: NextFunction) {
     if (isRecoverCode) return connectorMiddleware(req, res, next);
     const token = await app._sessionCache.getSession(signature);
 
-
     requestAuth.user = token.user;
     requestAuth.workspace = token.workspace;
     
@@ -65,30 +64,6 @@ function authPermissionMiddleware(permission?: PermissionRoles[]) {
         });
       }
 
-      // DEBUG VALIDATIONS
-      // const myValidation = `${req.method}-${req.baseUrl}${req.path}`;
-      // const combination = 'POST-/predicate/';
-
-      // if (combination === myValidation) {
-      //   console.log('[validacao]: ', {
-      //     //workspace: workspace.permissions,
-      //     user: {
-      //       id: user.id,
-      //       name: user.name,
-      //       address: user.address,
-      //     },
-      //     permission: permission,
-      //     user_p: workspace.permissions[user.id],
-      //     validations: {
-      //       a: !!workspace.permissions[user.id],
-      //       b: permission.length === 0,
-      //       c: permission.filter(p =>
-      //         workspace.permissions[user.id][p].includes('*'),
-      //       ),
-      //     },
-      //   });
-      // }
-
       if (validatePermissionGeneral(workspace, user.id, permission)) return next();
 
       // if not required premissions
@@ -99,7 +74,6 @@ function authPermissionMiddleware(permission?: PermissionRoles[]) {
       });
     } catch (e) {
       return next(e);
-      //return e;
     }
   };
 }
