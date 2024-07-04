@@ -21,7 +21,7 @@
     "@graphql-tools/schema": "^10.0.4",
     "@graphql-tools/utils": "^10.2.2",
     "@graphql-tools/wrap": "^10.0.5",
-    "bakosafe": "link:/Users/luisburigo/Documents/dev/infinity/bako/bako-safe/packages/sdk",
+    "bakosafe": "0.88.1",
     "bakosafe-api": "workspace:^",
     "cors": "2.8.5",
     "dotenv": "16.4.5",
