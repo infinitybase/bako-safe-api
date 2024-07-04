@@ -6,6 +6,10 @@ import { defaultSchemas, subscriptionSchema } from "@/graphql-api";
 import { createGraphqlHttpHandler, createSubscriptionHandler } from "@/lib";
 import { handleErrorMiddleware, tokenDecodeMiddleware } from "@/middlewares";
 
+const {
+  APP_NAME
+} = process.env;
+
 export class GatewayServer {
   private static ROUTES_PATHS = {
     graphql: "/v1/graphql",
@@ -66,6 +70,11 @@ export class GatewayServer {
         fuelSchema: defaultSchemas.fuelSchema,
       })
     );
+    this.app.get('ping', ({ res }) => res.status(200).send(
+      {
+        message: `${APP_NAME} is running - ${new Date().toISOString()}`,
+      }
+    ));
     this.app.get(GatewayServer.ROUTES_PATHS.healthCheck, ({ res }) =>
       res.status(200).send({ status: "ok" })
     );
