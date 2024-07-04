@@ -5,7 +5,7 @@ import { BakoSafe } from 'bakosafe';
 import { GatewayServer } from "@/server";
 import { Database } from '@/lib';
 
-const { PORT, FUEL_PROVIDER, BAKO_SERVER } = process.env;
+const { API_PORT, FUEL_PROVIDER, BAKO_SERVER } = process.env;
 
 BakoSafe.setProviders({
   SERVER_URL: BAKO_SERVER,
@@ -13,7 +13,7 @@ BakoSafe.setProviders({
 });
 
 const main = async () => {
-  const server = new GatewayServer(PORT);
+  const server = new GatewayServer(API_PORT);
   await Database.connect();
   server.start();
 }
@@ -22,3 +22,4 @@ main().catch((reason) => {
   console.error('[GATEWAY SERVER] Failed to start server', reason);
   process.exit(1);
 });
+

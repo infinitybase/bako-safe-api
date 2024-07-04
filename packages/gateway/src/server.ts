@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import { Server } from "http";
-import expressPlayground from "graphql-playground-middleware-express";
 
 import { defaultSchemas, subscriptionSchema } from "@/graphql-api";
 import { createGraphqlHttpHandler, createSubscriptionHandler } from "@/lib";
