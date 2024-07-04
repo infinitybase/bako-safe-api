@@ -10,7 +10,8 @@
     "build:lib": "pnpm codegen:fuel && pnpm codegen:app",
     "codegen:app": "gql-gen -r dotenv/config --config codegen.ts",
     "codegen:fuel": "gql-gen -r dotenv/config --config codegen.fuel.ts",
-    "prepare": "pnpm build:lib"
+    "prepare": "pnpm build:lib",
+    "run": "make -C ./ deploy env_file=.env"
   },
   "keywords": [],
   "author": "",
