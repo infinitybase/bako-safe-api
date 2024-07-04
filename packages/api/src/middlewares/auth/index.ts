@@ -29,9 +29,9 @@ async function authMiddleware(
     const authStrategy = AuthStrategyFactory.createStrategy(signature);
     const { user, workspace } = await authStrategy.authenticate(req);
 
+
     req.user = user;
     req.workspace = workspace;
-
     return next();
   } catch (e) {
     return next(e);
@@ -65,30 +65,6 @@ function authPermissionMiddleware(permission?: PermissionRoles[]) {
         });
       }
 
-      // DEBUG VALIDATIONS
-      // const myValidation = `${req.method}-${req.baseUrl}${req.path}`;
-      // const combination = 'POST-/predicate/';
-
-      // if (combination === myValidation) {
-      //   console.log('[validacao]: ', {
-      //     //workspace: workspace.permissions,
-      //     user: {
-      //       id: user.id,
-      //       name: user.name,
-      //       address: user.address,
-      //     },
-      //     permission: permission,
-      //     user_p: workspace.permissions[user.id],
-      //     validations: {
-      //       a: !!workspace.permissions[user.id],
-      //       b: permission.length === 0,
-      //       c: permission.filter(p =>
-      //         workspace.permissions[user.id][p].includes('*'),
-      //       ),
-      //     },
-      //   });
-      // }
-
       if (validatePermissionGeneral(workspace, user.id, permission)) return next();
 
       // if not required premissions
@@ -99,7 +75,6 @@ function authPermissionMiddleware(permission?: PermissionRoles[]) {
       });
     } catch (e) {
       return next(e);
-      //return e;
     }
   };
 }
