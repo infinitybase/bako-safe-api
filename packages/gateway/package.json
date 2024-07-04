@@ -7,10 +7,10 @@
     "dev": "ts-node-dev -r tsconfig-paths/register -r dotenv/config ./src/index.ts",
     "build": "tsc --project . && tscpaths -p tsconfig.json -s ./src -o ./build",
     "start": "pm2-runtime start ./build/index.js",
-    "build:lib": "pnpm codegen:fuel && pnpm codegen:app",
+    "build:lib": "yarn codegen:fuel && yarn codegen:app",
     "codegen:app": "gql-gen -r dotenv/config --config codegen.ts",
     "codegen:fuel": "gql-gen -r dotenv/config --config codegen.fuel.ts",
-    "prepare": "pnpm build:lib",
+    "prepare": "yarn build:lib",
     "run": "make -C ./ deploy env_file=.env"
   },
   "keywords": [],
