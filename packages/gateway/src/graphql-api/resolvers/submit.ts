@@ -1,5 +1,4 @@
 import { TransactionType } from "fuels";
-import { BakoSafe } from "bakosafe";
 import { delegateToSchema } from "@graphql-tools/delegate";
 import { OperationTypeNode } from "graphql/language";
 
@@ -8,7 +7,7 @@ import { toTransaction } from "@/utils";
 import { AuthService } from "@/service";
 
 export const submit: MutationResolvers["submit"] = async (
-  parent,
+  _,
   args,
   context,
   info

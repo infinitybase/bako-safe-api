@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 
-import { RecoverCode, RecoverCodeType } from '@src/models';
-import { PermissionRoles, Workspace } from '@src/models/Workspace';
+import { PermissionRoles } from '@src/models/Workspace';
 import { validatePermissionGeneral } from '@src/utils/permissionValidate';
 
 import { ErrorTypes } from '@utils/error';
@@ -31,7 +30,6 @@ async function authMiddleware(
 
     req.user = user;
     req.workspace = workspace;
-
     return next();
   } catch (e) {
     return next(e);
