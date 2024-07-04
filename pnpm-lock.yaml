@@ -24,8 +24,8 @@ importers:
         specifier: 1.5.1
         version: 1.5.1
       bakosafe:
-        specifier: 0.0.59
-        version: 0.0.59(fuels@0.88.1)(ts-node@10.9.2)(typescript@4.9.5)
+        specifier: /Users/guimroque/Infinity/bsafe/bako-safe/packages/sdk/dsapdas.tgz
+        version: file:../bako-safe/packages/sdk/dsapdas.tgz(fuels@0.88.1)(ts-node@10.9.2)(typescript@4.9.5)
       bcrypt:
         specifier: 5.1.0
         version: 5.1.0
@@ -226,11 +226,8 @@ importers:
         specifier: ^10.0.5
         version: 10.0.5(graphql@16.9.0)
       bakosafe:
-        specifier: 0.0.59
-        version: 0.0.59(fuels@0.88.1)(ts-node@10.9.2)(typescript@4.9.5)
-      bakosafe-api:
-        specifier: workspace:^
-        version: link:../api
+        specifier: 0.0.60-preview
+        version: 0.0.60-preview(fuels@0.88.1)(ts-node@10.9.2)(typescript@4.9.5)
       cors:
         specifier: 2.8.5
         version: 2.8.5
@@ -4631,6 +4628,31 @@ packages:
 
   /bakosafe@0.0.59(fuels@0.88.1)(ts-node@10.9.2)(typescript@4.9.5):
     resolution: {integrity: sha512-2ZcahyHWshnKEGz/9qkyTIFPNY3hxG4+7mPl1eJ2rPkM0GxoZPsMwJ4F90zC5XJoU2qPhA+jkHQnCyBxYBEFEQ==}
+    peerDependencies:
+      fuels: 0.88.1
+    dependencies:
+      '@types/uuid': 9.0.8
+      axios: 1.5.1
+      elliptic: 6.5.5
+      fuels: 0.88.1
+      patch-package: 8.0.0
+      socket.io: 4.7.2
+      socket.io-client: 4.7.2
+      tsup: 7.2.0(ts-node@10.9.2)(typescript@4.9.5)
+      uuid: 9.0.1
+    transitivePeerDependencies:
+      - '@swc/core'
+      - bufferutil
+      - debug
+      - postcss
+      - supports-color
+      - ts-node
+      - typescript
+      - utf-8-validate
+    dev: false
+
+  /bakosafe@0.0.60-preview(fuels@0.88.1)(ts-node@10.9.2)(typescript@4.9.5):
+    resolution: {integrity: sha512-R3DepVGQeIdwa7MmlAAMN0FkY1Rr1T1Aa8izBz57ZiHRno06FiT/h5ImuoR/3HhlkbatFfqyZj1Dr5+EAG6eig==}
     peerDependencies:
       fuels: 0.88.1
     dependencies:
@@ -12163,4 +12185,32 @@ packages:
       nanoclone: 0.2.1
       property-expr: 2.0.6
       toposort: 2.0.2
+    dev: false
+
+  file:../bako-safe/packages/sdk/dsapdas.tgz(fuels@0.88.1)(ts-node@10.9.2)(typescript@4.9.5):
+    resolution: {integrity: sha512-EBzPDQWPL1TamtsEzmDzhdnAS7HiCLjRLtXQ7YVCAo+zbOPe2tNrk8ZV/GzJJq36T0eNCPfFaW+wtyAMlgut4A==, tarball: file:../bako-safe/packages/sdk/dsapdas.tgz}
+    id: file:../bako-safe/packages/sdk/dsapdas.tgz
+    name: bakosafe
+    version: 0.0.60
+    peerDependencies:
+      fuels: 0.88.1
+    dependencies:
+      '@types/uuid': 9.0.8
+      axios: 1.5.1
+      elliptic: 6.5.5
+      fuels: 0.88.1
+      patch-package: 8.0.0
+      socket.io: 4.7.2
+      socket.io-client: 4.7.2
+      tsup: 7.2.0(ts-node@10.9.2)(typescript@4.9.5)
+      uuid: 9.0.1
+    transitivePeerDependencies:
+      - '@swc/core'
+      - bufferutil
+      - debug
+      - postcss
+      - supports-color
+      - ts-node
+      - typescript
+      - utf-8-validate
     dev: false
