@@ -133,7 +133,8 @@ export interface IPredicateService {
   create: (payload: Partial<Predicate>) => Promise<Predicate>;
   update: (id: string, payload: IPredicatePayload) => Promise<Predicate>;
   delete: (id: string) => Promise<boolean>;
-  findById: (id: string, signer?: string) => Promise<IExtendedPredicate>;
+  findById: (id: string, signer?: string) => Promise<Predicate>;
   list: () => Promise<IPagination<Predicate> | Predicate[]>;
   instancePredicate: (predicateId: string) => Promise<Vault>;
+  getMissingDeposits: (predicate: Predicate) => Promise<void>;
 }

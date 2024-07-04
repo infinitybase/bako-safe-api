@@ -12,9 +12,6 @@ const app = express()
 let database: DatabaseClass
 const server = http.createServer(app)
 const io = new socketIo.Server(server, {
-	cors: {
-		origin: '*',
-	},
 	connectTimeout: Number(TIMEOUT_DICONNECT), // 30 mins
 })
 

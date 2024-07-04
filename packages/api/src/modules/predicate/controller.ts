@@ -1,6 +1,5 @@
-import axios from 'axios';
 import { TransactionStatus } from 'bakosafe';
-import { bn } from 'fuels';
+import { CoinQuantity, bn } from 'fuels';
 
 import { Predicate } from '@src/models/Predicate';
 import { Workspace } from '@src/models/Workspace';
@@ -16,7 +15,14 @@ import {
 } from '@models/index';
 
 import { error } from '@utils/error';
-import { Responses, bindMethods, successful } from '@utils/index';
+import {
+  Responses,
+  assetsMapBySymbol,
+  bindMethods,
+  calculateBalanceUSD,
+  subtractReservedCoinsFromBalances,
+  successful,
+} from '@utils/index';
 
 import { INotificationService } from '../notification/types';
 import { ITransactionService } from '../transaction/types';
@@ -32,7 +38,6 @@ import {
   IPredicateService,
 } from './types';
 import { IPredicateVersionService } from '../predicateVersion/types';
-import { formatPayloadToCreateTransaction } from '../transaction/utils';
 
 export class PredicateController {
   private userService: IUserService;
@@ -141,26 +146,10 @@ export class PredicateController {
     }
   }
 
-  async findById({ params: { id }, user }: IFindByIdRequest) {
+  async findById({ params: { id } }: IFindByIdRequest) {
     try {
-      const { predicate, missingDeposits } = await this.predicateService.findById(
-        id,
-        user.address,
-      );
-
-      if (missingDeposits.length >= 1) {
-        for (const deposit of missingDeposits) {
-          try {
-            const formattedPayload = formatPayloadToCreateTransaction(
-              deposit,
-              predicate,
-            );
-            await this.transactionService.create(formattedPayload);
-          } catch (error) {
-            console.error('Error saving deposit:', deposit, error);
-          }
-        }
-      }
+      const predicate = await this.predicateService.findById(id);
+      await this.predicateService.getMissingDeposits(predicate);
 
       return successful(predicate, Responses.Ok);
     } catch (e) {
@@ -172,9 +161,9 @@ export class PredicateController {
     try {
       const response = await Predicate.findOne({
         where: { predicateAddress: address },
-      })
+      });
 
-      const { predicate } = await this.predicateService.findById(
+      const predicate = await this.predicateService.findById(
         response.id,
         undefined,
       );
@@ -189,7 +178,7 @@ export class PredicateController {
     const { params, workspace } = req;
     const { name } = params;
     try {
-      if(!name || name.length === 0) return successful(false, Responses.Ok);
+      if (!name || name.length === 0) return successful(false, Responses.Ok);
 
       const response = await Predicate.createQueryBuilder('p')
         .leftJoin('p.workspace', 'w')
@@ -219,43 +208,43 @@ export class PredicateController {
                 transaction.status === TransactionStatus.PENDING_SENDER,
             )
             .reduce((accumulator, transaction: Transaction) => {
-              return accumulator.add(
-                transaction.assets.reduce((assetAccumulator, asset: Asset) => {
-                  return assetAccumulator.add(bn.parseUnits(asset.amount));
-                }, bn.parseUnits('0')),
-              );
-            }, bn.parseUnits('0'));
+              transaction.assets.forEach((asset: Asset) => {
+                const assetId = asset.assetId;
+                const amount = bn.parseUnits(asset.amount);
+                const existingAsset = accumulator.find(
+                  item => item.assetId === assetId,
+                );
+
+                if (existingAsset) {
+                  existingAsset.amount = existingAsset.amount.add(amount);
+                } else {
+                  accumulator.push({ assetId, amount });
+                }
+              });
+              return accumulator;
+            }, [] as CoinQuantity[]);
         })
-        .catch(e => {
-          return bn.parseUnits('0');
+        .catch(() => {
+          return [
+            {
+              assetId: assetsMapBySymbol['ETH'].id,
+              amount: bn.parseUnits('0'),
+            },
+          ] as CoinQuantity[];
         });
 
-      const { predicate } = await this.predicateService.findById(
-        address,
-        undefined,
-      );
+      const predicate = await this.predicateService.findById(address, undefined);
 
       const instance = await this.predicateService.instancePredicate(predicate.id);
-      const balance = await instance.getBalance();
-
-      //todo: move this calc logic
-      const convert = `ETH-USD`;
-
-      const priceUSD: number = await axios
-        .get(`https://economia.awesomeapi.com.br/last/${convert}`)
-        .then(({ data }) => {
-          return data[convert.replace('-', '')].bid ?? 0.0;
-        })
-        .catch(e => {
-          return 0.0;
-        });
+      const balances = await instance.getBalances();
+      const balancesToConvert =
+        response.length > 0
+          ? subtractReservedCoinsFromBalances(balances, response)
+          : balances;
 
       return successful(
         {
-          balance: balance.format().toString(),
-          balanceUSD: (parseFloat(balance.format().toString()) * priceUSD).toFixed(
-            2,
-          ),
+          balanceUSD: calculateBalanceUSD(balancesToConvert),
           reservedCoins: response,
         },
         Responses.Ok,
@@ -286,19 +275,17 @@ export class PredicateController {
         })
         .list()
         .then((response: Workspace[]) => response[0]);
-      
 
       const hasSingle = singleWorkspace.id === workspace.id;
 
-      const _wk = hasSingle 
+      const _wk = hasSingle
         ? await new WorkspaceService()
-        .filter({
-          user: user.id,
-        })
-        .list()
-        .then((response: Workspace[]) => response.map(wk => wk.id)) 
+            .filter({
+              user: user.id,
+            })
+            .list()
+            .then((response: Workspace[]) => response.map(wk => wk.id))
         : [workspace.id];
-
 
       const response = await this.predicateService
         .filter({

@@ -1,6 +1,6 @@
 import { Predicate, Transaction, TransactionType } from '@src/models';
 import { IPagination } from '@src/utils/pagination';
-import { ITCreateService, ITransactionsGroupedByMonth } from './types';
+import { ICreateTransactionPayload, ITCreateService, ITransactionsGroupedByMonth } from './types';
 import { IDeposit } from '../predicate/types';
 import { TransactionStatus } from 'bakosafe';
 
@@ -58,7 +58,8 @@ export const groupedTransactions = (
 export const formatPayloadToCreateTransaction = (
   deposit: IDeposit,
   predicate: Predicate,
-): ITCreateService => {
+  address: string,
+): ICreateTransactionPayload => {
   const formattedAssets = deposit.operations
     .map(operation =>
       operation.assetsSent.map(asset => ({
@@ -79,6 +80,7 @@ export const formatPayloadToCreateTransaction = (
     sendTime: deposit.date,
     gasUsed: deposit.gasUsed,
     predicateId: predicate.id,
+    predicateAddress: address,
     status: TransactionStatus.SUCCESS,
     resume: {
       hash: deposit.id,

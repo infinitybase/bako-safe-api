@@ -19,7 +19,7 @@ export class APITokenController {
     const { predicateId } = params;
 
     try {
-      const { predicate } = await this.predicateService.findById(predicateId);
+      const predicate = await this.predicateService.findById(predicateId);
 
       if (!predicate) {
         throw new NotFound({

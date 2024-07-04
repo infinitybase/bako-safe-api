@@ -1,7 +1,7 @@
 import { AuthValidations } from '@utils/testUtils/Auth';
 import { DEFAULT_TRANSACTION_TITLE, Predicate } from '@src/models';
 import { TestError, catchApplicationError } from '@utils/testUtils/Errors';
-import { SetupApiTokenTest } from '@modules/apiToken/__tests__/utils/setup';
+import { SetupApi } from '@src/utils/testUtils/setup';
 
 const tokenMock = {
   name: 'Test API Token',
@@ -17,7 +17,7 @@ describe('[API TOKEN]', () => {
   let notFoundPermissionApi: AuthValidations;
 
   beforeAll(async () => {
-    const setup = await SetupApiTokenTest.setup();
+    const setup = await SetupApi.setup();
 
     api = setup.api;
     predicate = setup.predicate;

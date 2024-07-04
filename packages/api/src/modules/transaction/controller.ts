@@ -3,7 +3,6 @@ import {
   hashMessage,
   Provider,
   Signer,
-  TransactionType as FuelTransactionType,
 } from 'fuels';
 
 import { PermissionRoles, Workspace } from '@src/models/Workspace';
@@ -17,7 +16,6 @@ import {
   NotificationTitle,
   Predicate,
   Transaction,
-  TransactionType,
   WitnessesStatus,
 } from '@models/index';
 

@@ -7,7 +7,7 @@ import { PredicateMock } from '@src/mocks/predicate';
 import { transactionMock } from '@src/mocks/transaction';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
 import { generateWorkspacePayload } from '@src/utils/testUtils/Workspace';
-import { assets } from '@src/mocks/assets';
+import { assetsMapBySymbol } from '@src/utils/assets';
 import { signBypK } from '@src/utils/testUtils/Wallet';
 
 describe('[TRANSACTION]', () => {
@@ -59,7 +59,6 @@ describe('[TRANSACTION]', () => {
       const {
         data_user1,
         data_user2,
-        USER_5,
         data: workspace,
       } = await generateWorkspacePayload(auth);
       await auth.selectWorkspace(workspace.id);
@@ -185,133 +184,137 @@ describe('[TRANSACTION]', () => {
       expect(status).toBe(200);
       expect(data).toHaveLength(0);
     });
+
+    // by month
+    await auth.axios.get('/transaction?byMonth=true').then(({ data, status }) => {
+      expect(status).toBe(200);
+      expect(data).toHaveProperty('data');
+      expect(data.data).toBeInstanceOf(Array);
+    });
   });
 
-  test(
-    'Should save missing deposits in db',
-    async () => {
-      // Gerando autenticação
-      const auth = new AuthValidations(networks['local'], accounts['USER_1']);
-      await auth.create();
-      await auth.createSession();
+  test('Should save missing deposits in db', async () => {
+    // Gerando autenticação
+    const auth = new AuthValidations(networks['local'], accounts['USER_1']);
+    await auth.create();
+    await auth.createSession();
 
-      const provider = await Provider.create(networks['local']);
+    const provider = await Provider.create(networks['local']);
 
-      // Criar predicate novo
-      const VaultPayload: IPayloadVault = {
-        configurable: {
-          SIGNATURES_COUNT: 1,
-          SIGNERS: [accounts['USER_1'].address],
-          network: provider.url,
-        },
-        BakoSafeAuth: auth.authToken,
-      };
+    // Criar predicate novo
+    const VaultPayload: IPayloadVault = {
+      configurable: {
+        SIGNATURES_COUNT: 1,
+        SIGNERS: [accounts['USER_1'].address],
+        network: provider.url,
+      },
+      BakoSafeAuth: auth.authToken,
+    };
 
-      const vault = await Vault.create(VaultPayload);
+    const vault = await Vault.create(VaultPayload);
 
-      // Usando conta genesis para enviar transação para esse predicate
-      const wallet = Wallet.fromPrivateKey(accounts['FULL'].privateKey, provider);
+    // Usando conta genesis para enviar transação para esse predicate
+    const wallet = Wallet.fromPrivateKey(accounts['FULL'].privateKey, provider);
 
-      // Transferindo moedas para o predicate recem criado pela genesis wallet
-      const transfer1 = await wallet.transfer(
-        vault.address,
-        bn.parseUnits('0.10'),
-        assets['ETH'],
+    // Transferindo moedas para o predicate recem criado pela genesis wallet
+    const transfer1 = await wallet.transfer(
+      vault.address,
+      bn.parseUnits('0.10'),
+      assetsMapBySymbol['ETH'].id,
+      {
+        maxFee: BakoSafe.getGasConfig('MAX_FEE'),
+        gasLimit: BakoSafe.getGasConfig('GAS_LIMIT'),
+      },
+    );
+
+    const transfer2 = await wallet.transfer(
+      vault.address,
+      bn.parseUnits('0.10'),
+      assetsMapBySymbol['BTC'].id,
+      {
+        maxFee: BakoSafe.getGasConfig('MAX_FEE'),
+        gasLimit: BakoSafe.getGasConfig('GAS_LIMIT'),
+      },
+    );
+
+    await transfer1.waitForResult();
+    await transfer2.waitForResult();
+
+    // Criando de fato a transação agora que o predicate tem moedas pra isso
+    const tx = await vault.BakoSafeIncludeTransaction({
+      name: 'Test 1',
+      assets: [
         {
-          maxFee: BakoSafe.getGasConfig('MAX_FEE'),
-          gasLimit: BakoSafe.getGasConfig('GAS_LIMIT'),
+          amount: '0.01',
+          assetId: assetsMapBySymbol['ETH'].id,
+          to: vault.address.toB256(),
         },
-      );
-
-      const transfer2 = await wallet.transfer(
-        vault.address,
-        bn.parseUnits('0.10'),
-        assets['BTC'],
         {
-          maxFee: BakoSafe.getGasConfig('MAX_FEE'),
-          gasLimit: BakoSafe.getGasConfig('GAS_LIMIT'),
+          amount: '0.01',
+          assetId: assetsMapBySymbol['BTC'].id,
+          to: vault.address.toB256(),
         },
-      );
+      ],
+    });
 
-      await transfer1.waitForResult();
-      await transfer2.waitForResult();
+    // Assinando a transação recem criada
+    await auth.axios.put(`/transaction/signer/${tx.BakoSafeTransactionId}`, {
+      account: accounts['USER_1'].address,
+      signer: await signBypK(tx.getHashTxId(), accounts['USER_1'].privateKey),
+      confirm: true,
+    });
 
-      // Criando de fato a transação agora que o predicate tem moedas pra isso
-      const tx = await vault.BakoSafeIncludeTransaction({
-        name: 'Test 1',
-        assets: [
-          {
-            amount: '0.01',
-            assetId: assets['ETH'],
-            to: vault.address.toB256(),
-          },
-          {
-            amount: '0.01',
-            assetId: assets['BTC'],
-            to: vault.address.toB256(),
-          },
-        ],
-      });
+    await tx.send();
+    await tx.wait();
 
-      // Assinando a transação recem criada
-      await auth.axios.put(`/transaction/signer/${tx.BakoSafeTransactionId}`, {
-        account: accounts['USER_1'].address,
-        signer: await signBypK(tx.getHashTxId(), accounts['USER_1'].privateKey),
-        confirm: true,
-      });
+    const id_vault = vault.BakoSafeVault.id;
 
-      await tx.send();
-      await tx.wait();
+    // Buscando as transações desse novo vault, deve ter apenas 1 (const tx)
+    const { data: transactions } = await auth.axios.get('/transaction', {
+      params: {
+        predicateId: [id_vault],
+      },
+    });
 
-      //@ts-ignore
-      const id_vault = vault.BakoSafeVault.predicate.id;
+    // validação para ter apenas 1
+    expect(transactions.length).toBe(1);
+    // confirmando se o nome é igual ao da tx criada
+    expect(transactions[0].name).toEqual(tx.name);
 
-      // Buscando as transações desse novo vault, deve ter apenas 1 (const tx)
-      const { data: transactions } = await auth.axios.get('/transaction', {
+    // Batendo no endpoint onde busca pelos depositos e salva os pendentes.
+    await auth.axios.get(`/predicate/${id_vault}`);
+
+    const transfer1Id = transfer1.id;
+    const transfer2Id = transfer2.id;
+
+    // Buscando as transações do vault mais uma vez, após os depositos salvos
+    const { data: transactionsAfterDeposit } = await auth.axios.get(
+      '/transaction',
+      {
         params: {
           predicateId: [id_vault],
         },
-      });
+      },
+    );
 
-      // validação para ter apenas 1
-      expect(transactions.length).toBe(1);
-      // confirmando se o nome é igual ao da tx criada
-      expect(transactions[0].name).toEqual(tx.name);
+    // O motivo do slice(8) no nome das transações que vêm do banco é que os depósitos são salvos como
+    // DEPOSIT_${deposit.id}, então o slice(8) remove o DEPOSIT_, assim comparando apenas o id
+    const checkTransactionName = (transactions, name) =>
+      transactions.some(tx => tx.name.slice(8) === name || tx.name === name);
 
-      // Batendo no endpoint onde busca pelos depositos e salva os pendentes.
-      await auth.axios.get(`/predicate/${id_vault}`);
+    expect(transactionsAfterDeposit.length === 3);
 
-      const transfer1Id = transfer1.id;
-      const transfer2Id = transfer2.id;
+    expect(
+      checkTransactionName(transactionsAfterDeposit, transfer1Id),
+    ).toBeTruthy();
+    expect(
+      checkTransactionName(transactionsAfterDeposit, transfer2Id),
+    ).toBeTruthy();
+    expect(checkTransactionName(transactionsAfterDeposit, tx.name)).toBeTruthy();
+  });
 
-      // Buscando as transações do vault mais uma vez, após os depositos salvos
-      const { data: transactionsAfterDeposit } = await auth.axios.get(
-        '/transaction',
-        {
-          params: {
-            predicateId: [id_vault],
-          },
-        },
-      );
-
-      // O motivo do slice(8) no nome das transações que vêm do banco é que os depósitos são salvos como
-      // DEPOSIT_${deposit.id}, então o slice(8) remove o DEPOSIT_, assim comparando apenas o id
-      const checkTransactionName = (transactions, name) =>
-        transactions.some(tx => tx.name.slice(8) === name || tx.name === name);
-
-      expect(transactionsAfterDeposit.length === 3);
-
-      expect(
-        checkTransactionName(transactionsAfterDeposit, transfer1Id),
-      ).toBeTruthy();
-      expect(
-        checkTransactionName(transactionsAfterDeposit, transfer2Id),
-      ).toBeTruthy();
-      expect(checkTransactionName(transactionsAfterDeposit, tx.name)).toBeTruthy();
-
-      
-     test(
-      'Throw an error when witness that has a status different from pending try to sign a transaction',
+  test(
+    'Throw an error when witness that has a status different from pending try to sign a transaction',
     async () => {
       // logar com usuário inválido no workspace
       const auth = new AuthValidations(networks['local'], accounts['USER_5']);

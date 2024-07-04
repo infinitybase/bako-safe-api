@@ -24,8 +24,8 @@ importers:
         specifier: 1.5.1
         version: 1.5.1
       bakosafe:
-        specifier: 0.0.58
-        version: 0.0.58(fuels@0.88.1)(ts-node@10.9.2)(typescript@4.9.5)
+        specifier: 0.0.59
+        version: 0.0.59(fuels@0.88.1)(ts-node@10.9.2)(typescript@4.9.5)
       bcrypt:
         specifier: 5.1.0
         version: 5.1.0
@@ -226,8 +226,8 @@ importers:
         specifier: ^10.0.5
         version: 10.0.5(graphql@16.9.0)
       bakosafe:
-        specifier: link:/Users/luisburigo/Documents/dev/infinity/bako/bako-safe/packages/sdk
-        version: link:../../../bako-safe/packages/sdk
+        specifier: 0.0.59
+        version: 0.0.59(fuels@0.88.1)(ts-node@10.9.2)(typescript@4.9.5)
       bakosafe-api:
         specifier: workspace:^
         version: link:../api
@@ -310,8 +310,8 @@ importers:
   packages/socket-server:
     dependencies:
       bakosafe:
-        specifier: 0.0.58
-        version: 0.0.58(fuels@0.88.1)(ts-node@10.9.2)(typescript@4.9.5)
+        specifier: 0.0.59
+        version: 0.0.59(fuels@0.88.1)(ts-node@10.9.2)(typescript@4.9.5)
       express:
         specifier: 4.17.1
         version: 4.17.1
@@ -4629,8 +4629,8 @@ packages:
       babel-preset-current-node-syntax: 1.0.1(@babel/core@7.24.6)
     dev: true
 
-  /bakosafe@0.0.58(fuels@0.88.1)(ts-node@10.9.2)(typescript@4.9.5):
-    resolution: {integrity: sha512-PObAlSbMzjYiOFmJ4Qd3lkOslT2O6Mqazvc5liJDZUXShyEUWRaL7fn/v/TDVFf4n7LxmPNiKWrFg8hBLoVg7g==}
+  /bakosafe@0.0.59(fuels@0.88.1)(ts-node@10.9.2)(typescript@4.9.5):
+    resolution: {integrity: sha512-2ZcahyHWshnKEGz/9qkyTIFPNY3hxG4+7mPl1eJ2rPkM0GxoZPsMwJ4F90zC5XJoU2qPhA+jkHQnCyBxYBEFEQ==}
     peerDependencies:
       fuels: 0.88.1
     dependencies:
@@ -5956,7 +5956,7 @@ packages:
     resolution: {integrity: sha512-9Z0qLB0NIisTRt1DZ/8U2k12RJn8yls/nXMZLn+/N8hANT3TcYjKFKcwbw5zFQiN4NTde3TSY9zb79e1ij6j9Q==}
     dependencies:
       '@socket.io/component-emitter': 3.1.2
-      debug: 4.3.4
+      debug: 4.3.5
       engine.io-parser: 5.2.2
       ws: 8.11.0
       xmlhttprequest-ssl: 2.0.0
@@ -5982,7 +5982,7 @@ packages:
       base64id: 2.0.0
       cookie: 0.4.2
       cors: 2.8.5
-      debug: 4.3.4
+      debug: 4.3.5
       engine.io-parser: 5.2.2
       ws: 8.11.0
     transitivePeerDependencies:
@@ -10628,7 +10628,7 @@ packages:
     engines: {node: '>=10.0.0'}
     dependencies:
       '@socket.io/component-emitter': 3.1.2
-      debug: 4.3.4
+      debug: 4.3.5
       engine.io-client: 6.5.3
       socket.io-parser: 4.2.4
     transitivePeerDependencies:
@@ -10668,7 +10668,7 @@ packages:
       accepts: 1.3.8
       base64id: 2.0.0
       cors: 2.8.5
-      debug: 4.3.4
+      debug: 4.3.5
       engine.io: 6.5.4
       socket.io-adapter: 2.5.4
       socket.io-parser: 4.2.4
@@ -11443,7 +11443,7 @@ packages:
       bundle-require: 4.1.0(esbuild@0.18.20)
       cac: 6.7.14
       chokidar: 3.6.0
-      debug: 4.3.4
+      debug: 4.3.5
       esbuild: 0.18.20
       execa: 5.1.1
       globby: 11.1.0
