@@ -4,7 +4,7 @@ import { networks } from '@mocks/networks';
 import { generateWorkspacePayload } from '@utils/testUtils/Workspace';
 import { PredicateMock } from '@mocks/predicate';
 
-export class SetupApiTokenTest {
+export class SetupApi {
   static async setup() {
     const api = await this.defaultApi();
 
