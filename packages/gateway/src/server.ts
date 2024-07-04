@@ -12,7 +12,7 @@ const {
 
 export class GatewayServer {
   private static ROUTES_PATHS = {
-    graphql: "/v1/graphql",
+    graphql: "/geteway/v1/graphql",
     graphqlSub: "/v1/graphql-sub",
     healthCheck: "/v1/health-check",
   };
@@ -50,6 +50,10 @@ export class GatewayServer {
   private beforeAllMiddlewares() {
     this.app.use(express.json());
     this.app.use(cors());
+    this.app.use((req, res, next) => {
+      console.log(`[${APP_NAME}] ${req.method} ${req.url}`);
+      next();
+    })
   }
 
   private afterAllMiddlewares() {
