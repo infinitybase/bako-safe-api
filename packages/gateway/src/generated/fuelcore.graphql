@@ -42,6 +42,7 @@ type Block {
   height: U32!
   id: BlockId!
   transactions: [Transaction!]!
+  version: BlockVersion!
 }
 
 type BlockConnection {
@@ -62,6 +63,10 @@ type BlockEdge {
 }
 
 scalar BlockId
+
+enum BlockVersion {
+  V1
+}
 
 """
 Breakpoint, defined as a tuple of contract ID and relative PC offset inside it
@@ -274,6 +279,7 @@ type GasCosts {
   add: U64!
   addi: U64!
   aloc: U64!
+  alocDependentCost: DependentCost!
   and: U64!
   andi: U64!
   bal: U64!
@@ -283,7 +289,9 @@ type GasCosts {
   call: DependentCost!
   cb: U64!
   ccp: DependentCost!
+  cfe: DependentCost!
   cfei: U64!
+  cfeiDependentCost: DependentCost!
   cfsi: U64!
   contractRoot: DependentCost!
   croo: DependentCost!
@@ -437,6 +445,12 @@ type Header {
   transactionsCount: U16!
   """Merkle root of transactions."""
   transactionsRoot: Bytes32!
+  """Version of the header"""
+  version: HeaderVersion!
+}
+
+enum HeaderVersion {
+  V1
 }
 
 type HeavyOperation {
@@ -561,7 +575,7 @@ type Mutation {
   """
   Execute a dry-run of multiple transactions using a fork of current state, no changes are committed.
   """
-  dryRun(txs: [HexString!]!, utxoValidation: Boolean): [DryRunTransactionExecutionStatus!]!
+  dryRun(gasPrice: U64, txs: [HexString!]!, utxoValidation: Boolean): [DryRunTransactionExecutionStatus!]!
   """End debugger session."""
   endSession(id: ID!): Boolean!
   """Execute a single fuel-asm instruction."""
