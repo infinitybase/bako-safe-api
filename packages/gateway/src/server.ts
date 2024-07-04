@@ -74,7 +74,7 @@ export class GatewayServer {
         fuelSchema: defaultSchemas.fuelSchema,
       })
     );
-    this.app.get('/ping', ({ res }) => res.status(200).send(
+    this.app.get('/gateway/ping', ({ res }) => res.status(200).send(
       {
         message: `${APP_NAME} is running - ${new Date().toISOString()}`,
       }
