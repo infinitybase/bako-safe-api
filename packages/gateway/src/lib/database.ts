@@ -16,8 +16,11 @@ export const defaultConnection: ConnectionConfig = {
   database: DATABASE_NAME,
   host: DATABASE_HOST,
   port: Number(DATABASE_PORT),
-  ssl: !isLocal
-}
+  ...!isLocal && {
+    ssl: {
+      rejectUnauthorized: false
+    }
+  },}
 
 export class Database {
   private readonly client: Client
