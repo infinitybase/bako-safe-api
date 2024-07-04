@@ -12,9 +12,9 @@ const {
 
 export class GatewayServer {
   private static ROUTES_PATHS = {
-    graphql: "/geteway/v1/graphql",
+    graphql: "/v1/graphql",
     graphqlSub: "/v1/graphql-sub",
-    healthCheck: "/v1/health-check",
+    healthCheck: "/gateway/v1/health-check",
   };
 
   private readonly app: express.Application;
