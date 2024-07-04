@@ -12,8 +12,8 @@ const {
 
 export class GatewayServer {
   private static ROUTES_PATHS = {
-    graphql: "/v1/graphql",
-    graphqlSub: "/v1/graphql-sub",
+    graphql: "/gateway/v1/graphql",
+    graphqlSub: "/gateway/v1/graphql-sub",
     healthCheck: "/gateway/v1/health-check",
   };
 
