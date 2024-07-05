@@ -12,9 +12,9 @@ const {
 
 export class GatewayServer {
   private static ROUTES_PATHS = {
-    graphql: "/gateway/v1/graphql",
-    graphqlSub: "/gateway/v1/graphql-sub",
-    healthCheck: "/gateway/v1/health-check",
+    graphql: "/v1/graphql",
+    graphqlSub: "/v1/graphql-sub",
+    healthCheck: "/v1/health-check",
   };
 
   private readonly app: express.Application;
@@ -74,7 +74,7 @@ export class GatewayServer {
         fuelSchema: defaultSchemas.fuelSchema,
       })
     );
-    this.app.get('/gateway/ping', ({ res }) => res.status(200).send(
+    this.app.get('/v1/ping', ({ res }) => res.status(200).send(
       {
         message: `${APP_NAME} is running - ${new Date().toISOString()}`,
       }
