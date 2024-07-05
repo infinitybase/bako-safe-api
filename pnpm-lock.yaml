@@ -24,8 +24,8 @@ importers:
         specifier: 1.5.1
         version: 1.5.1
       bakosafe:
-        specifier: 0.0.60-preview
-        version: 0.0.60-preview(fuels@0.88.1)(ts-node@10.9.2)(typescript@4.9.5)
+        specifier: /Users/guimroque/Infinity/bsafe/bako-safe/packages/sdk/dsaodas.tgz
+        version: file:../bako-safe/packages/sdk/dsaodas.tgz(fuels@0.88.1)(ts-node@10.9.2)(typescript@4.9.5)
       bcrypt:
         specifier: 5.1.0
         version: 5.1.0
@@ -228,6 +228,9 @@ importers:
       bakosafe:
         specifier: 0.0.60-preview
         version: 0.0.60-preview(fuels@0.88.1)(ts-node@10.9.2)(typescript@4.9.5)
+      copyfiles:
+        specifier: 2.4.1
+        version: 2.4.1
       cors:
         specifier: 2.8.5
         version: 2.8.5
@@ -10040,6 +10043,10 @@ packages:
     resolution: {integrity: sha512-OfxIeWzd4xdUNxlWhgFazxsA/nl3mS4/jGZI5n00uWOoSSFRhC1b6gl6xvmzUamgmqELraWp0J/qqVlXYPDPyA==}
     dev: false
 
+  /ramda@0.30.1:
+    resolution: {integrity: sha512-tEF5I22zJnuclswcZMc8bDIrwRHRzf+NqVEmqg50ShAZMP7MWeR/RGDthfM/p+BlqvF2fXAzpn8i+SJcYD3alw==}
+    dev: false
+
   /range-parser@1.2.1:
     resolution: {integrity: sha512-Hrgsx+orqoygnmhFbKaHE6c296J+HTAQXoxEF6gNupROmmGJRoyzfG3ccAveqCBrwr/2yxQ5BVd/GTl5agOwSg==}
     engines: {node: '>= 0.6'}
@@ -12160,4 +12167,33 @@ packages:
       nanoclone: 0.2.1
       property-expr: 2.0.6
       toposort: 2.0.2
+    dev: false
+
+  file:../bako-safe/packages/sdk/dsaodas.tgz(fuels@0.88.1)(ts-node@10.9.2)(typescript@4.9.5):
+    resolution: {integrity: sha512-V4mVxS3d4RmEhjwbFYrwvy5BwkxsrKPNCa3r7/pGEVPwsiacn5zK8zzi9JfpIC+jzsi0rNMqLMTGPxu4DRNxkg==, tarball: file:../bako-safe/packages/sdk/dsaodas.tgz}
+    id: file:../bako-safe/packages/sdk/dsaodas.tgz
+    name: bakosafe
+    version: 0.0.60
+    peerDependencies:
+      fuels: 0.88.1
+    dependencies:
+      '@types/uuid': 9.0.8
+      axios: 1.5.1
+      elliptic: 6.5.5
+      fuels: 0.88.1
+      patch-package: 8.0.0
+      ramda: 0.30.1
+      socket.io: 4.7.2
+      socket.io-client: 4.7.2
+      tsup: 7.2.0(ts-node@10.9.2)(typescript@4.9.5)
+      uuid: 9.0.1
+    transitivePeerDependencies:
+      - '@swc/core'
+      - bufferutil
+      - debug
+      - postcss
+      - supports-color
+      - ts-node
+      - typescript
+      - utf-8-validate
     dev: false
