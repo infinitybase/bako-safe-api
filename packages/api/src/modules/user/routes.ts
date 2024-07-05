@@ -10,7 +10,7 @@ import { PayloadCreateUserSchema, PayloadUpdateUserSchema } from './validation';
 
 const router = Router();
 
-console.log(UserService);
+
 const userService = new UserService();
 
 const userController = new UserController(userService);
