@@ -24,7 +24,7 @@
     "@graphql-tools/schema": "^10.0.4",
     "@graphql-tools/utils": "^10.2.2",
     "@graphql-tools/wrap": "^10.0.5",
-    "bakosafe": "0.0.61",    
+    "bakosafe": "0.0.63",    
     "cors": "2.8.5",
     "dotenv": "16.4.5",
     "express": "4.17.1",
