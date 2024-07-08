@@ -12,7 +12,7 @@
     "codegen:fuel": "gql-gen -r dotenv/config --config codegen.fuel.ts",
     "copyFiles": "copyfiles -u 1 src/**/*.graphql ./build",
     "postbuild": "yarn run copyFiles",
-    "prepare": "yarn build:lib",
+    "prepare": "echo 'FIX this command!' && exit 0",
     "run": "make -C ./ deploy env_file=.env"
   },
   "keywords": [],

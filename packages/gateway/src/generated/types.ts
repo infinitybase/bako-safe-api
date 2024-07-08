@@ -72,7 +72,6 @@ export type Block = {
   height: Scalars['U32']['output'];
   id: Scalars['BlockId']['output'];
   transactions: Array<Transaction>;
-  version: BlockVersion;
 };
 
 export type BlockConnection = {
@@ -93,10 +92,6 @@ export type BlockEdge = {
   /** The item at the end of the edge */
   node: Block;
 };
-
-export enum BlockVersion {
-  V1 = 'V1'
-}
 
 /** Breakpoint, defined as a tuple of contract ID and relative PC offset inside it */
 export type Breakpoint = {
@@ -325,7 +320,6 @@ export type GasCosts = {
   add: Scalars['U64']['output'];
   addi: Scalars['U64']['output'];
   aloc: Scalars['U64']['output'];
-  alocDependentCost: DependentCost;
   and: Scalars['U64']['output'];
   andi: Scalars['U64']['output'];
   bal: Scalars['U64']['output'];
@@ -335,9 +329,7 @@ export type GasCosts = {
   call: DependentCost;
   cb: Scalars['U64']['output'];
   ccp: DependentCost;
-  cfe: DependentCost;
   cfei: Scalars['U64']['output'];
-  cfeiDependentCost: DependentCost;
   cfsi: Scalars['U64']['output'];
   contractRoot: DependentCost;
   croo: DependentCost;
@@ -487,13 +479,7 @@ export type Header = {
   transactionsCount: Scalars['U16']['output'];
   /** Merkle root of transactions. */
   transactionsRoot: Scalars['Bytes32']['output'];
-  /** Version of the header */
-  version: HeaderVersion;
 };
-
-export enum HeaderVersion {
-  V1 = 'V1'
-}
 
 export type HeavyOperation = {
   __typename?: 'HeavyOperation';
@@ -672,7 +658,6 @@ export type MutationContinueTxArgs = {
 
 
 export type MutationDryRunArgs = {
-  gasPrice?: InputMaybe<Scalars['U64']['input']>;
   txs: Array<Scalars['HexString']['input']>;
   utxoValidation?: InputMaybe<Scalars['Boolean']['input']>;
 };
@@ -1332,7 +1317,6 @@ export type ResolversTypes = ResolversObject<{
   BlockConnection: ResolverTypeWrapper<BlockConnection>;
   BlockEdge: ResolverTypeWrapper<BlockEdge>;
   BlockId: ResolverTypeWrapper<Scalars['BlockId']['output']>;
-  BlockVersion: BlockVersion;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
   Breakpoint: Breakpoint;
   Bytes32: ResolverTypeWrapper<Scalars['Bytes32']['output']>;
@@ -1369,11 +1353,10 @@ export type ResolversTypes = ResolversObject<{
   FeeParameters: ResolverTypeWrapper<FeeParameters>;
   FeeParametersVersion: FeeParametersVersion;
   Float: ResolverTypeWrapper<Scalars['Float']['output']>;
-  GasCosts: ResolverTypeWrapper<Omit<GasCosts, 'alocDependentCost' | 'call' | 'ccp' | 'cfe' | 'cfeiDependentCost' | 'contractRoot' | 'croo' | 'csiz' | 'k256' | 'ldc' | 'logd' | 'mcl' | 'mcli' | 'mcp' | 'mcpi' | 'meq' | 'retd' | 's256' | 'scwq' | 'smo' | 'srwq' | 'stateRoot' | 'swwq' | 'vmInitialization'> & { alocDependentCost: ResolversTypes['DependentCost'], call: ResolversTypes['DependentCost'], ccp: ResolversTypes['DependentCost'], cfe: ResolversTypes['DependentCost'], cfeiDependentCost: ResolversTypes['DependentCost'], contractRoot: ResolversTypes['DependentCost'], croo: ResolversTypes['DependentCost'], csiz: ResolversTypes['DependentCost'], k256: ResolversTypes['DependentCost'], ldc: ResolversTypes['DependentCost'], logd: ResolversTypes['DependentCost'], mcl: ResolversTypes['DependentCost'], mcli: ResolversTypes['DependentCost'], mcp: ResolversTypes['DependentCost'], mcpi: ResolversTypes['DependentCost'], meq: ResolversTypes['DependentCost'], retd: ResolversTypes['DependentCost'], s256: ResolversTypes['DependentCost'], scwq: ResolversTypes['DependentCost'], smo: ResolversTypes['DependentCost'], srwq: ResolversTypes['DependentCost'], stateRoot: ResolversTypes['DependentCost'], swwq: ResolversTypes['DependentCost'], vmInitialization: ResolversTypes['DependentCost'] }>;
+  GasCosts: ResolverTypeWrapper<Omit<GasCosts, 'call' | 'ccp' | 'contractRoot' | 'croo' | 'csiz' | 'k256' | 'ldc' | 'logd' | 'mcl' | 'mcli' | 'mcp' | 'mcpi' | 'meq' | 'retd' | 's256' | 'scwq' | 'smo' | 'srwq' | 'stateRoot' | 'swwq' | 'vmInitialization'> & { call: ResolversTypes['DependentCost'], ccp: ResolversTypes['DependentCost'], contractRoot: ResolversTypes['DependentCost'], croo: ResolversTypes['DependentCost'], csiz: ResolversTypes['DependentCost'], k256: ResolversTypes['DependentCost'], ldc: ResolversTypes['DependentCost'], logd: ResolversTypes['DependentCost'], mcl: ResolversTypes['DependentCost'], mcli: ResolversTypes['DependentCost'], mcp: ResolversTypes['DependentCost'], mcpi: ResolversTypes['DependentCost'], meq: ResolversTypes['DependentCost'], retd: ResolversTypes['DependentCost'], s256: ResolversTypes['DependentCost'], scwq: ResolversTypes['DependentCost'], smo: ResolversTypes['DependentCost'], srwq: ResolversTypes['DependentCost'], stateRoot: ResolversTypes['DependentCost'], swwq: ResolversTypes['DependentCost'], vmInitialization: ResolversTypes['DependentCost'] }>;
   GasCostsVersion: GasCostsVersion;
   Genesis: ResolverTypeWrapper<Genesis>;
   Header: ResolverTypeWrapper<Header>;
-  HeaderVersion: HeaderVersion;
   HeavyOperation: ResolverTypeWrapper<HeavyOperation>;
   HexString: ResolverTypeWrapper<Scalars['HexString']['output']>;
   ID: ResolverTypeWrapper<Scalars['ID']['output']>;
@@ -1486,7 +1469,7 @@ export type ResolversParentTypes = ResolversObject<{
   FailureStatus: FailureStatus;
   FeeParameters: FeeParameters;
   Float: Scalars['Float']['output'];
-  GasCosts: Omit<GasCosts, 'alocDependentCost' | 'call' | 'ccp' | 'cfe' | 'cfeiDependentCost' | 'contractRoot' | 'croo' | 'csiz' | 'k256' | 'ldc' | 'logd' | 'mcl' | 'mcli' | 'mcp' | 'mcpi' | 'meq' | 'retd' | 's256' | 'scwq' | 'smo' | 'srwq' | 'stateRoot' | 'swwq' | 'vmInitialization'> & { alocDependentCost: ResolversParentTypes['DependentCost'], call: ResolversParentTypes['DependentCost'], ccp: ResolversParentTypes['DependentCost'], cfe: ResolversParentTypes['DependentCost'], cfeiDependentCost: ResolversParentTypes['DependentCost'], contractRoot: ResolversParentTypes['DependentCost'], croo: ResolversParentTypes['DependentCost'], csiz: ResolversParentTypes['DependentCost'], k256: ResolversParentTypes['DependentCost'], ldc: ResolversParentTypes['DependentCost'], logd: ResolversParentTypes['DependentCost'], mcl: ResolversParentTypes['DependentCost'], mcli: ResolversParentTypes['DependentCost'], mcp: ResolversParentTypes['DependentCost'], mcpi: ResolversParentTypes['DependentCost'], meq: ResolversParentTypes['DependentCost'], retd: ResolversParentTypes['DependentCost'], s256: ResolversParentTypes['DependentCost'], scwq: ResolversParentTypes['DependentCost'], smo: ResolversParentTypes['DependentCost'], srwq: ResolversParentTypes['DependentCost'], stateRoot: ResolversParentTypes['DependentCost'], swwq: ResolversParentTypes['DependentCost'], vmInitialization: ResolversParentTypes['DependentCost'] };
+  GasCosts: Omit<GasCosts, 'call' | 'ccp' | 'contractRoot' | 'croo' | 'csiz' | 'k256' | 'ldc' | 'logd' | 'mcl' | 'mcli' | 'mcp' | 'mcpi' | 'meq' | 'retd' | 's256' | 'scwq' | 'smo' | 'srwq' | 'stateRoot' | 'swwq' | 'vmInitialization'> & { call: ResolversParentTypes['DependentCost'], ccp: ResolversParentTypes['DependentCost'], contractRoot: ResolversParentTypes['DependentCost'], croo: ResolversParentTypes['DependentCost'], csiz: ResolversParentTypes['DependentCost'], k256: ResolversParentTypes['DependentCost'], ldc: ResolversParentTypes['DependentCost'], logd: ResolversParentTypes['DependentCost'], mcl: ResolversParentTypes['DependentCost'], mcli: ResolversParentTypes['DependentCost'], mcp: ResolversParentTypes['DependentCost'], mcpi: ResolversParentTypes['DependentCost'], meq: ResolversParentTypes['DependentCost'], retd: ResolversParentTypes['DependentCost'], s256: ResolversParentTypes['DependentCost'], scwq: ResolversParentTypes['DependentCost'], smo: ResolversParentTypes['DependentCost'], srwq: ResolversParentTypes['DependentCost'], stateRoot: ResolversParentTypes['DependentCost'], swwq: ResolversParentTypes['DependentCost'], vmInitialization: ResolversParentTypes['DependentCost'] };
   Genesis: Genesis;
   Header: Header;
   HeavyOperation: HeavyOperation;
@@ -1583,7 +1566,6 @@ export type BlockResolvers<ContextType = any, ParentType extends ResolversParent
   height?: Resolver<ResolversTypes['U32'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['BlockId'], ParentType, ContextType>;
   transactions?: Resolver<Array<ResolversTypes['Transaction']>, ParentType, ContextType>;
-  version?: Resolver<ResolversTypes['BlockVersion'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 
@@ -1794,7 +1776,6 @@ export type GasCostsResolvers<ContextType = any, ParentType extends ResolversPar
   add?: Resolver<ResolversTypes['U64'], ParentType, ContextType>;
   addi?: Resolver<ResolversTypes['U64'], ParentType, ContextType>;
   aloc?: Resolver<ResolversTypes['U64'], ParentType, ContextType>;
-  alocDependentCost?: Resolver<ResolversTypes['DependentCost'], ParentType, ContextType>;
   and?: Resolver<ResolversTypes['U64'], ParentType, ContextType>;
   andi?: Resolver<ResolversTypes['U64'], ParentType, ContextType>;
   bal?: Resolver<ResolversTypes['U64'], ParentType, ContextType>;
@@ -1804,9 +1785,7 @@ export type GasCostsResolvers<ContextType = any, ParentType extends ResolversPar
   call?: Resolver<ResolversTypes['DependentCost'], ParentType, ContextType>;
   cb?: Resolver<ResolversTypes['U64'], ParentType, ContextType>;
   ccp?: Resolver<ResolversTypes['DependentCost'], ParentType, ContextType>;
-  cfe?: Resolver<ResolversTypes['DependentCost'], ParentType, ContextType>;
   cfei?: Resolver<ResolversTypes['U64'], ParentType, ContextType>;
-  cfeiDependentCost?: Resolver<ResolversTypes['DependentCost'], ParentType, ContextType>;
   cfsi?: Resolver<ResolversTypes['U64'], ParentType, ContextType>;
   contractRoot?: Resolver<ResolversTypes['DependentCost'], ParentType, ContextType>;
   croo?: Resolver<ResolversTypes['DependentCost'], ParentType, ContextType>;
@@ -1931,7 +1910,6 @@ export type HeaderResolvers<ContextType = any, ParentType extends ResolversParen
   time?: Resolver<ResolversTypes['Tai64Timestamp'], ParentType, ContextType>;
   transactionsCount?: Resolver<ResolversTypes['U16'], ParentType, ContextType>;
   transactionsRoot?: Resolver<ResolversTypes['Bytes32'], ParentType, ContextType>;
-  version?: Resolver<ResolversTypes['HeaderVersion'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 
