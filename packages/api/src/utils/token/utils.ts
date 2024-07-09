@@ -28,7 +28,6 @@ export class TokenUtils {
         break;
       case Encoder.WEB_AUTHN:
         address = await recoverWebAuthnSignature(digest, signature);
-
         break;
       default:
         throw new Unauthorized({
@@ -157,7 +156,7 @@ export class TokenUtils {
       });
 
     const user = await TokenUtils.checkUserExists(address);
-
+    console.log('user', user)
     await TokenUtils.invalidateRecoverCode(user, RecoverCodeType.AUTH);
 
     const workspace = await TokenUtils.findSingleWorkspace(user.id);

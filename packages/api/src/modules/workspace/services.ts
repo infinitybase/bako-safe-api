@@ -85,7 +85,7 @@ export class WorkspaceService implements IWorkspaceService {
           },
         );
 
-      this._filter.user &&
+        this._filter.user &&
         queryBuilder.andWhere(qb => {
           const subQuery = qb
             .subQuery()
@@ -140,6 +140,21 @@ export class WorkspaceService implements IWorkspaceService {
       });
     }
   }
+
+  async findByUser(user_id: string, single: boolean = false): Promise<Workspace[]> {
+    console.log(user_id, single)
+    const a = await Workspace.query(
+      `SELECT w.*
+      FROM workspace w
+      INNER JOIN workspace_users wu ON wu.workspace_id = w.id
+      INNER JOIN users u ON u.id = wu.user_id
+      WHERE u.id = $1  AND w.single = $2`,
+      [user_id, single]
+    );
+    console.log(a)
+    return a;
+  }
+
 
   async update(payload: Partial<Workspace>): Promise<boolean> {
     const w = Object.assign(
