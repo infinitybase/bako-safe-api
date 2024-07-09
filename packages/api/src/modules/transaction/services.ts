@@ -6,11 +6,12 @@ import {
   Vault,
 } from 'bakosafe';
 import {
+  hexlify,
   Provider,
   TransactionRequest,
-  TransactionResponse,
-  hexlify,
   transactionRequestify,
+  TransactionResponse,
+  TransactionType,
 } from 'fuels';
 import { Brackets } from 'typeorm';
 
@@ -385,9 +386,16 @@ export class TransactionService implements ITransactionService {
     const api_transaction = await this.findById(bsafe_txid);
     const { predicate, txData, witnesses } = api_transaction;
     const provider = await Provider.create(predicate.provider);
-    const _witnesses = witnesses
+    let _witnesses = witnesses
       .filter(w => !!w.signature)
       .map(witness => witness.signature);
+
+    if (txData.type === TransactionType.Create) {
+      _witnesses = [
+        hexlify(txData.witnesses[txData.bytecodeWitnessIndex]),
+        ..._witnesses,
+      ];
+    }
 
     const tx = transactionRequestify({
       ...txData,
@@ -401,15 +409,15 @@ export class TransactionService implements ITransactionService {
     const encodedTransaction = hexlify(tx_est.toTransactionBytes());
     return await provider.operations
       .submit({ encodedTransaction })
-      .then(async ({ submit: { id: transactionId } }) => {
+      .then(async response => {
         const transaction = await new TransactionResponse(
-          transactionId,
+          response.submit.id,
           provider,
         ).waitForResult();
         const resume: ITransactionResume = {
           ...api_transaction.resume,
           witnesses: _witnesses,
-          hash: transactionId.substring(2),
+          hash: response.submit.id.substring(2),
           // max_fee * gasUsed
           gasUsed: transaction.fee.format({ precision: 9 }),
           status: TransactionStatus.PROCESS_ON_CHAIN,

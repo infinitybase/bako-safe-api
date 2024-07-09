@@ -45,11 +45,6 @@ export interface IDeposit {
   txData: TransactionRequest;
 }
 
-export interface IExtendedPredicate {
-  predicate: Predicate;
-  missingDeposits: IDeposit[];
-}
-
 export interface IPredicateFilterParams {
   q?: string;
   name?: string;

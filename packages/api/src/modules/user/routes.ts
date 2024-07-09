@@ -9,7 +9,10 @@ import { UserService } from './service';
 import { PayloadCreateUserSchema, PayloadUpdateUserSchema } from './validation';
 
 const router = Router();
+
+
 const userService = new UserService();
+
 const userController = new UserController(userService);
 
 router.get('/nickname/:nickname', handleResponse(userController.validateName));

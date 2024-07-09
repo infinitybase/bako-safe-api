@@ -1,5 +1,9 @@
 import { ITransactionResume, TransactionStatus } from 'bakosafe';
-import { Provider, Signer, hashMessage } from 'fuels';
+import {
+  hashMessage,
+  Provider,
+  Signer,
+} from 'fuels';
 
 import { PermissionRoles, Workspace } from '@src/models/Workspace';
 import {
@@ -18,8 +22,8 @@ import {
 import { IPredicateService } from '@modules/predicate/types';
 import { IWitnessService } from '@modules/witness/types';
 
-import { ErrorTypes, NotFound, error } from '@utils/error';
-import { Responses, bindMethods, successful } from '@utils/index';
+import { error, ErrorTypes, NotFound } from '@utils/error';
+import { bindMethods, Responses, successful } from '@utils/index';
 
 import { IAddressBookService } from '../addressBook/types';
 import { IAssetService } from '../asset/types';
@@ -140,6 +144,7 @@ export class TransactionController {
 
       const newTransaction = await this.transactionService.create({
         ...transaction,
+        type: Transaction.getTypeFromTransactionRequest(transaction.txData),
         status: TransactionStatus.AWAIT_REQUIREMENTS,
         resume: {
           hash: transaction.hash,
