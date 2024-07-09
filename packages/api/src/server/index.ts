@@ -2,6 +2,7 @@ import { BakoSafe } from 'bakosafe';
 
 import app from './app';
 import Bootstrap from './bootstrap';
+import { bakoProviders, bakoGasFee } from '../config/bakosafe';
 
 const { API_PORT, PORT, API_ENVIRONMENT } = process.env;
 
@@ -20,16 +21,8 @@ const start = async () => {
   });
 };
 
-BakoSafe.setProviders({
-  SERVER_URL: process.env.API_URL,
-  CLIENT_URL: process.env.UI_URL,
-  CHAIN_URL: process.env.API_DEFAULT_NETWORK,
-});
-
-BakoSafe.setGasConfig({
-  GAS_LIMIT: Number(process.env.GAS_LIMIT) ?? 10000000,
-  MAX_FEE: Number(process.env.MAX_FEE) ?? 1000000,
-});
+BakoSafe.setProviders(bakoProviders);
+BakoSafe.setGasConfig(bakoGasFee);
 
 try {
   start();

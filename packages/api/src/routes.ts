@@ -1,7 +1,10 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
+import { rateLimitConf } from './config/rateLimit';
+
+
 
 import users from '@src/modules/user/routes';
-
 import addressBook from '@modules/addressBook/routes';
 import auth from '@modules/auth/routes';
 import dApp from '@modules/dApps/routes';
@@ -12,7 +15,6 @@ import transactions from '@modules/transaction/routes';
 import vaultTemplate from '@modules/vaultTemplate/routes';
 import workspace from '@modules/workspace/routes';
 import apiToken from '@modules/apiToken/routes';
-
 const router = Router();
 
 router.use('/auth', auth);

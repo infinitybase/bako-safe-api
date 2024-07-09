@@ -9,6 +9,8 @@ import { isDevMode, TVLCronJob } from '@src/utils';
 
 import { handleErrors } from '@middlewares/index';
 import { QuoteStorage, SessionStorage } from './storage';
+import { rateLimitConf } from '@src/config/rateLimit';
+import rateLimit from 'express-rate-limit';
 
 
 class App {
@@ -32,6 +34,7 @@ class App {
   private initMiddlewares() {
     this.app.use(bodyParser.urlencoded({ limit: '20mb', extended: true }));
     this.app.use(bodyParser.json({ limit: '20mb' }));
+    this.app.use(rateLimit(rateLimitConf))
     this.app.use(cookieParser());
     this.app.use(Express.json());
     this.app.use(cors());
