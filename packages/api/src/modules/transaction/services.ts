@@ -99,6 +99,7 @@ export class TransactionService implements ITransactionService {
         'witnesses',
         'predicate',
         'predicate.members',
+        'predicate.workspace',
         'createdBy',
       ],
     })
@@ -474,6 +475,7 @@ export class TransactionService implements ITransactionService {
         vaultName: api_transaction.predicate.name,
         transactionId: api_transaction.id,
         transactionName: api_transaction.name,
+        workspaceId: api_transaction.predicate.workspace.id,
       };
 
       if (result.status.type === TransactionProcessStatus.SUCCESS) {

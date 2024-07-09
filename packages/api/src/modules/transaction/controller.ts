@@ -187,6 +187,7 @@ export class TransactionController {
             vaultName: predicate.name,
             transactionName: name,
             transactionId: id,
+            workspaceId: predicate.workspace.id,
           },
           user_id: member.id,
         });
@@ -416,6 +417,7 @@ export class TransactionController {
           vaultName: predicate.name,
           transactionId: transactionId,
           transactionName: name,
+          workspaceId: predicate.workspace.id,
         };
 
         // NOTIFY MEMBERS ON SIGNED TRANSACTIONS
