@@ -13,7 +13,6 @@ import {
 } from 'graphql';
 import { type ExecutionResult, isAsyncIterable } from 'graphql-sse';
 import express from 'express';
-import { CLITokenCoder } from '@/lib';
 
 // https://github.com/faboulaws/graphql-sse/blob/main/libs/server/src/process-subscription.ts
 async function processSubscription({
@@ -109,7 +108,7 @@ async function processSubscription({
   }
 }
 
-export const createSubscriptionHandler = ({ schema }) => {
+export const createSubscriptionHandler = ({ schema, defaultContext }) => {
   return async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     // @ts-ignore
     const graphQLParameters = getGraphQLParameters(req);
@@ -126,7 +125,7 @@ export const createSubscriptionHandler = ({ schema }) => {
         variables: graphQLParameters.variables,
         schema,
         // @ts-ignore
-        context: {schema, ...req.context},
+        context: {schema, ...req.context, ...defaultContext},
       });
 
       if (result.type === RESULT_TYPE.EVENT_STREAM) {

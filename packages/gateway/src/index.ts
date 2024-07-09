@@ -14,7 +14,8 @@ BakoSafe.setProviders({
 
 const main = async () => {
   const server = new GatewayServer(API_PORT);
-  await Database.connect();
+  const database = await Database.connect();
+  server.setDatabase(database);
   server.start();
 }
 

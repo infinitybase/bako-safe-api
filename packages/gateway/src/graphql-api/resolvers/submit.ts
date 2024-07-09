@@ -4,7 +4,7 @@ import { OperationTypeNode } from "graphql/language";
 
 import { MutationResolvers } from "@/generated";
 import { toTransaction } from "@/utils";
-import { AuthService } from "@/service";
+import { AuthService, TransactionService } from '@/service';
 
 export const submit: MutationResolvers["submit"] = async (
   _,
@@ -12,17 +12,14 @@ export const submit: MutationResolvers["submit"] = async (
   context,
   info
 ) => {
-  const { schema, apiToken, userId } = context;
+  const { schema, apiToken, userId, database } = context;
   const transaction = toTransaction(args.tx);
 
   if (transaction.type === TransactionType.Create) {
-    const authService = await AuthService.instance();
-    const { vault, codeId } = await authService.getVaultFromApiToken(apiToken, userId);
-    transaction.witnesses = [
-      transaction.witnesses.at(transaction.bytecodeWitnessIndex),
-    ];
-    const deployTransfer = await vault.BakoSafeDeployContract(transaction);
-    await authService.closeSession(codeId);
+    const authService = new AuthService(database);
+    const transactionService = new TransactionService(transaction, authService);
+    const submitResponse = await transactionService.submit({ apiToken, userId });
+    const { deployTransfer, vault } = submitResponse;
 
     console.log('[MUTATION] Transaction sent to Bako', {
       vault: vault.BakoSafeVaultId,
