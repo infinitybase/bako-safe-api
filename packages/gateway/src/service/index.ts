@@ -1,2 +1,2 @@
 export * from './auth';
-export * from './submit-transaction';
+export * from './transaction';
