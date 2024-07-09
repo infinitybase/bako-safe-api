@@ -182,6 +182,7 @@ export class TransactionController {
             vaultName: predicate.name,
             transactionName: name,
             transactionId: id,
+            workspaceId: predicate.workspace.id,
           },
           user_id: member.id,
         });
@@ -411,6 +412,7 @@ export class TransactionController {
           vaultName: predicate.name,
           transactionId: transactionId,
           transactionName: name,
+          workspaceId: predicate.workspace.id,
         };
 
         // NOTIFY MEMBERS ON SIGNED TRANSACTIONS
@@ -465,25 +467,23 @@ export class TransactionController {
       const { workspace, user } = req;
 
       const singleWorkspace = await new WorkspaceService()
-      .filter({
-        user: user.id,
-        single: true,
-      })
-      .list()
-      .then((response: Workspace[]) => response[0]);
-    
+        .filter({
+          user: user.id,
+          single: true,
+        })
+        .list()
+        .then((response: Workspace[]) => response[0]);
 
-    const hasSingle = singleWorkspace.id === workspace.id;
+      const hasSingle = singleWorkspace.id === workspace.id;
 
-    const _wk = hasSingle 
-      ? await new WorkspaceService()
-      .filter({
-        user: user.id,
-      })
-      .list()
-      .then((response: Workspace[]) => response.map(wk => wk.id)) 
-      : [workspace.id];
-
+      const _wk = hasSingle
+        ? await new WorkspaceService()
+            .filter({
+              user: user.id,
+            })
+            .list()
+            .then((response: Workspace[]) => response.map(wk => wk.id))
+        : [workspace.id];
 
       const result = await new TransactionService()
         .filter({

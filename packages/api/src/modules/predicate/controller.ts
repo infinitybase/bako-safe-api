@@ -106,7 +106,11 @@ export class PredicateController {
       );
 
       const { id, name, members: predicateMembers } = newPredicate;
-      const summary = { vaultId: id, vaultName: name };
+      const summary = {
+        vaultId: id,
+        vaultName: name,
+        workspaceId: newPredicate.workspace.id,
+      };
       const membersWithoutLoggedUser = predicateMembers.filter(
         member => member.id !== user.id,
       );
