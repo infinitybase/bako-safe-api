@@ -2,9 +2,7 @@ name: '[Socket Server] Deploy to Amazon ECS'
 
 on:
   push:
-    branches: [ master ]
-    paths:
-      - './packages/socket-server/**'
+    branches: [ main ]
 
 jobs:
   deploy:

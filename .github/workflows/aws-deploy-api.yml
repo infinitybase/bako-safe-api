@@ -2,9 +2,7 @@ name: '[API] Deploy to Amazon ECS'
 
 on:
   push:
-    branches: [ master ]
-    paths:
-      - './packages/api/**'
+    branches: [ main ]
 
 jobs:
   deploy:

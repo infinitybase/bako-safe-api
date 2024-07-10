@@ -2,7 +2,7 @@ name: '[Gateway] Deploy to Amazon ECS'
 
 on:
   push:
-    branches: [ FEAT/action-gateway ]
+    branches: [ main ]
 
 jobs:
   deploy:
