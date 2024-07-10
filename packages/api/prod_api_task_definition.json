@@ -18,7 +18,7 @@
             "environment": [],
             "environmentFiles": [
                 {
-                    "value": "arn:aws:s3:::bako-safe-env/bako-safe-api-prod.env",
+                    "value": "arn:aws:s3:::bako-safe-env/bakosafe-prod.env",
                     "type": "s3"
                 }
             ],
