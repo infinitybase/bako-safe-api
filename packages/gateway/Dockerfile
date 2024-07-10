@@ -1,4 +1,4 @@
-FROM arm64v8/node:18.18.2-alpine
+FROM arm64v8/node:18.18.2-buster-slim
 
 # Create app directory
 WORKDIR /gateway
