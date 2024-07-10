@@ -11,11 +11,26 @@ const {
   API_URL, 
   FUEL_PROVIDER, 
   GAS_LIMIT, 
-  MAX_FEE
+  MAX_FEE,
+  COIN_MARKET_CAP_API_KEY
 } = process.env;
 
 const start = async () => {
   const port = API_PORT || PORT || 3333;
+
+
+  console.log('[ENVIRONMENTS]: ', {
+    API_PORT,
+    PORT,
+    API_ENVIRONMENT,
+    UI_URL,
+    API_URL,
+    FUEL_PROVIDER,
+    GAS_LIMIT,
+    MAX_FEE,
+    COIN_MARKET_CAP_API_KEY
+  })
+
 
   await Bootstrap.start();
 
