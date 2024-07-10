@@ -6,18 +6,18 @@ import { txConfirm, txRequest } from '@modules/transactions'
 import { DatabaseClass } from '@utils/database'
 import { SocketEvents } from './types'
 
-const { PORT, TIMEOUT_DICONNECT, APP_NAME } = process.env
+const { SOCKET_PORT, SOCKET_TIMEOUT_DICONNECT, SOCKET_NAME } = process.env
 
 const app = express()
 let database: DatabaseClass
 const server = http.createServer(app)
 const io = new socketIo.Server(server, {
-	connectTimeout: Number(TIMEOUT_DICONNECT), // 30 mins
+	connectTimeout: Number(SOCKET_TIMEOUT_DICONNECT), // 30 mins
 })
 
 // Health Check
 app.get('/health', ({ res }) =>
-    res.status(200).send({ status: 'ok', message: `Health check ${process.env.APP_NAME} passed` }),
+    res.status(200).send({ status: 'ok', message: `Health check ${SOCKET_NAME} passed` }),
 );
 
 // Configuração do Socket.IO
@@ -75,7 +75,7 @@ const databaseConnect = async () => {
 }
 
 // Iniciar o servidor
-const port = PORT || 3000
+const port = SOCKET_PORT || 3000
 server.listen(port, async () => {
 	await databaseConnect()
 	console.log(`Server runner on port ${port}`)

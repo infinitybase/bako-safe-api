@@ -1,14 +1,14 @@
-name: '[API] Deploy to Amazon ECS'
+name: '[Gateway] Deploy to Amazon ECS'
 
 on:
   push:
-    branches: [ master ]
+    branches: [ feat/action-gateway ]
     paths:
-      - './packages/api/**'
+      - './packages/gateway/**'
 
 jobs:
   deploy:
-    name: '[API] Deploy to Amazon ECS'
+    name: '[Gateway] Deploy to Amazon ECS'
     runs-on: ubuntu-latest
 
     steps:
@@ -36,11 +36,11 @@ jobs:
       id: build-image
       env:
         ECR_REGISTRY: ${{ steps.login_ecr.outputs.registry }}
-        ECR_REPOSITORY: bako-safe-api
+        ECR_REPOSITORY: bako-safe-gateway-api
         IMAGE_TAG: ${{ github.sha }}
       run: |
         # Build a docker container and push it to ECR
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./packages/api
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./packages/gateway
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
@@ -48,14 +48,14 @@ jobs:
       id: task-def
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
-        task-definition: ./packages/api/prod_api_task_definition.json
-        container-name: bako-safe-api
+        task-definition: ./packages/gateway/prod_gateway_task_definition.json
+        container-name: bako-safe-gateway-api
         image: ${{ steps.build-image.outputs.image }}
 
     - name: Deploy Amazon ECS task definition
       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
       with:
         task-definition: ${{ steps.task-def.outputs.task-definition }}
-        service: bako-safe-api-service
+        service: bako-safe-gateway-api-service
         cluster: Bako-Safe-ECS
         wait-for-service-stability: true
