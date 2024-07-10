@@ -20,7 +20,7 @@ import {
 import { IconUtils } from '@utils/icons';
 
 const {
-  API_DEFAULT_NETWORK
+  FUEL_PROVIDER
 } = process.env;
 
 export class AddressBookController {
@@ -68,7 +68,7 @@ export class AddressBookController {
       if (!savedUser) {
         savedUser = await this.userService.create({
           address,
-          provider: user.provider,// ?? API_DEFAULT_NETWORK,// ?? networks['devnet'],
+          provider: user.provider,
           avatar: IconUtils.user(),
           type: TypeUser.FUEL,
           active: true,

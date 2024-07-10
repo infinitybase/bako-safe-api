@@ -10,7 +10,6 @@ import { handleResponse } from '@utils/index';
 import { AddressBookService } from '../addressBook/services';
 import { AssetService } from '../asset/services';
 import { NotificationService } from '../notification/services';
-import { UserService } from '../user/service';
 import { TransactionController } from './controller';
 import { TransactionService } from './services';
 import {
@@ -26,7 +25,6 @@ const witnessService = new WitnessService();
 const addressBookService = new AddressBookService();
 const assetService = new AssetService();
 const notificationService = new NotificationService();
-const userService = new UserService();
 
 const {
   list,

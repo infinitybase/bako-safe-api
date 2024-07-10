@@ -12,21 +12,18 @@ export interface ISession {
     user: User;
   }
 
-const CLEAR_TIME = 60 * 1000 * 23; // 23 minutos
+const REFRESH_TIME = 60 * 1000 * 23; // 23 minutos
 
 
 export class SessionStorage {
-    data = new Map<string, UserToken>();
-    private nextClear: number = new Date().getTime() + CLEAR_TIME; 
+    private data = new Map<string, UserToken>();
 
-    constructor () {
+    protected constructor () {
         this.data = new Map<string, UserToken>();
     }
 
     // adiciona uma sessão ao store limpa as sessões expiradas
     public async addSession(sessionId: string, session: UserToken) {
-        const pendingClear = new Date().getTime() > this.nextClear;
-        pendingClear && await this.clearExpiredSessions();
         this.data.set(sessionId, session);
     }
 
@@ -65,21 +62,33 @@ export class SessionStorage {
 
     // limpa as sessões expiradas
     public async clearExpiredSessions() {
-            for await (const [sessionId, session] of this.data.entries()) {
-                if (isPast(session.expired_at)) {
-                    await UserToken.delete({
-                        id: session.id
-                    });
-                    this.data.delete(sessionId);
-                }
+        for await (const [sessionId, session] of this.data.entries()) {
+            if (isPast(session.expired_at)) {
+                await UserToken.delete({
+                    id: session.id
+                });
+                this.data.delete(sessionId);
             }
-            new AuthService().clearExpiredTokens();
-            this.nextClear = new Date().getTime() + CLEAR_TIME;
+        }
+        new AuthService().clearExpiredTokens();
     }
 
+    public getActiveSessions() {
+        return this.data.size;
+    }
 
     public clear() {
         this.data.clear();
+    }
+
+    static start() {
+        const _this = new SessionStorage();
+        
+        setInterval(() => {
+          _this.clearExpiredSessions();
+        }, REFRESH_TIME);
+
+        return _this;
     }
 
 }

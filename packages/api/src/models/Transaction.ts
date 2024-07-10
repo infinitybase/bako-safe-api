@@ -3,7 +3,7 @@ import {
   ITransactionResume,
   ITransactionSummary,
 } from 'bakosafe';
-import { TransactionRequest } from 'fuels';
+import { TransactionRequest, TransactionType as FuelTransactionType } from 'fuels';
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 
 import { User } from '@models/User';
@@ -13,6 +13,12 @@ import { Base } from './Base';
 import { Predicate } from './Predicate';
 import { Witness } from './Witness';
 
+export enum TransactionType {
+  TRANSACTION_SCRIPT = 'TRANSACTION_SCRIPT',
+  TRANSACTION_CREATE = 'TRANSACTION_CREATE',
+  DEPOSIT = 'DEPOSIT',
+}
+
 @Entity('transactions')
 class Transaction extends Base {
   @Column()
@@ -20,6 +26,14 @@ class Transaction extends Base {
 
   @Column()
   hash: string;
+
+  @Column({
+    name: 'type',
+    type: 'enum',
+    enum: TransactionType,
+    default: TransactionType.TRANSACTION_SCRIPT,
+  })
+  type: TransactionType;
 
   @Column({
     type: 'jsonb',
@@ -67,6 +81,17 @@ class Transaction extends Base {
   @JoinColumn({ name: 'predicate_id' })
   @ManyToOne(() => Predicate)
   predicate: Predicate;
+
+  static getTypeFromTransactionRequest(transactionRequest: TransactionRequest) {
+    const { type } = transactionRequest;
+    const transactionType = {
+      [FuelTransactionType.Create]: TransactionType.TRANSACTION_CREATE,
+      [FuelTransactionType.Script]: TransactionType.TRANSACTION_SCRIPT,
+      default: TransactionType.TRANSACTION_SCRIPT,
+    };
+
+    return transactionType[type] ?? transactionType.default;
+  }
 }
 
 export { Transaction };

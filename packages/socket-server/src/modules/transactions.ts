@@ -3,7 +3,6 @@ import { BakoSafe, TransactionStatus, Vault } from 'bakosafe'
 import crypto from 'crypto'
 import { TransactionRequestLike } from 'fuels'
 import { Socket } from 'socket.io'
-import { Client } from 'pg'
 import { DatabaseClass } from '@utils/database'
 
 export interface IEventTX_REQUEST {
@@ -22,7 +21,7 @@ interface IEvent<D> {
 	database: DatabaseClass
 }
 
-const { BAKO_URL_UI, BAKO_URL_API } = process.env
+const { UI_URL, API_URL } = process.env
 
 export const txConfirm = async ({ data, socket, database }: IEvent<IEventTX_CONFIRM>) => {
 	const { sessionId, username, request_id } = socket.handshake.auth
@@ -36,12 +35,12 @@ export const txConfirm = async ({ data, socket, database }: IEvent<IEventTX_CONF
 		// validar se o origin é diferente da url usada no front...adicionar um .env pra isso
 		console.log('[TX_CONFIRM]', {
 			origin,
-			BAKO_URL_UI,
+			UI_URL,
 			room
 		})
 
 
-		if (origin != BAKO_URL_UI) return
+		if (origin != UI_URL) return
 
 		// ------------------------------ [DAPP] ------------------------------
 		const dapp = await database.query(
@@ -78,7 +77,7 @@ export const txConfirm = async ({ data, socket, database }: IEvent<IEventTX_CONF
 
 		// ------------------------------ [TX] ------------------------------
 		BakoSafe.setProviders({
-			SERVER_URL: BAKO_URL_API,
+			SERVER_URL: API_URL,
 			CHAIN_URL: dapp.current_vault_provider,
 		})
 		const predicate = await Vault.create({

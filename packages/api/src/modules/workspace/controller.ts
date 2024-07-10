@@ -1,8 +1,13 @@
-import axios from 'axios';
-import { BakoSafe } from 'bakosafe';
-import { BN, bn } from 'fuels';
+import { Asset, BakoSafe, TransactionStatus } from 'bakosafe';
 
-import { Predicate, TypeUser, User, PermissionAccess } from '@src/models';
+import {
+  Predicate,
+  TypeUser,
+  User,
+  PermissionAccess,
+  Transaction,
+  Asset as AssetModel,
+} from '@src/models';
 import { PermissionRoles, Workspace } from '@src/models/Workspace';
 import Internal from '@src/utils/error/Internal';
 import {
@@ -12,11 +17,18 @@ import {
 import { IconUtils } from '@src/utils/icons';
 
 import { ErrorTypes, error } from '@utils/error';
-import { Responses, successful } from '@utils/index';
+import {
+  Responses,
+  assetsMapBySymbol,
+  calculateBalanceUSD,
+  subtractReservedCoinsFromBalances,
+  successful,
+} from '@utils/index';
 
 import { PredicateService } from '../predicate/services';
 import { UserService } from '../user/service';
 import { WorkspaceService } from './services';
+import { TransactionService } from '../transaction/services';
 import {
   ICreateRequest,
   IGetBalanceRequest,
@@ -25,6 +37,7 @@ import {
   IUpdatePermissionsRequest,
   IUpdateRequest,
 } from './types';
+import { CoinQuantity, bn } from 'fuels';
 
 export class WorkspaceController {
   async listByUser(req: IListByUserRequest) {
@@ -74,45 +87,86 @@ export class WorkspaceController {
     try {
       const { workspace } = req;
       const predicateService = new PredicateService();
-      const balance = await predicateService
+      const transactionService = new TransactionService();
+      const predicatesBalance = [];
+      let reservedCoins: CoinQuantity[] = [];
+
+      await predicateService
         .filter({
           workspace: [workspace.id],
         })
         .list()
         .then(async (response: Predicate[]) => {
-          let _balance: BN = bn(0);
           for await (const predicate of response) {
             const vault = await predicateService.instancePredicate(predicate.id);
-            _balance = _balance.add(await vault.getBalance());
+            predicatesBalance.push(...(await vault.getBalances()));
           }
-          return _balance;
-        })
-        .catch(e => {
-          throw new Internal({
-            type: ErrorTypes.Internal,
-            title: 'Error on get balance',
-            detail: e,
-          });
+
+          // Calculates amount of coins reserved per asset
+          const predicateIds = response.map(item => item.id);
+          reservedCoins = await transactionService
+            .filter({
+              predicateId: predicateIds,
+            })
+            .list()
+            .then((data: Transaction[]) => {
+              return data
+                .filter(
+                  (transaction: Transaction) =>
+                    transaction.status === TransactionStatus.AWAIT_REQUIREMENTS ||
+                    transaction.status === TransactionStatus.PENDING_SENDER,
+                )
+                .reduce((accumulator, transaction: Transaction) => {
+                  transaction.assets.forEach((asset: AssetModel) => {
+                    const assetId = asset.assetId;
+                    const amount = bn.parseUnits(asset.amount);
+                    const existingAsset = accumulator.find(
+                      item => item.assetId === assetId,
+                    );
+
+                    if (existingAsset) {
+                      existingAsset.amount = existingAsset.amount.add(amount);
+                    } else {
+                      accumulator.push({ assetId, amount });
+                    }
+                  });
+                  return accumulator;
+                }, [] as CoinQuantity[]);
+            })
+            .catch(() => {
+              return [
+                {
+                  assetId: assetsMapBySymbol['ETH'].id,
+                  amount: bn.parseUnits('0'),
+                },
+              ] as CoinQuantity[];
+            });
         });
 
-      const convert = `ETH-USD`;
+      // Calculate balance per asset
+      const formattedPredicatesBalance = predicatesBalance.map(item => ({
+        ...item,
+        amount: item.amount.format(),
+      }));
+      const assetsBalance = await Asset.assetsGroupById(formattedPredicatesBalance);
+      const formattedAssetsBalance = Object.entries(assetsBalance).map(
+        ([assetId, amount]) => ({
+          assetId,
+          amount,
+        }),
+      );
 
-      const priceUSD: number = await axios
-        .get(`https://economia.awesomeapi.com.br/last/${convert}`)
-        .then(({ data }) => {
-          return data[convert.replace('-', '')].bid ?? 0.0;
-        })
-        .catch(e => {
-          return 0.0;
-        });
+      // Subtracts the amount of coins reserved per asset from the balance per asset
+      const availableAssetsBalance =
+        reservedCoins.length > 0
+          ? subtractReservedCoinsFromBalances(formattedAssetsBalance, reservedCoins)
+          : formattedAssetsBalance;
 
       return successful(
         {
-          balance: balance.format().toString(),
-          balanceUSD: (parseFloat(balance.format().toString()) * priceUSD).toFixed(
-            2,
-          ),
+          balanceUSD: calculateBalanceUSD(availableAssetsBalance),
           workspaceId: workspace.id,
+          assetsBalance: availableAssetsBalance,
         },
         Responses.Ok,
       );

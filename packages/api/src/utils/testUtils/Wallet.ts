@@ -1,7 +1,5 @@
 import { BakoSafe, Vault } from 'bakosafe';
-import { BN, Wallet, Provider, bn } from 'fuels';
-
-import { assets } from '@src/mocks/assets';
+import { BN, Wallet, Provider } from 'fuels';
 
 export const txParams = {
   maxFee: BakoSafe.getGasConfig('MAX_FEE'),
@@ -18,12 +16,7 @@ export const sendPredicateCoins = async (
     rootWallet,
     await Provider.create(BakoSafe.getProviders('CHAIN_URL')),
   );
-  const deposit = await wallet.transfer(
-    predicate.address,
-    amount,
-    assets[asset],
-    txParams,
-  );
+  const deposit = await wallet.transfer(predicate.address, amount, asset, txParams);
   await deposit.wait();
 };
 

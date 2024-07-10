@@ -6,11 +6,12 @@ import {
   Vault,
 } from 'bakosafe';
 import {
+  hexlify,
   Provider,
   TransactionRequest,
-  TransactionResponse,
-  hexlify,
   transactionRequestify,
+  TransactionResponse,
+  TransactionType,
 } from 'fuels';
 import { Brackets } from 'typeorm';
 
@@ -34,8 +35,10 @@ import {
   ICreateTransactionPayload,
   ITransactionFilterParams,
   ITransactionService,
+  ITransactionsGroupedByMonth,
   IUpdateTransactionPayload,
 } from './types';
+import { groupedTransactions } from './utils';
 
 export class TransactionService implements ITransactionService {
   private _ordination: IOrdination<Transaction> = {
@@ -96,6 +99,7 @@ export class TransactionService implements ITransactionService {
         'witnesses',
         'predicate',
         'predicate.members',
+        'predicate.workspace',
         'createdBy',
       ],
     })
@@ -121,7 +125,12 @@ export class TransactionService implements ITransactionService {
 
   //todo: melhorar a valocidade de processamento dessa query
   //caso trocar inner por left atrapalha muito a performance
-  async list(): Promise<IPagination<Transaction> | Transaction[]> {
+  async list(): Promise<
+    | IPagination<Transaction>
+    | Transaction[]
+    | IPagination<ITransactionsGroupedByMonth>
+    | ITransactionsGroupedByMonth
+  > {
     const hasPagination = this._pagination?.page && this._pagination?.perPage;
     const queryBuilder = Transaction.createQueryBuilder('t')
       .select([
@@ -136,6 +145,7 @@ export class TransactionService implements ITransactionService {
         't.status',
         't.summary',
         't.updatedAt',
+        't.type',
       ])
       .leftJoin('t.assets', 'assets')
       .leftJoin('t.witnesses', 'witnesses')
@@ -246,6 +256,11 @@ export class TransactionService implements ITransactionService {
         id: this._filter.id,
       });
 
+    this._filter.type &&
+      queryBuilder.andWhere('t.type = :type', {
+        type: this._filter.type,
+      });
+
     /* *
      * TODO: Not best solution for performance, "take" dont limit this method
      *       just find all and create an array with length. The best way is use
@@ -264,17 +279,19 @@ export class TransactionService implements ITransactionService {
       });
     };
 
-    return hasPagination
-      ? Pagination.create(queryBuilder)
+    const transactions = hasPagination
+      ? await Pagination.create(queryBuilder)
           .paginate(this._pagination)
           .then(paginationResult => paginationResult)
           .catch(handleInternalError)
-      : queryBuilder
+      : await queryBuilder
           .getMany()
           .then(transactions => {
             return transactions ?? [];
           })
           .catch(handleInternalError);
+
+    return this._filter.byMonth ? groupedTransactions(transactions) : transactions;
   }
 
   async delete(id: string): Promise<boolean> {
@@ -369,9 +386,16 @@ export class TransactionService implements ITransactionService {
     const api_transaction = await this.findById(bsafe_txid);
     const { predicate, txData, witnesses } = api_transaction;
     const provider = await Provider.create(predicate.provider);
-    const _witnesses = witnesses
+    let _witnesses = witnesses
       .filter(w => !!w.signature)
       .map(witness => witness.signature);
+
+    if (txData.type === TransactionType.Create) {
+      _witnesses = [
+        hexlify(txData.witnesses[txData.bytecodeWitnessIndex]),
+        ..._witnesses,
+      ];
+    }
 
     const tx = transactionRequestify({
       ...txData,
@@ -385,15 +409,15 @@ export class TransactionService implements ITransactionService {
     const encodedTransaction = hexlify(tx_est.toTransactionBytes());
     return await provider.operations
       .submit({ encodedTransaction })
-      .then(async ({ submit: { id: transactionId } }) => {
+      .then(async response => {
         const transaction = await new TransactionResponse(
-          transactionId,
+          response.submit.id,
           provider,
         ).waitForResult();
         const resume: ITransactionResume = {
           ...api_transaction.resume,
           witnesses: _witnesses,
-          hash: transactionId.substring(2),
+          hash: response.submit.id.substring(2),
           // max_fee * gasUsed
           gasUsed: transaction.fee.format({ precision: 9 }),
           status: TransactionStatus.PROCESS_ON_CHAIN,
@@ -451,6 +475,7 @@ export class TransactionService implements ITransactionService {
         vaultName: api_transaction.predicate.name,
         transactionId: api_transaction.id,
         transactionName: api_transaction.name,
+        workspaceId: api_transaction.predicate.workspace.id,
       };
 
       if (result.status.type === TransactionProcessStatus.SUCCESS) {

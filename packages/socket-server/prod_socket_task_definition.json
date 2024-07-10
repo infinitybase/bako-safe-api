@@ -18,7 +18,7 @@
             "environment": [],
             "environmentFiles": [
                 {
-                    "value": "arn:aws:s3:::bako-safe-env/bako-safe-socket-server-api-prod.env",
+                    "value": "arn:aws:s3:::bako-safe-env/bakosafe-prod.env",
                     "type": "s3"
                 }
             ],
@@ -85,8 +85,8 @@
     "requiresCompatibilities": [
         "FARGATE"
     ],
-    "cpu": "256",
-    "memory": "512",
+    "cpu": "512",
+    "memory": "1024",
     "runtimePlatform": {
         "cpuArchitecture": "ARM64",
         "operatingSystemFamily": "LINUX"

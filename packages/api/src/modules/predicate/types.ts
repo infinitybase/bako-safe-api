@@ -6,6 +6,7 @@ import { IDefaultOrdination, IOrdination } from '@src/utils/ordination';
 import { IPagination, PaginationParams } from '@src/utils/pagination';
 
 import { Predicate, User } from '@models/index';
+import { Operation, TransactionRequest } from 'fuels';
 
 export enum OrderBy {
   name = 'name',
@@ -36,6 +37,14 @@ export interface IPredicateMemberPayload {
   predicate_id: string;
 }
 
+export interface IDeposit {
+  date: Date;
+  id: string;
+  operations: Operation[];
+  gasUsed: string;
+  txData: TransactionRequest;
+}
+
 export interface IPredicateFilterParams {
   q?: string;
   name?: string;
@@ -44,6 +53,23 @@ export interface IPredicateFilterParams {
   provider?: string;
   owner?: string;
   workspace?: string[];
+}
+
+export interface IGetTxEndCursorQueryProps {
+  providerUrl: string;
+  address: string;
+  txQuantityRange: number;
+}
+
+export interface IEndCursorPayload {
+  data: {
+    transactionsByOwner: {
+      pageInfo: {
+        endCursor: string;
+        hasNextPage: boolean;
+      };
+    };
+  };
 }
 
 interface ICreatePredicateRequestSchema extends ValidatedRequestSchema {
@@ -105,4 +131,5 @@ export interface IPredicateService {
   findById: (id: string, signer?: string) => Promise<Predicate>;
   list: () => Promise<IPagination<Predicate> | Predicate[]>;
   instancePredicate: (predicateId: string) => Promise<Vault>;
+  getMissingDeposits: (predicate: Predicate) => Promise<void>;
 }
