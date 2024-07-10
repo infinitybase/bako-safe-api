@@ -1,20 +1,21 @@
 FROM arm64v8/node:18.18.2-alpine
 
-# Create app directory
+# Instalar dependências necessárias para node-gyp
+RUN apk add --no-cache python3 make g++ \
+    && npm install -g node-gyp
+
+# Criar diretório da aplicação
 WORKDIR /gateway
 ADD . /gateway
 
-# Install node-gyp
-RUN yarn global add node-gyp && yarn install --frozen-lockfile
-
-# Install app dependencies
+# Instalar dependências da aplicação
 RUN yarn install
 
 # Build
 RUN yarn build
 
-# Expose the application port
+# Expor a porta da aplicação
 EXPOSE 4444
 
-# Start the application
+# Iniciar a aplicação
 ENTRYPOINT ["yarn", "start"]
