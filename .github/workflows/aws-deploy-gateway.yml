@@ -2,7 +2,7 @@ name: '[Gateway] Deploy to Amazon ECS'
 
 on:
   push:
-    branches: [ feat/action-gateway ]
+    branches: [ FEAT/action-gateway ]
     paths:
       - './packages/gateway/**'
 
