@@ -85,6 +85,8 @@ export class QuoteStorage {
         },
       );
 
+      console.log('[REQUEST_QUOTE] auth: ', COIN_MARKET_CAP_API_KEY)
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const formattedData = Object.values(data.data).map((item: any) => ({
         assetId: assetsMapBySymbol[item.symbol].id,
@@ -93,7 +95,7 @@ export class QuoteStorage {
 
       return formattedData;
     } catch (e) {
-      console.log('[STORAGE_QUOTE] Get quots value: ', e.message);
+      console.log('[STORAGE_QUOTE] Get quots value: ', e);
       return [];
     }
   }
