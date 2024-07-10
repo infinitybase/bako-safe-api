@@ -19,7 +19,7 @@ services:
       # APP
       - API_PORT=${API_PORT}
       - APP_NAME=${API_NAME}
-      - BAKO_SERVER=${BAKO_SERVER}
+      - API_URL=${API_URL}
       - FUEL_PROVIDER=${FUEL_PROVIDER}
       # TOKENS
       - API_TOKEN_SECRET=${API_TOKEN_SECRET}
