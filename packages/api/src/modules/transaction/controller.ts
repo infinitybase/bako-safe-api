@@ -1,9 +1,5 @@
 import { ITransactionResume, TransactionStatus } from 'bakosafe';
-import {
-  hashMessage,
-  Provider,
-  Signer,
-} from 'fuels';
+import { hashMessage, Provider, Signer } from 'fuels';
 
 import { PermissionRoles, Workspace } from '@src/models/Workspace';
 import {
@@ -333,6 +329,26 @@ export class TransactionController {
     }
   }
 
+  async sendToChainAsync(id: string, resume: any) {
+    this.transactionService
+      .sendToChain(id)
+      .then(async (result: ITransactionResume) => {
+        await this.transactionService.update(id, {
+          status: TransactionStatus.PROCESS_ON_CHAIN,
+          sendTime: new Date(),
+          resume: result,
+        });
+      })
+      .catch(async () => {
+        await this.transactionService.update(id, {
+          status: TransactionStatus.FAILED,
+          sendTime: new Date(),
+          resume: { ...resume, status: TransactionStatus.FAILED },
+        });
+        throw new Error('Transaction send failed');
+      });
+  }
+
   async signByID({
     body: { account, signer, confirm },
     params: { id },
@@ -392,23 +408,24 @@ export class TransactionController {
         });
 
         if (result.status === TransactionStatus.PENDING_SENDER) {
-          await this.transactionService
-            .sendToChain(id)
-            .then(async (result: ITransactionResume) => {
-              return await this.transactionService.update(id, {
-                status: TransactionStatus.PROCESS_ON_CHAIN,
-                sendTime: new Date(),
-                resume: result,
-              });
-            })
-            .catch(async () => {
-              await this.transactionService.update(id, {
-                status: TransactionStatus.FAILED,
-                sendTime: new Date(),
-                resume: { ...resume, status: TransactionStatus.FAILED },
-              });
-              throw new Error('Transaction send failed');
-            });
+          this.sendToChainAsync(id, resume);
+          // await this.transactionService
+          //   .sendToChain(id)
+          //   .then(async (result: ITransactionResume) => {
+          //     return await this.transactionService.update(id, {
+          //       status: TransactionStatus.PROCESS_ON_CHAIN,
+          //       sendTime: new Date(),
+          //       resume: result,
+          //     });
+          //   })
+          //   .catch(async () => {
+          //     await this.transactionService.update(id, {
+          //       status: TransactionStatus.FAILED,
+          //       sendTime: new Date(),
+          //       resume: { ...resume, status: TransactionStatus.FAILED },
+          //     });
+          //     throw new Error('Transaction send failed');
+          //   });
         }
 
         const notificationSummary = {
