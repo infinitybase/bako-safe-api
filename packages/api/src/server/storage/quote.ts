@@ -119,3 +119,10 @@ export class QuoteStorage {
     return _this;
   }
 }
+
+
+
+
+
+
+// validacao do qa mais rápida proximo dos eventos
