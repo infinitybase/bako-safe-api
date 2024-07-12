@@ -12,7 +12,7 @@ export interface ISession {
     user: User;
   }
 
-const REFRESH_TIME = 30 * 1000 * 5; // 23 minutos
+const REFRESH_TIME = 30 * 1000 * 0.5; // 23 minutos
 
 
 export class SessionStorage {
@@ -39,7 +39,6 @@ export class SessionStorage {
             this.addSession(sessionId, session);
         }
 
-        console.log('[SESSION]: ', session.expired_at);
 
         if (session && isPast(session.expired_at)) {
             await this.removeSession(sessionId);
@@ -68,12 +67,9 @@ export class SessionStorage {
     public async clearExpiredSessions() {
         await AuthService.clearExpiredTokens();
         for await (const [sessionId, session] of this.data.entries()) {
-            console.log('[SESSION]: ', {
-                sessionId,
-                expired_at: session.expired_at,
-                isPast: isPast(session.expired_at)
-            });
-            if (isPast(session.expired_at)) {
+            let handleRemove = !session.expired_at || isPast(session.expired_at);
+            console.log('[HANDLE_REMOVE]: ', handleRemove, session.expired_at ?? 'sem data de expiração');
+            if (handleRemove) {
                 this.data.delete(sessionId);
             }
         }
