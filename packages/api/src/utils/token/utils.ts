@@ -184,6 +184,7 @@ export class TokenUtils {
       .leftJoinAndSelect('userToken.user', 'user')
       .leftJoinAndSelect('userToken.workspace', 'workspace')
       .where('userToken.token = :token', { token: signature })
+      .andWhere('userToken.expired_at > :now', { now: new Date() })
       .getOne();
 
 
