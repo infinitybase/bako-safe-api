@@ -12,7 +12,7 @@ export interface ISession {
     user: User;
   }
 
-const REFRESH_TIME = 30 * 1000 * 0.5; // 23 minutos
+const REFRESH_TIME = 30 * 1000 * 10; // 23 minutos
 
 
 export class SessionStorage {
