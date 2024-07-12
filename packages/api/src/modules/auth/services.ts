@@ -104,6 +104,9 @@ export class AuthService implements IAuthService {
 
   async clearExpiredTokens(): Promise<void> {
     try {
+      console.log('[CLEAR_EXPIRED_TOKEN]', {
+        serverDate: new Date(),
+      });
       await UserToken.delete({
         expired_at: LessThanOrEqual(new Date()),
       });
