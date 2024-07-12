@@ -67,9 +67,11 @@ export class SessionStorage {
         for await (const [sessionId, session] of this.data.entries()) {
             if (isPast(session.expired_at)) {
                 this.data.delete(sessionId);
+                await UserToken.delete({
+                    token: sessionId
+                });
             }
         }
-        return await new AuthService().clearExpiredTokens();
     }
 
     public getActiveSessions() {
