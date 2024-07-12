@@ -16,6 +16,7 @@ import {
   NotificationTitle,
   Predicate,
   Transaction,
+  Witness,
   WitnessesStatus,
 } from '@models/index';
 
@@ -77,32 +78,65 @@ export class TransactionController {
         workspace,
         user,
       );
+      const qb = Transaction.createQueryBuilder('t')
+        .leftJoin('t.witnesses', 'w')
+        .leftJoin('t.predicate', 'p')
+        .addSelect(['t.status','t.predicate_id',  'w.account', 'w.status', 'w.signature', 'p.workspace_id'])
+        .where('t.status = :status', { status: TransactionStatus.AWAIT_REQUIREMENTS })
+        predicateId?.length > 0 &&
+          qb.andWhere('t.predicate_id = :predicateId', { predicateId: predicateId[0]})
+        workspaceList?.length > 0 &&
+          qb.andWhere('p.workspace_id IN (:...workspaceList)', { workspaceList })
+        qb.andWhere(
+          qb => {
+            const subQuery = qb.subQuery()
+              .select('w.id')
+              .from(Witness, 'w')
+              .where('w.transaction_id = t.id')
+              .andWhere('w.status = :witnessStatus', { witnessStatus: WitnessesStatus.PENDING });
+    
+            if (hasSingle) {
+              subQuery.andWhere('w.account = :userAddress', { userAddress: user.address });
+            }
+    
+            return `EXISTS (${subQuery.getQuery()})`;
+          }
+        );
+        
 
-      const result = await new TransactionService()
-        .filter({
-          status: [TransactionStatus.AWAIT_REQUIREMENTS],
-          signer: hasSingle ? user.address : undefined,
-          workspaceId: workspaceList,
-          predicateId,
-        })
-        .list()
-        .then((result: Transaction[]) => {
-          return {
-            ofUser:
-              result.filter(transaction =>
-                transaction.witnesses.find(
-                  w =>
-                    w.account === user.address &&
-                    w.status === WitnessesStatus.PENDING,
-                ),
-              ).length ?? 0,
-            transactionsBlocked:
-              result.filter(t => t.status === TransactionStatus.AWAIT_REQUIREMENTS)
-                .length > 0 ?? false,
-          };
-        });
-      return successful(result, Responses.Ok);
+        const result = await qb.getCount()
+
+        // console.log('[PENDING_TX]', await qb.getMany())
+
+      // const result = await new TransactionService()
+      //   .filter({
+      //     status: [TransactionStatus.AWAIT_REQUIREMENTS],
+      //     signer: hasSingle ? user.address : undefined,
+      //     workspaceId: workspaceList,
+      //     predicateId,
+      //   })
+      //   .list()
+      //   .then((result: Transaction[]) => {
+      //     return {
+      //       ofUser:
+      //         result.filter(transaction =>
+      //           transaction.witnesses.find(
+      //             w =>
+      //               w.account === user.address &&
+      //               w.status === WitnessesStatus.PENDING,
+      //           ),
+      //         ).length ?? 0,
+      //       transactionsBlocked:
+      //         result.filter(t => t.status === TransactionStatus.AWAIT_REQUIREMENTS)
+      //           .length > 0 ?? false,
+      //     };
+      //   });
+      return successful({
+        ofUser: result,
+        transactionsBlocked: result > 0,
+      }, Responses.Ok);
     } catch (e) {
+      console.log(e)
       return error(e.error, e.statusCode);
     }
   }

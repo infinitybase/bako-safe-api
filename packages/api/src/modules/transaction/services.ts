@@ -307,7 +307,12 @@ export class TransactionService implements ITransactionService {
   }
 
   async validateStatus(transactionId: string): Promise<TransactionStatus> {
-    return await this.findById(transactionId)
+    return await Transaction.createQueryBuilder('t')
+      .where('t.id = :id', { id: transactionId })
+      .leftJoin('t.witnesses', 'witnesses')
+      .leftJoin('t.predicate', 'predicate')
+      .addSelect(['witnesses.status', 'predicate.minSigners'])
+      .getOne()
       .then((transaction: Transaction) => {
         const witness: {
           DONE: number;
@@ -348,6 +353,7 @@ export class TransactionService implements ITransactionService {
         return TransactionStatus.AWAIT_REQUIREMENTS;
       })
       .catch(e => {
+        console.log(e)
         throw new Internal({
           type: ErrorTypes.Internal,
           title: 'Error on transaction validateStatus',
