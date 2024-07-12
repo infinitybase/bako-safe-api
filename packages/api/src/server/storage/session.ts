@@ -44,9 +44,7 @@ export class SessionStorage {
             return null;
         }
 
-        //console.log('[SESSION]', session.token);
-
-        return session;
+        return session ?? null;
     }
 
     public async getTokenOnDatabase(sessionId: string) {
@@ -71,7 +69,7 @@ export class SessionStorage {
                 this.data.delete(sessionId);
             }
         }
-        new AuthService().clearExpiredTokens();
+        return await new AuthService().clearExpiredTokens();
     }
 
     public getActiveSessions() {
@@ -86,6 +84,7 @@ export class SessionStorage {
         const _this = new SessionStorage();
         
         setInterval(() => {
+            console.log('[CLEAR_EXPIRED_TOKEN]', new Date());
           _this.clearExpiredSessions();
         }, REFRESH_TIME);
 
