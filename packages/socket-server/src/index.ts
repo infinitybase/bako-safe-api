@@ -13,6 +13,9 @@ let database: DatabaseClass
 const server = http.createServer(app)
 const io = new socketIo.Server(server, {
 	connectTimeout: Number(SOCKET_TIMEOUT_DICONNECT), // 30 mins
+	cors: {
+		origin: '*'
+	}
 })
 
 // Health Check
