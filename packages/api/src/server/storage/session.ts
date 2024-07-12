@@ -70,7 +70,7 @@ export class SessionStorage {
                 this.data.delete(sessionId);
             }
         }
-        await new AuthService().clearExpiredTokens();
+        return await new AuthService().clearExpiredTokens();
     }
 
     public getActiveSessions() {
