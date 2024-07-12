@@ -66,7 +66,6 @@ export class SessionStorage {
     public async clearExpiredSessions() {
         for await (const [sessionId, session] of this.data.entries()) {
             if (isPast(session.expired_at)) {
-                console.log('[REMOVENDO_SESSAO]: ', sessionId);
                 this.data.delete(sessionId);
             }
         }
