@@ -33,14 +33,18 @@ export class SessionStorage {
     // - se o token estiver expirado, remove do store e do banco
     public async getSession(sessionId: string) {
         let session = this.data.get(sessionId);
+        console.log('[QUANTIDADE_DE_SESSOES]: ', this.data.size);
         if (!session) {
             session = await this.getTokenOnDatabase(sessionId);
+            this.addSession(sessionId, session);
         }
 
         if (session && isPast(session.expired_at)) {
             await this.removeSession(sessionId);
             return null;
         }
+
+        //console.log('[SESSION]', session.token);
 
         return session;
     }
@@ -64,9 +68,6 @@ export class SessionStorage {
     public async clearExpiredSessions() {
         for await (const [sessionId, session] of this.data.entries()) {
             if (isPast(session.expired_at)) {
-                await UserToken.delete({
-                    id: session.id
-                });
                 this.data.delete(sessionId);
             }
         }
