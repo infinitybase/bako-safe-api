@@ -66,13 +66,9 @@ export class SessionStorage {
     // limpa as sessões expiradas
     public async clearExpiredSessions() {
         await AuthService.clearExpiredTokens();
-        for await (const [sessionId, session] of this.data.entries()) {
-            let handleRemove = !session.expired_at || isPast(session.expired_at);
-            console.log('[HANDLE_REMOVE]: ', handleRemove, session.expired_at ?? 'sem data de expiração');
-            if (handleRemove) {
-                this.data.delete(sessionId);
-            }
-        }
+        this.data = new Map<string, UserToken>();
+        console.log('[CACHE_SESSIONS_CLEARED]', this.data.size);
+
     }
 
     public getActiveSessions() {
