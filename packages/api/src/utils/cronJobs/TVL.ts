@@ -3,6 +3,9 @@ import { Asset, IConfVault, Vault } from 'bakosafe';
 import cron from 'node-cron';
 import { assetsMapById } from '../assets';
 import app from '@src/server/app';
+const { FUEL_PROVIDER } = process.env;
+
+const VALID_PROVIDERS = [FUEL_PROVIDER];
 
 // Executa todos os dias a meia-noite
 const TVLCronJob = cron.schedule('0 0 * * *', async () => {
@@ -15,16 +18,18 @@ const TVLCronJob = cron.schedule('0 0 * * *', async () => {
       .getOne();
 
     if (savedTVL) {
-      console.log('[CRON_JOB]: TVL - has already been executed on the current date');
+      console.log(
+        '[CRON_JOB]: TVL - has already been executed on the current date',
+      );
       return;
     }
 
     // Busca dados de todos os vaults
     const predicates = await Predicate.createQueryBuilder('p')
       .leftJoinAndSelect('p.version', 'version')
-      .select(['p.id', 'p.configurable', 'version.code'])
-      .where("p.configurable::jsonb ->> 'network' NOT LIKE :network", {
-        network: '%localhost%',
+      .select(['p.id', 'p.configurable', 'p.provider', 'version.code'])
+      .where('p.provider IN (:...providers)', {
+        providers: VALID_PROVIDERS,
       })
       .andWhere('version.name NOT LIKE :fakeName', {
         fakeName: '%fake_name%',
@@ -34,19 +39,27 @@ const TVLCronJob = cron.schedule('0 0 * * *', async () => {
     const vaultsBalance = [];
 
     for await (const predicate of predicates) {
-      const configurable: IConfVault = {
-        ...JSON.parse(predicate.configurable),
-      };
+      try {
+        const configurable: IConfVault = {
+          ...JSON.parse(predicate.configurable),
+        };
 
-      // Instancia cada vault
-      const vault = await Vault.create({
-        configurable,
-        version: predicate.version.code,
-      });
+        // Instancia cada vault
+        const vault = await Vault.create({
+          configurable,
+          version: predicate.version.code,
+        });
 
-      // Obtém os balances de cada vault e adiciona no array de balances
-      const balances = await vault.getBalances();
-      vaultsBalance.push(...balances);
+        // Obtém os balances de cada vault e adiciona no array de balances
+        const balances = await vault.getBalances();
+        vaultsBalance.push(...balances);
+      } catch (e) {
+        console.log(
+          `[CRON_JOB]: TVL - Error processing predicate ${predicate.id}: `,
+          e,
+        );
+        continue;
+      }
     }
 
     const assetsTVL = await Asset.assetsGroupById(
