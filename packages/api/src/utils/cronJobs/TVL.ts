@@ -3,8 +3,9 @@ import { Asset, IConfVault, Vault } from 'bakosafe';
 import cron from 'node-cron';
 import { assetsMapById } from '../assets';
 import app from '@src/server/app';
+const { FUEL_PROVIDER } = process.env;
 
-const VALID_PROVIDERS = ['https://testnet.fuel.network/v1/graphql'];
+const VALID_PROVIDERS = [FUEL_PROVIDER];
 
 // Executa todos os dias a meia-noite
 const TVLCronJob = cron.schedule('0 0 * * *', async () => {
