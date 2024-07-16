@@ -7,8 +7,9 @@
     --db-path ./mnt/db/ \
     --consensus-key ${CONSENSUS_KEY} \
     --snapshot config \
-    --poa-instant true \
+    --native-executor-version 0 \
     --vm-backtrace \
     --min-gas-price ${MIN_GAS_PRICE} \
     --utxo-validation \
-    --debug
+    --debug \
+    --graphql-max-complexity 10000000
