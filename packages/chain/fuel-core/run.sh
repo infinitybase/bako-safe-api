@@ -12,4 +12,5 @@
     --min-gas-price ${MIN_GAS_PRICE} \
     --utxo-validation \
     --debug \
-    --graphql-max-complexity 10000000
+    --graphql-max-complexity 10000000 \
+    --graphql-max-recursive-depth 72
