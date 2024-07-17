@@ -31,12 +31,12 @@ export const createGraphqlFetch: () => AsyncExecutor = () => {
   return (request) => createExecutor(request);
 };
 
-export const createGraphqlHttpHandler = ({ appSchema, fuelSchema }) => {
+export const createGraphqlHttpHandler = ({ appSchema, fuelSchema, defaultContext }) => {
   return async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const handler = createHttpHandler({
       schema: appSchema,
       // @ts-ignore
-      context: { ...req.context, schema: fuelSchema },
+      context: { ...req.context, ...defaultContext, schema: fuelSchema },
     });
 
     return handler(req, res, next);

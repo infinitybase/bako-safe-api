@@ -12,6 +12,7 @@ export enum NotificationTitle {
 }
 
 export interface NotificationSummary {
+  workspaceId: string;
   vaultId: string;
   vaultName: string;
   transactionId?: string;
@@ -44,7 +45,6 @@ class Notification extends Base {
 }
 
 export { Notification };
-
 
 // -- Criação de índice para a coluna 'user_id'
 // CREATE INDEX idx_notifications_user_id ON notifications(user_id);

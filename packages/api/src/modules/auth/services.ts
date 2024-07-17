@@ -102,17 +102,13 @@ export class AuthService implements IAuthService {
       });
   }
 
-  async clearExpiredTokens(): Promise<void> {
+  static async clearExpiredTokens(): Promise<void> {
     try {
       await UserToken.delete({
         expired_at: LessThanOrEqual(new Date()),
       });
     } catch (e) {
-      throw new Internal({
-        type: ErrorTypes.Internal,
-        title: 'Error on clear expired tokens',
-        detail: e,
-      });
+      console.log('[CLEAR_EXPIRED_TOKEN_ERROR]', e);
     }
   }
 

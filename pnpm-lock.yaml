@@ -24,8 +24,8 @@ importers:
         specifier: 1.5.1
         version: 1.5.1
       bakosafe:
-        specifier: 0.0.61
-        version: 0.0.61(fuels@0.88.1)(ts-node@10.9.2)(typescript@4.9.5)
+        specifier: 0.0.63
+        version: 0.0.63(fuels@0.88.1)(ts-node@10.9.2)(typescript@4.9.5)
       bcrypt:
         specifier: 5.1.0
         version: 5.1.0
@@ -226,8 +226,8 @@ importers:
         specifier: ^10.0.5
         version: 10.0.5(graphql@16.9.0)
       bakosafe:
-        specifier: 0.0.61
-        version: 0.0.61(fuels@0.88.1)(ts-node@10.9.2)(typescript@4.9.5)
+        specifier: link:/Users/luisburigo/Documents/dev/infinity/bako/bako-safe-sdk/packages/sdk
+        version: link:../../../bako-safe-sdk/packages/sdk
       copyfiles:
         specifier: 2.4.1
         version: 2.4.1
@@ -310,8 +310,8 @@ importers:
   packages/socket-server:
     dependencies:
       bakosafe:
-        specifier: 0.0.61
-        version: 0.0.61(fuels@0.88.1)(ts-node@10.9.2)(typescript@4.9.5)
+        specifier: 0.0.63
+        version: 0.0.63(fuels@0.88.1)(ts-node@10.9.2)(typescript@4.9.5)
       express:
         specifier: 4.17.1
         version: 4.17.1
@@ -2072,7 +2072,7 @@ packages:
       '@fuel-ts/errors': 0.88.1
       '@fuel-ts/interfaces': 0.88.1
       '@fuel-ts/utils': 0.88.1
-      '@noble/hashes': 1.3.3
+      '@noble/hashes': 1.4.0
       bech32: 2.0.0
     dev: false
 
@@ -2103,7 +2103,7 @@ packages:
       '@fuel-ts/interfaces': 0.88.1
       '@fuel-ts/math': 0.88.1
       '@fuel-ts/utils': 0.88.1
-      '@noble/hashes': 1.3.3
+      '@noble/hashes': 1.4.0
     dev: false
 
   /@fuel-ts/errors@0.88.1:
@@ -2140,7 +2140,7 @@ packages:
       '@fuel-ts/crypto': 0.88.1
       '@fuel-ts/interfaces': 0.88.1
       '@fuel-ts/utils': 0.88.1
-      '@noble/hashes': 1.3.3
+      '@noble/hashes': 1.4.0
     dev: false
 
   /@fuel-ts/interfaces@0.88.1:
@@ -2714,13 +2714,13 @@ packages:
       - '@types/node'
     dev: true
 
-  /@graphql-tools/executor-http@1.0.9(@types/node@20.6.0)(graphql@16.9.0):
-    resolution: {integrity: sha512-+NXaZd2MWbbrWHqU4EhXcrDbogeiCDmEbrAN+rMn4Nu2okDjn2MTFDbTIab87oEubQCH4Te1wDkWPKrzXup7+Q==}
+  /@graphql-tools/executor-http@1.1.2(@types/node@20.6.0)(graphql@16.9.0):
+    resolution: {integrity: sha512-Yssoh2+GBcoPcL6Jf9X+G+cp8RhiKz6m5R/BLLN0mdg6t02TYANYZV76dMBRPX93xaoIpjl94JkttC6O6ejwWg==}
     engines: {node: '>=16.0.0'}
     peerDependencies:
       graphql: ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
     dependencies:
-      '@graphql-tools/utils': 10.2.2(graphql@16.9.0)
+      '@graphql-tools/utils': 10.3.1(graphql@16.9.0)
       '@repeaterjs/repeater': 3.0.6
       '@whatwg-node/fetch': 0.9.18
       extract-files: 11.0.0
@@ -2815,7 +2815,7 @@ packages:
       graphql: ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
     dependencies:
       '@ardatan/sync-fetch': 0.0.1
-      '@graphql-tools/executor-http': 1.0.9(@types/node@20.6.0)(graphql@16.9.0)
+      '@graphql-tools/executor-http': 1.1.2(@types/node@20.6.0)(graphql@16.9.0)
       '@graphql-tools/graphql-tag-pluck': 8.3.1(graphql@16.9.0)
       '@graphql-tools/utils': 10.2.2(graphql@16.9.0)
       '@whatwg-node/fetch': 0.9.18
@@ -3104,7 +3104,7 @@ packages:
       '@ardatan/sync-fetch': 0.0.1
       '@graphql-tools/delegate': 10.0.11(graphql@16.9.0)
       '@graphql-tools/executor-graphql-ws': 1.1.2(graphql@16.9.0)
-      '@graphql-tools/executor-http': 1.0.9(@types/node@20.6.0)(graphql@16.9.0)
+      '@graphql-tools/executor-http': 1.1.2(@types/node@20.6.0)(graphql@16.9.0)
       '@graphql-tools/executor-legacy-ws': 1.0.6(graphql@16.9.0)
       '@graphql-tools/utils': 10.2.2(graphql@16.9.0)
       '@graphql-tools/wrap': 10.0.5(graphql@16.9.0)
@@ -3133,6 +3133,19 @@ packages:
       dset: 3.1.3
       graphql: 16.9.0
       tslib: 2.6.2
+
+  /@graphql-tools/utils@10.3.1(graphql@16.9.0):
+    resolution: {integrity: sha512-Yhk1F0MNk4/ctgl3d0DKq++ZPovvZuh1ixWuUEVAxrFloYOAVwJ+rvGI1lsopArdJly8QXClT9lkvOxQszMw/w==}
+    engines: {node: '>=16.0.0'}
+    peerDependencies:
+      graphql: ^14.0.0 || ^15.0.0 || ^16.0.0 || ^17.0.0
+    dependencies:
+      '@graphql-typed-document-node/core': 3.2.0(graphql@16.9.0)
+      cross-inspect: 1.0.0
+      dset: 3.1.3
+      graphql: 16.9.0
+      tslib: 2.6.2
+    dev: true
 
   /@graphql-tools/utils@9.2.1(graphql@16.9.0):
     resolution: {integrity: sha512-WUw506Ql6xzmOORlriNrD6Ugx+HjVgYxt9KCXD9mHAak+eaXSwuGGPyE60hy9xaDEoXKBsG7SkG69ybitaVl6A==}
@@ -3502,6 +3515,11 @@ packages:
 
   /@noble/hashes@1.3.3:
     resolution: {integrity: sha512-V7/fPHgl+jsVPXqqeOzT8egNj2iBIVt+ECeMMG8TdcnTikP3oaBtUVqpT/gYCR68aEBJSF+XbYUxStjbFMqIIA==}
+    engines: {node: '>= 16'}
+    dev: false
+
+  /@noble/hashes@1.4.0:
+    resolution: {integrity: sha512-V1JJ1WTRUqHHrOSh597hURcMqVKVGL/ea3kv0gSnEdsEZ0/+VyPghM1lMNGc00z7CIQorSvbKpuJkxvuHbvdbg==}
     engines: {node: '>= 16'}
     dev: false
 
@@ -4629,8 +4647,8 @@ packages:
       babel-preset-current-node-syntax: 1.0.1(@babel/core@7.24.6)
     dev: true
 
-  /bakosafe@0.0.61(fuels@0.88.1)(ts-node@10.9.2)(typescript@4.9.5):
-    resolution: {integrity: sha512-Yv0JURzwZI71VS83apOPCoA0X9s1WhNrPnicXvatreFuN0bGzFMemSch2DHDLnNdTiex3S+qsZJ0BQl5YpEO9Q==}
+  /bakosafe@0.0.63(fuels@0.88.1)(ts-node@10.9.2)(typescript@4.9.5):
+    resolution: {integrity: sha512-leD/XRU1kH3UY+pL8aBi69BeXioUD4i58hXKuhIFudKoPKMhGjPUemeCF2+cxXTvXj4hrYfg7z63qP75A0qCvw==}
     peerDependencies:
       fuels: 0.88.1
     dependencies:

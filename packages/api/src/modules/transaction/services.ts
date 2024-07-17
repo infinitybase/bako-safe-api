@@ -99,6 +99,7 @@ export class TransactionService implements ITransactionService {
         'witnesses',
         'predicate',
         'predicate.members',
+        'predicate.workspace',
         'createdBy',
       ],
     })
@@ -178,36 +179,21 @@ export class TransactionService implements ITransactionService {
       });
 
     // =============== specific for workspace ===============
-    this._filter.workspaceId &&
-      !this._filter.signer &&
-      queryBuilder.andWhere(
-        new Brackets(qb => {
-          if (this._filter.workspaceId) {
-            qb.orWhere('workspace.id IN (:...workspace)', {
-              workspace: this._filter.workspaceId,
-            });
-          }
-        }),
-      );
-    // =============== specific for workspace ===============
-
-    // =============== specific for home ===============
-    (this._filter.workspaceId || this._filter.signer) &&
-      queryBuilder.andWhere(
-        new Brackets(qb => {
-          if (this._filter.workspaceId) {
-            qb.orWhere('workspace.id IN (:...workspace)', {
-              workspace: this._filter.workspaceId,
-            });
-          }
-
-          if (this._filter.signer) {
-            qb.orWhere('members.address = :signer', {
-              signer: this._filter.signer,
-            });
-          }
-        }),
-      );
+    if (this._filter.workspaceId || this._filter.signer) {
+      queryBuilder.andWhere(new Brackets(qb => {
+        if (this._filter.workspaceId) {
+          qb.orWhere('workspace.id IN (:...workspace)', {
+            workspace: this._filter.workspaceId,
+          });
+        }
+        if (this._filter.signer) {
+          qb.orWhere('members.address = :signer', {
+            signer: this._filter.signer,
+          });
+        }
+      }));
+    }
+  
     // =============== specific for home ===============
 
     this._filter.to &&
@@ -306,7 +292,12 @@ export class TransactionService implements ITransactionService {
   }
 
   async validateStatus(transactionId: string): Promise<TransactionStatus> {
-    return await this.findById(transactionId)
+    return await Transaction.createQueryBuilder('t')
+      .where('t.id = :id', { id: transactionId })
+      .leftJoin('t.witnesses', 'witnesses')
+      .leftJoin('t.predicate', 'predicate')
+      .addSelect(['witnesses.status', 'predicate.minSigners'])
+      .getOne()
       .then((transaction: Transaction) => {
         const witness: {
           DONE: number;
@@ -347,6 +338,7 @@ export class TransactionService implements ITransactionService {
         return TransactionStatus.AWAIT_REQUIREMENTS;
       })
       .catch(e => {
+        console.log(e)
         throw new Internal({
           type: ErrorTypes.Internal,
           title: 'Error on transaction validateStatus',
@@ -474,6 +466,7 @@ export class TransactionService implements ITransactionService {
         vaultName: api_transaction.predicate.name,
         transactionId: api_transaction.id,
         transactionName: api_transaction.name,
+        workspaceId: api_transaction.predicate.workspace.id,
       };
 
       if (result.status.type === TransactionProcessStatus.SUCCESS) {

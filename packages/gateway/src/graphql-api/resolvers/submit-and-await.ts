@@ -2,13 +2,13 @@ import { type DeployTransfer } from 'bakosafe';
 import { TransactionType, ZeroBytes32 } from 'fuels';
 import { TAI64 } from 'tai64';
 
-import { toTransaction } from '@/utils';
 import { SuccessStatus } from '@/generated';
-import { AuthService } from '@/service';
+import { toTransaction } from '@/utils';
+import { AuthService, TransactionService } from '@/service';
 
 export const submitAndAwait = {
   subscribe: async function* (_, args, context) {
-    const { apiToken, userId } = context;
+    const { apiToken, userId, database } = context;
 
     const transaction = toTransaction(args.tx);
 
@@ -17,11 +17,10 @@ export const submitAndAwait = {
         throw new Error('Only TransactionType.Create are supported');
       }
 
-      const authService = await AuthService.instance();
-      const { vault, codeId } = await authService.getVaultFromApiToken(apiToken, userId);
-      transaction.witnesses = [transaction.witnesses.at(transaction.bytecodeWitnessIndex)];
-      const deployTransfer = await vault.BakoSafeDeployContract(transaction);
-      await authService.closeSession(codeId);
+      const authService = new AuthService(database);
+      const transactionService = new TransactionService(transaction, authService);
+      const submitResponse = await transactionService.submit({ apiToken, userId });
+      const { deployTransfer, vault } = submitResponse;
 
       console.log('[SUBSCRIPTION] Transaction sent to Bako', {
         vault: vault.BakoSafeVaultId,

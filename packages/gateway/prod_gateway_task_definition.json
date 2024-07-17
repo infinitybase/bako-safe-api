@@ -1,15 +1,15 @@
 {
-    "taskDefinitionArn": "arn:aws:ecs:us-east-1:392170836981:task-definition/bako-safe-api:4",
+    "taskDefinitionArn": "arn:aws:ecs:us-east-1:392170836981:task-definition/bako-safe-gateway-api:1",
     "containerDefinitions": [
         {
-            "name": "bako-safe-api",
-            "image": "392170836981.dkr.ecr.us-east-1.amazonaws.com/bako-safe-api:v1",
+            "name": "bako-safe-gateway-api",
+            "image": "392170836981.dkr.ecr.us-east-1.amazonaws.com/bako-safe-gateway-api:v1",
             "cpu": 0,
             "portMappings": [
                 {
-                    "name": "port-3333",
-                    "containerPort": 3333,
-                    "hostPort": 3333,
+                    "name": "p-4444",
+                    "containerPort": 4444,
+                    "hostPort": 4444,
                     "protocol": "tcp",
                     "appProtocol": "http"
                 }
@@ -28,7 +28,7 @@
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
-                    "awslogs-group": "/ecs/bako-safe-api",
+                    "awslogs-group": "/ecs/bako-safe-gateway-api",
                     "awslogs-create-group": "true",
                     "awslogs-region": "us-east-1",
                     "awslogs-stream-prefix": "ecs"
@@ -38,11 +38,11 @@
             "systemControls": []
         }
     ],
-    "family": "bako-safe-api",
+    "family": "bako-safe-gateway-api",
     "taskRoleArn": "arn:aws:iam::392170836981:role/ecs-api-bsafe-s3-bako-safe-env",
     "executionRoleArn": "arn:aws:iam::392170836981:role/ecsTaskExecutionRole",
     "networkMode": "awsvpc",
-    "revision": 4,
+    "revision": 1,
     "volumes": [],
     "status": "ACTIVE",
     "requiresAttributes": [
@@ -85,24 +85,18 @@
     "requiresCompatibilities": [
         "FARGATE"
     ],
-    "cpu": "2048",
-    "memory": "4096",
+    "cpu": "256",
+    "memory": "512",
     "runtimePlatform": {
         "cpuArchitecture": "ARM64",
         "operatingSystemFamily": "LINUX"
     },
-    "registeredAt": "2024-06-21T19:04:43.968Z",
+    "registeredAt": "2024-07-04T17:09:11.964Z",
     "registeredBy": "arn:aws:iam::392170836981:user/jota",
     "tags": [
         {
-            "key": "environment",
-            "value": "prod"
-        },
-        {
             "key": "nome",
-            "value": "bako-safe-api-task"
+            "value": "bako-safe-gateway-api-prod"
         }
     ]
 }
-
-

@@ -50,7 +50,7 @@ const development: ConnectionOptions = {
 const test: ConnectionOptions = {
   type: 'postgres',
   host: DATABASE_HOST,
-  port: Number(process.env.DATABASE_PORT),
+  port: Number(DATABASE_PORT),
   username: DATABASE_USERNAME,
   password: DATABASE_PASSWORD,
   database: DATABASE_NAME,
@@ -65,11 +65,11 @@ const test: ConnectionOptions = {
 
 const production: ConnectionOptions = {
   type: 'postgres',
-  host: process.env.DATABASE_HOST,
-  port: Number(process.env.DATABASE_PORT),
-  username: process.env.DATABASE_USERNAME,
-  password: process.env.DATABASE_PASSWORD,
-  database: process.env.DATABASE_NAME,
+  host: DATABASE_HOST,
+  port: Number(DATABASE_PORT),
+  username: DATABASE_USERNAME,
+  password: DATABASE_PASSWORD,
+  database: DATABASE_NAME,
   entities: [entitiesDir],
   migrations: [migrationsDir, seedersDir],
   synchronize: false,
@@ -81,11 +81,11 @@ const production: ConnectionOptions = {
 
 const staging: ConnectionOptions = {
   type: 'postgres',
-  host: process.env.DATABASE_HOST,
-  port: Number(process.env.DATABASE_PORT),
-  username: process.env.DATABASE_USERNAME,
-  password: process.env.DATABASE_PASSWORD,
-  database: process.env.DATABASE_NAME,
+  host: DATABASE_HOST,
+  port: Number(DATABASE_PORT),
+  username: DATABASE_USERNAME,
+  password: DATABASE_PASSWORD,
+  database: DATABASE_NAME,
   entities: [entitiesDir],
   migrations: [migrationsDir, seedersDir],
   synchronize: false,

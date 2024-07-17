@@ -104,8 +104,12 @@ export class PredicateController {
         workspace.id,
       );
 
-      const { id, name, members: predicateMembers } = newPredicate;
-      const summary = { vaultId: id, vaultName: name };
+      const { id, name, members: predicateMembers, workspace: wk_predicate } = newPredicate;
+      const summary = {
+        vaultId: id,
+        vaultName: name,
+        workspaceId: wk_predicate.id,
+      };
       const membersWithoutLoggedUser = predicateMembers.filter(
         member => member.id !== user.id,
       );
@@ -147,8 +151,8 @@ export class PredicateController {
 
   async findById({ params: { predicateId } }: IFindByIdRequest) {
     try {
-      const predicate = await this.predicateService.findById(predicateId);
-      await this.predicateService.getMissingDeposits(predicate);
+      const predicate = await this.predicateService.findById(id);
+      // await this.predicateService.getMissingDeposits(predicate);
 
       return successful(predicate, Responses.Ok);
     } catch (e) {
