@@ -2,6 +2,7 @@ import { User } from "@src/models";
 import UserToken from "@src/models/UserToken";
 import { Workspace } from "@src/models/Workspace";
 import { AuthService } from "@src/modules/auth/services";
+import { SocketClient } from "@src/socket/client";
 import { TokenUtils } from "@src/utils";
 import { isPast } from "date-fns";
 
@@ -13,18 +14,73 @@ export interface ISession {
   }
 
 const REFRESH_TIME = 30 * 1000 * 10; // 23 minutos
+const { API_URL } = process.env;
+// move to env const
+const SESSION_ID = '123' // is a const because all clients (apis) join on the same room
+
+//todo: move this
+enum AuthNotifyType {
+    REMOVE = '[REMOVE]',
+    UPDATE = '[UPDATE]'
+}
+enum MessageType {
+    DEFAULT = 'message'
+}
+enum AuthUsername {
+    API = '[API]'
+}
+
 
 
 export class SessionStorage {
     private data = new Map<string, UserToken>();
+    private client = new SocketClient(SESSION_ID, API_URL)
+
 
     protected constructor () {
         this.data = new Map<string, UserToken>();
+        this.client.socket.on(
+            MessageType.DEFAULT, 
+            data => this.reciveNotify(data)
+        )
     }
+
+
+    private sendNotify(data, type){
+        return this.client.sendMessage({
+            type,
+            data,
+            sessionId: SESSION_ID,
+            to: AuthUsername.API,
+            request_id: SESSION_ID
+        })
+    }
+
+    private reciveNotify({data, type}) {
+        console.log('RECEIVED_MESSAGE', data, type);
+        // type -> 
+            // UPDATE: 
+                // add more time on session
+                // change wk
+            // REMOVE:
+                // logout
+        switch (type) {
+            case AuthNotifyType.UPDATE:
+                this.addSession(data.token, data);
+                break
+            case AuthNotifyType.REMOVE:
+                this.removeSession(data.token)
+        }        
+    }
+    
 
     // adiciona uma sessão ao store limpa as sessões expiradas
     public async addSession(sessionId: string, session: UserToken) {
         this.data.set(sessionId, session);
+        this.sendNotify(
+            session,
+            AuthNotifyType.UPDATE
+        )
     }
 
     // - busca o token no store
@@ -61,6 +117,7 @@ export class SessionStorage {
             token: sessionId
         });
         this.data.delete(sessionId);
+        this.sendNotify({ token: sessionId }, AuthNotifyType.REMOVE)
     }
 
     // limpa as sessões expiradas
