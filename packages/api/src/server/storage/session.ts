@@ -66,13 +66,12 @@ export class SessionStorage {
                 // logout
         switch (type) {
             case AuthNotifyType.UPDATE:
-                this.addSession(data.token, data);
+                this.data.set(data.token, data);
                 break
             case AuthNotifyType.REMOVE:
-                this.removeSession(data.token)
-        }        
+                this.data.delete(data.token)
+        }
     }
-    
 
     // adiciona uma sessão ao store limpa as sessões expiradas
     public async addSession(sessionId: string, session: UserToken) {
@@ -95,7 +94,6 @@ export class SessionStorage {
             this.addSession(sessionId, session);
         }
 
-
         if (session && isPast(session.expired_at)) {
             await this.removeSession(sessionId);
             return null;
@@ -109,7 +107,6 @@ export class SessionStorage {
 
         return token;
     }
-
 
     // remove uma sessão do store e do database
     public async removeSession(sessionId: string) {
