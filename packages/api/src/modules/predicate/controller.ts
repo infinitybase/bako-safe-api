@@ -17,11 +17,9 @@ import {
 import { error } from '@utils/error';
 import {
   Responses,
-  assetsMapBySymbol,
-  balancesToAssets,
   bindMethods,
   calculateBalanceUSD,
-  subtractReservedCoinsFromBalances,
+  subCoins,
   successful,
 } from '@utils/index';
 
@@ -147,9 +145,9 @@ export class PredicateController {
     }
   }
 
-  async findById({ params: { id } }: IFindByIdRequest) {
+  async findById({ params: { predicateId } }: IFindByIdRequest) {
     try {
-      const predicate = await this.predicateService.findById(id);
+      const predicate = await this.predicateService.findById(predicateId);
       await this.predicateService.getMissingDeposits(predicate);
 
       return successful(predicate, Responses.Ok);
@@ -194,62 +192,60 @@ export class PredicateController {
     }
   }
 
-  async hasReservedCoins({ params: { address } }: IFindByHashRequest) {
+  async hasReservedCoins({ params: { predicateId } }: IFindByIdRequest) {
     try {
-      const response = await this.transactionService
-        .filter({
-          predicateId: [address],
+      const predicate_txs = await Transaction.createQueryBuilder('t')
+        .leftJoin('t.assets', 'a')
+        .leftJoin('t.predicate', 'p')
+        .addSelect([
+          't', 
+          'a.assetId', 
+          'a.amount', 
+          'p.id',
+        ])
+         // not moved to id, because we need add join to predicate
+        .where('p.id = :predicateId', { predicateId })
+        .andWhere('t.status IN (:...status)', {
+          status: [
+            TransactionStatus.AWAIT_REQUIREMENTS,
+            TransactionStatus.PENDING_SENDER,
+          ],
         })
-        .list()
-        .then((data: Transaction[]) => {
-          return data
-            .filter(
-              (transaction: Transaction) =>
-                transaction.status === TransactionStatus.AWAIT_REQUIREMENTS ||
-                transaction.status === TransactionStatus.PENDING_SENDER,
-            )
-            .reduce((accumulator, transaction: Transaction) => {
-              transaction.assets.forEach((asset: Asset) => {
-                const assetId = asset.assetId;
-                const amount = bn.parseUnits(asset.amount);
-                const existingAsset = accumulator.find(
-                  item => item.assetId === assetId,
-                );
+        .getMany()
 
-                if (existingAsset) {
-                  existingAsset.amount = existingAsset.amount.add(amount);
-                } else {
-                  accumulator.push({ assetId, amount });
-                }
-              });
-              return accumulator;
-            }, [] as CoinQuantity[]);
-        })
-        .catch(() => {
-          return [
-            {
-              assetId: assetsMapBySymbol['ETH'].id,
-              amount: bn.parseUnits('0'),
-            },
-          ] as CoinQuantity[];
+        const tx_reserved_balances = predicate_txs.reduce((accumulator, transaction: Transaction) => {
+        transaction.assets.forEach((asset: Asset) => {
+          const assetId = asset.assetId;
+          const amount = bn.parseUnits(asset.amount);
+          const existingAsset = accumulator.find(
+            item => item.assetId === assetId,
+          );
+
+          if (existingAsset) {
+            existingAsset.amount = existingAsset.amount.add(amount);
+          }
+            accumulator.push({ assetId, amount });
+          
         });
+        return accumulator;
+      }, [] as CoinQuantity[]);
+      
 
-      const predicate = await this.predicateService.findById(address, undefined);
-
-      const instance = await this.predicateService.instancePredicate(predicate.id);
+      const instance = await this.predicateService.instancePredicate(predicateId);
       const balances = await instance.getBalances();
-      const balancesToConvert =
-        response.length > 0
-          ? subtractReservedCoinsFromBalances(balances, response)
+      const assets =
+      tx_reserved_balances.length > 0
+          ? subCoins(balances, tx_reserved_balances)
           : balances;
-
-      const assets = balancesToAssets(balances, response);
-
+      
       return successful(
         {
-          balanceUSD: calculateBalanceUSD(balancesToConvert),
-          reservedCoins: response,
-          assets,
+          reservedCoinsUSD: calculateBalanceUSD(tx_reserved_balances), // locked value on USDC
+          totalBalanceUSD: calculateBalanceUSD(balances),
+          currentBalanceUSD: calculateBalanceUSD(assets),
+          currentBalance: assets,
+          totalBalance: balances,
+          reservedCoins: tx_reserved_balances, // locked coins
         },
         Responses.Ok,
       );

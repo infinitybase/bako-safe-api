@@ -1,8 +1,6 @@
 import { CoinQuantity, bn } from 'fuels';
 
 import app from '@src/server/app';
-import { Asset } from 'bakosafe';
-import { assetsMap } from './assets';
 
 const calculateBalanceUSD = (balances: CoinQuantity[]): string => {
   let balanceUSD = 0;
@@ -16,50 +14,19 @@ const calculateBalanceUSD = (balances: CoinQuantity[]): string => {
   return balanceUSD.toFixed(2);
 };
 
-const subtractReservedCoinsFromBalances = (
+const subCoins = (
   balances: CoinQuantity[],
   reservedCoins: CoinQuantity[],
 ): CoinQuantity[] => {
-  return balances.reduce((acc, balance) => {
-    const reservedCoin = reservedCoins.find(
-      coin => coin.assetId === balance.assetId,
-    );
-    const adjustedAmount = reservedCoin
-      ? balance.amount.sub(reservedCoin.amount)
-      : balance.amount;
+  const reservedMap = new Map(reservedCoins.map(coin => [coin.assetId, coin.amount]));
 
-    if (adjustedAmount.gt(bn.parseUnits('0'))) {
-      acc.push({ ...balance, amount: adjustedAmount });
-    }
-
-    return acc;
-  }, [] as CoinQuantity[]);
+  return balances
+    .map(balance => {
+      const reservedAmount = reservedMap.get(balance.assetId);
+      const adjustedAmount = reservedAmount ? balance.amount.sub(reservedAmount) : balance.amount;
+      return { ...balance, amount: adjustedAmount };
+    })
+    .filter(balance => balance.amount.gt(bn.parseUnits('0')));
 };
 
-const balancesToAssets = (
-  balances: CoinQuantity[],
-  reservedCoins: CoinQuantity[],
-) => {
-  return balances.reduce((acc, balance) => {
-    const assetInfos = assetsMap[balance.assetId];
-    const reservedCoinAmount = reservedCoins?.find(
-      item => item.assetId === balance.assetId,
-    )?.amount;
-    const adjustedAmount = reservedCoinAmount
-      ? balance.amount.sub(reservedCoinAmount)
-      : balance.amount;
-
-    if (adjustedAmount.gt(0)) {
-      acc.push({
-        amount: adjustedAmount.format(),
-        slug: assetInfos?.slug ?? 'UKN',
-        name: assetInfos?.name ?? 'Unknown',
-        assetId: balance.assetId,
-      });
-    }
-
-    return acc;
-  }, [] as Required<Asset>[]);
-};
-
-export { calculateBalanceUSD, subtractReservedCoinsFromBalances, balancesToAssets };
+export { calculateBalanceUSD, subCoins };
