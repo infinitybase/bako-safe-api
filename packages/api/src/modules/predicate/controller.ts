@@ -18,6 +18,7 @@ import { error } from '@utils/error';
 import {
   Responses,
   assetsMapBySymbol,
+  balancesToAssets,
   bindMethods,
   calculateBalanceUSD,
   subtractReservedCoinsFromBalances,
@@ -242,10 +243,13 @@ export class PredicateController {
           ? subtractReservedCoinsFromBalances(balances, response)
           : balances;
 
+      const assets = balancesToAssets(balances, response);
+
       return successful(
         {
           balanceUSD: calculateBalanceUSD(balancesToConvert),
           reservedCoins: response,
+          assets,
         },
         Responses.Ok,
       );

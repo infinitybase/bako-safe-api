@@ -1,6 +1,8 @@
 import { CoinQuantity, bn } from 'fuels';
 
 import app from '@src/server/app';
+import { Asset } from 'bakosafe';
+import { assetsMap } from './assets';
 
 const calculateBalanceUSD = (balances: CoinQuantity[]): string => {
   let balanceUSD = 0;
@@ -34,4 +36,30 @@ const subtractReservedCoinsFromBalances = (
   }, [] as CoinQuantity[]);
 };
 
-export { calculateBalanceUSD, subtractReservedCoinsFromBalances };
+const balancesToAssets = (
+  balances: CoinQuantity[],
+  reservedCoins: CoinQuantity[],
+) => {
+  return balances.reduce((acc, balance) => {
+    const assetInfos = assetsMap[balance.assetId];
+    const reservedCoinAmount = reservedCoins?.find(
+      item => item.assetId === balance.assetId,
+    )?.amount;
+    const adjustedAmount = reservedCoinAmount
+      ? balance.amount.sub(reservedCoinAmount)
+      : balance.amount;
+
+    if (adjustedAmount.gt(0)) {
+      acc.push({
+        amount: adjustedAmount.format(),
+        slug: assetInfos?.slug ?? 'UKN',
+        name: assetInfos?.name ?? 'Unknown',
+        assetId: balance.assetId,
+      });
+    }
+
+    return acc;
+  }, [] as Required<Asset>[]);
+};
+
+export { calculateBalanceUSD, subtractReservedCoinsFromBalances, balancesToAssets };
