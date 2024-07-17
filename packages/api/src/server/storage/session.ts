@@ -68,10 +68,10 @@ export class SessionStorage {
                 // logout
         switch (type) {
             case AuthNotifyType.UPDATE:
-                this.addSession(data.token, data);
+                this.data.set(data.token, data);
                 break
             case AuthNotifyType.REMOVE:
-                this.removeSession(data.token)
+                this.data.delete(data.token)
         }        
     }
     
