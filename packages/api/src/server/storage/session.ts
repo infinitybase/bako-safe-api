@@ -1,3 +1,4 @@
+
 import { User } from "@src/models";
 import UserToken from "@src/models/UserToken";
 import { Workspace } from "@src/models/Workspace";
@@ -6,12 +7,13 @@ import { SocketClient } from "@src/socket/client";
 import { TokenUtils } from "@src/utils";
 import { isPast } from "date-fns";
 
+
 export interface ISession {
-    nome: string;
-    userToken: UserToken;
-    workspace: Workspace;
-    user: User;
-  }
+  nome: string;
+  userToken: UserToken;
+  workspace: Workspace;
+  user: User;
+}
 
 const REFRESH_TIME = 30 * 1000 * 10; // 23 minutos
 const { API_URL } = process.env;
@@ -31,8 +33,8 @@ enum AuthUsername {
 }
 
 
-
 export class SessionStorage {
+
     private data = new Map<string, UserToken>();
     private client = new SocketClient(SESSION_ID, API_URL)
 
@@ -70,7 +72,7 @@ export class SessionStorage {
                 break
             case AuthNotifyType.REMOVE:
                 this.data.delete(data.token)
-        }
+        }        
     }
 
     // adiciona uma sessão ao store limpa as sessões expiradas
@@ -100,47 +102,47 @@ export class SessionStorage {
         }
 
         return session ?? null;
-    }
+  }
 
-    public async getTokenOnDatabase(sessionId: string) {
-        const token = await TokenUtils.getTokenBySignature(sessionId);
+  public async getTokenOnDatabase(sessionId: string) {
+    const token = await TokenUtils.getTokenBySignature(sessionId);
 
-        return token;
-    }
+    return token;
+  }
 
-    // remove uma sessão do store e do database
-    public async removeSession(sessionId: string) {
-        await UserToken.delete({
-            token: sessionId
-        });
-        this.data.delete(sessionId);
-        this.sendNotify({ token: sessionId }, AuthNotifyType.REMOVE)
-    }
 
-    // limpa as sessões expiradas
-    public async clearExpiredSessions() {
-        await AuthService.clearExpiredTokens();
-        this.data.clear();
-        console.log('[CACHE_SESSIONS_CLEARED]', this.data.size);
-    }
+  // remove uma sessão do store e do database
+  public async removeSession(sessionId: string) {
+      await UserToken.delete({
+          token: sessionId
+      });
+      this.data.delete(sessionId);
+      this.sendNotify({ token: sessionId }, AuthNotifyType.REMOVE)
+  }
 
-    public getActiveSessions() {
-        return this.data.size;
-    }
+  // limpa as sessões expiradas
+  public async clearExpiredSessions() {
+    await AuthService.clearExpiredTokens();
+    this.data.clear();
+    console.log('[CACHE_SESSIONS_CLEARED]', this.data.size);
+  }
 
-    public clear() {
-        this.data.clear();
-    }
+  public getActiveSessions() {
+    return this.data.size;
+  }
 
-    static start() {
-        const _this = new SessionStorage();
-        
-        setInterval(() => {
-            console.log('[CLEAR_EXPIRED_TOKEN]', new Date());
-          _this.clearExpiredSessions();
-        }, REFRESH_TIME);
+  public clear() {
+    this.data.clear();
+  }
 
-        return _this;
-    }
+  static start() {
+    const _this = new SessionStorage();
 
+    setInterval(() => {
+      console.log('[CLEAR_EXPIRED_TOKEN]', new Date());
+      _this.clearExpiredSessions();
+    }, REFRESH_TIME);
+
+    return _this;
+  }
 }
