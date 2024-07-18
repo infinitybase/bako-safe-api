@@ -104,7 +104,12 @@ export class PredicateController {
         workspace.id,
       );
 
-      const { id, name, members: predicateMembers, workspace: wk_predicate } = newPredicate;
+      const {
+        id,
+        name,
+        members: predicateMembers,
+        workspace: wk_predicate,
+      } = newPredicate;
       const summary = {
         vaultId: id,
         vaultName: name,
@@ -151,7 +156,7 @@ export class PredicateController {
 
   async findById({ params: { predicateId } }: IFindByIdRequest) {
     try {
-      const predicate = await this.predicateService.findById(id);
+      const predicate = await this.predicateService.findById(predicateId);
       // await this.predicateService.getMissingDeposits(predicate);
 
       return successful(predicate, Responses.Ok);
@@ -201,13 +206,8 @@ export class PredicateController {
       const predicate_txs = await Transaction.createQueryBuilder('t')
         .leftJoin('t.assets', 'a')
         .leftJoin('t.predicate', 'p')
-        .addSelect([
-          't', 
-          'a.assetId', 
-          'a.amount', 
-          'p.id',
-        ])
-         // not moved to id, because we need add join to predicate
+        .addSelect(['t', 'a.assetId', 'a.amount', 'p.id'])
+        // not moved to id, because we need add join to predicate
         .where('p.id = :predicateId', { predicateId })
         .andWhere('t.status IN (:...status)', {
           status: [
@@ -215,33 +215,34 @@ export class PredicateController {
             TransactionStatus.PENDING_SENDER,
           ],
         })
-        .getMany()
+        .getMany();
 
-        const tx_reserved_balances = predicate_txs.reduce((accumulator, transaction: Transaction) => {
-        transaction.assets.forEach((asset: Asset) => {
-          const assetId = asset.assetId;
-          const amount = bn.parseUnits(asset.amount);
-          const existingAsset = accumulator.find(
-            item => item.assetId === assetId,
-          );
+      const tx_reserved_balances = predicate_txs.reduce(
+        (accumulator, transaction: Transaction) => {
+          transaction.assets.forEach((asset: Asset) => {
+            const assetId = asset.assetId;
+            const amount = bn.parseUnits(asset.amount);
+            const existingAsset = accumulator.find(
+              item => item.assetId === assetId,
+            );
 
-          if (existingAsset) {
-            existingAsset.amount = existingAsset.amount.add(amount);
-          }
+            if (existingAsset) {
+              existingAsset.amount = existingAsset.amount.add(amount);
+            }
             accumulator.push({ assetId, amount });
-          
-        });
-        return accumulator;
-      }, [] as CoinQuantity[]);
-      
+          });
+          return accumulator;
+        },
+        [] as CoinQuantity[],
+      );
 
       const instance = await this.predicateService.instancePredicate(predicateId);
       const balances = await instance.getBalances();
       const assets =
-      tx_reserved_balances.length > 0
+        tx_reserved_balances.length > 0
           ? subCoins(balances, tx_reserved_balances)
           : balances;
-      
+
       return successful(
         {
           reservedCoinsUSD: calculateBalanceUSD(tx_reserved_balances), // locked value on USDC
