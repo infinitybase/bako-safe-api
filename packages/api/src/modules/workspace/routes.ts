@@ -46,12 +46,13 @@ router.put(
 );
 
 router.put(
-  '/:id/permissions/:member',
+  '/permissions/:member',
   PayloadUpdateWorkspaceParams,
   PayloadUpdatePermissionsWorkspaceSchema,
   authPermissionMiddleware([PermissionRoles.OWNER, PermissionRoles.ADMIN]),
   handleResponse(workspaceController.updatePermissions),
 );
+
 router.post(
   '/:id/members/:member/remove',
   PayloadUpdateWorkspaceParams,

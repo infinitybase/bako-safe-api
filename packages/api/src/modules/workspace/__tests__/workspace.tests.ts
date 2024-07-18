@@ -162,7 +162,7 @@ describe('[WORKSPACE]', () => {
 
       //update permission
       await auth_aux.axios
-        .put(`/workspace/${data.id}/permissions/${data_user1.id}`, {
+        .put(`/workspace/permissions/${data_user1.id}`, {
           permissions: defaultPermissions[PermissionRoles.MANAGER],
         })
         .then(({ data, status }) => {
@@ -179,7 +179,7 @@ describe('[WORKSPACE]', () => {
 
       //update owner
       await auth_aux.axios
-        .put(`/workspace/${data.id}/permissions/${data.owner.id}`, {
+        .put(`/workspace/permissions/${data.owner.id}`, {
           permissions: defaultPermissions[PermissionRoles.MANAGER],
         })
         .catch(({ response }) => {
@@ -191,7 +191,7 @@ describe('[WORKSPACE]', () => {
 
       //update without permission
       await api.axios
-        .put(`/workspace/${data.id}/permissions/${data_user2.id}`, {
+        .put(`/workspace/permissions/${data_user2.id}`, {
           permissions: defaultPermissions[PermissionRoles.MANAGER],
         })
         .catch(({ response }) => {
