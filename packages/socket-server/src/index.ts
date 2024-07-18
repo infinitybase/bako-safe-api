@@ -62,7 +62,7 @@ io.on(SocketEvents.CONNECT, async socket => {
 	socket.on(SocketEvents.DEFAULT, data => {
 		const { sessionId, to, request_id } = data
 		console.log('[SOCKET]: RECEIVED MESSAGE FROM', sessionId, to, request_id)
-		const requestId = request_id === 'undefined' ? '' : request_id
+		const requestId = request_id === undefined ? '' : request_id
 		const room = `${sessionId}:${to}:${requestId}`
 
 		console.log('[SOCKET]: SEND MESSAGE TO', room)

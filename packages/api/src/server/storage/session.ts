@@ -19,27 +19,26 @@ export interface ISession {
 const REFRESH_TIME = 30 * 1000 * 10; // 23 minutos
 const { API_URL } = process.env;
 // move to env const
-const SESSION_ID = '123' // is a const because all clients (apis) join on the same room
+const {API_SOCKET_SESSION_ID} = process.env // is a const because all clients (apis) join on the same room
 
 
 export class SessionStorage {
 
     private data = new Map<string, UserToken>();
-    private client = new SocketClient(SESSION_ID, API_URL);
+    private client = new SocketClient(API_SOCKET_SESSION_ID, API_URL);
 
 
     protected constructor () {
         this.data = new Map<string, UserToken>();
         this.client.socket.onAny(
             (event, ...args) => {
-                console.log('[EVENT]', event, args);
                 if (event === SocketEvents.DEFAULT) {
                     this.reciveNotify(args[0]);
                 }
             }
         )
 
-        new SocketClient(SESSION_ID, API_URL);
+        new SocketClient(API_SOCKET_SESSION_ID, API_URL);
     }
 
 
@@ -47,7 +46,7 @@ export class SessionStorage {
         return this.client.sendMessage({
             type,
             data,
-            sessionId: SESSION_ID,
+            sessionId: API_SOCKET_SESSION_ID,
             to: SocketUsernames.API,
             request_id: undefined,
         })
