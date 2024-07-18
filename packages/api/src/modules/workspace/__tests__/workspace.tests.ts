@@ -103,7 +103,7 @@ describe('[WORKSPACE]', () => {
     const {
       data: workspace_updated,
       status: status_update,
-    } = await auth_aux.axios.put(`/workspace/${data.id}`, {
+    } = await auth_aux.axios.put('/workspace', {
       name: 'Workspace 1 updated',
       description: 'Workspace 1 description updated',
     });
@@ -136,7 +136,7 @@ describe('[WORKSPACE]', () => {
 
       await api.selectWorkspace(data.id);
 
-      await api.axios.put(`/workspace/${data.id}`, {
+      await api.axios.put('/workspace', {
         name: 'Workspace 1 updated',
         description: 'Workspace 1 description updated',
       });

@@ -39,7 +39,7 @@ router.post(
 router.get('/:id', handleResponse(workspaceController.findById));
 
 router.put(
-  '/:id',
+  '/',
   PayloadUpdateWorkspaceSchema,
   authPermissionMiddleware([PermissionRoles.OWNER, PermissionRoles.ADMIN]),
   handleResponse(workspaceController.update),
