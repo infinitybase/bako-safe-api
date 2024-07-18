@@ -6,6 +6,7 @@ export const handleErrorMiddleware = (
   res: express.Response,
   next: express.NextFunction
 ) => {
+  console.log(error);
   return res.status(200).json({
     data: null,
     errors: [

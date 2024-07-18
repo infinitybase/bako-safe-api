@@ -9,8 +9,8 @@ services:
       MIN_GAS_PRICE: ${MIN_GAS_PRICE}
       # This is the private key of the consensus.PoA.signing_key in the chainConfig.json
       # this key is responsible for validating the transactions
-      CONSENSUS_KEY: ${WALLET_SECRET}
-    build: ./fuel-core
+      CONSENSUS_KEY: ${CONSENSUS_KEY}
+    build: fuel-core
     ports:
       - '${FUEL_CORE_PORT:-4000}:4000'
     volumes:
