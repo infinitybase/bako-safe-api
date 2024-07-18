@@ -198,7 +198,7 @@ export class TokenUtils {
       );
 
       const renewedToken = await this.getTokenBySignature(token.token);
-      await app._sessionCache.renewSession(token.token, renewedToken.expired_at);
+      await app._sessionCache.addSession(token.token, renewedToken);
 
       return renewedToken;
     }
