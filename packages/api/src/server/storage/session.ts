@@ -80,7 +80,7 @@ export class SessionStorage {
             this.addSession(sessionId, session);
         }
 
-        if (session && isPast(session.expired_at)) {
+        if (session && isPast(new Date(session.expiredAt))) {
             await this.removeSession(sessionId);
             return null;
         }

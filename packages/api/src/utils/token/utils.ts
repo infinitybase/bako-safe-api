@@ -73,7 +73,7 @@ export class TokenUtils {
       });
     }
 
-    if (recoverCode.used || isPast(recoverCode.validAt)) {
+    if (recoverCode.used || isPast(new Date(recoverCode.validAt))) {
       throw new Unauthorized({
         type: ErrorTypes.Unauthorized,
         title: UnauthorizedErrorTitles.EXPIRED_TOKEN,
@@ -95,7 +95,7 @@ export class TokenUtils {
       });
     }
 
-    if (isPast(token.expired_at)) {
+    if (isPast(new Date(token.expiredAt))) {
       throw new Unauthorized({
         type: ErrorTypes.Unauthorized,
         title: UnauthorizedErrorTitles.EXPIRED_TOKEN,
@@ -189,12 +189,12 @@ export class TokenUtils {
   }
 
   static async renewToken(token: UserToken) {
-    const minutesToExpiration = differenceInMinutes(token.expired_at, new Date());
+    const minutesToExpiration = differenceInMinutes(token.expiredAt, new Date());
 
     if (minutesToExpiration < Number(MINUTES_TO_RENEW)) {
       await UserToken.update(
         { id: token.id },
-        { expired_at: addMinutes(new Date(), Number(RENEWAL_EXPIRES_IN)) },
+        { expiredAt: addMinutes(new Date(), Number(RENEWAL_EXPIRES_IN)) },
       );
 
       const renewedToken = await this.getTokenBySignature(token.token);
