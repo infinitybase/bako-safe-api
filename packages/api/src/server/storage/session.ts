@@ -4,6 +4,7 @@ import UserToken from "@src/models/UserToken";
 import { Workspace } from "@src/models/Workspace";
 import { AuthService } from "@src/modules/auth/services";
 import { SocketClient } from "@src/socket/client";
+import { AuthNotifyType, SocketEvents, SocketUsernames } from "@src/socket/types";
 import { TokenUtils } from "@src/utils";
 import { isPast } from "date-fns";
 
@@ -20,31 +21,25 @@ const { API_URL } = process.env;
 // move to env const
 const SESSION_ID = '123' // is a const because all clients (apis) join on the same room
 
-//todo: move this
-enum AuthNotifyType {
-    REMOVE = '[REMOVE]',
-    UPDATE = '[UPDATE]'
-}
-enum MessageType {
-    DEFAULT = 'message'
-}
-enum AuthUsername {
-    API = '[API]'
-}
-
 
 export class SessionStorage {
 
     private data = new Map<string, UserToken>();
-    private client = new SocketClient(SESSION_ID, API_URL)
+    private client = new SocketClient(SESSION_ID, API_URL);
 
 
     protected constructor () {
         this.data = new Map<string, UserToken>();
-        this.client.socket.on(
-            MessageType.DEFAULT, 
-            data => this.reciveNotify(data)
+        this.client.socket.onAny(
+            (event, ...args) => {
+                console.log('[EVENT]', event, args);
+                if (event === SocketEvents.DEFAULT) {
+                    this.reciveNotify(args[0]);
+                }
+            }
         )
+
+        new SocketClient(SESSION_ID, API_URL);
     }
 
 
@@ -53,19 +48,12 @@ export class SessionStorage {
             type,
             data,
             sessionId: SESSION_ID,
-            to: AuthUsername.API,
-            request_id: SESSION_ID
+            to: SocketUsernames.API,
+            request_id: undefined,
         })
     }
 
     private reciveNotify({data, type}) {
-        console.log('RECEIVED_MESSAGE', data, type);
-        // type -> 
-            // UPDATE: 
-                // add more time on session
-                // change wk
-            // REMOVE:
-                // logout
         switch (type) {
             case AuthNotifyType.UPDATE:
                 this.data.set(data.token, data);
@@ -73,9 +61,10 @@ export class SessionStorage {
             case AuthNotifyType.REMOVE:
                 this.data.delete(data.token)
         }        
+
+        console.log('[SESSIONS]', this.data.size); 
     }
 
-    // adiciona uma sessão ao store limpa as sessões expiradas
     public async addSession(sessionId: string, session: UserToken) {
         this.data.set(sessionId, session);
         this.sendNotify(
@@ -84,10 +73,6 @@ export class SessionStorage {
         )
     }
 
-    // - busca o token no store
-    //      - se não encontrar busca no banco
-    // - envia para a renovacao, que é renovado se necessário, se nao, retorna o mesmo token
-    // - se o token estiver expirado, remove do store e do banco
     public async getSession(sessionId: string) {
         let session = this.data.get(sessionId);
         console.log('[QUANTIDADE_DE_SESSOES]: ', this.data.size);
