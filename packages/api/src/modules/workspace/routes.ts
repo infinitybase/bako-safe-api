@@ -54,13 +54,13 @@ router.put(
 );
 
 router.post(
-  '/:id/members/:member/remove',
+  '/members/:member/remove',
   PayloadUpdateWorkspaceParams,
   authPermissionMiddleware([PermissionRoles.OWNER, PermissionRoles.ADMIN]),
   handleResponse(workspaceController.removeMember),
 );
 router.post(
-  '/:id/members/:member/include',
+  '/members/:member/include',
   PayloadUpdateWorkspaceParams,
   authPermissionMiddleware([PermissionRoles.OWNER, PermissionRoles.ADMIN]),
   handleResponse(workspaceController.addMember),

@@ -225,7 +225,7 @@ describe('[WORKSPACE]', () => {
 
     //include exists on database member
     await auth_aux.axios
-      .post(`/workspace/${data.id}/members/${data_user_aux.userId}/include`)
+      .post(`/workspace/members/${data_user_aux.userId}/include`)
       .then(({ data, status }) => {
         quantityMembers++;
         expect(status).toBe(200);
@@ -240,7 +240,7 @@ describe('[WORKSPACE]', () => {
     // //include not exists on database member (create)
     const aux_byAddress = Address.fromRandom().toAddress();
     await auth_aux.axios
-      .post(`/workspace/${data.id}/members/${aux_byAddress}/include`)
+      .post(`/workspace/members/${aux_byAddress}/include`)
       .then(({ data, status }) => {
         quantityMembers++;
         expect(status).toBe(200);
@@ -254,7 +254,7 @@ describe('[WORKSPACE]', () => {
 
     //remove member
     await auth_aux.axios
-      .post(`/workspace/${data.id}/members/${data_user_aux.userId}/remove`)
+      .post(`/workspace/members/${data_user_aux.userId}/remove`)
       .then(({ data, status }) => {
         quantityMembers--;
         expect(status).toBe(200);
@@ -268,7 +268,7 @@ describe('[WORKSPACE]', () => {
 
     //remove owner
     await auth_aux.axios
-      .post(`/workspace/${data.id}/members/${workspace.owner.id}/remove`)
+      .post(`/workspace/members/${workspace.owner.id}/remove`)
       .catch(({ response }) => {
         expect(response.status).toBe(401);
         expect(response.data.detail).toEqual(
@@ -278,7 +278,7 @@ describe('[WORKSPACE]', () => {
 
     // //update without permission
     await api.axios
-      .post(`/workspace/${data.id}/members/${data_user_aux.userId}/include`)
+      .post(`/workspace/members/${data_user_aux.userId}/include`)
       .catch(({ response }) => {
         expect(response.status).toBe(401);
         expect(response.data.errors.detail).toEqual(
