@@ -53,7 +53,9 @@ export class GatewayServer {
   }
 
   private beforeAllMiddlewares() {
-    this.app.use(express.json());
+    this.app.use(express.json({
+      limit: '50mb'
+    }));
     this.app.use(cors());
     this.app.use((req, res, next) => {
       console.log(`[${APP_NAME}] ${req.method} ${req.url}`);
