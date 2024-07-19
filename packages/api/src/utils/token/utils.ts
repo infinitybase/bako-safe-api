@@ -189,7 +189,10 @@ export class TokenUtils {
   }
 
   static async renewToken(token: UserToken) {
+    console.log('[RENEW]: ', JSON.stringify(token))
     const minutesToExpiration = differenceInMinutes(token.expiredAt, new Date());
+
+    
 
     if (minutesToExpiration < Number(MINUTES_TO_RENEW)) {
       await UserToken.update(

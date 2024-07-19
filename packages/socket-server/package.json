@@ -6,7 +6,7 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "NODE_ENV=development ts-node-dev --respawn --transpile-only -r tsconfig-paths/register -r dotenv/config src/index.ts",
-    "start": "node start ./build/index.js",
+    "start": "node ./build/index.js",
     "build": "tsc --project . && tscpaths -p tsconfig.json -s ./src -o ./build",
     "run:socket-server": "make -C ./ deploy env_file=.env"
   },

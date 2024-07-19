@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "ts-node-dev -r tsconfig-paths/register -r dotenv/config ./src/index.ts",
     "build": "tsc --project . && tscpaths -p tsconfig.json -s ./src -o ./build",
-    "start": "node start ./build/index.js",
+    "start": "node ./build/index.js",
     "build:lib": "yarn codegen:fuel && yarn codegen:app",
     "codegen:app": "gql-gen -r dotenv/config --config codegen.ts",
     "codegen:fuel": "gql-gen -r dotenv/config --config codegen.fuel.ts",
