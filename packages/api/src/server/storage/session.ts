@@ -74,7 +74,7 @@ export class SessionStorage {
 
     public async getSession(sessionId: string) {
         let session = this.data.get(sessionId);
-        console.log('[QUANTIDADE_DE_SESSOES]: ', this.data.size);
+        console.log('[QUANTIDADE_DE_SESSOES]: ', this.data.size, session.expiredAt);
         if (!session) {
             session = await this.getTokenOnDatabase(sessionId);
             this.addSession(sessionId, session);
