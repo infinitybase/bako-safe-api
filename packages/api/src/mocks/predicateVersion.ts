@@ -1,4 +1,4 @@
-import { generatePredicateVersionName } from '@src/utils';
+import { generatePredicateVersionName } from '@src/utils/predicateVersionName';
 
 const code = '0x379cc51194ba4c6288b1dae9cfe7e758a95d268cf5525c3ffb6b0c3bef941872';
 
