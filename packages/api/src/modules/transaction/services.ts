@@ -338,7 +338,6 @@ export class TransactionService implements ITransactionService {
         return TransactionStatus.AWAIT_REQUIREMENTS;
       })
       .catch(e => {
-        console.log(e)
         throw new Internal({
           type: ErrorTypes.Internal,
           title: 'Error on transaction validateStatus',
