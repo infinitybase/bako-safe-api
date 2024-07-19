@@ -74,16 +74,19 @@ export class SessionStorage {
 
     public async getSession(sessionId: string) {
         let session = this.data.get(sessionId);
-        console.log('[QUANTIDADE_DE_SESSOES]: ', {
-            size: this.data.size, 
-            expire: session.expiredAt, 
-            expire_fmt: new Date(session.expiredAt), 
-            atual: new Date()
-        });
+        
         if (!session) {
             session = await this.getTokenOnDatabase(sessionId);
             this.addSession(sessionId, session);
         }
+
+        console.log('[QUANTIDADE_DE_SESSOES]: ', {
+            size: this.data.size, 
+            session: JSON.stringify(session),
+            // expire: session.expiredAt, 
+            // expire_fmt: new Date(session.expiredAt), 
+            atual: new Date()
+        });
 
         if (session && isPast(new Date(session.expiredAt))) {
             await this.removeSession(sessionId);
