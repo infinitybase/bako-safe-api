@@ -1,21 +1,24 @@
 FROM arm64v8/node:18.18.2-alpine
 
-# Instalar dependências necessárias para node-gyp
+# Install dependencies necessary for node-gyp
 RUN apk add --no-cache python3 make g++ \
     && npm install -g node-gyp
 
-# Criar diretório da aplicação
+# Install pnpm
+RUN npm install -g pnpm
+
+# Create the application directory
 WORKDIR /gateway
 ADD . /gateway
 
-# Instalar dependências da aplicação
-RUN yarn install
+# Install application dependencies
+RUN pnpm install
 
-# Build
-RUN yarn build
+# Build the application
+RUN pnpm build
 
-# Expor a porta da aplicação
+# Expose the application port
 EXPOSE 4444
 
-# Iniciar a aplicação
-ENTRYPOINT ["yarn", "start"]
+# Start the application
+ENTRYPOINT ["pnpm", "start"]
