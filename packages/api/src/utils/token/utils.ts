@@ -87,6 +87,10 @@ export class TokenUtils {
   static async recoverToken(signature: string) {
     const token = await app._sessionCache.getSession(signature);
 
+    console.log('[recover]: ', JSON.stringify(token))
+    console.log('[recover]: ', token.expiredAt, new Date())
+
+
     if (!token) {
       throw new Unauthorized({
         type: ErrorTypes.Unauthorized,
@@ -190,9 +194,8 @@ export class TokenUtils {
 
   static async renewToken(token: UserToken) {
     console.log('[RENEW]: ', JSON.stringify(token))
+    console.log('[RENEW]: ', token.expiredAt, new Date())
     const minutesToExpiration = differenceInMinutes(token.expiredAt, new Date());
-
-    
 
     if (minutesToExpiration < Number(MINUTES_TO_RENEW)) {
       await UserToken.update(
