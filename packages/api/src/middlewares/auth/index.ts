@@ -7,7 +7,7 @@ import { ErrorTypes } from '@utils/error';
 import { Unauthorized, UnauthorizedErrorTitles } from '@utils/error/Unauthorized';
 
 import { IAuthRequest } from './types';
-import { TokenUtils } from '@src/utils';
+import { AuthStrategyFactory } from './methods';
 
 async function authMiddleware(
   req: IAuthRequest,
@@ -25,10 +25,8 @@ async function authMiddleware(
       });
     }
 
-    const token = await TokenUtils.recoverToken(signature);
-    await TokenUtils.renewToken(token);
-
-    const { user, workspace } = token;
+    const authStrategy = AuthStrategyFactory.createStrategy(signature);
+    const { user, workspace } = await authStrategy.authenticate(req);
 
     req.user = user;
     req.workspace = workspace;
