@@ -44,7 +44,7 @@ class UserToken extends Base {
   @Column({
     name: 'expired_at',
   })
-  expiredAt?: Date;
+  expired_at?: Date;
 
   @JoinColumn({ name: 'workspace_id' })
   @OneToOne(() => Workspace)

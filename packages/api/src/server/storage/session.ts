@@ -80,15 +80,8 @@ export class SessionStorage {
             this.addSession(sessionId, session);
         }
 
-        console.log('[QUANTIDADE_DE_SESSOES]: ', {
-            size: this.data.size, 
-            session: JSON.stringify(session),
-            // expire: session.expiredAt, 
-            // expire_fmt: new Date(session.expiredAt), 
-            atual: new Date()
-        });
 
-        if (session && isPast(new Date(session.expiredAt))) {
+        if (session && isPast(new Date(session.expired_at))) {
             await this.removeSession(sessionId);
             return null;
         }

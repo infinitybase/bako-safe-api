@@ -15,6 +15,7 @@ import { LessThanOrEqual } from 'typeorm';
 
 export class AuthService implements IAuthService {
   async signIn(payload: ICreateUserTokenPayload): Promise<ISignInResponse> {
+    console.log('[SIGNIN] payload', payload);
     return UserToken.create(payload)
       .save()
       .then(data => {
@@ -23,7 +24,7 @@ export class AuthService implements IAuthService {
           avatar: data.user.avatar,
           address: data.user.address,
           user_id: data.user.id,
-          expiredAt: data.expiredAt,
+          expired_at: data.expired_at,
           workspace: {
             id: data.workspace.id,
             name: data.workspace.name,
@@ -105,7 +106,7 @@ export class AuthService implements IAuthService {
   static async clearExpiredTokens(): Promise<void> {
     try {
       await UserToken.delete({
-        expiredAt: LessThanOrEqual(new Date()),
+        expired_at: LessThanOrEqual(new Date()),
       });
     } catch (e) {
       console.log('[CLEAR_EXPIRED_TOKEN_ERROR]', e);
