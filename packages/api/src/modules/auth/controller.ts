@@ -38,9 +38,6 @@ export class AuthController {
         encoder,
       );
 
-
-      console.log('[SIGNIN] userToken', userToken)
-
       await app._sessionCache.addSession(userToken.token, userToken);
       return successful(signin, Responses.Ok);
     } catch (e) {

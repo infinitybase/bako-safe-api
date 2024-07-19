@@ -1,4 +1,4 @@
-import { addMinutes, differenceInMinutes, isPast } from 'date-fns';
+import { addMinutes, differenceInMinutes, isPast, parseISO } from 'date-fns';
 
 import { RecoverCode, RecoverCodeType, User, Workspace } from '@src/models';
 import { AuthService } from '@src/modules/auth/services';
@@ -13,6 +13,7 @@ import { Unauthorized, UnauthorizedErrorTitles } from '@utils/error/Unauthorized
 
 import { recoverFuelSignature, recoverWebAuthnSignature } from './web3';
 import app from '@src/server/app';
+import exp from 'constants';
 
 const EXPIRES_IN = process.env.TOKEN_EXPIRATION_TIME ?? '20';
 const RENEWAL_EXPIRES_IN = process.env.RENEWAL_TOKEN_EXPIRATION_TIME ?? '10';
@@ -182,22 +183,18 @@ export class TokenUtils {
         user: user,
         workspace,
       });
-
-      console.log('[createAuthToken]: ', sig)
   
       return {
         userToken: await this.getTokenBySignature(sig.accessToken),
         signin: sig,
       };
     }catch(e){
-      console.log(e)
       throw e;
     }
   }
 
   static async getTokenBySignature(signature: string) {
     try{
-      console.log('[TOKEN]: ', signature)
       const userToken = await UserToken.createQueryBuilder('userToken')
       .leftJoinAndSelect('userToken.user', 'user')
       .leftJoinAndSelect('userToken.workspace', 'workspace')
@@ -205,19 +202,27 @@ export class TokenUtils {
       .andWhere('userToken.expired_at > :now', { now: new Date() })
       .getOne();
 
-      console.log('[TOKEN_ENCONTRADO]', userToken)
-
       return userToken;
     }catch(e){
-      console.log(e)
       throw e;
     }
   }
 
   static async renewToken(token: UserToken) {
-    // console.log('[RENEW]: ', JSON.stringify(token))
-    // console.log('[RENEW]: ', token.expired_at, new Date())
-    const minutesToExpiration = differenceInMinutes(token.expired_at, new Date());
+    const expirationDate = token.expired_at.toISOString() ?? new Date().toISOString();
+    const now = new Date();
+
+    const minutesToExpiration = differenceInMinutes(
+      parseISO(expirationDate),
+      now,
+    );
+
+    console.log('[RENEW_TOKEN]', {
+      minutesToExpiration,
+      now,
+      token: token.token,
+      exp: token.expired_at ?? 'inválid value'
+    })
 
     if (minutesToExpiration < Number(MINUTES_TO_RENEW)) {
       await UserToken.update(

@@ -15,7 +15,6 @@ import { LessThanOrEqual } from 'typeorm';
 
 export class AuthService implements IAuthService {
   async signIn(payload: ICreateUserTokenPayload): Promise<ISignInResponse> {
-    console.log('[SIGNIN] payload', payload);
     return UserToken.create(payload)
       .save()
       .then(data => {
