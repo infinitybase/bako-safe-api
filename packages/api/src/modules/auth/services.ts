@@ -23,7 +23,7 @@ export class AuthService implements IAuthService {
           avatar: data.user.avatar,
           address: data.user.address,
           user_id: data.user.id,
-          expiredAt: data.expired_at,
+          expiredAt: data.expiredAt,
           workspace: {
             id: data.workspace.id,
             name: data.workspace.name,
@@ -105,7 +105,7 @@ export class AuthService implements IAuthService {
   static async clearExpiredTokens(): Promise<void> {
     try {
       await UserToken.delete({
-        expired_at: LessThanOrEqual(new Date()),
+        expiredAt: LessThanOrEqual(new Date()),
       });
     } catch (e) {
       console.log('[CLEAR_EXPIRED_TOKEN_ERROR]', e);
