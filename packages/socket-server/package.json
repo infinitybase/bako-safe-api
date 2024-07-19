@@ -6,7 +6,7 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "NODE_ENV=development ts-node-dev --respawn --transpile-only -r tsconfig-paths/register -r dotenv/config src/index.ts",
-    "start": "pm2-runtime start ./build/index.js",
+    "start": "node start ./build/index.js",
     "build": "tsc --project . && tscpaths -p tsconfig.json -s ./src -o ./build",
     "run:socket-server": "make -C ./ deploy env_file=.env"
   },
@@ -17,7 +17,6 @@
     "express-joi-validation": "5.0.0",
     "fuels": "0.88.1",
     "pg": "8.5.1",
-    "pm2": "5.3.0",
     "socket.io": "4.7.2",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^3.15.0",
