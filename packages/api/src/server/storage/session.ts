@@ -52,8 +52,9 @@ export class SessionStorage {
         })
     }
 
-    private reciveNotify({data, type}) {
-        switch (type) {
+    private reciveNotify(data) {
+        console.log('[RECIVE_NOTIFY]', data);
+        switch (data.type) {
             case AuthNotifyType.UPDATE:
                 this.data.set(data.token, data);
                 break
@@ -67,7 +68,10 @@ export class SessionStorage {
     public async addSession(sessionId: string, session: UserToken) {
         this.data.set(sessionId, session);
         this.sendNotify(
-            session,
+            {
+                ...session,
+                token: sessionId
+            },
             AuthNotifyType.UPDATE
         )
     }
