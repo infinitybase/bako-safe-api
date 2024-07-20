@@ -52,14 +52,23 @@ export class SessionStorage {
         })
     }
 
-    private reciveNotify({data, type}) {
+    private reciveNotify({type, data}) {
+        console.log('[RECIVE_NOTIFY]', data.token);
+        
+        if (!!data && !!data.token) {
+            return;
+        }
+        
         switch (type) {
             case AuthNotifyType.UPDATE:
                 this.data.set(data.token, data);
                 break
             case AuthNotifyType.REMOVE:
                 this.data.delete(data.token)
-        }        
+                break
+            default:
+                break
+        }
 
         console.log('[SESSIONS]', this.data.size); 
     }
@@ -67,7 +76,10 @@ export class SessionStorage {
     public async addSession(sessionId: string, session: UserToken) {
         this.data.set(sessionId, session);
         this.sendNotify(
-            session,
+            {
+                ...session,
+                token: sessionId
+            },
             AuthNotifyType.UPDATE
         )
     }
