@@ -52,15 +52,23 @@ export class SessionStorage {
         })
     }
 
-    private reciveNotify(data) {
-        console.log('[RECIVE_NOTIFY]', data);
-        switch (data.type) {
+    private reciveNotify({type, data}) {
+        console.log('[RECIVE_NOTIFY]', data.token);
+        
+        if (!!data && !!data.token) {
+            return;
+        }
+        
+        switch (type) {
             case AuthNotifyType.UPDATE:
                 this.data.set(data.token, data);
                 break
             case AuthNotifyType.REMOVE:
                 this.data.delete(data.token)
-        }        
+                break
+            default:
+                break
+        }
 
         console.log('[SESSIONS]', this.data.size); 
     }
