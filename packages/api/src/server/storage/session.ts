@@ -53,9 +53,9 @@ export class SessionStorage {
     }
 
     private reciveNotify({type, data}) {
-        console.log('[RECIVE_NOTIFY]', data.token);
+        console.log('[RECIVE_NOTIFY]', data.token ?? 'NO_TOKEN');
         
-        if (!!data && !!data.token) {
+        if (!!data || !!data.token) {
             return;
         }
         
