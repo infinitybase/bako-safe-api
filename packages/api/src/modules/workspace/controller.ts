@@ -21,7 +21,7 @@ import {
   Responses,
   assetsMapBySymbol,
   calculateBalanceUSD,
-  subtractReservedCoinsFromBalances,
+  subCoins,
   successful,
 } from '@utils/index';
 
@@ -159,7 +159,7 @@ export class WorkspaceController {
       // Subtracts the amount of coins reserved per asset from the balance per asset
       const availableAssetsBalance =
         reservedCoins.length > 0
-          ? subtractReservedCoinsFromBalances(formattedAssetsBalance, reservedCoins)
+          ? subCoins(formattedAssetsBalance, reservedCoins)
           : formattedAssetsBalance;
 
       return successful(
