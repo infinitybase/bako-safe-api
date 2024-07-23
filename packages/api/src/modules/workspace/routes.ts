@@ -39,27 +39,28 @@ router.post(
 router.get('/:id', handleResponse(workspaceController.findById));
 
 router.put(
-  '/:id',
+  '/',
   PayloadUpdateWorkspaceSchema,
   authPermissionMiddleware([PermissionRoles.OWNER, PermissionRoles.ADMIN]),
   handleResponse(workspaceController.update),
 );
 
 router.put(
-  '/:id/permissions/:member',
+  '/permissions/:member',
   PayloadUpdateWorkspaceParams,
   PayloadUpdatePermissionsWorkspaceSchema,
   authPermissionMiddleware([PermissionRoles.OWNER, PermissionRoles.ADMIN]),
   handleResponse(workspaceController.updatePermissions),
 );
+
 router.post(
-  '/:id/members/:member/remove',
+  '/members/:member/remove',
   PayloadUpdateWorkspaceParams,
   authPermissionMiddleware([PermissionRoles.OWNER, PermissionRoles.ADMIN]),
   handleResponse(workspaceController.removeMember),
 );
 router.post(
-  '/:id/members/:member/include',
+  '/members/:member/include',
   PayloadUpdateWorkspaceParams,
   authPermissionMiddleware([PermissionRoles.OWNER, PermissionRoles.ADMIN]),
   handleResponse(workspaceController.addMember),

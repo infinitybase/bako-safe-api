@@ -23,7 +23,6 @@ export const PayloadUpdateWorkspaceSchema = validator.body(
 export const PayloadUpdateWorkspaceParams = validator.params(
   Joi.object({
     member: Joi.string().required(),
-    id: Joi.string().required(),
   }),
 );
 
