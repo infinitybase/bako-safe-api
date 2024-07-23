@@ -86,7 +86,7 @@ interface IDeletePredicateRequestSchema extends ValidatedRequestSchema {
 }
 
 interface IFindByIdRequestSchema extends ValidatedRequestSchema {
-  [ContainerTypes.Params]: { id: string };
+  [ContainerTypes.Params]: { predicateId: string };
 }
 interface IFindByHashRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Params]: { address: string };

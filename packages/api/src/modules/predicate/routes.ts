@@ -48,9 +48,9 @@ router.post(
   handleResponse(create),
 );
 router.get('/', handleResponse(list));
-router.get('/:id', handleResponse(findById));
+router.get('/:predicateId', handleResponse(findById));
 router.get('/by-name/:name', handleResponse(findByName));
-router.get('/reserved-coins/:address', handleResponse(hasReservedCoins));
+router.get('/reserved-coins/:predicateId', handleResponse(hasReservedCoins));
 router.get('/by-address/:address', handleResponse(findByAddress));
 
 export default router;
