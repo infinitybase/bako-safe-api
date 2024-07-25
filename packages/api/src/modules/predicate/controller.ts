@@ -237,7 +237,7 @@ export class PredicateController {
       );
 
       const instance = await this.predicateService.instancePredicate(predicateId);
-      const balances = await instance.getBalances();
+      const { balances } = await instance.getBalances();
       const assets =
         tx_reserved_balances.length > 0
           ? subCoins(balances, tx_reserved_balances)
