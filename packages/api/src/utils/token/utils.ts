@@ -217,12 +217,12 @@ export class TokenUtils {
       now,
     );
 
-    console.log('[RENEW_TOKEN]', {
-      minutesToExpiration,
-      now,
-      token: token.token,
-      exp: token.expired_at ?? 'inválid value'
-    })
+    // console.log('[RENEW_TOKEN]', {
+    //   minutesToExpiration,
+    //   now,
+    //   token: token.token,
+    //   exp: token.expired_at ?? 'inválid value'
+    // })
 
     if (minutesToExpiration < Number(MINUTES_TO_RENEW)) {
       await UserToken.update(

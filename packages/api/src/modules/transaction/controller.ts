@@ -373,7 +373,8 @@ export class TransactionController {
           resume: result,
         });
       })
-      .catch(async () => {
+      .catch(async (e) => {
+        console.log('[erro ao enviar]', e)
         await this.transactionService.update(id, {
           status: TransactionStatus.FAILED,
           sendTime: new Date(),

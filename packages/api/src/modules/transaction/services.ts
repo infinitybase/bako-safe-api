@@ -373,6 +373,8 @@ export class TransactionService implements ITransactionService {
   }
 
   async sendToChain(bsafe_txid: string) {
+    console.log('>>>>>>[SEND_TO_CHAIN]')
+
     const api_transaction = await this.findById(bsafe_txid);
     const { predicate, txData, witnesses } = api_transaction;
     const provider = await Provider.create(predicate.provider);
@@ -416,6 +418,7 @@ export class TransactionService implements ITransactionService {
         return resume;
       })
       .catch(e => {
+        console.log(e)
         throw new Internal({
           type: ErrorTypes.Internal,
           title: 'Error on transaction sendToChain',
