@@ -8,16 +8,23 @@ import {
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 import { Provider, TransactionRequest } from 'fuels';
 
-import { Asset, Predicate, Transaction, TransactionType, Witness } from '@models/index';
+import { Transaction, TransactionType, Witness } from '@models/index';
 
 import { AuthValidatedRequest } from '@middlewares/auth/types';
 
 import { IOrdination } from '@utils/ordination';
 import { IPagination, PaginationParams } from '@utils/pagination';
 
+export interface IAsset {
+  assetId: string;
+  to: string;
+  amount: string;
+  transaction: Transaction;
+}
+
 export enum OrderBy {
   name = 'name',
-  status = 'name',
+  status = 'status',
 }
 
 export enum Sort {
@@ -173,7 +180,7 @@ interface IListRequestSchema extends ValidatedRequestSchema {
 }
 export interface ITCreateService
   extends Partial<Omit<Transaction, 'assets' | 'witnesses'>> {
-  assets: Partial<Asset>[];
+  assets: Partial<IAsset>[];
   witnesses: Partial<Witness>[];
 }
 

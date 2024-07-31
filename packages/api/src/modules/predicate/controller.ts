@@ -6,13 +6,7 @@ import { Workspace } from '@src/models/Workspace';
 import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
 import { IconUtils } from '@src/utils/icons';
 
-import {
-  Asset,
-  NotificationTitle,
-  Transaction,
-  TypeUser,
-  User,
-} from '@models/index';
+import { NotificationTitle, Transaction, TypeUser, User } from '@models/index';
 
 import { error } from '@utils/error';
 import {
@@ -24,7 +18,7 @@ import {
 } from '@utils/index';
 
 import { INotificationService } from '../notification/types';
-import { ITransactionService } from '../transaction/types';
+import { IAsset, ITransactionService } from '../transaction/types';
 import { IUserService } from '../user/types';
 import { WorkspaceService } from '../workspace/services';
 import {
@@ -219,7 +213,8 @@ export class PredicateController {
 
       const tx_reserved_balances = predicate_txs.reduce(
         (accumulator, transaction: Transaction) => {
-          transaction.assets.forEach((asset: Asset) => {
+          // TODO: Adjust logic to get assets from transaction resume
+          transaction.assets.forEach((asset: IAsset) => {
             const assetId = asset.assetId;
             const amount = bn.parseUnits(asset.amount);
             const existingAsset = accumulator.find(
