@@ -38,7 +38,7 @@ export class SessionStorage {
             }
         )
 
-        new SocketClient(API_SOCKET_SESSION_ID, API_URL);
+        // new SocketClient(API_SOCKET_SESSION_ID, API_URL);
     }
 
 
@@ -53,7 +53,7 @@ export class SessionStorage {
     }
 
     private reciveNotify({type, data}) {
-        console.log('[RECIVE_NOTIFY]', data.token ?? 'NO_TOKEN');
+        // console.log('[RECIVE_NOTIFY]', data.token ?? 'NO_TOKEN');
         
         if (!!data || !!data.token) {
             return;

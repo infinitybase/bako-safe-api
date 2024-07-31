@@ -15,7 +15,7 @@ export class SocketClient {
 
     const isDev = process.env.NODE_ENV === 'development';
     const URL = isDev ? process.env.SOCKET_URL : process.env.API_URL;
-
+    
     this.socket = io(URL, { autoConnect: true, auth });
   }
 
