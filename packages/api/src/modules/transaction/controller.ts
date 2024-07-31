@@ -102,31 +102,6 @@ export class TransactionController {
 
         const result = await qb.getCount()
 
-        // console.log('[PENDING_TX]', await qb.getMany())
-
-      // const result = await new TransactionService()
-      //   .filter({
-      //     status: [TransactionStatus.AWAIT_REQUIREMENTS],
-      //     signer: hasSingle ? user.address : undefined,
-      //     workspaceId: workspaceList,
-      //     predicateId,
-      //   })
-      //   .list()
-      //   .then((result: Transaction[]) => {
-      //     return {
-      //       ofUser:
-      //         result.filter(transaction =>
-      //           transaction.witnesses.find(
-      //             w =>
-      //               w.account === user.address &&
-      //               w.status === WitnessesStatus.PENDING,
-      //           ),
-      //         ).length ?? 0,
-      //       transactionsBlocked:
-      //         result.filter(t => t.status === TransactionStatus.AWAIT_REQUIREMENTS)
-      //           .length > 0 ?? false,
-      //     };
-      //   });
       return successful({
         ofUser: result,
         transactionsBlocked: result > 0,
@@ -363,27 +338,6 @@ export class TransactionController {
     }
   }
 
-  async sendToChainAsync(id: string, resume: any) {
-    this.transactionService
-      .sendToChain(id)
-      .then(async (result: ITransactionResume) => {
-        await this.transactionService.update(id, {
-          status: TransactionStatus.PROCESS_ON_CHAIN,
-          sendTime: new Date(),
-          resume: result,
-        });
-      })
-      .catch(async (e) => {
-        console.log('[erro ao enviar]', e)
-        await this.transactionService.update(id, {
-          status: TransactionStatus.FAILED,
-          sendTime: new Date(),
-          resume: { ...resume, status: TransactionStatus.FAILED },
-        });
-        throw new Error('Transaction send failed');
-      });
-  }
-
   async signByID({
     body: { account, signer, confirm },
     params: { id },
@@ -443,24 +397,7 @@ export class TransactionController {
         });
 
         if (result.status === TransactionStatus.PENDING_SENDER) {
-          this.sendToChainAsync(id, resume);
-          // await this.transactionService
-          //   .sendToChain(id)
-          //   .then(async (result: ITransactionResume) => {
-          //     return await this.transactionService.update(id, {
-          //       status: TransactionStatus.PROCESS_ON_CHAIN,
-          //       sendTime: new Date(),
-          //       resume: result,
-          //     });
-          //   })
-          //   .catch(async () => {
-          //     await this.transactionService.update(id, {
-          //       status: TransactionStatus.FAILED,
-          //       sendTime: new Date(),
-          //       resume: { ...resume, status: TransactionStatus.FAILED },
-          //     });
-          //     throw new Error('Transaction send failed');
-          //   });
+          this.transactionService.sendToChain(id)
         }
 
         const notificationSummary = {
@@ -500,6 +437,7 @@ export class TransactionController {
 
       return successful(!!witness, Responses.Ok);
     } catch (e) {
+      console.log(e)
       return error(e.error, e.statusCode);
     }
   }
@@ -583,24 +521,8 @@ export class TransactionController {
 
   async send({ params: { id } }: ISendTransactionRequest) {
     try {
-      const resume = await this.transactionService
-        .sendToChain(id)
-        .then(async (result: ITransactionResume) => {
-          return await this.transactionService.update(id, {
-            status: TransactionStatus.PROCESS_ON_CHAIN,
-            sendTime: new Date(),
-            resume: result,
-          });
-        })
-        .catch(async e => {
-          await this.transactionService.update(id, {
-            status: TransactionStatus.FAILED,
-            sendTime: new Date(),
-          });
-          throw new Error('Transaction send failed');
-        });
-
-      return successful(resume, Responses.Ok);
+      this.transactionService.sendToChain(id) // not wait for this
+      return successful(true, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }
@@ -609,16 +531,28 @@ export class TransactionController {
   async verifyOnChain({ params: { id } }: ISendTransactionRequest) {
     try {
       const api_transaction = await this.transactionService.findById(id);
-      const { predicate, name, id: transactionId } = api_transaction;
+      const { predicate, status } = api_transaction;
       const provider = await Provider.create(predicate.provider);
 
-      this.transactionService.checkInvalidConditions(api_transaction);
+      this.transactionService.checkInvalidConditions(status);
 
       const result = await this.transactionService.verifyOnChain(
         api_transaction,
         provider,
       );
 
+      return successful(result, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async transactionStatus({ params: { id } }: ISendTransactionRequest) {
+    try {
+      const result = await Transaction.createQueryBuilder('t')
+        .select(['t.status', 't.id'])
+        .where('t.id = :id', { id })
+        .getOne();
       return successful(result, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);

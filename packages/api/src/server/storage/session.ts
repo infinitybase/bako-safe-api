@@ -38,7 +38,7 @@ export class SessionStorage {
             }
         )
 
-        new SocketClient(API_SOCKET_SESSION_ID, API_URL);
+        // new SocketClient(API_SOCKET_SESSION_ID, API_URL);
     }
 
 
