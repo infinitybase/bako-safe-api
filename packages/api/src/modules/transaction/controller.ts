@@ -23,7 +23,6 @@ import { error, ErrorTypes, NotFound } from '@utils/error';
 import { bindMethods, Responses, successful } from '@utils/index';
 
 import { IAddressBookService } from '../addressBook/types';
-import { IAssetService } from '../asset/types';
 import { INotificationService } from '../notification/types';
 import { PredicateService } from '../predicate/services';
 import { UserService } from '../user/service';
@@ -52,7 +51,6 @@ export class TransactionController {
     predicateService: IPredicateService,
     witnessService: IWitnessService,
     addressBookService: IAddressBookService,
-    assetService: IAssetService,
     notificationService: INotificationService,
   ) {
     Object.assign(this, {
@@ -60,7 +58,6 @@ export class TransactionController {
       predicateService,
       witnessService,
       addressBookService,
-      assetService,
       notificationService,
     });
     bindMethods(this);
@@ -77,32 +74,45 @@ export class TransactionController {
       const qb = Transaction.createQueryBuilder('t')
         .leftJoin('t.witnesses', 'w')
         .leftJoin('t.predicate', 'p')
-        .addSelect(['t.status','t.predicate_id',  'w.account', 'w.status', 'w.signature', 'p.workspace_id'])
-        .where('t.status = :status', { status: TransactionStatus.AWAIT_REQUIREMENTS })
-        predicateId?.length > 0 &&
-          qb.andWhere('t.predicate_id = :predicateId', { predicateId: predicateId[0]})
-        workspaceList?.length > 0 &&
-          qb.andWhere('p.workspace_id IN (:...workspaceList)', { workspaceList })
-        qb.andWhere(
-          qb => {
-            const subQuery = qb.subQuery()
-              .select('w.id')
-              .from(Witness, 'w')
-              .where('w.transaction_id = t.id')
-              .andWhere('w.status = :witnessStatus', { witnessStatus: WitnessesStatus.PENDING });
-    
-            if (hasSingle) {
-              subQuery.andWhere('w.account = :userAddress', { userAddress: user.address });
-            }
-    
-            return `EXISTS (${subQuery.getQuery()})`;
-          }
-        );
-        
+        .addSelect([
+          't.status',
+          't.predicate_id',
+          'w.account',
+          'w.status',
+          'w.signature',
+          'p.workspace_id',
+        ])
+        .where('t.status = :status', {
+          status: TransactionStatus.AWAIT_REQUIREMENTS,
+        });
+      predicateId?.length > 0 &&
+        qb.andWhere('t.predicate_id = :predicateId', {
+          predicateId: predicateId[0],
+        });
+      workspaceList?.length > 0 &&
+        qb.andWhere('p.workspace_id IN (:...workspaceList)', { workspaceList });
+      qb.andWhere(qb => {
+        const subQuery = qb
+          .subQuery()
+          .select('w.id')
+          .from(Witness, 'w')
+          .where('w.transaction_id = t.id')
+          .andWhere('w.status = :witnessStatus', {
+            witnessStatus: WitnessesStatus.PENDING,
+          });
 
-        const result = await qb.getCount()
+        if (hasSingle) {
+          subQuery.andWhere('w.account = :userAddress', {
+            userAddress: user.address,
+          });
+        }
 
-        // console.log('[PENDING_TX]', await qb.getMany())
+        return `EXISTS (${subQuery.getQuery()})`;
+      });
+
+      const result = await qb.getCount();
+
+      // console.log('[PENDING_TX]', await qb.getMany())
 
       // const result = await new TransactionService()
       //   .filter({
@@ -127,10 +137,13 @@ export class TransactionController {
       //           .length > 0 ?? false,
       //     };
       //   });
-      return successful({
-        ofUser: result,
-        transactionsBlocked: result > 0,
-      }, Responses.Ok);
+      return successful(
+        {
+          ofUser: result,
+          transactionsBlocked: result > 0,
+        },
+        Responses.Ok,
+      );
     } catch (e) {
       return error(e.error, e.statusCode);
     }
@@ -179,6 +192,7 @@ export class TransactionController {
           hash: transaction.hash,
           status: TransactionStatus.AWAIT_REQUIREMENTS,
           witnesses: witnesses.filter(w => !!w.signature).map(w => w.signature),
+          // TODO: ADJUST OUTPUT FORMAT
           outputs: transaction.assets.map(({ amount, to, assetId }) => ({
             amount,
             to,
