@@ -405,7 +405,7 @@ export class TransactionService implements ITransactionService {
       ...txData,
       witnesses: [
         ...txData.type === TransactionType.Create // is required add on 1st position
-            ? [hexlify(witnesses[txData.bytecodeWitnessIndex].signature)]
+            ? [hexlify(txData.witnesses[txData.bytecodeWitnessIndex])]
             : [],
         ...witnesses.filter(w => !!w.signature).map(w => w.signature),
       ],
@@ -420,6 +420,7 @@ export class TransactionService implements ITransactionService {
       this.update(bsafe_txid, { status: TransactionStatus.PROCESS_ON_CHAIN });
     })
     .catch(e => {
+      console.log(e)
       this.update(bsafe_txid, { status: TransactionStatus.FAILED, resume: {
         ...resume,
         status: TransactionStatus.FAILED,
