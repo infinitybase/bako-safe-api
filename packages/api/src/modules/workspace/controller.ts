@@ -6,7 +6,6 @@ import {
   User,
   PermissionAccess,
   Transaction,
-  Asset as AssetModel,
 } from '@src/models';
 import { PermissionRoles, Workspace } from '@src/models/Workspace';
 import Internal from '@src/utils/error/Internal';
@@ -38,6 +37,7 @@ import {
   IUpdateRequest,
 } from './types';
 import { CoinQuantity, bn } from 'fuels';
+import { IAsset } from '../transaction/types';
 
 export class WorkspaceController {
   async listByUser(req: IListByUserRequest) {
@@ -117,7 +117,7 @@ export class WorkspaceController {
                     transaction.status === TransactionStatus.PENDING_SENDER,
                 )
                 .reduce((accumulator, transaction: Transaction) => {
-                  transaction.assets.forEach((asset: AssetModel) => {
+                  transaction.assets.forEach((asset: IAsset) => {
                     const assetId = asset.assetId;
                     const amount = bn.parseUnits(asset.amount);
                     const existingAsset = accumulator.find(
