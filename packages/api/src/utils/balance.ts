@@ -1,6 +1,42 @@
-import { CoinQuantity, bn } from 'fuels';
+import {
+  BN,
+  CoinQuantity,
+  OutputCoin,
+  OutputType,
+  TransactionRequestOutput,
+  bn,
+} from 'fuels';
 
 import app from '@src/server/app';
+import { Transaction } from '@src/models';
+
+const isOutputCoin = (output: TransactionRequestOutput): output is OutputCoin =>
+  output.type === OutputType.Coin;
+
+const calculateTxReservedBalances = (
+  transactions: Transaction[],
+): CoinQuantity[] => {
+  const reservedMap = new Map<string, BN>();
+
+  transactions.forEach(transaction => {
+    const { outputs } = transaction.resume;
+
+    outputs
+      .filter(output => isOutputCoin(output))
+      .forEach(output => {
+        const { assetId, amount } = output;
+        const currentAmount = reservedMap.get(assetId) || new BN(0);
+        reservedMap.set(assetId, currentAmount.add(amount));
+      });
+  });
+
+  const result = Array.from(reservedMap, ([assetId, amount]) => ({
+    assetId,
+    amount,
+  }));
+
+  return result;
+};
 
 const calculateBalanceUSD = (balances: CoinQuantity[]): string => {
   let balanceUSD = 0;
@@ -18,15 +54,19 @@ const subCoins = (
   balances: CoinQuantity[],
   reservedCoins: CoinQuantity[],
 ): CoinQuantity[] => {
-  const reservedMap = new Map(reservedCoins.map(coin => [coin.assetId, coin.amount]));
+  const reservedMap = new Map(
+    reservedCoins.map(coin => [coin.assetId, coin.amount]),
+  );
 
   return balances
     .map(balance => {
       const reservedAmount = reservedMap.get(balance.assetId);
-      const adjustedAmount = reservedAmount ? balance.amount.sub(reservedAmount) : balance.amount;
+      const adjustedAmount = reservedAmount
+        ? balance.amount.sub(reservedAmount)
+        : balance.amount;
       return { ...balance, amount: adjustedAmount };
     })
     .filter(balance => balance.amount.gt(bn.parseUnits('0')));
 };
 
-export { calculateBalanceUSD, subCoins };
+export { isOutputCoin, calculateTxReservedBalances, calculateBalanceUSD, subCoins };
