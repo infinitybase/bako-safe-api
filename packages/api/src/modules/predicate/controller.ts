@@ -199,9 +199,8 @@ export class PredicateController {
   async hasReservedCoins({ params: { predicateId } }: IFindByIdRequest) {
     try {
       const predicate_txs = await Transaction.createQueryBuilder('t')
-        .leftJoin('t.assets', 'a')
         .leftJoin('t.predicate', 'p')
-        .addSelect(['t', 'a.assetId', 'a.amount', 'p.id'])
+        .addSelect(['t', 'p.id'])
         // not moved to id, because we need add join to predicate
         .where('p.id = :predicateId', { predicateId })
         .andWhere('t.status IN (:...status)', {
