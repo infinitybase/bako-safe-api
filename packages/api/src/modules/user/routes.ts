@@ -31,6 +31,11 @@ router.get(
   authMiddleware,
   handleResponse(userController.meTransactions),
 );
+router.get(
+  '/me/info', 
+  authMiddleware, 
+  handleResponse(userController.info)
+);
 router.get('/me', authMiddleware, handleResponse(userController.me));
 router.get('/', authMiddleware, handleResponse(userController.find));
 router.get('/:id', authMiddleware, handleResponse(userController.findOne));

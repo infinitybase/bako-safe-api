@@ -25,6 +25,7 @@ import {
   IDeleteRequest,
   IFindOneRequest,
   IListRequest,
+  IMeInfoRequest,
   IMeRequest,
   IUpdateRequest,
   IUserService,
@@ -97,6 +98,32 @@ export class UserController {
     } catch (e) {
       return error(e.error, e.statusCode);
     }
+  }
+
+  async meInfo(req: IMeInfoRequest) {
+    const { user, workspace } = req;
+
+    return successful(
+      {
+        id: user.id,
+        name: user.name,
+        type: user.type,
+        avatar: user.avatar,
+        address: user.address,
+        webauthn: user.webauthn,
+        onSingleWorkspace: workspace.single && workspace.name.includes(`[${user.id}]`),
+        workspace: {
+          id: workspace.id,
+          name: workspace.name,
+          owner: workspace.owner,
+          avatar: workspace.avatar,
+          permission: workspace.permissions[user.id],
+        },
+      },
+      Responses.Ok,
+    );
+
+
   }
 
   async me(req: IMeRequest) {
