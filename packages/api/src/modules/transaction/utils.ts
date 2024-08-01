@@ -1,10 +1,6 @@
 import { Predicate, Transaction, TransactionType } from '@src/models';
 import { IPagination } from '@src/utils/pagination';
-import {
-  ICreateTransactionPayload,
-  ITCreateService,
-  ITransactionsGroupedByMonth,
-} from './types';
+import { ICreateTransactionPayload, ITransactionsGroupedByMonth } from './types';
 import { IDeposit } from '../predicate/types';
 import { TransactionStatus } from 'bakosafe';
 
@@ -75,8 +71,11 @@ export const formatPayloadToCreateTransaction = (
     )
     .flat();
 
+  const txData = deposit.txData;
+  const inputs = Transaction.getInputsFromTransactionRequest(txData);
+
   const payload = {
-    txData: deposit.txData,
+    txData,
     type: TransactionType.DEPOSIT,
     name: `DEPOSIT_${deposit.id}`,
     hash: deposit.id.slice(2),
@@ -89,14 +88,16 @@ export const formatPayloadToCreateTransaction = (
       hash: deposit.id,
       status: TransactionStatus.SUCCESS,
       witnesses: [predicate.owner.address],
-      outputs: formattedAssets,
+      inputs,
+      outputs: txData.outputs,
       requiredSigners: predicate.minSigners,
       totalSigners: predicate.members.length,
       predicate: {
         id: predicate.id,
         address: predicate.predicateAddress,
       },
-      BakoSafeID: '',
+      id: '',
+      type: txData.type,
     },
     assets: formattedAssets,
     witnesses: [

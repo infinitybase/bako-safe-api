@@ -25,11 +25,13 @@ export const generateInitialTransaction = async (): Promise<TTI> => {
   });
 
   const assets = await generateInitialAssets();
+  const _txData = JSON.parse(txData);
+  const inputs = Transaction.getInputsFromTransactionRequest(_txData);
 
   const transaction1: TTI = {
     name: `fake_name ${accounts['USER_1'].address} ${TransactionStatus.AWAIT_REQUIREMENTS}`,
     hash: 'fake_hash',
-    txData: JSON.parse(txData),
+    txData: _txData,
     status: TransactionStatus.AWAIT_REQUIREMENTS,
     sendTime: new Date(),
     gasUsed: 'fake_gasUsed',
@@ -41,9 +43,11 @@ export const generateInitialTransaction = async (): Promise<TTI> => {
       },
       totalSigners: 0,
       requiredSigners: 0,
-      outputs: [],
+      inputs,
+      outputs: _txData.outputs,
       hash: 'fake_hash',
-      BakoSafeID: 'fake_BakoSafeID',
+      id: 'fake_id',
+      type: _txData.type,
     },
     createdBy: user,
     predicate: predicate[0],

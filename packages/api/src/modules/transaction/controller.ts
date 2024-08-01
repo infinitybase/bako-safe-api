@@ -192,19 +192,16 @@ export class TransactionController {
           hash: transaction.hash,
           status: TransactionStatus.AWAIT_REQUIREMENTS,
           witnesses: witnesses.filter(w => !!w.signature).map(w => w.signature),
-          // TODO: ADJUST OUTPUT FORMAT
-          outputs: transaction.assets.map(({ amount, to, assetId }) => ({
-            amount,
-            to,
-            assetId,
-          })),
+          inputs: Transaction.getInputsFromTransactionRequest(transaction.txData),
+          outputs: transaction.txData.outputs,
           requiredSigners: predicate.minSigners,
           totalSigners: predicate.members.length,
           predicate: {
             id: predicate.id,
             address: predicate.predicateAddress,
           },
-          BakoSafeID: '',
+          id: '',
+          type: transaction.txData.type,
         },
         witnesses,
         predicate,
@@ -212,7 +209,7 @@ export class TransactionController {
         summary,
       });
 
-      newTransaction.resume.BakoSafeID = newTransaction.id;
+      newTransaction.resume.id = newTransaction.id;
       await newTransaction.save();
 
       await new PredicateService().update(predicate.id);
