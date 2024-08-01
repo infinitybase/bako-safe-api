@@ -7,6 +7,7 @@ import {
 } from 'bakosafe';
 import {
   hexlify,
+  OutputType,
   Provider,
   TransactionRequest,
   transactionRequestify,
@@ -95,7 +96,6 @@ export class TransactionService implements ITransactionService {
     return await Transaction.findOne({
       where: { id },
       relations: [
-        'assets',
         'witnesses',
         'predicate',
         'predicate.members',
@@ -147,7 +147,6 @@ export class TransactionService implements ITransactionService {
         't.updatedAt',
         't.type',
       ])
-      .leftJoin('t.assets', 'assets')
       .leftJoin('t.witnesses', 'witnesses')
       .leftJoin('t.predicate', 'predicate')
       .leftJoin('predicate.members', 'members')
@@ -161,10 +160,6 @@ export class TransactionService implements ITransactionService {
         'witnesses.account',
         'witnesses.signature',
         'witnesses.status',
-        'assets.id',
-        'assets.amount',
-        'assets.to',
-        'assets.assetId',
         'members.id',
         'members.avatar',
         'members.address',
@@ -180,26 +175,35 @@ export class TransactionService implements ITransactionService {
 
     // =============== specific for workspace ===============
     if (this._filter.workspaceId || this._filter.signer) {
-      queryBuilder.andWhere(new Brackets(qb => {
-        if (this._filter.workspaceId) {
-          qb.orWhere('workspace.id IN (:...workspace)', {
-            workspace: this._filter.workspaceId,
-          });
-        }
-        if (this._filter.signer) {
-          qb.orWhere('members.address = :signer', {
-            signer: this._filter.signer,
-          });
-        }
-      }));
+      queryBuilder.andWhere(
+        new Brackets(qb => {
+          if (this._filter.workspaceId) {
+            qb.orWhere('workspace.id IN (:...workspace)', {
+              workspace: this._filter.workspaceId,
+            });
+          }
+          if (this._filter.signer) {
+            qb.orWhere('members.address = :signer', {
+              signer: this._filter.signer,
+            });
+          }
+        }),
+      );
     }
-  
+
     // =============== specific for home ===============
 
     this._filter.to &&
-      queryBuilder
-        .innerJoin('t.assets', 'asset')
-        .andWhere('asset.to = :to', { to: this._filter.to });
+      queryBuilder.andWhere(
+        `
+      EXISTS (
+        SELECT 1
+        FROM jsonb_array_elements(t.resume->'outputs') AS output
+        WHERE (output->>'type')::int = :outputType
+          AND (output->>'to')::text = :filterTo
+      )`,
+        { outputType: OutputType.Coin, filterTo: this._filter.to },
+      );
 
     this._filter.hash &&
       queryBuilder.andWhere('LOWER(t.hash) = LOWER(:hash)', {
