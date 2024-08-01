@@ -1,14 +1,13 @@
-import { TransactionStatus } from 'bakosafe';
+import { ITransferAsset, TransactionStatus } from 'bakosafe';
 
 import { Predicate, Transaction, User } from '@src/models';
 
 import { accounts } from '../accounts';
 import { txData } from '../txdata';
 import { generateInitialAssets } from './initialAssets';
-import { IAsset } from '@src/modules/transaction/types';
 
 export interface TTI extends Partial<Omit<Transaction, 'assets' | 'witnesses'>> {
-  assets: Partial<IAsset>[];
+  assets: ITransferAsset[];
 }
 export const generateInitialTransaction = async (): Promise<TTI> => {
   const user = await User.findOne({

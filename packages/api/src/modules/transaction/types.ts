@@ -1,6 +1,7 @@
 import {
   ITransactionResume,
   ITransactionSummary,
+  ITransferAsset,
   TransactionStatus,
   Transfer,
   Vault,
@@ -14,13 +15,6 @@ import { AuthValidatedRequest } from '@middlewares/auth/types';
 
 import { IOrdination } from '@utils/ordination';
 import { IPagination, PaginationParams } from '@utils/pagination';
-
-export interface IAsset {
-  assetId: string;
-  to: string;
-  amount: string;
-  transaction: Transaction;
-}
 
 export enum OrderBy {
   name = 'name',
@@ -180,7 +174,7 @@ interface IListRequestSchema extends ValidatedRequestSchema {
 }
 export interface ITCreateService
   extends Partial<Omit<Transaction, 'assets' | 'witnesses'>> {
-  assets: Partial<IAsset>[];
+  assets: ITransferAsset[];
   witnesses: Partial<Witness>[];
 }
 

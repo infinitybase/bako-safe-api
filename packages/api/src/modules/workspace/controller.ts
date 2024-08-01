@@ -38,7 +38,6 @@ import {
   IUpdateRequest,
 } from './types';
 import { CoinQuantity, bn } from 'fuels';
-import { IAsset } from '../transaction/types';
 
 export class WorkspaceController {
   async listByUser(req: IListByUserRequest) {

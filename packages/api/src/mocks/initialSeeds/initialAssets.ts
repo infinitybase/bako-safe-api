@@ -1,19 +1,18 @@
 import { bn } from 'fuels';
 
-import { IAsset } from '@src/modules/transaction/types';
-
 import { accounts } from '../accounts';
+import { ITransferAsset } from 'bakosafe';
 
 export const ETH_id = '0x000000000000000000000000000000000000000000000000000000';
 
-export const generateInitialAssets = async (): Promise<Partial<IAsset>[]> => {
-  const asset1: Partial<IAsset> = {
+export const generateInitialAssets = async (): Promise<ITransferAsset[]> => {
+  const asset1: ITransferAsset = {
     assetId: ETH_id,
     amount: bn(1000).toString(),
     to: accounts['STORE'].address,
   };
 
-  const asset2: Partial<IAsset> = {
+  const asset2: ITransferAsset = {
     assetId: ETH_id,
     amount: bn(100000).toString(),
     to: accounts['STORE'].address,
