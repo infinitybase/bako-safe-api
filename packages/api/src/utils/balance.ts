@@ -1,6 +1,7 @@
 import {
   BN,
   CoinQuantity,
+  Output,
   OutputCoin,
   OutputType,
   TransactionRequestOutput,
@@ -22,8 +23,8 @@ const calculateTxReservedBalances = (
     const { outputs } = transaction.resume;
 
     outputs
-      .filter(output => isOutputCoin(output))
-      .forEach(output => {
+      .filter((output: TransactionRequestOutput) => isOutputCoin(output))
+      .forEach((output: OutputCoin) => {
         const { assetId, amount } = output;
         const currentAmount = reservedMap.get(assetId) || new BN(0);
         reservedMap.set(assetId, currentAmount.add(amount));
