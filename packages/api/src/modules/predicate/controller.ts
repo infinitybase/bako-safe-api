@@ -1,5 +1,4 @@
 import { TransactionStatus } from 'bakosafe';
-import { CoinQuantity, bn } from 'fuels';
 
 import { Predicate } from '@src/models/Predicate';
 import { Workspace } from '@src/models/Workspace';
@@ -19,7 +18,7 @@ import {
 } from '@utils/index';
 
 import { INotificationService } from '../notification/types';
-import { IAsset, ITransactionService } from '../transaction/types';
+import { ITransactionService } from '../transaction/types';
 import { IUserService } from '../user/types';
 import { WorkspaceService } from '../workspace/services';
 import {
