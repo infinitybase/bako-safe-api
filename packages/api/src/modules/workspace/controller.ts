@@ -20,6 +20,7 @@ import {
   Responses,
   assetsMapBySymbol,
   calculateBalanceUSD,
+  calculateTxReservedBalances,
   subCoins,
   successful,
 } from '@utils/index';
@@ -110,28 +111,14 @@ export class WorkspaceController {
             })
             .list()
             .then((data: Transaction[]) => {
-              return data
-                .filter(
-                  (transaction: Transaction) =>
-                    transaction.status === TransactionStatus.AWAIT_REQUIREMENTS ||
-                    transaction.status === TransactionStatus.PENDING_SENDER,
-                )
-                .reduce((accumulator, transaction: Transaction) => {
-                  transaction.assets.forEach((asset: IAsset) => {
-                    const assetId = asset.assetId;
-                    const amount = bn.parseUnits(asset.amount);
-                    const existingAsset = accumulator.find(
-                      item => item.assetId === assetId,
-                    );
+              const reservedTxs = data.filter(
+                (transaction: Transaction) =>
+                  transaction.status === TransactionStatus.AWAIT_REQUIREMENTS ||
+                  transaction.status === TransactionStatus.PENDING_SENDER,
+              );
+              const reservedBalances = calculateTxReservedBalances(reservedTxs);
 
-                    if (existingAsset) {
-                      existingAsset.amount = existingAsset.amount.add(amount);
-                    } else {
-                      accumulator.push({ assetId, amount });
-                    }
-                  });
-                  return accumulator;
-                }, [] as CoinQuantity[]);
+              return reservedBalances;
             })
             .catch(() => {
               return [

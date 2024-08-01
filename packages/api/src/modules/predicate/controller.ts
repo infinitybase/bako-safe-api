@@ -13,6 +13,7 @@ import {
   Responses,
   bindMethods,
   calculateBalanceUSD,
+  calculateTxReservedBalances,
   subCoins,
   successful,
 } from '@utils/index';
@@ -211,26 +212,7 @@ export class PredicateController {
         })
         .getMany();
 
-      const tx_reserved_balances = predicate_txs.reduce(
-        (accumulator, transaction: Transaction) => {
-          // TODO: Adjust logic to get assets from transaction resume
-          transaction.assets.forEach((asset: IAsset) => {
-            const assetId = asset.assetId;
-            const amount = bn.parseUnits(asset.amount);
-            const existingAsset = accumulator.find(
-              item => item.assetId === assetId,
-            );
-
-            if (existingAsset) {
-              existingAsset.amount = existingAsset.amount.add(amount);
-            }
-            accumulator.push({ assetId, amount });
-          });
-          return accumulator;
-        },
-        [] as CoinQuantity[],
-      );
-
+      const tx_reserved_balances = calculateTxReservedBalances(predicate_txs);
       const instance = await this.predicateService.instancePredicate(predicateId);
       const balances = await instance.getBalances();
       const assets =
