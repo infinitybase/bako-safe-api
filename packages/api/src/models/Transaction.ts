@@ -88,6 +88,19 @@ class Transaction extends Base {
 
     return transactionType[type] ?? transactionType.default;
   }
+
+  static getInputsFromTransactionRequest(transactionRequest: TransactionRequest) {
+    const inputs = transactionRequest.inputs.map(input => {
+      if ('predicate' in input) {
+        const { predicate, ...rest } = input;
+        return rest;
+      }
+
+      return input;
+    });
+
+    return inputs;
+  }
 }
 
 export { Transaction };
