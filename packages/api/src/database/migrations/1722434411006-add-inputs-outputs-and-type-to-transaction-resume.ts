@@ -5,23 +5,8 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 export class AddInputsOutputsAndTypeToTransactionResume1722434411006
   implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.startTransaction();
-
-    try {
-      // Replace BakoSafeID with id in resume
-      await queryRunner.query(`
-      UPDATE transactions
-      SET resume = jsonb_set(
-          resume - 'BakoSafeID',
-          '{id}',
-          resume->'BakoSafeID'
-      )
-      WHERE resume ? 'BakoSafeID' 
-        AND status != '${TransactionStatus.SUCCESS}'; 
-    `);
-
-      // Add inputs and type to resume and set outputs with new format
-      await queryRunner.query(`
+    // Add inputs and type to resume and set outputs with new format
+    await queryRunner.query(`
       UPDATE transactions
       SET resume = jsonb_set(
           jsonb_set(
@@ -38,25 +23,12 @@ export class AddInputsOutputsAndTypeToTransactionResume1722434411006
       )
       WHERE status != '${TransactionStatus.SUCCESS}';
   `);
-      await queryRunner.commitTransaction();
-    } catch (e) {
-      await queryRunner.rollbackTransaction();
-      throw e;
-    }
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.startTransaction();
 
     try {
-      // Replace id with BakoSafeID in resume
-      await queryRunner.query(`
-      UPDATE transactions
-      SET resume = jsonb_set(resume, '{BakoSafeID}', resume->'id') - 'id'
-      WHERE resume ? 'id' 
-        AND status != '${TransactionStatus.SUCCESS}';
-    `);
-
       // Get transactions
       const transactions = await queryRunner.query(`
       SELECT id, resume->'outputs' AS outputs
@@ -68,7 +40,7 @@ export class AddInputsOutputsAndTypeToTransactionResume1722434411006
       for (const transaction of transactions) {
         let outputs = transaction.outputs || [];
 
-        // Filtrar outputs com type igual a 0 e converter valores
+        // Filter outputs with type coin and convert values
         outputs = outputs
           .map((output: TransactionRequestOutput) => {
             if (output.type === OutputType.Coin) {
