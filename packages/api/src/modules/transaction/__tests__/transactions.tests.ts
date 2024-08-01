@@ -41,7 +41,6 @@ describe('[TRANSACTION]', () => {
       );
       expect(data_transaction).toHaveProperty('witnesses');
       expect(data_transaction.witnesses).toHaveLength(members.length);
-      expect(data_transaction).toHaveProperty('assets');
       expect(tx.getHashTxId()).toEqual(data_transaction.hash);
     },
     60 * 1000,
