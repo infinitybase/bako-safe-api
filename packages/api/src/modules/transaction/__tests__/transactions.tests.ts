@@ -39,6 +39,7 @@ describe('[TRANSACTION]', () => {
         'predicate.predicateAddress',
         vault.address.toString(),
       );
+      expect(data_transaction).toHaveProperty('assets');
       expect(data_transaction).toHaveProperty('witnesses');
       expect(data_transaction.witnesses).toHaveLength(members.length);
       expect(tx.getHashTxId()).toEqual(data_transaction.hash);

@@ -38,6 +38,7 @@ import {
   IUpdateRequest,
 } from './types';
 import { CoinQuantity, bn } from 'fuels';
+import { ITransactionResponse } from '../transaction/types';
 
 export class WorkspaceController {
   async listByUser(req: IListByUserRequest) {
@@ -109,7 +110,7 @@ export class WorkspaceController {
               predicateId: predicateIds,
             })
             .list()
-            .then((data: Transaction[]) => {
+            .then((data: ITransactionResponse[]) => {
               const reservedTxs = data.filter(
                 (transaction: Transaction) =>
                   transaction.status === TransactionStatus.AWAIT_REQUIREMENTS ||

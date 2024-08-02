@@ -1,7 +1,7 @@
 import { TransactionStatus } from 'bakosafe';
 import { addMinutes } from 'date-fns';
 
-import { DApp, Predicate, RecoverCodeType, Transaction, User } from '@src/models';
+import { DApp, Predicate, RecoverCodeType, User } from '@src/models';
 import { SocketClient } from '@src/socket/client';
 
 import { error } from '@utils/error';
@@ -17,6 +17,7 @@ import {
   IDAppsService,
   IDappRequest,
 } from './types';
+import { ITransactionResponse } from '../transaction/types';
 
 const { API_URL } = process.env;
 
@@ -105,7 +106,7 @@ export class DappController {
           predicateAddress: vaultAddress,
         })
         .list()
-        .then((data: Transaction[]) => {
+        .then((data: ITransactionResponse[]) => {
           return data.length > 0;
         });
 

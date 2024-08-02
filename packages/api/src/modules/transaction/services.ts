@@ -1,5 +1,4 @@
 import {
-  ITransactionResume,
   TransactionProcessStatus,
   TransactionStatus,
   Transfer,
@@ -35,11 +34,12 @@ import { NotificationService } from '../notification/services';
 import {
   ICreateTransactionPayload,
   ITransactionFilterParams,
+  ITransactionResponse,
   ITransactionService,
   ITransactionsGroupedByMonth,
   IUpdateTransactionPayload,
 } from './types';
-import { groupedTransactions } from './utils';
+import { formatTransactionsResponse, groupedTransactions } from './utils';
 
 export class TransactionService implements ITransactionService {
   private _ordination: IOrdination<Transaction> = {
@@ -64,10 +64,10 @@ export class TransactionService implements ITransactionService {
     return this;
   }
 
-  async create(payload: ICreateTransactionPayload): Promise<Transaction> {
+  async create(payload: ICreateTransactionPayload): Promise<ITransactionResponse> {
     return await Transaction.create(payload)
       .save()
-      .then(transaction => transaction)
+      .then(transaction => Transaction.formatTransactionResponse(transaction))
       .catch(e => {
         throw new Internal({
           type: ErrorTypes.Internal,
@@ -92,7 +92,7 @@ export class TransactionService implements ITransactionService {
       });
   }
 
-  async findById(id: string): Promise<Transaction> {
+  async findById(id: string): Promise<ITransactionResponse> {
     return await Transaction.findOne({
       where: { id },
       relations: [
@@ -113,7 +113,7 @@ export class TransactionService implements ITransactionService {
           });
         }
 
-        return transaction;
+        return Transaction.formatTransactionResponse(transaction);
       })
       .catch(e => {
         throw new Internal({
@@ -127,8 +127,8 @@ export class TransactionService implements ITransactionService {
   //todo: melhorar a valocidade de processamento dessa query
   //caso trocar inner por left atrapalha muito a performance
   async list(): Promise<
-    | IPagination<Transaction>
-    | Transaction[]
+    | IPagination<ITransactionResponse>
+    | ITransactionResponse[]
     | IPagination<ITransactionsGroupedByMonth>
     | ITransactionsGroupedByMonth
   > {
@@ -281,7 +281,11 @@ export class TransactionService implements ITransactionService {
           })
           .catch(handleInternalError);
 
-    return this._filter.byMonth ? groupedTransactions(transactions) : transactions;
+    const _transactions = formatTransactionsResponse(transactions);
+
+    return this._filter.byMonth
+      ? groupedTransactions(_transactions)
+      : _transactions;
   }
 
   async delete(id: string): Promise<boolean> {
@@ -377,7 +381,6 @@ export class TransactionService implements ITransactionService {
     }
   }
 
-
   //instance vault
   //instance tx
   //add witnesses
@@ -389,8 +392,8 @@ export class TransactionService implements ITransactionService {
       resume,
       witnesses,
     } = await Transaction.createQueryBuilder('t')
-      .innerJoin('t.predicate', 'p')//predicate
-      .innerJoin('t.witnesses', 'w')//witnesses
+      .innerJoin('t.predicate', 'p') //predicate
+      .innerJoin('t.witnesses', 'w') //witnesses
       .addSelect([
         't.id',
         't.tx_data',
@@ -408,39 +411,41 @@ export class TransactionService implements ITransactionService {
     const tx = transactionRequestify({
       ...txData,
       witnesses: [
-        ...txData.type === TransactionType.Create // is required add on 1st position
-            ? [hexlify(txData.witnesses[txData.bytecodeWitnessIndex])]
-            : [],
+        ...(txData.type === TransactionType.Create // is required add on 1st position
+          ? [hexlify(txData.witnesses[txData.bytecodeWitnessIndex])]
+          : []),
         ...witnesses.filter(w => !!w.signature).map(w => w.signature),
       ],
     });
 
     await provider.estimatePredicates(tx);
-    const encodedTransaction = hexlify(tx.toTransactionBytes())
-    
+    const encodedTransaction = hexlify(tx.toTransactionBytes());
+
     //submit
-    provider.operations.submit({encodedTransaction})
-    .then(() => {
-      this.update(bsafe_txid, { status: TransactionStatus.PROCESS_ON_CHAIN });
-    })
-    .catch(e => {
-      console.log(e)
-      this.update(bsafe_txid, { status: TransactionStatus.FAILED, resume: {
-        ...resume,
-        status: TransactionStatus.FAILED,
-        //@ts-ignore
-        error: e // todo: add reason of error here (fuels not return this reason, only logs)
-      } });
-    });
+    provider.operations
+      .submit({ encodedTransaction })
+      .then(() => {
+        this.update(bsafe_txid, { status: TransactionStatus.PROCESS_ON_CHAIN });
+      })
+      .catch(e => {
+        console.log(e);
+        this.update(bsafe_txid, {
+          status: TransactionStatus.FAILED,
+          resume: {
+            ...resume,
+            status: TransactionStatus.FAILED,
+            //@ts-ignore
+            error: e, // todo: add reason of error here (fuels not return this reason, only logs)
+          },
+        });
+      });
   }
 
   async verifyOnChain(api_transaction: Transaction, provider: Provider) {
     const idOnChain = `0x${api_transaction.hash}`;
     const sender = new TransactionResponse(idOnChain, provider);
     const {
-      status: {
-        type
-      }
+      status: { type },
     } = await sender.fetch();
 
     if (type === TransactionProcessStatus.SUBMITED) {

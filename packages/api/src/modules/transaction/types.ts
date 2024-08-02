@@ -7,7 +7,7 @@ import {
   Vault,
 } from 'bakosafe';
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
-import { Provider, TransactionRequest, TransactionResponse } from 'fuels';
+import { Provider, TransactionRequest } from 'fuels';
 
 import { Transaction, TransactionType, Witness } from '@models/index';
 
@@ -33,6 +33,10 @@ export enum TransactionHistory {
   DECLINE = 'DECLINE',
   CANCEL = 'CANCEL',
   SEND = 'SEND',
+}
+
+export interface ITransactionResponse extends Transaction {
+  assets: ITransferAsset[];
 }
 
 export interface ICreateTransactionPayload {
@@ -91,7 +95,7 @@ export interface ITransactionFilterParams {
 
 export interface ITransactionsGroupedByMonth {
   monthYear: string;
-  transactions: Transaction[];
+  transactions: ITransactionResponse[];
 }
 
 export type ICloseTransactionBody = {

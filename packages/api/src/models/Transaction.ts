@@ -3,7 +3,13 @@ import {
   ITransactionResume,
   ITransactionSummary,
 } from 'bakosafe';
-import { TransactionRequest, TransactionType as FuelTransactionType } from 'fuels';
+import {
+  TransactionRequest,
+  TransactionType as FuelTransactionType,
+  TransactionRequestOutput,
+  bn,
+  OutputCoin,
+} from 'fuels';
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 
 import { User } from '@models/User';
@@ -11,6 +17,8 @@ import { User } from '@models/User';
 import { Base } from './Base';
 import { Predicate } from './Predicate';
 import { Witness } from './Witness';
+import { isOutputCoin } from '@src/utils/balance';
+import { ITransactionResponse } from '@src/modules/transaction/types';
 
 export enum TransactionType {
   TRANSACTION_SCRIPT = 'TRANSACTION_SCRIPT',
@@ -100,6 +108,25 @@ class Transaction extends Base {
     });
 
     return inputs;
+  }
+
+  static formatTransactionResponse(transaction: Transaction): ITransactionResponse {
+    const assets = transaction.resume.outputs
+      .filter((output: TransactionRequestOutput) => isOutputCoin(output))
+      .map((output: OutputCoin) => {
+        const { assetId, amount, to } = output;
+        return {
+          assetId,
+          amount: bn(amount).format(),
+          to,
+        };
+      });
+
+    const result = Object.assign(transaction, {
+      assets,
+    });
+
+    return result;
   }
 }
 
