@@ -35,6 +35,7 @@ const {
   findByHash,
   verifyOnChain,
   createHistory,
+  transactionStatus,
 } = new TransactionController(
   transactionService,
   predicateService,
@@ -55,5 +56,6 @@ router.post('/send/:id', handleResponse(send));
 router.post('/verify/:id', handleResponse(verifyOnChain));
 router.put('/signer/:id', validateSignerByIdPayload, handleResponse(signByID));
 router.get('/history/:id', handleResponse(createHistory));
+router.get('/status/:id', handleResponse(transactionStatus))
 
 export default router;

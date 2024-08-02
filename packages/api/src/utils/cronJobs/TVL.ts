@@ -51,7 +51,7 @@ const TVLCronJob = cron.schedule('0 0 * * *', async () => {
         });
 
         // Obtém os balances de cada vault e adiciona no array de balances
-        const balances = await vault.getBalances();
+        const { balances } = await vault.getBalances();
         vaultsBalance.push(...balances);
       } catch (e) {
         console.log(

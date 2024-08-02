@@ -7,7 +7,7 @@ import {
   Vault,
 } from 'bakosafe';
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
-import { Provider, TransactionRequest } from 'fuels';
+import { Provider, TransactionRequest, TransactionResponse } from 'fuels';
 
 import { Transaction, TransactionType, Witness } from '@models/index';
 
@@ -202,12 +202,12 @@ export interface ITransactionService {
     witnesses: string[],
   ) => Promise<Transfer>;
   validateStatus: (transactionId: string) => Promise<TransactionStatus>;
-  checkInvalidConditions: (api_transaction: Transaction) => void;
+  checkInvalidConditions: (api_transaction: TransactionStatus) => void;
   verifyOnChain: (
     api_transaction: Transaction,
     provider: Provider,
   ) => Promise<ITransactionResume>;
-  sendToChain: (transactionId: string) => Promise<ITransactionResume>;
+  sendToChain: (transactionId: string) => Promise<void>;
   create: (payload: ITCreateService) => Promise<Transaction>;
   update: (id: string, payload: IUpdateTransactionPayload) => Promise<Transaction>;
   list: () => Promise<

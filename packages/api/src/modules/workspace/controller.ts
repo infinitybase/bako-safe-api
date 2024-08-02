@@ -99,7 +99,7 @@ export class WorkspaceController {
         .then(async (response: Predicate[]) => {
           for await (const predicate of response) {
             const vault = await predicateService.instancePredicate(predicate.id);
-            predicatesBalance.push(...(await vault.getBalances()));
+            predicatesBalance.push(...(await vault.getBalances()).balances);
           }
 
           // Calculates amount of coins reserved per asset

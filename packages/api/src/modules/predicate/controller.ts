@@ -212,7 +212,7 @@ export class PredicateController {
 
       const tx_reserved_balances = calculateTxReservedBalances(predicate_txs);
       const instance = await this.predicateService.instancePredicate(predicateId);
-      const balances = await instance.getBalances();
+      const { balances } = await instance.getBalances();
       const assets =
         tx_reserved_balances.length > 0
           ? subCoins(balances, tx_reserved_balances)
@@ -230,6 +230,7 @@ export class PredicateController {
         Responses.Ok,
       );
     } catch (e) {
+      console.log(e)
       return error(e.error, e.statusCode);
     }
   }
