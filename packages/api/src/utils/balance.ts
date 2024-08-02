@@ -5,7 +5,7 @@ import app from '@src/server/app';
 const calculateBalanceUSD = (balances: CoinQuantity[]): string => {
   let balanceUSD = 0;
 
-  balances.forEach(balance => {
+  balances?.forEach(balance => {
     const formattedAmount = parseFloat(balance.amount.format());
     const priceUSD = app._quoteCache.getQuote(balance.assetId);
     balanceUSD += formattedAmount * priceUSD;
@@ -18,12 +18,16 @@ const subCoins = (
   balances: CoinQuantity[],
   reservedCoins: CoinQuantity[],
 ): CoinQuantity[] => {
-  const reservedMap = new Map(reservedCoins.map(coin => [coin.assetId, coin.amount]));
+  const reservedMap = new Map(
+    reservedCoins.map(coin => [coin.assetId, coin.amount]),
+  );
 
   return balances
     .map(balance => {
       const reservedAmount = reservedMap.get(balance.assetId);
-      const adjustedAmount = reservedAmount ? balance.amount.sub(reservedAmount) : balance.amount;
+      const adjustedAmount = reservedAmount
+        ? balance.amount.sub(reservedAmount)
+        : balance.amount;
       return { ...balance, amount: adjustedAmount };
     })
     .filter(balance => balance.amount.gt(bn.parseUnits('0')));
