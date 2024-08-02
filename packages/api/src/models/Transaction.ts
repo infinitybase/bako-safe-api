@@ -17,8 +17,8 @@ import { User } from '@models/User';
 import { Base } from './Base';
 import { Predicate } from './Predicate';
 import { Witness } from './Witness';
-import { isOutputCoin } from '@src/utils/balance';
 import { ITransactionResponse } from '@src/modules/transaction/types';
+import { isOutputCoin } from '@src/utils/outputTypeValidate';
 
 export enum TransactionType {
   TRANSACTION_SCRIPT = 'TRANSACTION_SCRIPT',

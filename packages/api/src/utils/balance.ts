@@ -1,18 +1,8 @@
-import {
-  BN,
-  CoinQuantity,
-  Output,
-  OutputCoin,
-  OutputType,
-  TransactionRequestOutput,
-  bn,
-} from 'fuels';
+import { BN, CoinQuantity, OutputCoin, TransactionRequestOutput, bn } from 'fuels';
 
 import app from '@src/server/app';
 import { Transaction } from '@src/models';
-
-const isOutputCoin = (output: TransactionRequestOutput): output is OutputCoin =>
-  output.type === OutputType.Coin;
+import { isOutputCoin } from './outputTypeValidate';
 
 const calculateTxReservedBalances = (
   transactions: Transaction[],
@@ -70,4 +60,4 @@ const subCoins = (
     .filter(balance => balance.amount.gt(bn.parseUnits('0')));
 };
 
-export { isOutputCoin, calculateTxReservedBalances, calculateBalanceUSD, subCoins };
+export { calculateTxReservedBalances, calculateBalanceUSD, subCoins };
