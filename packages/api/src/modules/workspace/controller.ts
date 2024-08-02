@@ -82,6 +82,93 @@ export class WorkspaceController {
     }
   }
 
+  async fetchPredicateData(req: IGetBalanceRequest) {
+    let reservedCoins: CoinQuantity[] = [];
+    try {
+      const { workspace } = req;
+      const predicateService = new PredicateService();
+      const transactionService = new TransactionService();
+
+      const predicates = (await predicateService
+        .filter({ workspace: [workspace.id] })
+        .list()) as Predicate[];
+
+      const balancePromises = predicates.map(async predicate => {
+        const vault = await predicateService.instancePredicate(predicate.id);
+        const balances = await vault.getBalances();
+        return balances;
+      });
+
+      const balances = await Promise.all(balancePromises);
+
+      const predicatesBalance = balances.flat();
+
+      // Calculating reserved coins per asset
+      const predicateIds = predicates.map(item => item.id);
+      const transactions = (await transactionService
+        .filter({
+          predicateId: predicateIds,
+          status: [
+            TransactionStatus.AWAIT_REQUIREMENTS,
+            TransactionStatus.PENDING_SENDER,
+          ],
+        })
+        .list()) as Transaction[];
+
+      reservedCoins = transactions.reduce((accumulator, transaction) => {
+        transaction.assets.forEach(asset => {
+          const assetId = asset.assetId;
+          const amount = bn.parseUnits(asset.amount);
+          const existingAsset = accumulator.find(item => item.assetId === assetId);
+
+          if (existingAsset) {
+            existingAsset.amount = existingAsset.amount.add(amount);
+          } else {
+            accumulator.push({
+              assetId,
+              amount,
+            });
+          }
+        });
+        return accumulator;
+      }, [] as CoinQuantity[]);
+
+      const formattedPredicatesBalance = predicatesBalance.map(item => ({
+        ...item,
+        amount: item.amount.format(),
+      }));
+      const assetsBalance = await Asset.assetsGroupById(formattedPredicatesBalance);
+      const formattedAssetsBalance = Object.entries(assetsBalance).map(
+        ([assetId, amount]) => ({
+          assetId,
+          amount,
+        }),
+      );
+
+      // Subtracts the amount of coins reserved per asset from the balance per asset
+      const availableAssetsBalance =
+        reservedCoins.length > 0
+          ? subCoins(formattedAssetsBalance, reservedCoins)
+          : formattedAssetsBalance;
+
+      return successful(
+        {
+          balanceUSD: calculateBalanceUSD(availableAssetsBalance),
+          workspaceId: workspace.id,
+          assetsBalance: availableAssetsBalance,
+        },
+        Responses.Ok,
+      );
+    } catch (error) {
+      reservedCoins = [
+        {
+          assetId: assetsMapBySymbol['ETH'].id,
+          amount: bn.parseUnits('0'),
+        },
+      ] as CoinQuantity[];
+    }
+  }
+
   // todo: implement this by other coins, and use utils of bsafe-sdk
   async getBalance(req: IGetBalanceRequest) {
     try {
@@ -99,7 +186,8 @@ export class WorkspaceController {
         .then(async (response: Predicate[]) => {
           for await (const predicate of response) {
             const vault = await predicateService.instancePredicate(predicate.id);
-            predicatesBalance.push(...(await vault.getBalances()).balances);
+            // predicatesBalance.push(...(await vault.getBalances()).balances());
+            predicatesBalance.push(...(await vault.getBalances()));
           }
 
           // Calculates amount of coins reserved per asset
