@@ -208,18 +208,24 @@ export class PredicateController {
         version: { code: versionCode },
         configurable,
       } = await Predicate.createQueryBuilder('p')
-      .leftJoin('p.transactions', 't')
-      .leftJoin('t.assets', 'a')
-      .leftJoin('p.version', 'pv')
-      .addSelect(['t', 'a.assetId', 'a.amount', 'p.id', 'p.configurable', 'pv.code'])
-      .where('p.id = :predicateId', { predicateId })
-      .andWhere('t.status IN (:...status)', {
-        status: [
-          TransactionStatus.AWAIT_REQUIREMENTS,
-          TransactionStatus.PENDING_SENDER,
-        ],
-      })
-      .getOne()
+        .leftJoin('p.transactions', 't', 't.status IN (:...status)', {
+          status: [
+            TransactionStatus.AWAIT_REQUIREMENTS,
+            TransactionStatus.PENDING_SENDER,
+          ],
+        })
+        .leftJoin('t.assets', 'a')
+        .leftJoin('p.version', 'pv')
+        .addSelect([
+          't',
+          'a.assetId',
+          'a.amount',
+          'p.id',
+          'p.configurable',
+          'pv.code',
+        ])
+        .where('p.id = :predicateId', { predicateId })
+        .getOne();
 
       //todo: replace by a util on model Transaction
       const tx_reserved_balances = predicate_txs.reduce(

@@ -92,10 +92,15 @@ export class WorkspaceController {
       const predicates = await Predicate.createQueryBuilder('p')
         .leftJoin('p.workspaces', 'w')
         .leftJoin('p.version', 'pv')
-        .leftJoin('p.transactions', 't')
+        .leftJoin('p.transactions', 't', 't.status IN (:...status)', {
+          status: [
+            TransactionStatus.AWAIT_REQUIREMENTS,
+            TransactionStatus.PENDING_SENDER,
+          ],
+        })
         .leftJoin('t.assets', 'a') // remove this next
         .addSelect([
-          'p.id', 
+          'p.id',
           'p.configurable',
           'pv.code',
           'w.id',
@@ -104,63 +109,58 @@ export class WorkspaceController {
           'a.amount',
         ])
         .where('w.id = :id', { id: workspace.id })
-        .andWhere('t.status IN (:...status)', [
-          TransactionStatus.AWAIT_REQUIREMENTS,
-          TransactionStatus.PENDING_SENDER,
-        ])
         .getMany();
-      
 
       // Fetches the balance of each predicate
-      const balancePromises = predicates.map(async ({
-        configurable,
-        version: { code: versionCode },
-        transactions,
-      }) => {
-        const vault = await predicateService.instancePredicate(
-          configurable,
-          versionCode,
-        );
-        const balances = (await vault.getBalances()).balances;
-          
-        predicateCoins = balances.reduce((accumulator, balance) => {
-          const assetId = balance.assetId;
-          const existingAsset = accumulator.find(item => item.assetId === assetId);
-        
-          if (existingAsset) {
-            existingAsset.amount = existingAsset.amount.add(balance.amount);
-          } else {
-            accumulator.push({
-              assetId,
-              amount: balance.amount,
-            });
-          }
-        
-          return accumulator;
-        }, predicateCoins);
+      const balancePromises = predicates.map(
+        async ({ configurable, version: { code: versionCode }, transactions }) => {
+          const vault = await predicateService.instancePredicate(
+            configurable,
+            versionCode,
+          );
+          const balances = (await vault.getBalances()).balances;
 
+          predicateCoins = balances.reduce((accumulator, balance) => {
+            const assetId = balance.assetId;
+            const existingAsset = accumulator.find(
+              item => item.assetId === assetId,
+            );
 
-        reservedCoins = transactions.reduce((accumulator, transaction) => {
-          transaction.assets.forEach(asset => {
-            const assetId = asset.assetId;
-            const amount = bn.parseUnits(asset.amount);
-            const existingAsset = accumulator.find(item => item.assetId === assetId);
-  
             if (existingAsset) {
-              existingAsset.amount = existingAsset.amount.add(amount);
+              existingAsset.amount = existingAsset.amount.add(balance.amount);
             } else {
               accumulator.push({
                 assetId,
-                amount,
+                amount: balance.amount,
               });
             }
-          });
-          return accumulator;
-        }, reservedCoins);
-        
 
-        return balances;
-      });
+            return accumulator;
+          }, predicateCoins);
+
+          reservedCoins = transactions.reduce((accumulator, transaction) => {
+            transaction.assets.forEach(asset => {
+              const assetId = asset.assetId;
+              const amount = bn.parseUnits(asset.amount);
+              const existingAsset = accumulator.find(
+                item => item.assetId === assetId,
+              );
+
+              if (existingAsset) {
+                existingAsset.amount = existingAsset.amount.add(amount);
+              } else {
+                accumulator.push({
+                  assetId,
+                  amount,
+                });
+              }
+            });
+            return accumulator;
+          }, reservedCoins);
+
+          return balances;
+        },
+      );
 
       await Promise.all(balancePromises);
 
