@@ -167,8 +167,6 @@ export class TransactionController {
           hash: transaction.hash,
           status: TransactionStatus.AWAIT_REQUIREMENTS,
           witnesses: witnesses.filter(w => !!w.signature).map(w => w.signature),
-          inputs: Transaction.getInputsFromTransactionRequest(transaction.txData),
-          outputs: transaction.txData.outputs,
           requiredSigners: predicate.minSigners,
           totalSigners: predicate.members.length,
           predicate: {
@@ -176,7 +174,6 @@ export class TransactionController {
             address: predicate.predicateAddress,
           },
           id: '',
-          type: transaction.txData.type,
         },
         witnesses,
         predicate,
@@ -448,7 +445,6 @@ export class TransactionController {
 
       return successful(!!witness, Responses.Ok);
     } catch (e) {
-      console.log(e);
       return error(e.error, e.statusCode);
     }
   }

@@ -88,11 +88,8 @@ export const formatPayloadToCreateTransaction = (
     )
     .flat();
 
-  const txData = deposit.txData;
-  const inputs = Transaction.getInputsFromTransactionRequest(txData);
-
   const payload = {
-    txData,
+    txData: deposit.txData,
     type: TransactionType.DEPOSIT,
     name: `DEPOSIT_${deposit.id}`,
     hash: deposit.id.slice(2),
@@ -105,8 +102,6 @@ export const formatPayloadToCreateTransaction = (
       hash: deposit.id,
       status: TransactionStatus.SUCCESS,
       witnesses: [predicate.owner.address],
-      inputs,
-      outputs: txData.outputs,
       requiredSigners: predicate.minSigners,
       totalSigners: predicate.members.length,
       predicate: {
@@ -114,7 +109,6 @@ export const formatPayloadToCreateTransaction = (
         address: predicate.predicateAddress,
       },
       id: '',
-      type: txData.type,
     },
     assets: formattedAssets,
     witnesses: [
