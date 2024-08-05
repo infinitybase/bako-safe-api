@@ -1,4 +1,4 @@
-import { ITransactionResume, TransactionStatus } from 'bakosafe';
+import { TransactionStatus } from 'bakosafe';
 import { hashMessage, Provider, Signer } from 'fuels';
 
 import { PermissionRoles, Workspace } from '@src/models/Workspace';
@@ -17,7 +17,6 @@ import {
 } from '@models/index';
 
 import { IPredicateService } from '@modules/predicate/types';
-import { IWitnessService } from '@modules/witness/types';
 
 import { error, ErrorTypes, NotFound } from '@utils/error';
 import { bindMethods, Responses, successful } from '@utils/index';
@@ -43,20 +42,17 @@ import {
 
 export class TransactionController {
   private transactionService: ITransactionService;
-  private witnessService: IWitnessService;
   private notificationService: INotificationService;
 
   constructor(
     transactionService: ITransactionService,
     predicateService: IPredicateService,
-    witnessService: IWitnessService,
     addressBookService: IAddressBookService,
     notificationService: INotificationService,
   ) {
     Object.assign(this, {
       transactionService,
       predicateService,
-      witnessService,
       addressBookService,
       notificationService,
     });
