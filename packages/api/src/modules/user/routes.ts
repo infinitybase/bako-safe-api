@@ -10,7 +10,6 @@ import { PayloadCreateUserSchema, PayloadUpdateUserSchema } from './validation';
 
 const router = Router();
 
-
 const userService = new UserService();
 
 const userController = new UserController(userService);
@@ -22,21 +21,25 @@ router.get('/by-hardware/:hardware', handleResponse(userController.getByHardware
 router.get('/info', authMiddleware, handleResponse(userController.info));
 router.get('/nickaname/:nickname', handleResponse(userController.validateName));
 router.get(
-  '/me/tokens',
+  '/latest/tokens',
   authMiddleware,
   handleResponse(userController.tokensUSDAmount),
 );
 router.get(
-  '/me/transactions',
+  '/latest/transactions',
   authMiddleware,
   handleResponse(userController.meTransactions),
 );
 router.get(
-  '/me/info', 
-  authMiddleware, 
-  handleResponse(userController.info)
+  '/latest/info',
+  authMiddleware,
+  handleResponse(userController.latestInfo),
 );
-router.get('/me', authMiddleware, handleResponse(userController.me));
+router.get(
+  '/predicates',
+  authMiddleware,
+  handleResponse(userController.predicates),
+);
 router.get('/', authMiddleware, handleResponse(userController.find));
 router.get('/:id', authMiddleware, handleResponse(userController.findOne));
 router.put(
