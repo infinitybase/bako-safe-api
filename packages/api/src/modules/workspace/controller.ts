@@ -84,6 +84,7 @@ export class WorkspaceController {
 
   async fetchPredicateData(req: IGetBalanceRequest) {
     let reservedCoins: CoinQuantity[] = [];
+    let predicateCoins: CoinQuantity[] = [];
     try {
       const { workspace } = req;
       const predicateService = new PredicateService();
@@ -109,6 +110,8 @@ export class WorkspaceController {
         ])
         .getMany();
       
+
+      // Fetches the balance of each predicate
       const balancePromises = predicates.map(async ({
         configurable,
         version: { code: versionCode },
@@ -119,7 +122,24 @@ export class WorkspaceController {
           versionCode,
         );
         const balances = (await vault.getBalances()).balances;
+          
+        predicateCoins = balances.reduce((accumulator, balance) => {
+          const assetId = balance.assetId;
+          const existingAsset = accumulator.find(item => item.assetId === assetId);
         
+          if (existingAsset) {
+            existingAsset.amount = existingAsset.amount.add(balance.amount);
+          } else {
+            accumulator.push({
+              assetId,
+              amount: balance.amount,
+            });
+          }
+        
+          return accumulator;
+        }, predicateCoins);
+
+
         reservedCoins = transactions.reduce((accumulator, transaction) => {
           transaction.assets.forEach(asset => {
             const assetId = asset.assetId;
@@ -142,34 +162,22 @@ export class WorkspaceController {
         return balances;
       });
 
-      const balances = await Promise.all(balancePromises);
-
-      const predicatesBalance = balances.flat();
-
-      const formattedPredicatesBalance = predicatesBalance.map(item => ({
-        ...item,
-        amount: item.amount.format(),
-        to: '',
-      }));
-      const assetsBalance = await Asset.assetsGroupById(formattedPredicatesBalance);
-      const formattedAssetsBalance = Object.entries(assetsBalance).map(
-        ([assetId, amount]) => ({
-          assetId,
-          amount,
-        }),
-      );
+      await Promise.all(balancePromises);
 
       // Subtracts the amount of coins reserved per asset from the balance per asset
-      const availableAssetsBalance =
+      const assets =
         reservedCoins.length > 0
-          ? subCoins(formattedAssetsBalance, reservedCoins)
-          : formattedAssetsBalance;
+          ? subCoins(predicateCoins, reservedCoins)
+          : predicateCoins;
 
       return successful(
         {
-          balanceUSD: calculateBalanceUSD(availableAssetsBalance),
-          workspaceId: workspace.id,
-          assetsBalance: availableAssetsBalance,
+          reservedCoinsUSD: calculateBalanceUSD(reservedCoins),
+          totalBalanceUSD: calculateBalanceUSD(predicateCoins),
+          currentBalanceUSD: calculateBalanceUSD(assets),
+          currentBalance: assets,
+          totalBalance: predicateCoins,
+          reservedCoins,
         },
         Responses.Ok,
       );
