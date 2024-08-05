@@ -10,7 +10,7 @@ const calculateTxReservedBalances = (
   const reservedMap = new Map<string, BN>();
 
   transactions.forEach(transaction => {
-    const { outputs } = transaction.resume;
+    const { outputs } = transaction.txData;
 
     outputs
       .filter((output: TransactionRequestOutput) => isOutputCoin(output))

@@ -97,21 +97,8 @@ class Transaction extends Base {
     return transactionType[type] ?? transactionType.default;
   }
 
-  static getInputsFromTransactionRequest(transactionRequest: TransactionRequest) {
-    const inputs = transactionRequest.inputs.map(input => {
-      if ('predicate' in input) {
-        const { predicate, ...rest } = input;
-        return rest;
-      }
-
-      return input;
-    });
-
-    return inputs;
-  }
-
   static formatTransactionResponse(transaction: Transaction): ITransactionResponse {
-    const assets = transaction.resume.outputs
+    const assets = transaction.txData.outputs
       .filter((output: TransactionRequestOutput) => isOutputCoin(output))
       .map((output: OutputCoin) => {
         const { assetId, amount, to } = output;

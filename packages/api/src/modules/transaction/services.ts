@@ -141,6 +141,7 @@ export class TransactionService implements ITransactionService {
         't.id',
         't.name',
         't.predicateId',
+        't.txData',
         't.resume',
         't.sendTime',
         't.status',
@@ -197,9 +198,9 @@ export class TransactionService implements ITransactionService {
     this._filter.to &&
       queryBuilder.andWhere(
         `
-      EXISTS (
+        EXISTS (
         SELECT 1
-        FROM jsonb_array_elements(t.resume->'outputs') AS output
+        FROM jsonb_array_elements(t.tx_data->'outputs') AS output
         WHERE (output->>'type')::int = :outputType
           AND (output->>'to')::text = :filterTo
       )`,
