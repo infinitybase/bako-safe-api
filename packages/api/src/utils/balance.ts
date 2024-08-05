@@ -4,9 +4,7 @@ import app from '@src/server/app';
 import { Transaction } from '@src/models';
 import { isOutputCoin } from './outputTypeValidate';
 
-const calculateTxReservedBalances = (
-  transactions: Transaction[],
-): CoinQuantity[] => {
+const calculateReservedCoins = (transactions: Transaction[]): CoinQuantity[] => {
   const reservedMap = new Map<string, BN>();
 
   transactions.forEach(transaction => {
@@ -32,7 +30,7 @@ const calculateTxReservedBalances = (
 const calculateBalanceUSD = (balances: CoinQuantity[]): string => {
   let balanceUSD = 0;
 
-  balances.forEach(balance => {
+  balances?.forEach(balance => {
     const formattedAmount = parseFloat(balance.amount.format());
     const priceUSD = app._quoteCache.getQuote(balance.assetId);
     balanceUSD += formattedAmount * priceUSD;
@@ -60,4 +58,4 @@ const subCoins = (
     .filter(balance => balance.amount.gt(bn.parseUnits('0')));
 };
 
-export { calculateTxReservedBalances, calculateBalanceUSD, subCoins };
+export { calculateReservedCoins, calculateBalanceUSD, subCoins };

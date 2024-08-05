@@ -12,7 +12,7 @@ import {
   Responses,
   bindMethods,
   calculateBalanceUSD,
-  calculateTxReservedBalances,
+  calculateReservedCoins,
   subCoins,
   successful,
 } from '@utils/index';
@@ -197,35 +197,39 @@ export class PredicateController {
 
   async hasReservedCoins({ params: { predicateId } }: IFindByIdRequest) {
     try {
-      const predicate_txs = await Transaction.createQueryBuilder('t')
-        .leftJoin('t.predicate', 'p')
-        .addSelect(['t', 'p.id'])
-        // not moved to id, because we need add join to predicate
-        .where('p.id = :predicateId', { predicateId })
-        .andWhere('t.status IN (:...status)', {
+      const {
+        transactions: predicateTxs,
+        version: { code: versionCode },
+        configurable,
+      } = await Predicate.createQueryBuilder('p')
+        .leftJoin('p.transactions', 't', 't.status IN (:...status)', {
           status: [
             TransactionStatus.AWAIT_REQUIREMENTS,
             TransactionStatus.PENDING_SENDER,
           ],
         })
-        .getMany();
+        .leftJoin('p.version', 'pv')
+        .addSelect(['t', 'p.id', 'p.configurable', 'pv.code'])
+        .where('p.id = :predicateId', { predicateId })
+        .getOne();
 
-      const tx_reserved_balances = calculateTxReservedBalances(predicate_txs);
-      const instance = await this.predicateService.instancePredicate(predicateId);
-      const { balances } = await instance.getBalances();
+      const reservedCoins = calculateReservedCoins(predicateTxs);
+      const instance = await this.predicateService.instancePredicate(
+        configurable,
+        versionCode,
+      );
+      const balances = (await instance.getBalances()).balances;
       const assets =
-        tx_reserved_balances.length > 0
-          ? subCoins(balances, tx_reserved_balances)
-          : balances;
+        reservedCoins.length > 0 ? subCoins(balances, reservedCoins) : balances;
 
       return successful(
         {
-          reservedCoinsUSD: calculateBalanceUSD(tx_reserved_balances), // locked value on USDC
+          reservedCoinsUSD: calculateBalanceUSD(reservedCoins), // locked value on USDC
           totalBalanceUSD: calculateBalanceUSD(balances),
           currentBalanceUSD: calculateBalanceUSD(assets),
           currentBalance: assets,
           totalBalance: balances,
-          reservedCoins: tx_reserved_balances, // locked coins
+          reservedCoins: reservedCoins, // locked coins
         },
         Responses.Ok,
       );
