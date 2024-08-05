@@ -80,7 +80,7 @@ export class TransactionService implements ITransactionService {
   async update(
     id: string,
     payload?: IUpdateTransactionPayload,
-  ): Promise<Transaction> {
+  ): Promise<ITransactionResponse> {
     return await Transaction.update({ id }, payload)
       .then(async () => await this.findById(id))
       .catch(e => {

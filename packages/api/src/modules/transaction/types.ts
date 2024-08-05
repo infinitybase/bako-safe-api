@@ -224,14 +224,17 @@ export interface ITransactionService {
     provider: Provider,
   ) => Promise<ITransactionResume>;
   sendToChain: (transactionId: string) => Promise<void>;
-  create: (payload: ITCreateService) => Promise<Transaction>;
-  update: (id: string, payload: IUpdateTransactionPayload) => Promise<Transaction>;
+  create: (payload: ITCreateService) => Promise<ITransactionResponse>;
+  update: (
+    id: string,
+    payload: IUpdateTransactionPayload,
+  ) => Promise<ITransactionResponse>;
   list: () => Promise<
-    | IPagination<Transaction>
-    | Transaction[]
+    | IPagination<ITransactionResponse>
+    | ITransactionResponse[]
     | IPagination<ITransactionsGroupedByMonth>
     | ITransactionsGroupedByMonth
   >;
-  findById: (id: string) => Promise<Transaction>;
+  findById: (id: string) => Promise<ITransactionResponse>;
   delete: (id: string) => Promise<boolean>;
 }

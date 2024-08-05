@@ -36,6 +36,7 @@ import {
   IListRequest,
   ISendTransactionRequest,
   ISignByIdRequest,
+  ITransactionResponse,
   ITransactionService,
   TransactionHistory,
 } from './types';
@@ -333,7 +334,7 @@ export class TransactionController {
         .filter({ hash })
         .paginate(undefined)
         .list()
-        .then((result: Transaction[]) => {
+        .then((result: ITransactionResponse[]) => {
           return result[0];
         });
       return successful(response, Responses.Ok);
