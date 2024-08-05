@@ -87,51 +87,64 @@ export class WorkspaceController {
     try {
       const { workspace } = req;
       const predicateService = new PredicateService();
-      const transactionService = new TransactionService();
 
-      const predicates = (await predicateService
-        .filter({ workspace: [workspace.id] })
-        .list()) as Predicate[];
+      const predicates = await Predicate.createQueryBuilder('p')
+        .leftJoin('p.workspaces', 'w')
+        .leftJoin('p.version', 'pv')
+        .leftJoin('p.transactions', 't')
+        .leftJoin('t.assets', 'a') // remove this next
+        .addSelect([
+          'p.id', 
+          'p.configurable',
+          'pv.code',
+          'w.id',
+          't.status',
+          'a.assetId',
+          'a.amount',
+        ])
+        .where('w.id = :id', { id: workspace.id })
+        .andWhere('t.status IN (:...status)', [
+          TransactionStatus.AWAIT_REQUIREMENTS,
+          TransactionStatus.PENDING_SENDER,
+        ])
+        .getMany();
+      
+      const balancePromises = predicates.map(async ({
+        configurable,
+        version: { code: versionCode },
+        transactions,
+      }) => {
+        const vault = await predicateService.instancePredicate(
+          configurable,
+          versionCode,
+        );
+        const balances = (await vault.getBalances()).balances;
+        
+        reservedCoins = transactions.reduce((accumulator, transaction) => {
+          transaction.assets.forEach(asset => {
+            const assetId = asset.assetId;
+            const amount = bn.parseUnits(asset.amount);
+            const existingAsset = accumulator.find(item => item.assetId === assetId);
+  
+            if (existingAsset) {
+              existingAsset.amount = existingAsset.amount.add(amount);
+            } else {
+              accumulator.push({
+                assetId,
+                amount,
+              });
+            }
+          });
+          return accumulator;
+        }, reservedCoins);
+        
 
-      const balancePromises = predicates.map(async predicate => {
-        const vault = await predicateService.instancePredicate(predicate.id);
-        const balances = await vault.getBalances();
         return balances;
       });
 
       const balances = await Promise.all(balancePromises);
 
       const predicatesBalance = balances.flat();
-
-      // Calculating reserved coins per asset
-      const predicateIds = predicates.map(item => item.id);
-      const transactions = (await transactionService
-        .filter({
-          predicateId: predicateIds,
-          status: [
-            TransactionStatus.AWAIT_REQUIREMENTS,
-            TransactionStatus.PENDING_SENDER,
-          ],
-        })
-        .list()) as Transaction[];
-
-      reservedCoins = transactions.reduce((accumulator, transaction) => {
-        transaction.assets.forEach(asset => {
-          const assetId = asset.assetId;
-          const amount = bn.parseUnits(asset.amount);
-          const existingAsset = accumulator.find(item => item.assetId === assetId);
-
-          if (existingAsset) {
-            existingAsset.amount = existingAsset.amount.add(amount);
-          } else {
-            accumulator.push({
-              assetId,
-              amount,
-            });
-          }
-        });
-        return accumulator;
-      }, [] as CoinQuantity[]);
 
       const formattedPredicatesBalance = predicatesBalance.map(item => ({
         ...item,
