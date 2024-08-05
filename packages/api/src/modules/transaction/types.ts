@@ -35,6 +35,18 @@ export enum TransactionHistory {
   SEND = 'SEND',
 }
 
+export enum WitnessesStatus {
+  REJECTED = 'REJECTED',
+  DONE = 'DONE',
+  PENDING = 'PENDING',
+}
+
+export interface IWitness {
+  signature: string;
+  account: string;
+  status: WitnessesStatus;
+}
+
 export interface ITransactionResponse extends Transaction {
   assets: ITransferAsset[];
 }
