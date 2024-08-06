@@ -78,40 +78,35 @@ export class TransactionController {
       const hasWorkspace = workspaceList && workspaceList.length > 0;
       
       const qb = Transaction.createQueryBuilder('t')
-        .leftJoin(
-          't.witnesses', 
-          'w', 
-          hasSingle 
-            ? `w.status = :pendingStatus AND w.account = :userAddress` 
-            : `w.status = :pendingStatus`, 
-          hasSingle 
-            ? { pendingStatus: WitnessStatus.PENDING, userAddress: user.address } 
-            : { pendingStatus: WitnessStatus.PENDING }
-        )
-        .leftJoin(
-          't.predicate', 
-          'p', 
-          hasPredicate ? 'p.id = :predicateId' : '1=1', 
-          hasPredicate ? { predicateId: predicateId[0] } : {}
-        )
-        .leftJoin(
-          'p.workspace', 
-          'wks', 
-          hasWorkspace ? 'wks.id IN (:...workspaceList)' : '1=1', 
-          hasWorkspace ? { workspaceList } : {}
-        )
-        .addSelect([
-          't.status',
-          't.predicate_id',  
-          'w.account', 
-          'w.status', 
-          'w.signature', 
-          'p.workspace_id'
-        ])
-        .where('t.status = :status', { status: TransactionStatus.AWAIT_REQUIREMENTS });
+      .innerJoin(
+        't.witnesses', 
+        'w', 
+        hasSingle 
+          ? `w.status = :pendingStatus AND w.account = :userAddress` 
+          : `w.status = :pendingStatus`, 
+        hasSingle 
+          ? { pendingStatus: WitnessStatus.PENDING, userAddress: user.address } 
+          : { pendingStatus: WitnessStatus.PENDING }
+      )
+      .innerJoin(
+        't.predicate', 
+        'p', 
+        hasPredicate ? 'p.id = :predicateId' : '1=1', 
+        hasPredicate ? { predicateId: predicateId[0] } : {}
+      )
+      .innerJoin(
+        'p.workspace', 
+        'wks', 
+        hasWorkspace ? 'wks.id IN (:...workspaceList)' : '1=1', 
+        hasWorkspace ? { workspaceList } : {}
+      )
+      .addSelect([
+        't.status'
+      ])
+      .where('t.status = :status', { status: TransactionStatus.AWAIT_REQUIREMENTS });
       
       const result = await qb.getCount();
-      
+
       return successful({
         ofUser: result,
         transactionsBlocked: result > 0,
