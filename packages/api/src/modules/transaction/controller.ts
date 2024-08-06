@@ -84,12 +84,22 @@ export class TransactionController {
       workspaceList?.length > 0 &&
         qb.andWhere('p.workspace_id IN (:...workspaceList)', { workspaceList });
 
-      const witnessFilter = hasSingle
-        ? `$.witnesses[*] ? (@.status == $witnessStatus && @.account == $userAddress)`
-        : `$.witnesses[*] ? (@.status == $witnessStatus)`;
+      const witnessQuery = hasSingle
+        ? `
+          EXISTS (
+            SELECT 1
+            FROM jsonb_array_elements(t.resume->'witnesses') AS witness
+            WHERE (witness->>'status')::text = :witnessStatus
+              AND (witness->>'account')::text = :userAddress
+          )`
+        : `
+          EXISTS (
+            SELECT 1
+            FROM jsonb_array_elements(t.resume->'witnesses') AS witness
+            WHERE (witness->>'status')::text = :witnessStatus
+          )`;
 
-      qb.andWhere(`jsonb_path_exists(t.resume, :witnessFilter)`, {
-        witnessFilter,
+      qb.andWhere(witnessQuery, {
         witnessStatus: WitnessStatus.PENDING,
         ...(hasSingle && { userAddress: user.address }),
       });
