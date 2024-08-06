@@ -11,3 +11,4 @@ export * from './cronJobs';
 export * from './balance';
 export * from './assets';
 export * from './runMode';
+export * from './witnessesUpdatedAt';
