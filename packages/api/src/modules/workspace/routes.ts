@@ -27,7 +27,7 @@ router.get(
     PermissionRoles.MANAGER,
     PermissionRoles.VIEWER,
   ]),
-  handleResponse(workspaceController.getBalance),
+  handleResponse(workspaceController.fetchPredicateData),
 );
 
 router.post(
