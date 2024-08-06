@@ -13,7 +13,12 @@ import { NotificationTitle, Predicate, Transaction } from '@models/index';
 import { IPredicateService } from '@modules/predicate/types';
 
 import { error, ErrorTypes, NotFound } from '@utils/error';
-import { bindMethods, Responses, successful } from '@utils/index';
+import {
+  bindMethods,
+  generateWitnessesUpdatedAt,
+  Responses,
+  successful,
+} from '@utils/index';
 
 import { IAddressBookService } from '../addressBook/types';
 import { INotificationService } from '../notification/types';
@@ -34,6 +39,7 @@ import {
   ITransactionService,
   TransactionHistory,
 } from './types';
+import { format } from 'date-fns';
 
 export class TransactionController {
   private transactionService: ITransactionService;
@@ -62,43 +68,30 @@ export class TransactionController {
         workspace,
         user,
       );
+
       const qb = Transaction.createQueryBuilder('t')
-        .leftJoin('t.witnesses', 'w')
         .leftJoin('t.predicate', 'p')
-        .addSelect([
-          't.status',
-          't.predicate_id',
-          'w.account',
-          'w.status',
-          'w.signature',
-          'p.workspace_id',
-        ])
+        .addSelect(['t.status', 't.predicate_id', 'p.workspace_id'])
         .where('t.status = :status', {
           status: TransactionStatus.AWAIT_REQUIREMENTS,
         });
+
       predicateId?.length > 0 &&
         qb.andWhere('t.predicate_id = :predicateId', {
           predicateId: predicateId[0],
         });
+
       workspaceList?.length > 0 &&
         qb.andWhere('p.workspace_id IN (:...workspaceList)', { workspaceList });
-      qb.andWhere(qb => {
-        const subQuery = qb
-          .subQuery()
-          .select('w.id')
-          .from(Witness, 'w')
-          .where('w.transaction_id = t.id')
-          .andWhere('w.status = :witnessStatus', {
-            witnessStatus: WitnessStatus.PENDING,
-          });
 
-        if (hasSingle) {
-          subQuery.andWhere('w.account = :userAddress', {
-            userAddress: user.address,
-          });
-        }
+      const witnessFilter = hasSingle
+        ? `$.witnesses[*] ? (@.status == $witnessStatus && @.account == $userAddress)`
+        : `$.witnesses[*] ? (@.status == $witnessStatus)`;
 
-        return `EXISTS (${subQuery.getQuery()})`;
+      qb.andWhere(`jsonb_path_exists(t.resume, :witnessFilter)`, {
+        witnessFilter,
+        witnessStatus: WitnessStatus.PENDING,
+        ...(hasSingle && { userAddress: user.address }),
       });
 
       const result = await qb.getCount();
@@ -148,6 +141,7 @@ export class TransactionController {
         account: member.address,
         status: WitnessStatus.PENDING,
         signature: null,
+        updatedAt: generateWitnessesUpdatedAt(),
       }));
 
       const newTransaction = await this.transactionService.create({
@@ -157,7 +151,7 @@ export class TransactionController {
         resume: {
           hash: transaction.hash,
           status: TransactionStatus.AWAIT_REQUIREMENTS,
-          witnesses: witnesses.filter(w => !!w.signature).map(w => w.signature),
+          witnesses,
           requiredSigners: predicate.minSigners,
           totalSigners: predicate.members.length,
           predicate: {
@@ -166,7 +160,6 @@ export class TransactionController {
           },
           id: '',
         },
-        witnesses,
         predicate,
         createdBy: user,
         summary,
@@ -218,13 +211,13 @@ export class TransactionController {
   static async formatTransactionsHistory(data: Transaction) {
     const userService = new UserService();
     const results = [];
-    const _witnesses = data.witnesses.filter(
+    const _witnesses = data.resume.witnesses.filter(
       witness =>
         witness.status === WitnessStatus.DONE ||
         witness.status === WitnessStatus.REJECTED,
     );
 
-    const witnessRejected = data.witnesses.filter(
+    const witnessRejected = data.resume.witnesses.filter(
       witness => witness.status === WitnessStatus.REJECTED,
     );
 
@@ -344,17 +337,10 @@ export class TransactionController {
   }: ISignByIdRequest) {
     try {
       const transaction = await this.transactionService.findById(id);
-      const {
-        witnesses,
-        resume,
-        predicate,
-        name,
-        id: transactionId,
-        hash,
-      } = transaction;
+      const { resume, predicate, name, id: transactionId, hash } = transaction;
       const _resume = resume;
 
-      const witness = witnesses.find(w => w.account === account);
+      const witness = resume.witnesses.find(w => w.account === account);
 
       if (signer && confirm === 'true') {
         const acc_signed =
@@ -379,11 +365,16 @@ export class TransactionController {
           });
         }
 
-        await this.witnessService.update(witness.id, {
-          signature: signer,
-          status: confirm ? WitnessStatus.DONE : WitnessStatus.REJECTED,
-        }),
-          _resume.witnesses.push(signer);
+        _resume.witnesses = _resume.witnesses.map(witness =>
+          witness.account === account
+            ? {
+                ...witness,
+                signature: signer,
+                status: confirm ? WitnessStatus.DONE : WitnessStatus.REJECTED,
+                updatedAt: generateWitnessesUpdatedAt(),
+              }
+            : witness,
+        );
 
         const statusField = await this.transactionService.validateStatus(id);
 

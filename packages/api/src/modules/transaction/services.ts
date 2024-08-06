@@ -1,4 +1,5 @@
 import {
+  IWitnesses,
   TransactionProcessStatus,
   TransactionStatus,
   Transfer,
@@ -92,7 +93,6 @@ export class TransactionService implements ITransactionService {
     return await Transaction.findOne({
       where: { id },
       relations: [
-        'witnesses',
         'predicate',
         'predicate.members',
         'predicate.workspace',
@@ -145,7 +145,6 @@ export class TransactionService implements ITransactionService {
         't.updatedAt',
         't.type',
       ])
-      .leftJoin('t.witnesses', 'witnesses')
       .leftJoin('t.predicate', 'predicate')
       .leftJoin('predicate.members', 'members')
       .leftJoin('predicate.workspace', 'workspace')
@@ -154,10 +153,6 @@ export class TransactionService implements ITransactionService {
         'predicate.id',
         'predicate.minSigners',
         'predicate.predicateAddress',
-        'witnesses.id',
-        'witnesses.account',
-        'witnesses.signature',
-        'witnesses.status',
         'members.id',
         'members.avatar',
         'members.address',
@@ -300,9 +295,8 @@ export class TransactionService implements ITransactionService {
   async validateStatus(transactionId: string): Promise<TransactionStatus> {
     return await Transaction.createQueryBuilder('t')
       .where('t.id = :id', { id: transactionId })
-      .leftJoin('t.witnesses', 'witnesses')
       .leftJoin('t.predicate', 'predicate')
-      .addSelect(['witnesses.status', 'predicate.minSigners'])
+      .addSelect(['t.resume', 'predicate.minSigners'])
       .getOne()
       .then((transaction: Transaction) => {
         const witness: {
@@ -314,7 +308,7 @@ export class TransactionService implements ITransactionService {
           REJECTED: 0,
           PENDING: 0,
         };
-        transaction.witnesses.map((item: Witness) => {
+        transaction.resume.witnesses.map((item: IWitnesses) => {
           witness[item.status]++;
         });
         const totalSigners =
@@ -387,18 +381,9 @@ export class TransactionService implements ITransactionService {
       txData,
       status,
       resume,
-      witnesses,
     } = await Transaction.createQueryBuilder('t')
       .innerJoin('t.predicate', 'p') //predicate
-      .innerJoin('t.witnesses', 'w') //witnesses
-      .addSelect([
-        't.id',
-        't.tx_data',
-        't.resume',
-        't.status',
-        'p.provider',
-        'w.signature',
-      ])
+      .addSelect(['t.id', 't.tx_data', 't.resume', 't.status', 'p.provider'])
       .where('t.id = :id', { id: bsafe_txid })
       .getOne();
 
@@ -411,7 +396,7 @@ export class TransactionService implements ITransactionService {
         ...(txData.type === TransactionType.Create // is required add on 1st position
           ? [hexlify(txData.witnesses[txData.bytecodeWitnessIndex])]
           : []),
-        ...witnesses.filter(w => !!w.signature).map(w => w.signature),
+        ...resume.witnesses.filter(w => !!w.signature).map(w => w.signature),
       ],
     });
 
