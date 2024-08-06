@@ -1,4 +1,4 @@
-import { Asset, BakoSafe, TransactionStatus } from 'bakosafe';
+import { BakoSafe, TransactionStatus } from 'bakosafe';
 
 import { Predicate, TypeUser, User, PermissionAccess } from '@src/models';
 import { PermissionRoles, Workspace } from '@src/models/Workspace';
