@@ -432,16 +432,13 @@ export class PredicateService implements IPredicateService {
     }
   }
 
-  async instancePredicate(predicateId: string): Promise<Vault> {
-    const predicate = await this.findById(predicateId);
-
-    const configurable: IConfVault = {
-      ...JSON.parse(predicate.configurable),
-    };
-
+  async instancePredicate(
+    configurable: string,
+    version: string,
+  ): Promise<Vault> {
     return Vault.create({
-      configurable,
-      version: predicate.version.code,
+      configurable: JSON.parse(configurable),
+      version,
     });
   }
 }

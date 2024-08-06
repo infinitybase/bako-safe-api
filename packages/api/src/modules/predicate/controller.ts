@@ -203,20 +203,31 @@ export class PredicateController {
 
   async hasReservedCoins({ params: { predicateId } }: IFindByIdRequest) {
     try {
-      const predicate_txs = await Transaction.createQueryBuilder('t')
-        .leftJoin('t.assets', 'a')
-        .leftJoin('t.predicate', 'p')
-        .addSelect(['t', 'a.assetId', 'a.amount', 'p.id'])
-        // not moved to id, because we need add join to predicate
-        .where('p.id = :predicateId', { predicateId })
-        .andWhere('t.status IN (:...status)', {
+      const {
+        transactions: predicate_txs,
+        version: { code: versionCode },
+        configurable,
+      } = await Predicate.createQueryBuilder('p')
+        .leftJoin('p.transactions', 't', 't.status IN (:...status)', {
           status: [
             TransactionStatus.AWAIT_REQUIREMENTS,
             TransactionStatus.PENDING_SENDER,
           ],
         })
-        .getMany();
+        .leftJoin('t.assets', 'a')
+        .leftJoin('p.version', 'pv')
+        .addSelect([
+          't',
+          'a.assetId',
+          'a.amount',
+          'p.id',
+          'p.configurable',
+          'pv.code',
+        ])
+        .where('p.id = :predicateId', { predicateId })
+        .getOne();
 
+      //todo: replace by a util on model Transaction
       const tx_reserved_balances = predicate_txs.reduce(
         (accumulator, transaction: Transaction) => {
           transaction.assets.forEach((asset: Asset) => {
@@ -236,8 +247,11 @@ export class PredicateController {
         [] as CoinQuantity[],
       );
 
-      const instance = await this.predicateService.instancePredicate(predicateId);
-      const { balances } = await instance.getBalances();
+      const instance = await this.predicateService.instancePredicate(
+        configurable,
+        versionCode,
+      );
+      const balances = (await instance.getBalances()).balances;
       const assets =
         tx_reserved_balances.length > 0
           ? subCoins(balances, tx_reserved_balances)
@@ -255,7 +269,7 @@ export class PredicateController {
         Responses.Ok,
       );
     } catch (e) {
-      console.log(e)
+      console.log(e);
       return error(e.error, e.statusCode);
     }
   }
