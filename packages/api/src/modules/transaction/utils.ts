@@ -101,7 +101,7 @@ export const formatPayloadToCreateTransaction = (
     resume: {
       hash: deposit.id,
       status: TransactionStatus.SUCCESS,
-      witnesses: [predicate.owner.address],
+      witnesses: [],
       requiredSigners: predicate.minSigners,
       totalSigners: predicate.members.length,
       predicate: {
@@ -111,13 +111,6 @@ export const formatPayloadToCreateTransaction = (
       id: '',
     },
     assets: formattedAssets,
-    witnesses: [
-      {
-        ...predicate.owner,
-        account: predicate.owner.id,
-        createdAt: deposit.date,
-      },
-    ],
     predicate,
     createdBy: predicate.owner,
     summary: null,
