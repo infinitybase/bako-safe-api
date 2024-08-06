@@ -16,7 +16,8 @@ export class AddWitnessesToTransactionResume1722946311869
                 jsonb_build_object(
                   'signature', w.signature,
                   'account', w.account,
-                  'status', w.status
+                  'status', w.status,
+                  'updatedAt', w.updated_at
                 )
               ),
               '[]'::jsonb
@@ -32,22 +33,16 @@ export class AddWitnessesToTransactionResume1722946311869
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Extract witnesses data from resume JSON and insert back into witnesses table
     await queryRunner.query(`
-        INSERT INTO witnesses (signature, account, status, transaction_id)
+        INSERT INTO witnesses (signature, account, status, transaction_id, updated_at)
         SELECT
           witness->>'signature',
           witness->>'account',
           witness->>'status',
-          transactions.id
+          transactions.id,
+          witness->>'updatedAt'
         FROM transactions,
         jsonb_array_elements(transactions.resume->'witnesses') as witness
         WHERE transactions.status != '${TransactionStatus.SUCCESS}'
-      `);
-
-    // Remove witnesses from resume JSON
-    await queryRunner.query(`
-        UPDATE transactions
-        SET resume = resume - 'witnesses'
-        WHERE status != '${TransactionStatus.SUCCESS}'
       `);
   }
 }
