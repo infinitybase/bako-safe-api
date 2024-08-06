@@ -2,6 +2,7 @@ import {
   ITransactionResume,
   ITransactionSummary,
   ITransferAsset,
+  IWitnesses,
   TransactionStatus,
   Transfer,
   Vault,
@@ -35,18 +36,6 @@ export enum TransactionHistory {
   SEND = 'SEND',
 }
 
-export enum WitnessesStatus {
-  REJECTED = 'REJECTED',
-  DONE = 'DONE',
-  PENDING = 'PENDING',
-}
-
-export interface IWitness {
-  signature: string;
-  account: string;
-  status: WitnessesStatus;
-}
-
 export interface ITransactionResponse extends Transaction {
   assets: ITransferAsset[];
 }
@@ -62,7 +51,7 @@ export interface ICreateTransactionPayload {
     amount: string;
     to: string;
   }[];
-  witnesses: IWitness[];
+  witnesses: IWitnesses[];
   resume?: ITransactionResume;
   sendTime?: Date;
   gasUsed?: string;
@@ -191,7 +180,7 @@ interface IListRequestSchema extends ValidatedRequestSchema {
 export interface ITCreateService
   extends Partial<Omit<Transaction, 'assets' | 'witnesses'>> {
   assets: ITransferAsset[];
-  witnesses: IWitness[];
+  witnesses: IWitnesses[];
 }
 
 export type ICreateTransactionRequest = AuthValidatedRequest<ICreateTransactionRequestSchema>;

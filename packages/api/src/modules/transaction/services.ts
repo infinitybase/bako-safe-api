@@ -3,6 +3,7 @@ import {
   TransactionStatus,
   Transfer,
   Vault,
+  WitnessStatus,
 } from 'bakosafe';
 import {
   hexlify,
@@ -17,12 +18,7 @@ import { Brackets } from 'typeorm';
 
 import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
 
-import {
-  NotificationTitle,
-  Transaction,
-  Witness,
-  WitnessesStatus,
-} from '@models/index';
+import { NotificationTitle, Transaction } from '@models/index';
 
 import { NotFound } from '@utils/error';
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
@@ -322,9 +318,9 @@ export class TransactionService implements ITransactionService {
           witness[item.status]++;
         });
         const totalSigners =
-          witness[WitnessesStatus.DONE] +
-          witness[WitnessesStatus.REJECTED] +
-          witness[WitnessesStatus.PENDING];
+          witness[WitnessStatus.DONE] +
+          witness[WitnessStatus.REJECTED] +
+          witness[WitnessStatus.PENDING];
 
         if (
           transaction.status === TransactionStatus.SUCCESS ||
@@ -334,12 +330,12 @@ export class TransactionService implements ITransactionService {
           return transaction.status;
         }
 
-        if (witness[WitnessesStatus.DONE] >= transaction.predicate.minSigners) {
+        if (witness[WitnessStatus.DONE] >= transaction.predicate.minSigners) {
           return TransactionStatus.PENDING_SENDER;
         }
 
         if (
-          totalSigners - witness[WitnessesStatus.REJECTED] <
+          totalSigners - witness[WitnessStatus.REJECTED] <
           transaction.predicate.minSigners
         ) {
           return TransactionStatus.DECLINED;

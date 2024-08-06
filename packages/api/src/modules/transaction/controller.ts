@@ -1,4 +1,4 @@
-import { TransactionStatus } from 'bakosafe';
+import { TransactionStatus, WitnessStatus } from 'bakosafe';
 import { hashMessage, Provider, Signer } from 'fuels';
 
 import { PermissionRoles, Workspace } from '@src/models/Workspace';
@@ -8,13 +8,7 @@ import {
 } from '@src/utils/error/Unauthorized';
 import { validatePermissionGeneral } from '@src/utils/permissionValidate';
 
-import {
-  NotificationTitle,
-  Predicate,
-  Transaction,
-  Witness,
-  WitnessesStatus,
-} from '@models/index';
+import { NotificationTitle, Predicate, Transaction } from '@models/index';
 
 import { IPredicateService } from '@modules/predicate/types';
 
@@ -95,7 +89,7 @@ export class TransactionController {
           .from(Witness, 'w')
           .where('w.transaction_id = t.id')
           .andWhere('w.status = :witnessStatus', {
-            witnessStatus: WitnessesStatus.PENDING,
+            witnessStatus: WitnessStatus.PENDING,
           });
 
         if (hasSingle) {
@@ -152,7 +146,7 @@ export class TransactionController {
 
       const witnesses = predicate.members.map(member => ({
         account: member.address,
-        status: WitnessesStatus.PENDING,
+        status: WitnessStatus.PENDING,
         signature: null,
       }));
 
@@ -226,12 +220,12 @@ export class TransactionController {
     const results = [];
     const _witnesses = data.witnesses.filter(
       witness =>
-        witness.status === WitnessesStatus.DONE ||
-        witness.status === WitnessesStatus.REJECTED,
+        witness.status === WitnessStatus.DONE ||
+        witness.status === WitnessStatus.REJECTED,
     );
 
     const witnessRejected = data.witnesses.filter(
-      witness => witness.status === WitnessesStatus.REJECTED,
+      witness => witness.status === WitnessStatus.REJECTED,
     );
 
     results.push({
@@ -251,7 +245,7 @@ export class TransactionController {
 
       results.push({
         type:
-          witness.status === WitnessesStatus.REJECTED
+          witness.status === WitnessStatus.REJECTED
             ? TransactionHistory.DECLINE
             : TransactionHistory.SIGN,
         date: witness.updatedAt,
@@ -377,7 +371,7 @@ export class TransactionController {
       }
 
       if (witness) {
-        if (witness.status !== WitnessesStatus.PENDING) {
+        if (witness.status !== WitnessStatus.PENDING) {
           throw new NotFound({
             detail: 'Transaction was already declined.',
             title: UnauthorizedErrorTitles.INVALID_SIGNATURE,
@@ -387,7 +381,7 @@ export class TransactionController {
 
         await this.witnessService.update(witness.id, {
           signature: signer,
-          status: confirm ? WitnessesStatus.DONE : WitnessesStatus.REJECTED,
+          status: confirm ? WitnessStatus.DONE : WitnessStatus.REJECTED,
         }),
           _resume.witnesses.push(signer);
 

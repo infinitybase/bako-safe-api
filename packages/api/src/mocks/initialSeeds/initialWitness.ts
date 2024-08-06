@@ -1,18 +1,17 @@
-import { IWitness, WitnessesStatus } from '@src/modules/transaction/types';
-
 import { accounts } from '../accounts';
+import { IWitnesses, WitnessStatus } from 'bakosafe';
 
-export const generateInitialWitness = async (): Promise<IWitness[]> => {
-  const w1: IWitness = {
+export const generateInitialWitness = async (): Promise<IWitnesses[]> => {
+  const w1: IWitnesses = {
     signature: null,
     account: accounts['USER_1'].address,
-    status: WitnessesStatus.PENDING,
+    status: WitnessStatus.PENDING,
   };
 
-  const w2: IWitness = {
+  const w2: IWitnesses = {
     signature: null,
     account: accounts['USER_1'].address,
-    status: WitnessesStatus.PENDING,
+    status: WitnessStatus.PENDING,
   };
 
   return [w1, w2];
