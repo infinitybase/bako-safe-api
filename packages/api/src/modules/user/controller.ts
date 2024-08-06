@@ -119,6 +119,7 @@ export class UserController {
           owner: workspace.owner,
           avatar: workspace.avatar,
           permission: workspace.permissions[user.id],
+          description: workspace.description,
         },
       },
       Responses.Ok,
