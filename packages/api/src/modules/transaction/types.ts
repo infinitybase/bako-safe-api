@@ -51,7 +51,6 @@ export interface ICreateTransactionPayload {
     amount: string;
     to: string;
   }[];
-  witnesses: IWitnesses[];
   resume?: ITransactionResume;
   sendTime?: Date;
   gasUsed?: string;
@@ -177,11 +176,8 @@ interface IListRequestSchema extends ValidatedRequestSchema {
     type: TransactionType;
   };
 }
-export interface ITCreateService
-  extends Partial<Omit<Transaction, 'assets' | 'witnesses'>> {
-  assets: ITransferAsset[];
-  witnesses: IWitnesses[];
-}
+
+export type ITCreateService = Partial<Transaction>;
 
 export type ICreateTransactionRequest = AuthValidatedRequest<ICreateTransactionRequestSchema>;
 export type ICreateTransactionHistoryRequest = AuthValidatedRequest<ICreateTransactionHistoryRequestSchema>;
