@@ -386,6 +386,13 @@ export class TransactionController {
             : witness,
         );
 
+        await this.transactionService.update(id, {
+          resume: {
+            ..._resume,
+            witnesses: _resume.witnesses,
+          },
+        });
+
         const statusField = await this.transactionService.validateStatus(id);
 
         const result = await this.transactionService.update(id, {
