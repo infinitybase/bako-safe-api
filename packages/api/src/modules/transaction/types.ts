@@ -9,7 +9,7 @@ import {
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 import { Provider, TransactionRequest } from 'fuels';
 
-import { Transaction, TransactionType, Witness } from '@models/index';
+import { Transaction, TransactionType } from '@models/index';
 
 import { AuthValidatedRequest } from '@middlewares/auth/types';
 
@@ -62,7 +62,7 @@ export interface ICreateTransactionPayload {
     amount: string;
     to: string;
   }[];
-  witnesses: Partial<Witness>[];
+  witnesses: IWitness[];
   resume?: ITransactionResume;
   sendTime?: Date;
   gasUsed?: string;
@@ -191,7 +191,7 @@ interface IListRequestSchema extends ValidatedRequestSchema {
 export interface ITCreateService
   extends Partial<Omit<Transaction, 'assets' | 'witnesses'>> {
   assets: ITransferAsset[];
-  witnesses: Partial<Witness>[];
+  witnesses: IWitness[];
 }
 
 export type ICreateTransactionRequest = AuthValidatedRequest<ICreateTransactionRequestSchema>;
