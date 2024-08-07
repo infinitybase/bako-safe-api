@@ -88,6 +88,8 @@ export type ICheckNicknameRequest = UnloggedRequest<ICheckNickname>;
 
 export type ICheckHardwareRequest = UnloggedRequest<ICheckHardware>;
 
+export type IMeInfoRequest = AuthValidatedRequest<null>;
+
 export interface IUserService {
   filter(filter: IFilterParams): this;
   paginate(pagination: PaginationParams): this;
