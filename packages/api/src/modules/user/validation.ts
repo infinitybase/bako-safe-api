@@ -1,6 +1,7 @@
 import Joi from 'joi';
 
 import { validator } from '@utils/index';
+import { Address } from 'fuels';
 
 export const PayloadCreateUserSchema = validator.body(
   Joi.object({
@@ -9,7 +10,16 @@ export const PayloadCreateUserSchema = validator.body(
     password: Joi.string(),
     active: Joi.boolean(),
     type: Joi.string().required(),
-    address: Joi.string().required(),
+    address: Joi.string()
+      .required()
+      .custom((value, helpers) => {
+        try {
+          const address = Address.fromString(value);
+          return address.toB256();
+        } catch (error) {
+          return helpers.message({ custom: 'Invalid address' });
+        }
+      }),
     provider: Joi.string().required(),
     webauthn: Joi.object().optional(), //todo: type corretly this
   }),

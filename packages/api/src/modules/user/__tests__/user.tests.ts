@@ -22,12 +22,13 @@ describe('[USER]', () => {
   test(
     'Create user',
     async () => {
-      const code_length = `code${Address.fromRandom().toHexString()}`.length;
+      const address = Address.fromRandom();
+      const code_length = `code${address.toHexString()}`.length;
       await api
         .post('/user/', {
           name: `${new Date().getTime()} - Create user test`,
           type: TypeUser.FUEL,
-          address: Address.fromRandom().toAddress(),
+          address: address.toAddress(),
           provider: BakoSafe.getProviders('CHAIN_URL'),
         })
         .then(({ data, status }) => {
@@ -37,6 +38,34 @@ describe('[USER]', () => {
           expect(data).toHaveProperty('origin', UI_URL);
           expect(data).toHaveProperty('code');
           expect(data.code.length).toBe(code_length);
+        });
+    },
+    40 * 1000,
+  );
+
+  test(
+    'Error when creating user with invalid payload',
+    async () => {
+      expect.assertions(3);
+      await api
+        .post('/user/', {
+          name: `${new Date().getTime()} - Create user test`,
+          type: TypeUser.FUEL,
+          address: 'invalid_address',
+          provider: BakoSafe.getProviders('CHAIN_URL'),
+        })
+        .catch(reason => {
+          const { response } = reason;
+          expect(response.status).toBe(400);
+          expect(response.data.origin).toBe('body');
+          expect(response.data.errors).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                title: 'Invalid address',
+                detail: 'Invalid address',
+              }),
+            ]),
+          );
         });
     },
     40 * 1000,

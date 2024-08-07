@@ -193,11 +193,9 @@ export class UserController {
   async create(req: ICreateRequest) {
     try {
       const { address, name } = req.body;
-      
-      const _address = Address.fromString(address).toHexString();
-      console.log(_address)
+
       //verify user exists
-      let existingUser = await this.userService.findByAddress(_address);
+      let existingUser = await this.userService.findByAddress(address);
 
       if (!existingUser) {
         //verify name exists
@@ -209,21 +207,15 @@ export class UserController {
             detail: `User with name ${name} already exists`,
           });
         }
-        console.log('[presave]: ', {
-          ...req.body,
-          address: _address,
-          name: name ?? _address,
-          avatar: IconUtils.user(),
-        })
+
         //create
         existingUser = await this.userService.create({
           ...req.body,
-          address: _address,
-          name: name ?? _address,
+          address,
+          name: name ?? address,
           avatar: IconUtils.user(),
         });
-      } 
-      console.log('[EXISTING_USER]', existingUser)
+      }
 
       const code = await new RecoverCodeService()
         .create({
