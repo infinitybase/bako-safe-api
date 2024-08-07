@@ -5,7 +5,7 @@ import app from '@src/server/app';
 const calculateBalanceUSD = (balances: CoinQuantity[]): string => {
   let balanceUSD = 0;
 
-  balances.forEach(balance => {
+  balances?.forEach(balance => {
     const formattedAmount = parseFloat(balance.amount.format());
     const priceUSD = app._quoteCache.getQuote(balance.assetId);
     balanceUSD += formattedAmount * priceUSD;
@@ -14,24 +14,23 @@ const calculateBalanceUSD = (balances: CoinQuantity[]): string => {
   return balanceUSD.toFixed(2);
 };
 
-const subtractReservedCoinsFromBalances = (
+const subCoins = (
   balances: CoinQuantity[],
   reservedCoins: CoinQuantity[],
 ): CoinQuantity[] => {
-  return balances.reduce((acc, balance) => {
-    const reservedCoin = reservedCoins.find(
-      coin => coin.assetId === balance.assetId,
-    );
-    const adjustedAmount = reservedCoin
-      ? balance.amount.sub(reservedCoin.amount)
-      : balance.amount;
+  const reservedMap = new Map(
+    reservedCoins.map(coin => [coin.assetId, coin.amount]),
+  );
 
-    if (adjustedAmount.gt(bn.parseUnits('0'))) {
-      acc.push({ ...balance, amount: adjustedAmount });
-    }
-
-    return acc;
-  }, [] as CoinQuantity[]);
+  return balances
+    .map(balance => {
+      const reservedAmount = reservedMap.get(balance.assetId);
+      const adjustedAmount = reservedAmount
+        ? balance.amount.sub(reservedAmount)
+        : balance.amount;
+      return { ...balance, amount: adjustedAmount };
+    })
+    .filter(balance => balance.amount.gt(bn.parseUnits('0')));
 };
 
-export { calculateBalanceUSD, subtractReservedCoinsFromBalances };
+export { calculateBalanceUSD, subCoins };

@@ -1,17 +1,24 @@
-FROM arm64v8/node:18.18.2-alpine
+FROM arm64v8/node:22-alpine
 
-# Create app directory
+# Install dependencies necessary for node-gyp
+RUN apk add --no-cache python3 make g++ \
+    && npm install -g node-gyp
+
+# Install pnpm
+RUN npm install -g pnpm
+
+# Create the application directory
 WORKDIR /gateway
 ADD . /gateway
 
-# Install app dependencies
-RUN yarn install
+# Install application dependencies
+RUN pnpm install
 
-# Build
-RUN yarn build
+# Build the application
+RUN pnpm build
 
 # Expose the application port
 EXPOSE 4444
 
 # Start the application
-ENTRYPOINT ["yarn", "start"]
+ENTRYPOINT ["pnpm", "start"]

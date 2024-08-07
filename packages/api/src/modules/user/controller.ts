@@ -1,7 +1,7 @@
 import { addMinutes } from 'date-fns';
 
 import { RecoverCode, RecoverCodeType } from '@src/models';
-import { TypeUser, User } from '@src/models/User';
+import { User } from '@src/models/User';
 import { bindMethods } from '@src/utils/bindMethods';
 
 import {
@@ -25,6 +25,7 @@ import {
   IDeleteRequest,
   IFindOneRequest,
   IListRequest,
+  IMeInfoRequest,
   IMeRequest,
   IUpdateRequest,
   IUserService,
@@ -100,7 +101,33 @@ export class UserController {
     }
   }
 
-  async me(req: IMeRequest) {
+  async latestInfo(req: IMeInfoRequest) {
+    const { user, workspace } = req;
+
+    return successful(
+      {
+        id: user.id,
+        name: user.name,
+        type: user.type,
+        avatar: user.avatar,
+        address: user.address,
+        webauthn: user.webauthn,
+        onSingleWorkspace:
+          workspace.single && workspace.name.includes(`[${user.id}]`),
+        workspace: {
+          id: workspace.id,
+          name: workspace.name,
+          owner: workspace.owner,
+          avatar: workspace.avatar,
+          permission: workspace.permissions[user.id],
+          description: workspace.description,
+        },
+      },
+      Responses.Ok,
+    );
+  }
+
+  async predicates(req: IMeRequest) {
     try {
       //list all 8 last vaults of user
       const { workspace, user } = req;
@@ -120,13 +147,6 @@ export class UserController {
 
       return successful(
         {
-          workspace: {
-            id: workspace.id,
-            name: workspace.name,
-            avatar: workspace.avatar,
-            owner: workspace.owner,
-            description: workspace.description,
-          },
           predicates,
         },
         Responses.Ok,

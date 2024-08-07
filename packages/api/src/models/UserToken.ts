@@ -41,7 +41,9 @@ class UserToken extends Base {
   @Column({ type: 'jsonb' })
   payload: string;
 
-  @Column()
+  @Column({
+    name: 'expired_at',
+  })
   expired_at?: Date;
 
   @JoinColumn({ name: 'workspace_id' })

@@ -1,20 +1,22 @@
-FROM arm64v8/node:18.18.2-alpine
+FROM arm64v8/node:22-alpine
 
-# Create app directory
+# Install pnpm globally
+RUN npm install -g pnpm
+
+# Create the application directory
 WORKDIR /api
+
+# Add the application content to the working directory
 ADD . /api
 
-# Install app dependencies
-RUN yarn install
+# Install the application dependencies using pnpm
+RUN pnpm install
 
-# Install pm2
-RUN yarn global add pm2
-
-# Build
-RUN yarn build
+# Build the application
+RUN pnpm build
 
 # Expose the application port
 EXPOSE 3333
 
 # Start the application
-ENTRYPOINT ["yarn", "start"]
+ENTRYPOINT ["pnpm", "start"]

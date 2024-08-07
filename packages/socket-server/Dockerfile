@@ -1,19 +1,20 @@
-FROM arm64v8/node:18.18.2-alpine
+FROM arm64v8/node:22-alpine
 
 # Create app directory
-WORKDIR socket
+WORKDIR /socket
 ADD . /socket
 
+# Install pnpm
+RUN npm install -g pnpm
+
 # Install app dependencies
-RUN yarn install
+RUN pnpm install
 
-# Install pm2
-RUN yarn global add pm2
+# Build the application
+RUN pnpm build
 
-# Build
-RUN yarn build
-
-# Run!
+# Expose application port
 EXPOSE 3001
 
-ENTRYPOINT ["yarn", "start"]
+# Start the application
+ENTRYPOINT ["pnpm", "start"]

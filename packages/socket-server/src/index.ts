@@ -6,25 +6,33 @@ import { txConfirm, txRequest } from '@modules/transactions'
 import { DatabaseClass } from '@utils/database'
 import { SocketEvents } from './types'
 
-const { PORT, TIMEOUT_DICONNECT, APP_NAME } = process.env
+const { SOCKET_PORT, SOCKET_TIMEOUT_DICONNECT, SOCKET_NAME } = process.env
 
 const app = express()
 let database: DatabaseClass
 const server = http.createServer(app)
 const io = new socketIo.Server(server, {
-	connectTimeout: Number(TIMEOUT_DICONNECT), // 30 mins
+	connectTimeout: Number(SOCKET_TIMEOUT_DICONNECT), // 60 mins
+	cors: {
+		origin: '*'
+	}
 })
 
 // Health Check
 app.get('/health', ({ res }) =>
-    res.status(200).send({ status: 'ok', message: `Health check ${process.env.APP_NAME} passed` }),
+    res.status(200).send({ status: 'ok', message: `Health check ${SOCKET_NAME} passed` }),
 );
 
 // Configuração do Socket.IO
 io.on(SocketEvents.CONNECT, async socket => {
-	console.log('Conexão estabelecida com o cliente:', socket.handshake.auth)
+	
 	const { sessionId, username, request_id } = socket.handshake.auth
-	await socket.join(`${sessionId}:${username}:${request_id}`)
+	const requestId = request_id === undefined ? '' : request_id
+
+	const room = `${sessionId}:${username}:${requestId}`
+
+	await socket.join(room)
+	console.log('Conexão estabelecida com o cliente:', room)
 	//console.log('[CONEXAO]: ', socket.handshake.auth, socket.id)
 	/* 
 		[UI] emite esse evento quando o usuário confirma a tx 
@@ -53,10 +61,12 @@ io.on(SocketEvents.CONNECT, async socket => {
 	// Lidar com mensagens recebidas do cliente
 	socket.on(SocketEvents.DEFAULT, data => {
 		const { sessionId, to, request_id } = data
-		const room = `${sessionId}:${to}:${request_id}`
-		console.log('Mensagem recebida do cliente:', {
-			data,
-		})
+		console.log('[SOCKET]: RECEIVED MESSAGE FROM', sessionId, to, request_id)
+		const requestId = request_id === undefined ? '' : request_id
+		const room = `${sessionId}:${to}:${requestId}`
+
+		console.log('[SOCKET]: SEND MESSAGE TO', room)
+
 		socket.to(room).emit(SocketEvents.DEFAULT, data)
 	})
 
@@ -65,8 +75,6 @@ io.on(SocketEvents.CONNECT, async socket => {
 		socket.disconnect(true)
 		socket.rooms.forEach(room => socket.leave(room))
 		socket.removeAllListeners()
-
-		//console.log(socket.listenersAny(), socket.getMaxListeners(), socket._cleanup())
 	})
 })
 
@@ -75,7 +83,7 @@ const databaseConnect = async () => {
 }
 
 // Iniciar o servidor
-const port = PORT || 3000
+const port = SOCKET_PORT || 3000
 server.listen(port, async () => {
 	await databaseConnect()
 	console.log(`Server runner on port ${port}`)

@@ -1,4 +1,3 @@
-import { IBakoSafeAuth, Vault } from "bakosafe";
 import { Address } from "fuels";
 
 import { Database } from "@/lib";
@@ -8,37 +7,24 @@ type GetApiToken = {
   userId: string;
 };
 
-type GetVault = {
-  code: string;
-  vaultId: string;
-  userAddress: string;
-};
-
 export class AuthService {
   constructor(private db: Database) {}
 
-  static async instance() {
-    return new AuthService(await Database.connect());
-  }
-
-  async getVaultFromApiToken(apiToken: string, userId: string) {
-    const { vaultId, provider, userAddress } = await this.getTokenData({
+  async getSession(apiToken: string, userId: string) {
+    const { vaultId, tokenConfig, userAddress } = await this.getTokenData({
       apiToken,
       userId,
     });
     const { code, codeId } = await this.createSession(userId);
     return {
-      vault: await this.getVault({ code, vaultId, userAddress }),
-      codeId,
+      vaultId,
+      userAddress,
+      tokenConfig,
+      code: {
+        value: code,
+        id: codeId,
+      },
     };
-  }
-
-  async getVault(params: GetVault) {
-    return Vault.create({
-      id: params.vaultId,
-      address: params.userAddress,
-      token: params.code,
-    });
   }
 
   async getTokenData(params: GetApiToken) {
@@ -47,7 +33,8 @@ export class AuthService {
     const query = `
       SELECT api_tokens.predicate_id,
              users.address,
-             predicates.provider
+             predicates.provider,
+             api_tokens.config
       FROM api_tokens
                INNER JOIN predicates ON api_tokens.predicate_id = predicates.id
                INNER JOIN predicate_members ON api_tokens.predicate_id = predicate_members.predicate_id
@@ -70,6 +57,7 @@ export class AuthService {
       vaultId: result.predicate_id,
       provider: result.provider,
       userAddress: result.address,
+      tokenConfig: result.config,
     };
   }
 
@@ -95,5 +83,9 @@ export class AuthService {
       WHERE id = $1 AND used = false
     `;
     await this.db.query(query, [id]);
+  }
+
+  get database() {
+    return this.db;
   }
 }

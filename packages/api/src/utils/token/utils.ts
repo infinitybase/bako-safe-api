@@ -1,4 +1,4 @@
-import { addMinutes, differenceInMinutes, isPast } from 'date-fns';
+import { addMinutes, differenceInMinutes, isPast, parseISO } from 'date-fns';
 
 import { RecoverCode, RecoverCodeType, User, Workspace } from '@src/models';
 import { AuthService } from '@src/modules/auth/services';
@@ -13,6 +13,7 @@ import { Unauthorized, UnauthorizedErrorTitles } from '@utils/error/Unauthorized
 
 import { recoverFuelSignature, recoverWebAuthnSignature } from './web3';
 import app from '@src/server/app';
+import exp from 'constants';
 
 const EXPIRES_IN = process.env.TOKEN_EXPIRATION_TIME ?? '20';
 const RENEWAL_EXPIRES_IN = process.env.RENEWAL_TOKEN_EXPIRATION_TIME ?? '10';
@@ -28,6 +29,7 @@ export class TokenUtils {
         break;
       case Encoder.WEB_AUTHN:
         address = await recoverWebAuthnSignature(digest, signature);
+
         break;
       default:
         throw new Unauthorized({
@@ -72,7 +74,7 @@ export class TokenUtils {
       });
     }
 
-    if (recoverCode.used || isPast(recoverCode.validAt)) {
+    if (recoverCode.used || isPast(new Date(recoverCode.validAt))) {
       throw new Unauthorized({
         type: ErrorTypes.Unauthorized,
         title: UnauthorizedErrorTitles.EXPIRED_TOKEN,
@@ -86,6 +88,10 @@ export class TokenUtils {
   static async recoverToken(signature: string) {
     const token = await app._sessionCache.getSession(signature);
 
+    // console.log('[recover]: ', JSON.stringify(token))
+    // console.log('[recover]: ', token.expired_at, new Date())
+
+
     if (!token) {
       throw new Unauthorized({
         type: ErrorTypes.Unauthorized,
@@ -94,7 +100,7 @@ export class TokenUtils {
       });
     }
 
-    if (isPast(token.expired_at)) {
+    if (isPast(new Date(token.expired_at))) {
       throw new Unauthorized({
         type: ErrorTypes.Unauthorized,
         title: UnauthorizedErrorTitles.EXPIRED_TOKEN,
@@ -142,54 +148,81 @@ export class TokenUtils {
   }
 
   static async createAuthToken(signature: string, digest: string, encoder: string) {
-    const address = await TokenUtils.verifySignature({
-      signature,
-      digest,
-      encoder,
-    });
-
-    if (!address)
-      throw new Unauthorized({
-        type: ErrorTypes.Unauthorized,
-        title: UnauthorizedErrorTitles.INVALID_SIGNATURE,
-        detail: `User not found`,
+    try{
+      const address = await TokenUtils.verifySignature({
+        signature,
+        digest,
+        encoder,
       });
-
-    const user = await TokenUtils.checkUserExists(address);
-    console.log('user', user)
-    await TokenUtils.invalidateRecoverCode(user, RecoverCodeType.AUTH);
-
-    const workspace = await TokenUtils.findSingleWorkspace(user.id);
-    await TokenUtils.revokeToken(user); // todo: verify if it's necessary
-
-    const sig = await new AuthService().signIn({
-      token: signature,
-      encoder: Encoder[encoder],
-      provider: user.provider,
-      expired_at: addMinutes(new Date(), Number(EXPIRES_IN)),
-      payload: digest,
-      user: user,
-      workspace,
-    });
-
-    return {
-      userToken: await this.getTokenBySignature(sig.accessToken),
-      signin: sig,
+  
+      // console.log('[createAuthToken]: ', address)
+  
+      if (!address)
+        throw new Unauthorized({
+          type: ErrorTypes.Unauthorized,
+          title: UnauthorizedErrorTitles.INVALID_SIGNATURE,
+          detail: `User not found`,
+        });
+  
+      const user = await TokenUtils.checkUserExists(address);
+  
+      // console.log('[createAuthToken]: ', user)
+  
+      await TokenUtils.invalidateRecoverCode(user, RecoverCodeType.AUTH);
+  
+      
+      const workspace = await TokenUtils.findSingleWorkspace(user.id);
+      await TokenUtils.revokeToken(user); // todo: verify if it's necessary
+  
+      const sig = await new AuthService().signIn({
+        token: signature,
+        encoder: Encoder[encoder],
+        provider: user.provider,
+        expired_at: addMinutes(new Date(), Number(EXPIRES_IN)),
+        payload: digest,
+        user: user,
+        workspace,
+      });
+  
+      return {
+        userToken: await this.getTokenBySignature(sig.accessToken),
+        signin: sig,
+      };
+    }catch(e){
+      throw e;
     }
   }
-  
+
   static async getTokenBySignature(signature: string) {
-    return await UserToken.createQueryBuilder('userToken')
+    try{
+      const userToken = await UserToken.createQueryBuilder('userToken')
       .leftJoinAndSelect('userToken.user', 'user')
       .leftJoinAndSelect('userToken.workspace', 'workspace')
       .where('userToken.token = :token', { token: signature })
+      .andWhere('userToken.expired_at > :now', { now: new Date() })
       .getOne();
 
-
+      return userToken;
+    }catch(e){
+      throw e;
+    }
   }
 
   static async renewToken(token: UserToken) {
-    const minutesToExpiration = differenceInMinutes(token.expired_at, new Date());
+    const expirationDate = token.expired_at.toISOString() ?? new Date().toISOString();
+    const now = new Date();
+
+    const minutesToExpiration = differenceInMinutes(
+      parseISO(expirationDate),
+      now,
+    );
+
+    // console.log('[RENEW_TOKEN]', {
+    //   minutesToExpiration,
+    //   now,
+    //   token: token.token,
+    //   exp: token.expired_at ?? 'inválid value'
+    // })
 
     if (minutesToExpiration < Number(MINUTES_TO_RENEW)) {
       await UserToken.update(
@@ -197,11 +230,13 @@ export class TokenUtils {
         { expired_at: addMinutes(new Date(), Number(RENEWAL_EXPIRES_IN)) },
       );
 
-      return await this.getTokenBySignature(token.token);
+      const renewedToken = await this.getTokenBySignature(token.token);
+      await app._sessionCache.addSession(token.token, renewedToken);
+
+      return renewedToken;
     }
 
     return token;
-    
   }
 
   static async revokeToken(user: User) {

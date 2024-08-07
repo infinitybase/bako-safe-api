@@ -1,94 +1,145 @@
+
 import { User } from "@src/models";
 import UserToken from "@src/models/UserToken";
 import { Workspace } from "@src/models/Workspace";
 import { AuthService } from "@src/modules/auth/services";
+import { SocketClient } from "@src/socket/client";
+import { AuthNotifyType, SocketEvents, SocketUsernames } from "@src/socket/types";
 import { TokenUtils } from "@src/utils";
 import { isPast } from "date-fns";
 
-export interface ISession {
-    nome: string;
-    userToken: UserToken;
-    workspace: Workspace;
-    user: User;
-  }
 
-const REFRESH_TIME = 60 * 1000 * 23; // 23 minutos
+export interface ISession {
+  nome: string;
+  userToken: UserToken;
+  workspace: Workspace;
+  user: User;
+}
+
+const REFRESH_TIME = 30 * 1000 * 10; // 23 minutos
+const { API_URL } = process.env;
+// move to env const
+const {API_SOCKET_SESSION_ID} = process.env // is a const because all clients (apis) join on the same room
 
 
 export class SessionStorage {
+
     private data = new Map<string, UserToken>();
+    private client = new SocketClient(API_SOCKET_SESSION_ID, API_URL);
+
 
     protected constructor () {
         this.data = new Map<string, UserToken>();
+        this.client.socket.onAny(
+            (event, ...args) => {
+                if (event === SocketEvents.DEFAULT) {
+                    this.reciveNotify(args[0]);
+                }
+            }
+        )
+
+        // new SocketClient(API_SOCKET_SESSION_ID, API_URL);
     }
 
-    // adiciona uma sessão ao store limpa as sessões expiradas
-    public async addSession(sessionId: string, session: UserToken) {
-        this.data.set(sessionId, session);
+
+    private sendNotify(data, type){
+        return this.client.sendMessage({
+            type,
+            data,
+            sessionId: API_SOCKET_SESSION_ID,
+            to: SocketUsernames.API,
+            request_id: undefined,
+        })
     }
 
-    // - busca o token no store
-    //      - se não encontrar busca no banco
-    // - envia para a renovacao, que é renovado se necessário, se nao, retorna o mesmo token
-    // - se o token estiver expirado, remove do store e do banco
-    public async getSession(sessionId: string) {
-        let session = this.data.get(sessionId);
-        if (!session) {
-            session = await this.getTokenOnDatabase(sessionId);
+    private reciveNotify({type, data}) {
+        // console.log('[RECIVE_NOTIFY]', data.token ?? 'NO_TOKEN');
+        
+        if (!!data || !!data.token) {
+            return;
+        }
+        
+        switch (type) {
+            case AuthNotifyType.UPDATE:
+                this.data.set(data.token, data);
+                break
+            case AuthNotifyType.REMOVE:
+                this.data.delete(data.token)
+                break
+            default:
+                break
         }
 
-        if (session && isPast(session.expired_at)) {
+        console.log('[SESSIONS]', this.data.size); 
+    }
+
+    public async addSession(sessionId: string, session: UserToken) {
+        this.data.set(sessionId, session);
+        this.sendNotify(
+            {
+                ...session,
+                token: sessionId
+            },
+            AuthNotifyType.UPDATE
+        )
+    }
+
+    public async getSession(sessionId: string) {
+        let session = this.data.get(sessionId);
+        
+        if (!session) {
+            session = await this.getTokenOnDatabase(sessionId);
+            this.addSession(sessionId, session);
+        }
+
+
+        if (session && isPast(new Date(session.expired_at))) {
             await this.removeSession(sessionId);
             return null;
         }
 
-        return session;
-    }
+        return session ?? null;
+  }
 
-    public async getTokenOnDatabase(sessionId: string) {
-        const token = await TokenUtils.getTokenBySignature(sessionId);
+  public async getTokenOnDatabase(sessionId: string) {
+    const token = await TokenUtils.getTokenBySignature(sessionId);
 
-        return token;
-    }
+    return token;
+  }
 
 
-    // remove uma sessão do store e do database
-    public async removeSession(sessionId: string) {
-        await UserToken.delete({
-            token: sessionId
-        });
-        this.data.delete(sessionId);
-    }
+  // remove uma sessão do store e do database
+  public async removeSession(sessionId: string) {
+      await UserToken.delete({
+          token: sessionId
+      });
+      this.data.delete(sessionId);
+      this.sendNotify({ token: sessionId }, AuthNotifyType.REMOVE)
+  }
 
-    // limpa as sessões expiradas
-    public async clearExpiredSessions() {
-        for await (const [sessionId, session] of this.data.entries()) {
-            if (isPast(session.expired_at)) {
-                await UserToken.delete({
-                    id: session.id
-                });
-                this.data.delete(sessionId);
-            }
-        }
-        new AuthService().clearExpiredTokens();
-    }
+  // limpa as sessões expiradas
+  public async clearExpiredSessions() {
+    await AuthService.clearExpiredTokens();
+    this.data.clear();
+    console.log('[CACHE_SESSIONS_CLEARED]', this.data.size);
+  }
 
-    public getActiveSessions() {
-        return this.data.size;
-    }
+  public getActiveSessions() {
+    return this.data.size;
+  }
 
-    public clear() {
-        this.data.clear();
-    }
+  public clear() {
+    this.data.clear();
+  }
 
-    static start() {
-        const _this = new SessionStorage();
-        
-        setInterval(() => {
-          _this.clearExpiredSessions();
-        }, REFRESH_TIME);
+  static start() {
+    const _this = new SessionStorage();
 
-        return _this;
-    }
+    setInterval(() => {
+      console.log('[CLEAR_EXPIRED_TOKEN]', new Date());
+      _this.clearExpiredSessions();
+    }, REFRESH_TIME);
 
+    return _this;
+  }
 }

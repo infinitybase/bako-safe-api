@@ -17,10 +17,9 @@ import {
 import { error } from '@utils/error';
 import {
   Responses,
-  assetsMapBySymbol,
   bindMethods,
   calculateBalanceUSD,
-  subtractReservedCoinsFromBalances,
+  subCoins,
   successful,
 } from '@utils/index';
 
@@ -105,8 +104,17 @@ export class PredicateController {
         workspace.id,
       );
 
-      const { id, name, members: predicateMembers } = newPredicate;
-      const summary = { vaultId: id, vaultName: name };
+      const {
+        id,
+        name,
+        members: predicateMembers,
+        workspace: wk_predicate,
+      } = newPredicate;
+      const summary = {
+        vaultId: id,
+        vaultName: name,
+        workspaceId: wk_predicate.id,
+      };
       const membersWithoutLoggedUser = predicateMembers.filter(
         member => member.id !== user.id,
       );
@@ -146,10 +154,10 @@ export class PredicateController {
     }
   }
 
-  async findById({ params: { id } }: IFindByIdRequest) {
+  async findById({ params: { predicateId } }: IFindByIdRequest) {
     try {
-      const predicate = await this.predicateService.findById(id);
-      await this.predicateService.getMissingDeposits(predicate);
+      const predicate = await this.predicateService.findById(predicateId);
+      // await this.predicateService.getMissingDeposits(predicate);
 
       return successful(predicate, Responses.Ok);
     } catch (e) {
@@ -193,63 +201,75 @@ export class PredicateController {
     }
   }
 
-  async hasReservedCoins({ params: { address } }: IFindByHashRequest) {
+  async hasReservedCoins({ params: { predicateId } }: IFindByIdRequest) {
     try {
-      const response = await this.transactionService
-        .filter({
-          predicateId: [address],
+      const {
+        transactions: predicate_txs,
+        version: { code: versionCode },
+        configurable,
+      } = await Predicate.createQueryBuilder('p')
+        .leftJoin('p.transactions', 't', 't.status IN (:...status)', {
+          status: [
+            TransactionStatus.AWAIT_REQUIREMENTS,
+            TransactionStatus.PENDING_SENDER,
+          ],
         })
-        .list()
-        .then((data: Transaction[]) => {
-          return data
-            .filter(
-              (transaction: Transaction) =>
-                transaction.status === TransactionStatus.AWAIT_REQUIREMENTS ||
-                transaction.status === TransactionStatus.PENDING_SENDER,
-            )
-            .reduce((accumulator, transaction: Transaction) => {
-              transaction.assets.forEach((asset: Asset) => {
-                const assetId = asset.assetId;
-                const amount = bn.parseUnits(asset.amount);
-                const existingAsset = accumulator.find(
-                  item => item.assetId === assetId,
-                );
+        .leftJoin('t.assets', 'a')
+        .leftJoin('p.version', 'pv')
+        .addSelect([
+          't',
+          'a.assetId',
+          'a.amount',
+          'p.id',
+          'p.configurable',
+          'pv.code',
+        ])
+        .where('p.id = :predicateId', { predicateId })
+        .getOne();
 
-                if (existingAsset) {
-                  existingAsset.amount = existingAsset.amount.add(amount);
-                } else {
-                  accumulator.push({ assetId, amount });
-                }
-              });
-              return accumulator;
-            }, [] as CoinQuantity[]);
-        })
-        .catch(() => {
-          return [
-            {
-              assetId: assetsMapBySymbol['ETH'].id,
-              amount: bn.parseUnits('0'),
-            },
-          ] as CoinQuantity[];
-        });
+      //todo: replace by a util on model Transaction
+      const tx_reserved_balances = predicate_txs.reduce(
+        (accumulator, transaction: Transaction) => {
+          transaction.assets.forEach((asset: Asset) => {
+            const assetId = asset.assetId;
+            const amount = bn.parseUnits(asset.amount);
+            const existingAsset = accumulator.find(
+              item => item.assetId === assetId,
+            );
 
-      const predicate = await this.predicateService.findById(address, undefined);
+            if (existingAsset) {
+              existingAsset.amount = existingAsset.amount.add(amount);
+            }
+            accumulator.push({ assetId, amount });
+          });
+          return accumulator;
+        },
+        [] as CoinQuantity[],
+      );
 
-      const instance = await this.predicateService.instancePredicate(predicate.id);
-      const balances = await instance.getBalances();
-      const balancesToConvert =
-        response.length > 0
-          ? subtractReservedCoinsFromBalances(balances, response)
+      const instance = await this.predicateService.instancePredicate(
+        configurable,
+        versionCode,
+      );
+      const balances = (await instance.getBalances()).balances;
+      const assets =
+        tx_reserved_balances.length > 0
+          ? subCoins(balances, tx_reserved_balances)
           : balances;
 
       return successful(
         {
-          balanceUSD: calculateBalanceUSD(balancesToConvert),
-          reservedCoins: response,
+          reservedCoinsUSD: calculateBalanceUSD(tx_reserved_balances), // locked value on USDC
+          totalBalanceUSD: calculateBalanceUSD(balances),
+          currentBalanceUSD: calculateBalanceUSD(assets),
+          currentBalance: assets,
+          totalBalance: balances,
+          reservedCoins: tx_reserved_balances, // locked coins
         },
         Responses.Ok,
       );
     } catch (e) {
+      console.log(e);
       return error(e.error, e.statusCode);
     }
   }

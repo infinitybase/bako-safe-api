@@ -5,16 +5,17 @@ import { BakoSafe } from 'bakosafe';
 import { GatewayServer } from "@/server";
 import { Database } from '@/lib';
 
-const { API_PORT, FUEL_PROVIDER, BAKO_SERVER } = process.env;
+const { GATEWAY_PORT, FUEL_PROVIDER, API_URL } = process.env;
 
 BakoSafe.setProviders({
-  SERVER_URL: BAKO_SERVER,
+  SERVER_URL: API_URL,
   CHAIN_URL: FUEL_PROVIDER
 });
 
 const main = async () => {
-  const server = new GatewayServer(API_PORT);
-  await Database.connect();
+  const server = new GatewayServer(GATEWAY_PORT);
+  const database = await Database.connect();
+  server.setDatabase(database);
   server.start();
 }
 

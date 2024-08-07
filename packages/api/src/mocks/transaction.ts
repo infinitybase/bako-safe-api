@@ -4,7 +4,7 @@ import { bn, Address, Provider } from 'fuels';
 import { accounts } from '@src/mocks/accounts';
 
 import { sendPredicateCoins } from '@src/utils/testUtils/Wallet';
-import { assetsMapBySymbol } from '@src/utils';
+import { assetsMapBySymbol } from '@src/utils/assets';
 
 export const transaction = {
   name: 'Transaction A',

@@ -1,9 +1,5 @@
-import { ITransactionResume, TransactionStatus } from 'bakosafe';
-import {
-  hashMessage,
-  Provider,
-  Signer,
-} from 'fuels';
+import { ITransactionResume, TransactionStatus, WitnessStatus } from 'bakosafe';
+import { hashMessage, Provider, Signer } from 'fuels';
 
 import { PermissionRoles, Workspace } from '@src/models/Workspace';
 import {
@@ -16,6 +12,7 @@ import {
   NotificationTitle,
   Predicate,
   Transaction,
+  Witness,
   WitnessesStatus,
 } from '@models/index';
 
@@ -77,31 +74,43 @@ export class TransactionController {
         workspace,
         user,
       );
+      const hasPredicate = predicateId && predicateId.length > 0;
+      const hasWorkspace = workspaceList && workspaceList.length > 0;
+      
+      const qb = Transaction.createQueryBuilder('t')
+      .innerJoin(
+        't.witnesses', 
+        'w', 
+        hasSingle 
+          ? `w.status = :pendingStatus AND w.account = :userAddress` 
+          : `w.status = :pendingStatus`, 
+        hasSingle 
+          ? { pendingStatus: WitnessStatus.PENDING, userAddress: user.address } 
+          : { pendingStatus: WitnessStatus.PENDING }
+      )
+      .innerJoin(
+        't.predicate', 
+        'p', 
+        hasPredicate ? 'p.id = :predicateId' : '1=1', 
+        hasPredicate ? { predicateId: predicateId[0] } : {}
+      )
+      .innerJoin(
+        'p.workspace', 
+        'wks', 
+        hasWorkspace ? 'wks.id IN (:...workspaceList)' : '1=1', 
+        hasWorkspace ? { workspaceList } : {}
+      )
+      .addSelect([
+        't.status'
+      ])
+      .where('t.status = :status', { status: TransactionStatus.AWAIT_REQUIREMENTS });
+      
+      const result = await qb.getCount();
 
-      const result = await new TransactionService()
-        .filter({
-          status: [TransactionStatus.AWAIT_REQUIREMENTS],
-          signer: hasSingle ? user.address : undefined,
-          workspaceId: workspaceList,
-          predicateId,
-        })
-        .list()
-        .then((result: Transaction[]) => {
-          return {
-            ofUser:
-              result.filter(transaction =>
-                transaction.witnesses.find(
-                  w =>
-                    w.account === user.address &&
-                    w.status === WitnessesStatus.PENDING,
-                ),
-              ).length ?? 0,
-            transactionsBlocked:
-              result.filter(t => t.status === TransactionStatus.AWAIT_REQUIREMENTS)
-                .length > 0 ?? false,
-          };
-        });
-      return successful(result, Responses.Ok);
+      return successful({
+        ofUser: result,
+        transactionsBlocked: result > 0,
+      }, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }
@@ -187,6 +196,7 @@ export class TransactionController {
             vaultName: predicate.name,
             transactionName: name,
             transactionId: id,
+            workspaceId: predicate.workspace.id,
           },
           user_id: member.id,
         });
@@ -392,23 +402,7 @@ export class TransactionController {
         });
 
         if (result.status === TransactionStatus.PENDING_SENDER) {
-          await this.transactionService
-            .sendToChain(id)
-            .then(async (result: ITransactionResume) => {
-              return await this.transactionService.update(id, {
-                status: TransactionStatus.PROCESS_ON_CHAIN,
-                sendTime: new Date(),
-                resume: result,
-              });
-            })
-            .catch(async () => {
-              await this.transactionService.update(id, {
-                status: TransactionStatus.FAILED,
-                sendTime: new Date(),
-                resume: { ...resume, status: TransactionStatus.FAILED },
-              });
-              throw new Error('Transaction send failed');
-            });
+          this.transactionService.sendToChain(id)
         }
 
         const notificationSummary = {
@@ -416,6 +410,7 @@ export class TransactionController {
           vaultName: predicate.name,
           transactionId: transactionId,
           transactionName: name,
+          workspaceId: predicate.workspace.id,
         };
 
         // NOTIFY MEMBERS ON SIGNED TRANSACTIONS
@@ -447,6 +442,7 @@ export class TransactionController {
 
       return successful(!!witness, Responses.Ok);
     } catch (e) {
+      console.log(e)
       return error(e.error, e.statusCode);
     }
   }
@@ -530,24 +526,8 @@ export class TransactionController {
 
   async send({ params: { id } }: ISendTransactionRequest) {
     try {
-      const resume = await this.transactionService
-        .sendToChain(id)
-        .then(async (result: ITransactionResume) => {
-          return await this.transactionService.update(id, {
-            status: TransactionStatus.PROCESS_ON_CHAIN,
-            sendTime: new Date(),
-            resume: result,
-          });
-        })
-        .catch(async e => {
-          await this.transactionService.update(id, {
-            status: TransactionStatus.FAILED,
-            sendTime: new Date(),
-          });
-          throw new Error('Transaction send failed');
-        });
-
-      return successful(resume, Responses.Ok);
+      this.transactionService.sendToChain(id) // not wait for this
+      return successful(true, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }
@@ -556,16 +536,28 @@ export class TransactionController {
   async verifyOnChain({ params: { id } }: ISendTransactionRequest) {
     try {
       const api_transaction = await this.transactionService.findById(id);
-      const { predicate, name, id: transactionId } = api_transaction;
+      const { predicate, status } = api_transaction;
       const provider = await Provider.create(predicate.provider);
 
-      this.transactionService.checkInvalidConditions(api_transaction);
+      this.transactionService.checkInvalidConditions(status);
 
       const result = await this.transactionService.verifyOnChain(
         api_transaction,
         provider,
       );
 
+      return successful(result, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async transactionStatus({ params: { id } }: ISendTransactionRequest) {
+    try {
+      const result = await Transaction.createQueryBuilder('t')
+        .select(['t.status', 't.id'])
+        .where('t.id = :id', { id })
+        .getOne();
       return successful(result, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);

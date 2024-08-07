@@ -3,7 +3,7 @@ import cors from "cors";
 import { Server } from "http";
 
 import { defaultSchemas, subscriptionSchema } from "@/graphql-api";
-import { createGraphqlHttpHandler, createSubscriptionHandler } from "@/lib";
+import { createGraphqlHttpHandler, createSubscriptionHandler, Database } from '@/lib';
 import { handleErrorMiddleware, tokenDecodeMiddleware } from "@/middlewares";
 
 const {
@@ -20,6 +20,7 @@ export class GatewayServer {
   private readonly app: express.Application;
   private readonly port: number;
   private server: Server;
+  private database: Database;
 
   constructor(port: number | string) {
     this.port = Number(port);
@@ -47,8 +48,14 @@ export class GatewayServer {
     this.server.close();
   }
 
+  setDatabase(database: Database) {
+    this.database = database;
+  }
+
   private beforeAllMiddlewares() {
-    this.app.use(express.json());
+    this.app.use(express.json({
+      limit: '50mb'
+    }));
     this.app.use(cors());
     this.app.use((req, res, next) => {
       console.log(`[${APP_NAME}] ${req.method} ${req.url}`);
@@ -64,7 +71,10 @@ export class GatewayServer {
     this.app.post(
       GatewayServer.ROUTES_PATHS.graphqlSub,
       tokenDecodeMiddleware,
-      createSubscriptionHandler({ schema: subscriptionSchema })
+      createSubscriptionHandler({
+        schema: subscriptionSchema,
+        defaultContext: { database: this.database },
+      })
     );
     this.app.post(
       GatewayServer.ROUTES_PATHS.graphql,
@@ -72,6 +82,7 @@ export class GatewayServer {
       createGraphqlHttpHandler({
         appSchema: defaultSchemas.appSchema,
         fuelSchema: defaultSchemas.fuelSchema,
+        defaultContext: { database: this.database },
       })
     );
     this.app.get('/v1/ping', ({ res }) => res.status(200).send(

@@ -86,7 +86,7 @@ interface IDeletePredicateRequestSchema extends ValidatedRequestSchema {
 }
 
 interface IFindByIdRequestSchema extends ValidatedRequestSchema {
-  [ContainerTypes.Params]: { id: string };
+  [ContainerTypes.Params]: { predicateId: string };
 }
 interface IFindByHashRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Params]: { address: string };
@@ -130,6 +130,9 @@ export interface IPredicateService {
   delete: (id: string) => Promise<boolean>;
   findById: (id: string, signer?: string) => Promise<Predicate>;
   list: () => Promise<IPagination<Predicate> | Predicate[]>;
-  instancePredicate: (predicateId: string) => Promise<Vault>;
+  instancePredicate: (
+    configurable: string,
+    version: string
+  ) => Promise<Vault>;
   getMissingDeposits: (predicate: Predicate) => Promise<void>;
 }

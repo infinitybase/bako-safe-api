@@ -2,7 +2,7 @@ import { Column, Entity } from 'typeorm';
 
 import { Base } from './Base';
 
-const { API_DEFAULT_PROVIDER } = process.env;
+const { FUEL_PROVIDER } = process.env;
 
 export type WebAuthn = {
   id: string;
@@ -43,7 +43,7 @@ class User extends Base {
   email?: string;
 
   @Column({
-    default: API_DEFAULT_PROVIDER,
+    default: FUEL_PROVIDER,
   })
   provider: string;
 
