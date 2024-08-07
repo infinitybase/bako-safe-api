@@ -1,4 +1,4 @@
-import { ITransactionResume, TransactionStatus } from 'bakosafe';
+import { TransactionStatus, WitnessStatus } from 'bakosafe';
 import { hashMessage, Provider, Signer } from 'fuels';
 
 import { PermissionRoles, Workspace } from '@src/models/Workspace';
@@ -12,7 +12,6 @@ import {
   NotificationTitle,
   Predicate,
   Transaction,
-  Witness,
   WitnessesStatus,
 } from '@models/index';
 
@@ -71,44 +70,36 @@ export class TransactionController {
         workspace,
         user,
       );
+      const hasPredicate = predicateId && predicateId.length > 0;
+      const hasWorkspace = workspaceList && workspaceList.length > 0;
+
       const qb = Transaction.createQueryBuilder('t')
-        .leftJoin('t.witnesses', 'w')
-        .leftJoin('t.predicate', 'p')
-        .addSelect([
-          't.status',
-          't.predicate_id',
-          'w.account',
-          'w.status',
-          'w.signature',
-          'p.workspace_id',
-        ])
+        .innerJoin(
+          't.witnesses',
+          'w',
+          hasSingle
+            ? `w.status = :pendingStatus AND w.account = :userAddress`
+            : `w.status = :pendingStatus`,
+          hasSingle
+            ? { pendingStatus: WitnessStatus.PENDING, userAddress: user.address }
+            : { pendingStatus: WitnessStatus.PENDING },
+        )
+        .innerJoin(
+          't.predicate',
+          'p',
+          hasPredicate ? 'p.id = :predicateId' : '1=1',
+          hasPredicate ? { predicateId: predicateId[0] } : {},
+        )
+        .innerJoin(
+          'p.workspace',
+          'wks',
+          hasWorkspace ? 'wks.id IN (:...workspaceList)' : '1=1',
+          hasWorkspace ? { workspaceList } : {},
+        )
+        .addSelect(['t.status'])
         .where('t.status = :status', {
           status: TransactionStatus.AWAIT_REQUIREMENTS,
         });
-      predicateId?.length > 0 &&
-        qb.andWhere('t.predicate_id = :predicateId', {
-          predicateId: predicateId[0],
-        });
-      workspaceList?.length > 0 &&
-        qb.andWhere('p.workspace_id IN (:...workspaceList)', { workspaceList });
-      qb.andWhere(qb => {
-        const subQuery = qb
-          .subQuery()
-          .select('w.id')
-          .from(Witness, 'w')
-          .where('w.transaction_id = t.id')
-          .andWhere('w.status = :witnessStatus', {
-            witnessStatus: WitnessesStatus.PENDING,
-          });
-
-        if (hasSingle) {
-          subQuery.andWhere('w.account = :userAddress', {
-            userAddress: user.address,
-          });
-        }
-
-        return `EXISTS (${subQuery.getQuery()})`;
-      });
 
       const result = await qb.getCount();
 
