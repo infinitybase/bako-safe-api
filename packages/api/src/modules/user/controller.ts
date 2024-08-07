@@ -1,7 +1,7 @@
 import { addMinutes } from 'date-fns';
 
 import { RecoverCode, RecoverCodeType } from '@src/models';
-import { TypeUser, User } from '@src/models/User';
+import { User } from '@src/models/User';
 import { bindMethods } from '@src/utils/bindMethods';
 
 import {
@@ -119,6 +119,7 @@ export class UserController {
           owner: workspace.owner,
           avatar: workspace.avatar,
           permission: workspace.permissions[user.id],
+          description: workspace.description,
         },
       },
       Responses.Ok,
