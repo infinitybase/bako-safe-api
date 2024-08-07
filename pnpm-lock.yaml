@@ -223,8 +223,8 @@ importers:
         specifier: ^10.0.5
         version: 10.0.5(graphql@16.9.0)
       bakosafe:
-        specifier: 0.0.65
-        version: 0.0.65(fuels@0.92.1)(ts-node@10.9.2)(typescript@5.4.5)
+        specifier: link:/Users/luisburigo/Documents/dev/infinity/bako/bako-safe-sdk/packages/sdk
+        version: link:../../../bako-safe-sdk/packages/sdk
       copyfiles:
         specifier: 2.4.1
         version: 2.4.1
@@ -304,8 +304,8 @@ importers:
   packages/socket-server:
     dependencies:
       bakosafe:
-        specifier: 0.0.65
-        version: 0.0.65(fuels@0.92.1)(ts-node@10.9.2)(typescript@5.4.5)
+        specifier: /Users/luisburigo/Documents/dev/infinity/bako/bako-safe-sdk/packages/sdk
+        version: link:../../../bako-safe-sdk/packages/sdk
       express:
         specifier: 4.17.1
         version: 4.17.1
