@@ -38,6 +38,7 @@ export const submitAndAwait = {
     return {
       __typename: 'SuccessStatus',
       transactionId: `0x${payload.getHashTxId()}`,
+      blockHeight: '0',
       block: {
         consensus: {},
         transactions: [],

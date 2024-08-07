@@ -69,16 +69,25 @@ export class TransactionController {
         user,
       );
 
+      const hasPredicate = predicateId && predicateId.length > 0;
+      const hasWorkspace = workspaceList && workspaceList.length > 0;
+
       const qb = Transaction.createQueryBuilder('t')
-        .leftJoin('t.predicate', 'p')
-        .addSelect(['t.status', 't.predicate_id', 'p.workspace_id'])
+        .innerJoin(
+          't.predicate',
+          'p',
+          hasPredicate ? 'p.id = :predicateId' : '1=1',
+          hasPredicate ? { predicateId: predicateId[0] } : {},
+        )
+        .innerJoin(
+          'p.workspace',
+          'wks',
+          hasWorkspace ? 'wks.id IN (:...workspaceList)' : '1=1',
+          hasWorkspace ? { workspaceList } : {},
+        )
+        .addSelect(['t.status'])
         .where('t.status = :status', {
           status: TransactionStatus.AWAIT_REQUIREMENTS,
-        });
-
-      predicateId?.length > 0 &&
-        qb.andWhere('t.predicate_id = :predicateId', {
-          predicateId: predicateId[0],
         });
 
       workspaceList?.length > 0 &&
