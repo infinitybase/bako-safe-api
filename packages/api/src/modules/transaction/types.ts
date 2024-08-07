@@ -202,7 +202,10 @@ export interface ITransactionService {
     vault: Vault,
     witnesses: string[],
   ) => Promise<Transfer>;
-  validateStatus: (transactionId: string) => Promise<TransactionStatus>;
+  validateStatus: (
+    transaction: Transaction,
+    witnesses: IWitnesses[],
+  ) => TransactionStatus;
   checkInvalidConditions: (api_transaction: TransactionStatus) => void;
   verifyOnChain: (
     api_transaction: Transaction,

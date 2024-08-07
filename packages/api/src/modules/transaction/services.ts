@@ -292,58 +292,49 @@ export class TransactionService implements ITransactionService {
       });
   }
 
-  async validateStatus(transactionId: string): Promise<TransactionStatus> {
-    return await Transaction.createQueryBuilder('t')
-      .where('t.id = :id', { id: transactionId })
-      .leftJoin('t.predicate', 'predicate')
-      .addSelect(['t.resume', 'predicate.minSigners'])
-      .getOne()
-      .then((transaction: Transaction) => {
-        const witness: {
-          DONE: number;
-          REJECTED: number;
-          PENDING: number;
-        } = {
-          DONE: 0,
-          REJECTED: 0,
-          PENDING: 0,
-        };
-        transaction.resume.witnesses.map((item: IWitnesses) => {
-          witness[item.status]++;
-        });
-        const totalSigners =
-          witness[WitnessStatus.DONE] +
-          witness[WitnessStatus.REJECTED] +
-          witness[WitnessStatus.PENDING];
+  validateStatus(
+    transaction: Transaction,
+    witnesses: IWitnesses[],
+  ): TransactionStatus {
+    const witness: {
+      DONE: number;
+      REJECTED: number;
+      PENDING: number;
+    } = {
+      DONE: 0,
+      REJECTED: 0,
+      PENDING: 0,
+    };
 
-        if (
-          transaction.status === TransactionStatus.SUCCESS ||
-          transaction.status === TransactionStatus.FAILED ||
-          transaction.status === TransactionStatus.PROCESS_ON_CHAIN
-        ) {
-          return transaction.status;
-        }
+    witnesses.map((item: IWitnesses) => {
+      witness[item.status]++;
+    });
 
-        if (witness[WitnessStatus.DONE] >= transaction.predicate.minSigners) {
-          return TransactionStatus.PENDING_SENDER;
-        }
+    const totalSigners =
+      witness[WitnessStatus.DONE] +
+      witness[WitnessStatus.REJECTED] +
+      witness[WitnessStatus.PENDING];
 
-        if (
-          totalSigners - witness[WitnessStatus.REJECTED] <
-          transaction.predicate.minSigners
-        ) {
-          return TransactionStatus.DECLINED;
-        }
+    if (
+      transaction.status === TransactionStatus.SUCCESS ||
+      transaction.status === TransactionStatus.FAILED ||
+      transaction.status === TransactionStatus.PROCESS_ON_CHAIN
+    ) {
+      return transaction.status;
+    }
 
-        return TransactionStatus.AWAIT_REQUIREMENTS;
-      })
-      .catch(e => {
-        throw new Internal({
-          type: ErrorTypes.Internal,
-          title: 'Error on transaction validateStatus',
-          detail: e,
-        });
-      });
+    if (witness[WitnessStatus.DONE] >= transaction.predicate.minSigners) {
+      return TransactionStatus.PENDING_SENDER;
+    }
+
+    if (
+      totalSigners - witness[WitnessStatus.REJECTED] <
+      transaction.predicate.minSigners
+    ) {
+      return TransactionStatus.DECLINED;
+    }
+
+    return TransactionStatus.AWAIT_REQUIREMENTS;
   }
 
   async instanceTransactionScript(
