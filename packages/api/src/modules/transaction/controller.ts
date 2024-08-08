@@ -1,4 +1,4 @@
-import { ITransactionResume, TransactionStatus, WitnessStatus } from 'bakosafe';
+import { TransactionStatus, WitnessStatus } from 'bakosafe';
 import { hashMessage, Provider, Signer } from 'fuels';
 
 import { PermissionRoles, Workspace } from '@src/models/Workspace';
@@ -12,7 +12,6 @@ import {
   NotificationTitle,
   Predicate,
   Transaction,
-  Witness,
   WitnessesStatus,
 } from '@models/index';
 
@@ -23,7 +22,6 @@ import { error, ErrorTypes, NotFound } from '@utils/error';
 import { bindMethods, Responses, successful } from '@utils/index';
 
 import { IAddressBookService } from '../addressBook/types';
-import { IAssetService } from '../asset/types';
 import { INotificationService } from '../notification/types';
 import { PredicateService } from '../predicate/services';
 import { UserService } from '../user/service';
@@ -52,7 +50,6 @@ export class TransactionController {
     predicateService: IPredicateService,
     witnessService: IWitnessService,
     addressBookService: IAddressBookService,
-    assetService: IAssetService,
     notificationService: INotificationService,
   ) {
     Object.assign(this, {
@@ -60,7 +57,6 @@ export class TransactionController {
       predicateService,
       witnessService,
       addressBookService,
-      assetService,
       notificationService,
     });
     bindMethods(this);
@@ -76,41 +72,44 @@ export class TransactionController {
       );
       const hasPredicate = predicateId && predicateId.length > 0;
       const hasWorkspace = workspaceList && workspaceList.length > 0;
-      
+
       const qb = Transaction.createQueryBuilder('t')
-      .innerJoin(
-        't.witnesses', 
-        'w', 
-        hasSingle 
-          ? `w.status = :pendingStatus AND w.account = :userAddress` 
-          : `w.status = :pendingStatus`, 
-        hasSingle 
-          ? { pendingStatus: WitnessStatus.PENDING, userAddress: user.address } 
-          : { pendingStatus: WitnessStatus.PENDING }
-      )
-      .innerJoin(
-        't.predicate', 
-        'p', 
-        hasPredicate ? 'p.id = :predicateId' : '1=1', 
-        hasPredicate ? { predicateId: predicateId[0] } : {}
-      )
-      .innerJoin(
-        'p.workspace', 
-        'wks', 
-        hasWorkspace ? 'wks.id IN (:...workspaceList)' : '1=1', 
-        hasWorkspace ? { workspaceList } : {}
-      )
-      .addSelect([
-        't.status'
-      ])
-      .where('t.status = :status', { status: TransactionStatus.AWAIT_REQUIREMENTS });
-      
+        .innerJoin(
+          't.witnesses',
+          'w',
+          hasSingle
+            ? `w.status = :pendingStatus AND w.account = :userAddress`
+            : `w.status = :pendingStatus`,
+          hasSingle
+            ? { pendingStatus: WitnessStatus.PENDING, userAddress: user.address }
+            : { pendingStatus: WitnessStatus.PENDING },
+        )
+        .innerJoin(
+          't.predicate',
+          'p',
+          hasPredicate ? 'p.id = :predicateId' : '1=1',
+          hasPredicate ? { predicateId: predicateId[0] } : {},
+        )
+        .innerJoin(
+          'p.workspace',
+          'wks',
+          hasWorkspace ? 'wks.id IN (:...workspaceList)' : '1=1',
+          hasWorkspace ? { workspaceList } : {},
+        )
+        .addSelect(['t.status'])
+        .where('t.status = :status', {
+          status: TransactionStatus.AWAIT_REQUIREMENTS,
+        });
+
       const result = await qb.getCount();
 
-      return successful({
-        ofUser: result,
-        transactionsBlocked: result > 0,
-      }, Responses.Ok);
+      return successful(
+        {
+          ofUser: result,
+          transactionsBlocked: result > 0,
+        },
+        Responses.Ok,
+      );
     } catch (e) {
       return error(e.error, e.statusCode);
     }
@@ -159,18 +158,13 @@ export class TransactionController {
           hash: transaction.hash,
           status: TransactionStatus.AWAIT_REQUIREMENTS,
           witnesses: witnesses.filter(w => !!w.signature).map(w => w.signature),
-          outputs: transaction.assets.map(({ amount, to, assetId }) => ({
-            amount,
-            to,
-            assetId,
-          })),
           requiredSigners: predicate.minSigners,
           totalSigners: predicate.members.length,
           predicate: {
             id: predicate.id,
             address: predicate.predicateAddress,
           },
-          BakoSafeID: '',
+          id: '',
         },
         witnesses,
         predicate,
@@ -178,7 +172,7 @@ export class TransactionController {
         summary,
       });
 
-      newTransaction.resume.BakoSafeID = newTransaction.id;
+      newTransaction.resume.id = newTransaction.id;
       await newTransaction.save();
 
       await new PredicateService().update(predicate.id);
@@ -402,7 +396,7 @@ export class TransactionController {
         });
 
         if (result.status === TransactionStatus.PENDING_SENDER) {
-          this.transactionService.sendToChain(id)
+          this.transactionService.sendToChain(id);
         }
 
         const notificationSummary = {
@@ -442,7 +436,6 @@ export class TransactionController {
 
       return successful(!!witness, Responses.Ok);
     } catch (e) {
-      console.log(e)
       return error(e.error, e.statusCode);
     }
   }
@@ -526,7 +519,7 @@ export class TransactionController {
 
   async send({ params: { id } }: ISendTransactionRequest) {
     try {
-      this.transactionService.sendToChain(id) // not wait for this
+      this.transactionService.sendToChain(id); // not wait for this
       return successful(true, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
