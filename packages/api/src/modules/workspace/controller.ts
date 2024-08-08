@@ -176,8 +176,8 @@ export class WorkspaceController {
           // totalBalanceUSD: calculateBalanceUSD(predicateCoins),
           currentBalanceUSD: calculateBalanceUSD(assets),
           currentBalance: assets,
-          totalBalance: predicateCoins,
-          reservedCoins,
+          // totalBalance: predicateCoins,
+          // reservedCoins,
         },
         Responses.Ok,
       );
