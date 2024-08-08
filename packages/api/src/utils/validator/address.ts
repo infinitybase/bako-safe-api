@@ -14,4 +14,13 @@ export class AddressValidator {
   static validateMany(value: string[], helpers: CustomHelpers) {
     return value.map(address => AddressValidator.validate(address, helpers));
   }
+
+  static isAddress(value: string) {
+    try {
+      Address.fromString(value);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
 }
