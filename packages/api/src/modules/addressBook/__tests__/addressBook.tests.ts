@@ -4,6 +4,7 @@ import { accounts } from '@src/mocks/accounts';
 import { networks } from '@src/mocks/networks';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
 import { generateWorkspacePayload } from '@src/utils/testUtils/Workspace';
+import { catchApplicationError, TestError } from '@utils/testUtils/Errors';
 
 describe('[ADDRESS_BOOK]', () => {
   let api: AuthValidations;
@@ -48,24 +49,17 @@ describe('[ADDRESS_BOOK]', () => {
       const address = Address.fromRandom();
       const nickname = `[FAKE_CONTACT_NAME]: ${address.toAddress()}`;
 
-      const { data, status } = await api.axios
-        .post('/address-book/', {
+      const payloadError = await catchApplicationError(
+        api.axios.post('/address-book/', {
           nickname,
           address: 'invalid_address',
-        })
-        .then(Promise.reject)
-        .catch(e => e.response);
-
-      expect(status).toBe(400);
-      expect(data.origin).toBe('body');
-      expect(data.errors).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            title: 'Invalid address',
-            detail: 'Invalid address',
-          }),
-        ]),
+        }),
       );
+      TestError.expectValidation(payloadError, {
+        type: 'custom',
+        field: 'Invalid address',
+        origin: 'body',
+      });
     },
     5 * 1000,
   );
