@@ -24,3 +24,9 @@ export const PayloadUpdateUserSchema = validator.body(
     first_login: Joi.boolean().optional(),
   }),
 );
+
+export const FindUserByIDParams = validator.params(
+  Joi.object({
+    id: Joi.string().uuid(),
+  }),
+);
