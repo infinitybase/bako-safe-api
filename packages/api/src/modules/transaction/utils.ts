@@ -2,13 +2,26 @@ import { Predicate, Transaction, TransactionType } from '@src/models';
 import { IPagination } from '@src/utils/pagination';
 import {
   ICreateTransactionPayload,
-  ITCreateService,
+  ITransactionResponse,
   ITransactionsGroupedByMonth,
 } from './types';
 import { IDeposit } from '../predicate/types';
 import { TransactionStatus } from 'bakosafe';
 
-const convertToArray = (groupedData: { [key: string]: Transaction[] }) => {
+export const formatTransactionsResponse = (
+  transactions: IPagination<Transaction> | Transaction[],
+): IPagination<ITransactionResponse> | ITransactionResponse[] => {
+  if (Array.isArray(transactions)) {
+    return transactions.map(Transaction.formatTransactionResponse);
+  } else {
+    return {
+      ...transactions,
+      data: transactions.data.map(Transaction.formatTransactionResponse),
+    };
+  }
+};
+
+const convertToArray = (groupedData: { [key: string]: ITransactionResponse[] }) => {
   return Object.keys(groupedData).map(monthYear => ({
     monthYear,
     transactions: groupedData[monthYear],
@@ -16,9 +29,9 @@ const convertToArray = (groupedData: { [key: string]: Transaction[] }) => {
 };
 
 export const groupedTransactions = (
-  transactions: IPagination<Transaction> | Transaction[],
+  transactions: IPagination<ITransactionResponse> | ITransactionResponse[],
 ): IPagination<ITransactionsGroupedByMonth> | ITransactionsGroupedByMonth => {
-  const transactionArray: Transaction[] = Array.isArray(transactions)
+  const transactionArray: ITransactionResponse[] = Array.isArray(transactions)
     ? transactions
     : transactions.data;
 
@@ -31,7 +44,7 @@ export const groupedTransactions = (
     }
     acc[monthYear].push(transaction);
     return acc;
-  }, {} as { [key: string]: Transaction[] });
+  }, {} as { [key: string]: ITransactionResponse[] });
 
   const groupedArray = convertToArray(groupedData);
 
@@ -88,24 +101,16 @@ export const formatPayloadToCreateTransaction = (
     resume: {
       hash: deposit.id,
       status: TransactionStatus.SUCCESS,
-      witnesses: [predicate.owner.address],
-      outputs: formattedAssets,
+      witnesses: [],
       requiredSigners: predicate.minSigners,
       totalSigners: predicate.members.length,
       predicate: {
         id: predicate.id,
         address: predicate.predicateAddress,
       },
-      BakoSafeID: '',
+      id: '',
     },
     assets: formattedAssets,
-    witnesses: [
-      {
-        ...predicate.owner,
-        account: predicate.owner.id,
-        createdAt: deposit.date,
-      },
-    ],
     predicate,
     createdBy: predicate.owner,
     summary: null,

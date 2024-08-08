@@ -49,15 +49,34 @@ describe('[USER]', () => {
       await auth.create();
       await auth.createSession();
 
-      //list all predicates and transactions from user
-      await auth.axios.get('user/me').then(({ data, status }) => {
+      //get user info
+      await auth.axios.get('user/latest/info').then(({ data, status }) => {
         expect(status).toBe(200);
-        expect(data).toHaveProperty('predicates');
-        expect(data.predicates.data.length).toBeLessThanOrEqual(8);
+        expect(data).toHaveProperty('id');
+        expect(data).toHaveProperty('name');
+        expect(data).toHaveProperty('type');
+        expect(data).toHaveProperty('avatar');
+        expect(data).toHaveProperty('address');
+        expect(data).toHaveProperty('webauthn');
+        expect(data).toHaveProperty('onSingleWorkspace');
+        expect(data).toHaveProperty('workspace');
       });
     },
     10 * 1000,
   );
+
+  test('Home predicates endpoint', async () => {
+    const auth = new AuthValidations(networks['local'], accounts['USER_1']);
+    await auth.create();
+    await auth.createSession();
+
+    //list all predicates from user
+    await auth.axios.get('user/predicates').then(({ data, status }) => {
+      expect(status).toBe(200);
+      expect(data).toHaveProperty('predicates');
+      expect(data.predicates.data.length).toBeLessThanOrEqual(8);
+    });
+  });
 
   test('Home Transactions endpoint', async () => {
     const auth = new AuthValidations(networks['local'], accounts['USER_1']);
@@ -65,7 +84,7 @@ describe('[USER]', () => {
     await auth.createSession();
 
     //list all transactions by month,
-    await auth.axios.get('user/me/transactions').then(({ data, status }) => {
+    await auth.axios.get('user/latest/transactions').then(({ data, status }) => {
       expect(status).toBe(200);
       expect(data).toHaveProperty('data');
       expect(data.data).toBeInstanceOf(Array);
@@ -168,7 +187,7 @@ describe('[USER]', () => {
     await auth.createSession();
 
     //list all tokensIDS and usd quote,
-    await auth.axios.get('user/me/tokens').then(({ data, status }) => {
+    await auth.axios.get('user/latest/tokens').then(({ data, status }) => {
       expect(status).toBe(200);
       expect(data).toBeInstanceOf(Array);
     });

@@ -1,14 +1,16 @@
 import {
   ITransactionResume,
   ITransactionSummary,
+  ITransferAsset,
+  IWitnesses,
   TransactionStatus,
   Transfer,
   Vault,
 } from 'bakosafe';
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
-import { Provider, TransactionRequest, TransactionResponse } from 'fuels';
+import { Provider, TransactionRequest } from 'fuels';
 
-import { Asset, Predicate, Transaction, TransactionType, Witness } from '@models/index';
+import { Transaction, TransactionType } from '@models/index';
 
 import { AuthValidatedRequest } from '@middlewares/auth/types';
 
@@ -17,7 +19,7 @@ import { IPagination, PaginationParams } from '@utils/pagination';
 
 export enum OrderBy {
   name = 'name',
-  status = 'name',
+  status = 'status',
 }
 
 export enum Sort {
@@ -34,6 +36,10 @@ export enum TransactionHistory {
   SEND = 'SEND',
 }
 
+export interface ITransactionResponse extends Transaction {
+  assets: ITransferAsset[];
+}
+
 export interface ICreateTransactionPayload {
   name: string;
   hash: string;
@@ -45,7 +51,6 @@ export interface ICreateTransactionPayload {
     amount: string;
     to: string;
   }[];
-  witnesses: Partial<Witness>[];
   resume?: ITransactionResume;
   sendTime?: Date;
   gasUsed?: string;
@@ -90,7 +95,7 @@ export interface ITransactionFilterParams {
 
 export interface ITransactionsGroupedByMonth {
   monthYear: string;
-  transactions: Transaction[];
+  transactions: ITransactionResponse[];
 }
 
 export type ICloseTransactionBody = {
@@ -171,11 +176,8 @@ interface IListRequestSchema extends ValidatedRequestSchema {
     type: TransactionType;
   };
 }
-export interface ITCreateService
-  extends Partial<Omit<Transaction, 'assets' | 'witnesses'>> {
-  assets: Partial<Asset>[];
-  witnesses: Partial<Witness>[];
-}
+
+export type ITCreateService = Partial<Transaction>;
 
 export type ICreateTransactionRequest = AuthValidatedRequest<ICreateTransactionRequestSchema>;
 export type ICreateTransactionHistoryRequest = AuthValidatedRequest<ICreateTransactionHistoryRequestSchema>;
@@ -200,21 +202,27 @@ export interface ITransactionService {
     vault: Vault,
     witnesses: string[],
   ) => Promise<Transfer>;
-  validateStatus: (transactionId: string) => Promise<TransactionStatus>;
+  validateStatus: (
+    transaction: Transaction,
+    witnesses: IWitnesses[],
+  ) => TransactionStatus;
   checkInvalidConditions: (api_transaction: TransactionStatus) => void;
   verifyOnChain: (
     api_transaction: Transaction,
     provider: Provider,
   ) => Promise<ITransactionResume>;
   sendToChain: (transactionId: string) => Promise<void>;
-  create: (payload: ITCreateService) => Promise<Transaction>;
-  update: (id: string, payload: IUpdateTransactionPayload) => Promise<Transaction>;
+  create: (payload: ITCreateService) => Promise<ITransactionResponse>;
+  update: (
+    id: string,
+    payload: IUpdateTransactionPayload,
+  ) => Promise<ITransactionResponse>;
   list: () => Promise<
-    | IPagination<Transaction>
-    | Transaction[]
+    | IPagination<ITransactionResponse>
+    | ITransactionResponse[]
     | IPagination<ITransactionsGroupedByMonth>
     | ITransactionsGroupedByMonth
   >;
-  findById: (id: string) => Promise<Transaction>;
+  findById: (id: string) => Promise<ITransactionResponse>;
   delete: (id: string) => Promise<boolean>;
 }
