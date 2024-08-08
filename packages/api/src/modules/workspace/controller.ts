@@ -88,9 +88,9 @@ export class WorkspaceController {
     try {
       const { workspace } = req;
       const predicateService = new PredicateService();
-
+      console.log('[REQUEST]');
       const predicates = await Predicate.createQueryBuilder('p')
-        .leftJoin('p.workspaces', 'w')
+        .leftJoin('p.workspace', 'w')
         .leftJoin('p.version', 'pv')
         .leftJoin('p.transactions', 't', 't.status IN (:...status)', {
           status: [
@@ -171,9 +171,9 @@ export class WorkspaceController {
           : predicateCoins;
 
       return successful(
-        {
-          reservedCoinsUSD: calculateBalanceUSD(reservedCoins),
-          totalBalanceUSD: calculateBalanceUSD(predicateCoins),
+        {//no necessary items here (on workspace)
+          // reservedCoinsUSD: calculateBalanceUSD(reservedCoins),
+          // totalBalanceUSD: calculateBalanceUSD(predicateCoins),
           currentBalanceUSD: calculateBalanceUSD(assets),
           currentBalance: assets,
           totalBalance: predicateCoins,
@@ -182,6 +182,7 @@ export class WorkspaceController {
         Responses.Ok,
       );
     } catch (error) {
+      console.log(error)
       reservedCoins = [
         {
           assetId: assetsMapBySymbol['ETH'].id,
