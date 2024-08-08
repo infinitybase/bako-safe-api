@@ -25,3 +25,9 @@ export const validateSignInDappPayload = validator.body(
     address: Joi.string().required().custom(AddressValidator.validate),
   }),
 );
+
+export const validateSignInCodeParams = validator.params(
+  Joi.object({
+    address: Joi.string().required().custom(AddressValidator.validate),
+  }),
+);

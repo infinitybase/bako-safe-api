@@ -141,7 +141,6 @@ export class WorkspaceService implements IWorkspaceService {
   }
 
   async findByUser(user_id: string, single: boolean = false): Promise<Workspace[]> {
-    console.log(user_id, single);
     const a = await Workspace.query(
       `SELECT w.*
       FROM workspace w
@@ -150,7 +149,6 @@ export class WorkspaceService implements IWorkspaceService {
       WHERE u.id = $1  AND w.single = $2`,
       [user_id, single],
     );
-    console.log(a);
     return a;
   }
 
