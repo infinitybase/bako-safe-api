@@ -1,6 +1,7 @@
 import Joi from 'joi';
 
-import { validator } from '@utils/index';
+import { AddressValidator, validator } from '@utils/index';
+import { Address } from 'fuels';
 
 export const PayloadCreateUserSchema = validator.body(
   Joi.object({
@@ -9,9 +10,9 @@ export const PayloadCreateUserSchema = validator.body(
     password: Joi.string(),
     active: Joi.boolean(),
     type: Joi.string().required(),
-    address: Joi.string().required(),
+    address: Joi.string().required().custom(AddressValidator.validate),
     provider: Joi.string().required(),
-    webauthn: Joi.object().optional(), //todo: type corretly this
+    webauthn: Joi.object().optional(), //todo: type correctly this
   }),
 );
 
@@ -21,5 +22,11 @@ export const PayloadUpdateUserSchema = validator.body(
     email: Joi.string().email().allow(''),
     notify: Joi.boolean().optional(),
     first_login: Joi.boolean().optional(),
+  }),
+);
+
+export const FindUserByIDParams = validator.params(
+  Joi.object({
+    id: Joi.string().uuid(),
   }),
 );

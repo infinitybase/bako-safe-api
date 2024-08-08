@@ -4,7 +4,7 @@ import { handleResponse } from '@src/utils/index';
 
 import { AuthController } from './controller';
 import { AuthService } from './services';
-import { validateSignInPayload } from './validations';
+import { validateSignInCodeParams, validateSignInPayload } from './validations';
 
 const router = Router();
 const authService = new AuthService();
@@ -16,7 +16,11 @@ export const signOutPath = '/sign-out';
 
 router.post('/sign-in', validateSignInPayload, handleResponse(signIn));
 
-router.post('/code/:address', handleResponse(generateSignCode));
+router.post(
+  '/code/:address',
+  validateSignInCodeParams,
+  handleResponse(generateSignCode),
+);
 
 //todo: verify why do cant use authMiddleware here
 router.put('/workspace', handleResponse(updateWorkspace));

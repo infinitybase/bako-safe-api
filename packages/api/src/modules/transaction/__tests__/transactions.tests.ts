@@ -1,17 +1,19 @@
 import { BakoSafe, IPayloadVault, TransactionStatus, Vault } from 'bakosafe';
-import { Address, Provider, Wallet, bn } from 'fuels';
+import { Address, Provider, Wallet, bn, hash, ZeroBytes32 } from 'fuels';
 
 import { accounts } from '@src/mocks/accounts';
 import { networks } from '@src/mocks/networks';
 import { PredicateMock } from '@src/mocks/predicate';
-import { transactionMock } from '@src/mocks/transaction';
+import { transaction, transactionMock } from '@src/mocks/transaction';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
 import { generateWorkspacePayload } from '@src/utils/testUtils/Workspace';
 import { assetsMapBySymbol } from '@src/utils/assets';
 import { signBypK } from '@src/utils/testUtils/Wallet';
+import { catchApplicationError, TestError } from '@utils/testUtils/Errors';
 
 describe('[TRANSACTION]', () => {
   let api: AuthValidations;
+
   beforeAll(async () => {
     api = new AuthValidations(networks['local'], accounts['USER_1']);
 
@@ -37,12 +39,35 @@ describe('[TRANSACTION]', () => {
       expect(data_transaction).toHaveProperty('id');
       expect(data_transaction).toHaveProperty(
         'predicate.predicateAddress',
-        vault.address.toString(),
+        vault.address.toB256(),
       );
       expect(data_transaction).toHaveProperty('witnesses');
       expect(data_transaction.witnesses).toHaveLength(members.length);
       expect(data_transaction).toHaveProperty('assets');
       expect(tx.getHashTxId()).toEqual(data_transaction.hash);
+    },
+    60 * 1000,
+  );
+
+  test(
+    'Error when creating transaction with invalid payload',
+    async () => {
+      const payload = {
+        predicateAddress: 'invalid_address',
+        name: `[TESTE_MOCK] ${Address.fromRandom().toString()}`,
+        hash: ZeroBytes32,
+        txData: {},
+        status: TransactionStatus.AWAIT_REQUIREMENTS,
+        assets: [],
+      };
+      const payloadError = await catchApplicationError(
+        api.axios.post('/transaction', payload),
+      );
+      TestError.expectValidation(payloadError, {
+        type: 'custom',
+        field: 'Invalid address',
+        origin: 'body',
+      });
     },
     60 * 1000,
   );

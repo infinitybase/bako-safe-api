@@ -7,9 +7,7 @@ import {
   Workspace,
   defaultPermissions,
 } from '@src/models/Workspace';
-import {
-  ErrorTypes,
-} from '@src/utils/error';
+import { ErrorTypes } from '@src/utils/error';
 import GeneralError from '@src/utils/error/GeneralError';
 import Internal from '@src/utils/error/Internal';
 import { IOrdination, setOrdination } from '@src/utils/ordination';
@@ -19,6 +17,7 @@ import { IconUtils } from '@utils/icons';
 
 import { UserService } from '../user/service';
 import { IFilterParams, IWorkspaceService } from './types';
+import { AddressValidator } from '@src/utils';
 
 export class WorkspaceService implements IWorkspaceService {
   private _ordination: IOrdination<Workspace> = {
@@ -59,7 +58,7 @@ export class WorkspaceService implements IWorkspaceService {
           'owner.name',
           'owner.avatar',
           'users.id',
-          'users.address', 
+          'users.address',
           'users.name',
           'users.avatar',
           'predicates.id', // Seleção específica: apenas o campo 'id' de Predicate com alias
@@ -141,6 +140,18 @@ export class WorkspaceService implements IWorkspaceService {
     }
   }
 
+  async findByUser(user_id: string, single: boolean = false): Promise<Workspace[]> {
+    const a = await Workspace.query(
+      `SELECT w.*
+      FROM workspace w
+      INNER JOIN workspace_users wu ON wu.workspace_id = w.id
+      INNER JOIN users u ON u.id = wu.user_id
+      WHERE u.id = $1  AND w.single = $2`,
+      [user_id, single],
+    );
+    return a;
+  }
+
   async update(payload: Partial<Workspace>): Promise<boolean> {
     const w = Object.assign(
       await Workspace.findOne({ where: { id: payload.id } }),
@@ -168,23 +179,20 @@ export class WorkspaceService implements IWorkspaceService {
 
     const _permissions: IPermissions = {};
     for await (const member of [...members, owner.id]) {
-      const m =
-        member.length <= 36
-          ? await new UserService().findOne(member).then(data => data)
-          : await new UserService()
-              .findByAddress(member)
-              .then(async (data: User) => {
-                if (!data) {
-                  return await new UserService().create({
-                    address: member,
-                    name: member,
-                    provider: BakoSafe.getProviders('CHAIN_URL'),
-                    avatar: IconUtils.user(),
-                    type: TypeUser.FUEL,
-                  });
-                }
-                return data;
+      const m = AddressValidator.isAddress(member)
+        ? await new UserService().findByAddress(member).then(async (data: User) => {
+            if (!data) {
+              return await new UserService().create({
+                address: member,
+                name: member,
+                provider: BakoSafe.getProviders('CHAIN_URL'),
+                avatar: IconUtils.user(),
+                type: TypeUser.FUEL,
               });
+            }
+            return data;
+          })
+        : await new UserService().findOne(member).then(data => data);
       _members.push(m);
     }
 

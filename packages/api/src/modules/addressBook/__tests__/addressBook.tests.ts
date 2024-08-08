@@ -4,6 +4,7 @@ import { accounts } from '@src/mocks/accounts';
 import { networks } from '@src/mocks/networks';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
 import { generateWorkspacePayload } from '@src/utils/testUtils/Workspace';
+import { catchApplicationError, TestError } from '@utils/testUtils/Errors';
 
 describe('[ADDRESS_BOOK]', () => {
   let api: AuthValidations;
@@ -19,11 +20,11 @@ describe('[ADDRESS_BOOK]', () => {
   test(
     'Create address book using a personal workspace',
     async () => {
-      const nickname = `[FAKE_CONTACT_NAME]: ${Address.fromRandom().toAddress()}`;
-      const address = Address.fromRandom().toAddress();
+      const address = Address.fromRandom();
+      const nickname = `[FAKE_CONTACT_NAME]: ${address.toAddress()}`;
       const { data } = await api.axios.post('/address-book/', {
         nickname,
-        address,
+        address: address.toAddress(),
       });
 
       const aux = await api.axios
@@ -35,9 +36,30 @@ describe('[ADDRESS_BOOK]', () => {
 
       expect(data).toHaveProperty('id');
       expect(data).toHaveProperty('nickname', nickname);
-      expect(data).toHaveProperty('user.address', address);
+      expect(data).toHaveProperty('user.address', address.toB256());
 
       expect(aux).toHaveProperty('detail', 'Duplicated nickname');
+    },
+    5 * 1000,
+  );
+
+  test(
+    'Error when creating address book with invalid payload',
+    async () => {
+      const address = Address.fromRandom();
+      const nickname = `[FAKE_CONTACT_NAME]: ${address.toAddress()}`;
+
+      const payloadError = await catchApplicationError(
+        api.axios.post('/address-book/', {
+          nickname,
+          address: 'invalid_address',
+        }),
+      );
+      TestError.expectValidation(payloadError, {
+        type: 'custom',
+        field: 'Invalid address',
+        origin: 'body',
+      });
     },
     5 * 1000,
   );
@@ -53,10 +75,10 @@ describe('[ADDRESS_BOOK]', () => {
 
       await auth.selectWorkspace(workspace.id);
       const nickname = `[FAKE_CONTACT_NAME]: ${Address.fromRandom().toAddress()}`;
-      const address = Address.fromRandom().toAddress();
+      const address = Address.fromRandom();
       const { data } = await auth.axios.post('/address-book/', {
         nickname,
-        address,
+        address: address.toAddress(),
       });
 
       const aux = await auth.axios
@@ -68,7 +90,7 @@ describe('[ADDRESS_BOOK]', () => {
 
       expect(data).toHaveProperty('id');
       expect(data).toHaveProperty('nickname', nickname);
-      expect(data).toHaveProperty('user.address', address);
+      expect(data).toHaveProperty('user.address', address.toB256());
 
       expect(aux).toHaveProperty('detail', 'Duplicated nickname');
     },

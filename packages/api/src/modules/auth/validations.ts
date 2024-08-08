@@ -2,7 +2,8 @@ import Joi from 'joi';
 
 import { Encoder } from '@src/models';
 
-import { validator } from '@utils/index';
+import { AddressValidator, validator } from '@utils/index';
+import { Address } from 'fuels';
 
 const allowedEncoders = Object.values(Encoder);
 
@@ -21,6 +22,12 @@ export const validateSignInDappPayload = validator.body(
     sessionId: Joi.string().required(),
     url: Joi.string().required(),
     name: Joi.string().optional(),
-    address: Joi.string().required(),
+    address: Joi.string().required().custom(AddressValidator.validate),
+  }),
+);
+
+export const validateSignInCodeParams = validator.params(
+  Joi.object({
+    address: Joi.string().required().custom(AddressValidator.validate),
   }),
 );

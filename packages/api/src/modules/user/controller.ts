@@ -31,6 +31,7 @@ import {
   IUserService,
 } from './types';
 import { Not } from 'typeorm';
+import { Address } from 'fuels';
 
 export class UserController {
   private userService: IUserService;
@@ -195,7 +196,6 @@ export class UserController {
 
       //verify user exists
       let existingUser = await this.userService.findByAddress(address);
-      // if (existingUser) return successful(existingUser, Responses.Created);
 
       if (!existingUser) {
         //verify name exists
@@ -211,6 +211,7 @@ export class UserController {
         //create
         existingUser = await this.userService.create({
           ...req.body,
+          address,
           name: name ?? address,
           avatar: IconUtils.user(),
         });

@@ -31,7 +31,7 @@ export class AuthController {
   async signIn(req: ISignInRequest) {
     try {
       const { digest, encoder, signature } = req.body;
-
+      
       const { userToken, signin } = await TokenUtils.createAuthToken(
         signature,
         digest,

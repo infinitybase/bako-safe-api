@@ -1,11 +1,21 @@
 import Joi from 'joi';
 
-import { validator } from '@utils/index';
+import { AddressValidator, validator } from '@utils/index';
 
 export const PayloadCreateWorkspaceSchema = validator.body(
   Joi.object({
     name: Joi.string().required(),
-    members: Joi.array().items(Joi.string()).optional(),
+    members: Joi.array()
+      .items(
+        Joi.alternatives().try(
+          Joi.string().uuid(),
+          Joi.string().custom(AddressValidator.validate),
+        ),
+      )
+      .optional()
+      .messages({
+        'alternatives.match': 'Invalid member address or id',
+      }),
     description: Joi.string().allow('').optional(),
     avatar: Joi.string().optional(),
     permissions: Joi.object({}).optional(),
@@ -22,7 +32,10 @@ export const PayloadUpdateWorkspaceSchema = validator.body(
 
 export const PayloadUpdateWorkspaceParams = validator.params(
   Joi.object({
-    member: Joi.string().required(),
+    member: Joi.alternatives().try(
+      Joi.string().uuid(),
+      Joi.string().custom(AddressValidator.validate),
+    ),
   }),
 );
 

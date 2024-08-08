@@ -7,6 +7,7 @@ import { PermissionRoles, defaultPermissions } from '@src/models/Workspace';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
 import { generateWorkspacePayload } from '@src/utils/testUtils/Workspace';
 import { BakoSafe } from 'bakosafe';
+import { catchApplicationError, TestError } from '@utils/testUtils/Errors';
 
 describe('[WORKSPACE]', () => {
   let api: AuthValidations;
@@ -27,14 +28,9 @@ describe('[WORKSPACE]', () => {
         data.forEach(element => {
           expect(element).toHaveProperty('id');
           expect(element).toHaveProperty('name');
-          expect(element).toHaveProperty('owner');
-          expect(element).toHaveProperty('members');
+          expect(element).toHaveProperty('owner_id');
           expect(element).toHaveProperty('single', false);
           expect(element).toHaveProperty('permissions');
-          const aux = element.members.find(
-            m => m.address === api.authToken.address,
-          );
-          expect(!!aux).toBe(true);
         });
       });
     },
@@ -61,6 +57,25 @@ describe('[WORKSPACE]', () => {
       expect(data.permissions[data.owner.id]).toStrictEqual(
         defaultPermissions[PermissionRoles.OWNER],
       );
+    },
+    60 * 1000,
+  );
+
+  test(
+    'Error when creating workspace with invalid payload',
+    async () => {
+      const payloadError = await catchApplicationError(
+        api.axios.post(`/workspace/`, {
+          name: `[GENERATED] Workspace 1 ${new Date()}`,
+          description: '[GENERATED] Workspace 1 description',
+          members: ['asd'],
+        }),
+      );
+      TestError.expectValidation(payloadError, {
+        type: 'alternatives.match',
+        field: 'Invalid member address or id',
+        origin: 'body',
+      });
     },
     60 * 1000,
   );
@@ -211,9 +226,9 @@ describe('[WORKSPACE]', () => {
     const { data } = await generateWorkspacePayload(auth_aux);
     await auth_aux.selectWorkspace(data.id);
 
-    const aux_address = Address.fromRandom().toAddress();
+    const aux_address = Address.fromRandom();
     const { data: data_user_aux } = await auth_aux.axios.post('/user/', {
-      address: aux_address,
+      address: aux_address.toAddress(),
       provider: BakoSafe.getProviders('CHAIN_URL'),
       name: `${new Date().getTime()} - Create user test`,
       type: TypeUser.FUEL,
@@ -233,21 +248,25 @@ describe('[WORKSPACE]', () => {
         expect(data).toHaveProperty('owner');
         expect(data).toHaveProperty('members');
         expect(data.members).toHaveLength(quantityMembers);
-        expect(data.members.find(m => m.address === aux_address)).toBeDefined();
+        expect(
+          data.members.find(m => m.address === aux_address.toB256()),
+        ).toBeDefined();
         expect(data).toHaveProperty('permissions');
       });
 
     // //include not exists on database member (create)
-    const aux_byAddress = Address.fromRandom().toAddress();
+    const aux_byAddress = Address.fromRandom();
     await auth_aux.axios
-      .post(`/workspace/members/${aux_byAddress}/include`)
+      .post(`/workspace/members/${aux_byAddress.toAddress()}/include`)
       .then(({ data, status }) => {
         quantityMembers++;
         expect(status).toBe(200);
         expect(data).toHaveProperty('id');
         expect(data).toHaveProperty('owner');
         expect(data).toHaveProperty('members');
-        expect(data.members.find(m => m.address === aux_byAddress)).toBeDefined();
+        expect(
+          data.members.find(m => m.address === aux_byAddress.toB256()),
+        ).toBeDefined();
         expect(data.members).toHaveLength(quantityMembers);
         expect(data).toHaveProperty('permissions');
       });

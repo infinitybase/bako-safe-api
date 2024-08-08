@@ -6,7 +6,11 @@ import { handleResponse } from '@utils/index';
 
 import { UserController } from './controller';
 import { UserService } from './service';
-import { PayloadCreateUserSchema, PayloadUpdateUserSchema } from './validation';
+import {
+  FindUserByIDParams,
+  PayloadCreateUserSchema,
+  PayloadUpdateUserSchema,
+} from './validation';
 
 const router = Router();
 
@@ -41,7 +45,12 @@ router.get(
   handleResponse(userController.predicates),
 );
 router.get('/', authMiddleware, handleResponse(userController.find));
-router.get('/:id', authMiddleware, handleResponse(userController.findOne));
+router.get(
+  '/:id',
+  FindUserByIDParams,
+  authMiddleware,
+  handleResponse(userController.findOne),
+);
 router.put(
   '/:id',
   authMiddleware,

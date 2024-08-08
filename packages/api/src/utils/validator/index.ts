@@ -6,4 +6,6 @@ const validator = createValidator({
   passError: true,
 });
 
+export { AddressValidator } from './address';
+
 export { validator };
