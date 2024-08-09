@@ -7,19 +7,22 @@ import {
   WitnessStatus,
 } from 'bakosafe';
 import {
+  Address,
+  getTransactionsSummaries,
   hexlify,
   OutputType,
   Provider,
   TransactionRequest,
   transactionRequestify,
   TransactionResponse,
-  TransactionType,
+  TransactionType as FuelTransactionType,
+  getTransactionSummary,
 } from 'fuels';
 import { Brackets } from 'typeorm';
 
 import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
 
-import { NotificationTitle, Transaction } from '@models/index';
+import { NotificationTitle, Predicate, Transaction } from '@models/index';
 
 import { NotFound } from '@utils/error';
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
@@ -36,7 +39,11 @@ import {
   ITransactionsGroupedByMonth,
   IUpdateTransactionPayload,
 } from './types';
-import { formatTransactionsResponse, groupedTransactions } from './utils';
+import {
+  formatFuelTransaction,
+  formatTransactionsResponse,
+  groupedTransactions,
+} from './utils';
 
 export class TransactionService implements ITransactionService {
   private _ordination: IOrdination<Transaction> = {
@@ -384,7 +391,7 @@ export class TransactionService implements ITransactionService {
     const tx = transactionRequestify({
       ...txData,
       witnesses: [
-        ...(txData.type === TransactionType.Create // is required add on 1st position
+        ...(txData.type === FuelTransactionType.Create // is required add on 1st position
           ? [hexlify(txData.witnesses[txData.bytecodeWitnessIndex])]
           : []),
         ...resume.witnesses.filter(w => !!w.signature).map(w => w.signature),
@@ -480,5 +487,67 @@ export class TransactionService implements ITransactionService {
     }
 
     return api_transaction.resume;
+  }
+
+  async fetchFuelTransactions(
+    predicates: Predicate[],
+  ): Promise<ITransactionResponse[]> {
+    try {
+      let _transactions: ITransactionResponse[] = [];
+
+      for await (const predicate of predicates) {
+        const address = Address.fromString(predicate.predicateAddress).toB256();
+        const provider = await Provider.create(predicate.provider);
+
+        const { transactions } = await getTransactionsSummaries({
+          provider,
+          filters: {
+            owner: address,
+            first: 20,
+          },
+        });
+
+        const filteredTransactions = transactions.filter(
+          tx =>
+            tx.isStatusSuccess &&
+            tx.operations.some(op => op.to?.address === address),
+        );
+        const formattedTransactions = filteredTransactions.map(tx =>
+          formatFuelTransaction(tx, predicate),
+        );
+
+        _transactions = [..._transactions, ...formattedTransactions];
+      }
+
+      return _transactions;
+    } catch (e) {
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on transaction fetchFuelTransactions',
+        detail: e,
+      });
+    }
+  }
+
+  async fetchFuelTransactionById(
+    id: string,
+    predicate: Predicate,
+  ): Promise<ITransactionResponse> {
+    try {
+      const provider = await Provider.create(predicate.provider);
+
+      const tx = await getTransactionSummary({
+        id,
+        provider,
+      });
+
+      return formatFuelTransaction(tx, predicate);
+    } catch (e) {
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on transaction fetchFuelTransactionById',
+        detail: e,
+      });
+    }
   }
 }

@@ -10,7 +10,7 @@ import {
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 import { Provider, TransactionRequest } from 'fuels';
 
-import { Transaction, TransactionType } from '@models/index';
+import { Predicate, Transaction, TransactionType } from '@models/index';
 
 import { AuthValidatedRequest } from '@middlewares/auth/types';
 
@@ -115,7 +115,7 @@ interface ICreateTransactionRequestSchema extends ValidatedRequestSchema {
 }
 
 interface ICreateTransactionHistoryRequestSchema extends ValidatedRequestSchema {
-  [ContainerTypes.Params]: { id: string };
+  [ContainerTypes.Params]: { id: string; predicateId: string };
 }
 
 interface IUpdateTransactionRequestSchema extends ValidatedRequestSchema {
@@ -225,4 +225,11 @@ export interface ITransactionService {
   >;
   findById: (id: string) => Promise<ITransactionResponse>;
   delete: (id: string) => Promise<boolean>;
+  fetchFuelTransactions: (
+    predicates: Predicate[],
+  ) => Promise<ITransactionResponse[]>;
+  fetchFuelTransactionById: (
+    id: string,
+    predicate: Predicate,
+  ) => Promise<ITransactionResponse>;
 }
