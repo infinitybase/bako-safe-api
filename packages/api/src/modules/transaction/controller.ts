@@ -1,6 +1,6 @@
-import { TransactionStatus, WitnessStatus } from 'bakosafe';
+import { TransactionStatus, TransactionType, WitnessStatus } from 'bakosafe';
 import { hashMessage, Provider, Signer } from 'fuels';
-
+import { isUUID } from 'class-validator';
 import { PermissionRoles, Workspace } from '@src/models/Workspace';
 import {
   Unauthorized,
@@ -39,11 +39,13 @@ import {
   ITransactionService,
   TransactionHistory,
 } from './types';
-import { format } from 'date-fns';
+import { groupedTransactions, mergeTransactionLists } from './utils';
+import { IPagination } from '@src/utils/pagination/types';
 
 export class TransactionController {
   private transactionService: ITransactionService;
   private notificationService: INotificationService;
+  private predicateService: IPredicateService;
 
   constructor(
     transactionService: ITransactionService,
@@ -214,13 +216,27 @@ export class TransactionController {
     }
   }
 
-  async createHistory({ params: { id } }: ICreateTransactionHistoryRequest) {
+  async createHistory({
+    params: { id, predicateId },
+  }: ICreateTransactionHistoryRequest) {
     try {
-      const response = await this.transactionService
-        .findById(id)
-        .then(async (data: Transaction) => {
-          return TransactionController.formatTransactionsHistory(data);
-        });
+      const isUuid = isUUID(id);
+      let result = null;
+
+      if (isUuid) {
+        result = await this.transactionService.findById(id);
+      } else {
+        const predicate = await this.predicateService.findById(predicateId);
+        result = await this.transactionService.fetchFuelTransactionById(
+          id,
+          predicate,
+        );
+      }
+
+      const response = await TransactionController.formatTransactionsHistory(
+        result,
+      );
+
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
@@ -490,25 +506,81 @@ export class TransactionController {
             .then((response: Workspace[]) => response.map(wk => wk.id))
         : [workspace.id];
 
-      const result = await new TransactionService()
-        .filter({
-          id,
-          to,
-          status: status ?? undefined,
-          createdBy,
-          name,
-          workspaceId: _wk,
-          signer: hasSingle ? user.address : undefined,
-          predicateId: predicateId ?? undefined,
-          byMonth,
-          type,
-        })
-        .ordination({ orderBy, sort })
-        .paginate({ page, perPage })
-        .list();
+      const _status = status ?? undefined;
+      const signer = hasSingle ? user.address : undefined;
+      const ordination = { orderBy, sort };
+      const hasPagination = page && perPage;
 
-      return successful(result, Responses.Ok);
+      if (
+        _wk.length > 0 &&
+        (!_status ||
+          _status?.some(status => status === TransactionStatus.SUCCESS)) &&
+        (!type || type === TransactionType.DEPOSIT)
+      ) {
+        const dbTxs = await new TransactionService()
+          .filter({
+            id,
+            to,
+            status: _status,
+            createdBy,
+            name,
+            workspaceId: _wk,
+            signer,
+            predicateId: predicateId ?? undefined,
+            type,
+          })
+          .ordination(ordination)
+          .paginate({ page, perPage })
+          .list()
+          .then(
+            (data: IPagination<ITransactionResponse> | ITransactionResponse[]) =>
+              data,
+          );
+
+        const predicates = await new PredicateService()
+          .filter({
+            workspace: _wk,
+            signer,
+          })
+          .list()
+          .then((data: Predicate[]) => data);
+
+        const fuelTxs = await this.transactionService.fetchFuelTransactions(
+          predicates,
+        );
+
+        const mergedList = mergeTransactionLists(
+          dbTxs,
+          fuelTxs,
+          ordination,
+          hasPagination ? Number(perPage) || 10 : undefined,
+        );
+
+        const response = byMonth ? groupedTransactions(mergedList) : mergedList;
+
+        return successful(response, Responses.Ok);
+      } else {
+        const response = await new TransactionService()
+          .filter({
+            id,
+            to,
+            status: _status,
+            createdBy,
+            name,
+            workspaceId: _wk,
+            signer,
+            predicateId: predicateId ?? undefined,
+            byMonth,
+            type,
+          })
+          .ordination(ordination)
+          .paginate({ page, perPage })
+          .list();
+
+        return successful(response, Responses.Ok);
+      }
     } catch (e) {
+      console.log('ERROR TESTING: ', e);
       return error(e.error, e.statusCode);
     }
   }
