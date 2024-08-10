@@ -4,12 +4,16 @@ import {
   ICreateTransactionPayload,
   ITransactionResponse,
   ITransactionsGroupedByMonth,
+  ITransactionsListParams,
 } from './types';
 import { IDeposit } from '../predicate/types';
 import { TransactionStatus } from 'bakosafe';
 import { TransactionResult } from 'fuels';
 import { formatAssets } from '@src/utils/formatAssets';
 import { IOrdination } from '@src/utils/ordination/helper';
+import { isUUID } from 'class-validator';
+import { ITransactionCounter } from './types';
+import { ITransactionPagination } from './pagination';
 
 export const formatTransactionsResponse = (
   transactions: IPagination<Transaction> | Transaction[],
@@ -31,14 +35,10 @@ const convertToArray = (groupedData: { [key: string]: ITransactionResponse[] }) 
   }));
 };
 
-export const groupedTransactions = (
-  transactions: IPagination<ITransactionResponse> | ITransactionResponse[],
-): IPagination<ITransactionsGroupedByMonth> | ITransactionsGroupedByMonth => {
-  const transactionArray: ITransactionResponse[] = Array.isArray(transactions)
-    ? transactions
-    : transactions.data;
-
-  const groupedData = transactionArray.reduce((acc, transaction) => {
+const groupTransactions = (
+  transactions: ITransactionResponse[],
+): ITransactionsGroupedByMonth[] => {
+  const groupedData = transactions.reduce((acc, transaction) => {
     const options = { year: 'numeric', month: 'long' } as const;
     const monthYear = transaction.createdAt.toLocaleDateString('en-US', options);
 
@@ -51,7 +51,20 @@ export const groupedTransactions = (
 
   const groupedArray = convertToArray(groupedData);
 
-  if (!Array.isArray(transactions)) {
+  return groupedArray;
+};
+
+export const groupedTransactions = (
+  transactions: IPagination<ITransactionResponse> | ITransactionResponse[],
+): IPagination<ITransactionsGroupedByMonth> | ITransactionsGroupedByMonth => {
+  const isPaginated = !Array.isArray(transactions);
+  const transactionArray: ITransactionResponse[] = isPaginated
+    ? transactions.data
+    : transactions;
+
+  const groupedArray = groupTransactions(transactionArray);
+
+  if (isPaginated) {
     return {
       currentPage: transactions.currentPage,
       totalPages: transactions.totalPages,
@@ -71,6 +84,36 @@ export const groupedTransactions = (
     prevPage: null,
     perPage: transactionArray.length,
     total: transactionArray.length,
+    data: groupedArray,
+  };
+};
+
+export const groupedMergedTransactions = (
+  transactions:
+    | ITransactionPagination<ITransactionResponse>
+    | ITransactionResponse[],
+):
+  | ITransactionPagination<ITransactionsGroupedByMonth>
+  | ITransactionsGroupedByMonth => {
+  const isPaginated = !Array.isArray(transactions);
+  const transactionArray: ITransactionResponse[] = isPaginated
+    ? transactions.data
+    : transactions;
+
+  const groupedArray = groupTransactions(transactionArray);
+
+  if (isPaginated) {
+    return {
+      ...transactions,
+      data: groupedArray,
+    };
+  }
+
+  // Caso a resposta não seja uma paginação, retornar com mesmo formato de uma.
+  return {
+    perPage: transactionArray.length,
+    offsetDb: 0,
+    offsetFuel: 0,
     data: groupedArray,
   };
 };
@@ -191,21 +234,50 @@ export const formatFuelTransaction = (
 };
 
 export const mergeTransactionLists = (
-  bakoList: IPagination<ITransactionResponse> | ITransactionResponse[],
+  bakoList:
+    | IPagination<ITransactionResponse>
+    | ITransactionPagination<ITransactionResponse>
+    | ITransactionResponse[],
   fuelList: ITransactionResponse[],
-  ordination: IOrdination<Transaction>,
-  perPage?: number,
-): IPagination<ITransactionResponse> | ITransactionResponse[] => {
-  const isArray = Array.isArray(bakoList);
-  const bakoListArray: ITransactionResponse[] = isArray ? bakoList : bakoList.data;
-  const _bakoList = new Set(bakoListArray.map(tx => tx.hash));
-  const missingTxs = fuelList.filter(tx => !_bakoList.has(tx.hash));
-  const mergedList = [...bakoListArray, ...missingTxs];
-  const sortedList = sortTransactions(mergedList, ordination);
-  const list = perPage ? sortedList.slice(0, perPage) : sortedList;
-  const result = isArray ? list : { ...bakoList, data: list };
+  params: ITransactionsListParams,
+): ITransactionPagination<ITransactionResponse> | ITransactionResponse[] => {
+  const {
+    ordination: { orderBy, sort },
+    perPage,
+    offsetDb,
+    offsetFuel,
+  } = params;
 
-  return result;
+  const _ordination = { orderBy: orderBy || 'updatedAt', sort: sort || 'DESC' };
+  const _perPage = perPage ? Number(perPage) : undefined;
+  const _offsetDb = offsetDb ? Number(offsetDb) : undefined;
+  const _offsetFuel = offsetFuel ? Number(offsetFuel) : undefined;
+
+  const isPaginated = perPage && offsetDb && offsetFuel;
+  const bakoListArray: ITransactionResponse[] = Array.isArray(bakoList)
+    ? bakoList
+    : bakoList.data;
+  const _bakoList = new Set(bakoListArray.map(tx => tx.hash));
+  const _fuelList = sortTransactions(fuelList, _ordination).slice(_offsetFuel);
+  const missingTxs = _fuelList.filter(tx => !_bakoList.has(tx.hash));
+  const mergedList = [...bakoListArray, ...missingTxs];
+  const sortedList = sortTransactions(mergedList, _ordination);
+  const list = isPaginated ? sortedList.slice(0, _perPage) : sortedList;
+
+  if (!isPaginated) {
+    return list;
+  }
+
+  const counter = countTransactionsPerOrigin(list);
+  const newOffsetDb = _offsetDb + counter.DB;
+  const newOffsetFuel = _offsetFuel + counter.FUEL;
+
+  return {
+    data: list,
+    perPage: _perPage,
+    offsetDb: newOffsetDb,
+    offsetFuel: newOffsetFuel,
+  };
 };
 
 export const sortTransactions = (
@@ -213,7 +285,6 @@ export const sortTransactions = (
   ordination: IOrdination<Transaction>,
 ): ITransactionResponse[] => {
   const { orderBy, sort } = ordination;
-
   const sortedTransactions = transactions.sort((a, b) => {
     let compareValue = 0;
 
@@ -241,4 +312,20 @@ export const sortTransactions = (
   });
 
   return sortedTransactions;
+};
+
+const countTransactionsPerOrigin = (
+  transactions: ITransactionResponse[],
+): ITransactionCounter => {
+  return transactions.reduce<ITransactionCounter>(
+    (counter, transaction) => {
+      if (isUUID(transaction.id)) {
+        counter.DB++;
+      } else {
+        counter.FUEL++;
+      }
+      return counter;
+    },
+    { DB: 0, FUEL: 0 },
+  );
 };

@@ -16,6 +16,12 @@ import { AuthValidatedRequest } from '@middlewares/auth/types';
 
 import { IOrdination } from '@utils/ordination';
 import { IPagination, PaginationParams } from '@utils/pagination';
+import { TransactionPaginationParams } from './pagination';
+
+export interface ITransactionCounter {
+  DB: number;
+  FUEL: number;
+}
 
 export enum OrderBy {
   name = 'name',
@@ -91,6 +97,13 @@ export interface ITransactionFilterParams {
   id?: string;
   byMonth?: boolean;
   type?: TransactionType;
+}
+
+export interface ITransactionsListParams {
+  ordination?: IOrdination<Transaction>;
+  perPage?: string;
+  offsetDb?: string;
+  offsetFuel?: string;
 }
 
 export interface ITransactionsGroupedByMonth {
@@ -177,6 +190,20 @@ interface IListRequestSchema extends ValidatedRequestSchema {
   };
 }
 
+interface IListWithIncomingsRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Query]: {
+    status: TransactionStatus[];
+    predicateId: string[];
+    orderBy: OrderBy;
+    sort: Sort;
+    perPage?: string;
+    byMonth?: boolean;
+    type: TransactionType;
+    offsetDb?: string;
+    offsetFuel?: string;
+  };
+}
+
 export type ITCreateService = Partial<Transaction>;
 
 export type ICreateTransactionRequest = AuthValidatedRequest<ICreateTransactionRequestSchema>;
@@ -191,10 +218,12 @@ export type IFindTransactionByHashRequest = AuthValidatedRequest<IFindTransactio
 export type IFindTransactionByPredicateIdRequest = AuthValidatedRequest<IFindTransactionByPredicateIdRequestSchema>;
 export type IFindTransactionByToRequest = AuthValidatedRequest<IFindTransactionByToRequestSchema>;
 export type IListRequest = AuthValidatedRequest<IListRequestSchema>;
+export type IListWithIncomingsRequest = AuthValidatedRequest<IListWithIncomingsRequestSchema>;
 
 export interface ITransactionService {
   ordination(ordination?: IOrdination<Transaction>): this;
   paginate(pagination?: PaginationParams): this;
+  transactionPaginate(pagination?: TransactionPaginationParams): this;
   filter(filter: ITransactionFilterParams): this;
 
   instanceTransactionScript: (
@@ -223,6 +252,7 @@ export interface ITransactionService {
     | IPagination<ITransactionsGroupedByMonth>
     | ITransactionsGroupedByMonth
   >;
+  listWithIncomings: () => Promise<ITransactionResponse[]>;
   findById: (id: string) => Promise<ITransactionResponse>;
   delete: (id: string) => Promise<boolean>;
   fetchFuelTransactions: (
