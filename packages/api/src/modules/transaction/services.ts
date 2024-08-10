@@ -44,6 +44,7 @@ import {
   formatTransactionsResponse,
   groupedTransactions,
 } from './utils';
+import { TransactionPagination, TransactionPaginationParams } from './pagination';
 
 export class TransactionService implements ITransactionService {
   private _ordination: IOrdination<Transaction> = {
@@ -51,6 +52,7 @@ export class TransactionService implements ITransactionService {
     sort: 'DESC',
   };
   private _pagination: PaginationParams;
+  private _transactionPagination: TransactionPaginationParams;
   private _filter: ITransactionFilterParams;
 
   filter(filter: ITransactionFilterParams) {
@@ -60,6 +62,11 @@ export class TransactionService implements ITransactionService {
 
   paginate(pagination?: PaginationParams) {
     this._pagination = pagination;
+    return this;
+  }
+
+  transactionPaginate(pagination?: TransactionPaginationParams) {
+    this._transactionPagination = pagination;
     return this;
   }
 
@@ -287,6 +294,103 @@ export class TransactionService implements ITransactionService {
       : _transactions;
   }
 
+  async listWithIncomings(): Promise<ITransactionResponse[]> {
+    const hasPagination =
+      this._transactionPagination?.perPage && this._transactionPagination?.offset;
+    const queryBuilder = Transaction.createQueryBuilder('t')
+      .select([
+        't.createdAt',
+        't.gasUsed',
+        't.hash',
+        't.id',
+        't.name',
+        't.predicateId',
+        't.txData',
+        't.resume',
+        't.sendTime',
+        't.status',
+        't.summary',
+        't.updatedAt',
+        't.type',
+      ])
+      .leftJoin('t.predicate', 'predicate')
+      .leftJoin('predicate.members', 'members')
+      .leftJoin('predicate.workspace', 'workspace')
+      .addSelect([
+        'predicate.name',
+        'predicate.id',
+        'predicate.minSigners',
+        'predicate.predicateAddress',
+        'members.id',
+        'members.avatar',
+        'members.address',
+        'workspace.id',
+        'workspace.name',
+        'workspace.single',
+      ]);
+
+    // =============== specific for workspace ===============
+    if (this._filter.workspaceId || this._filter.signer) {
+      queryBuilder.andWhere(
+        new Brackets(qb => {
+          if (this._filter.workspaceId) {
+            qb.orWhere('workspace.id IN (:...workspace)', {
+              workspace: this._filter.workspaceId,
+            });
+          }
+          if (this._filter.signer) {
+            qb.orWhere('members.address = :signer', {
+              signer: this._filter.signer,
+            });
+          }
+        }),
+      );
+    }
+
+    // =============== specific for home ===============
+
+    this._filter.predicateId &&
+      this._filter.predicateId.length > 0 &&
+      queryBuilder.andWhere('t.predicate_id IN (:...predicateID)', {
+        predicateID: this._filter.predicateId,
+      });
+
+    this._filter.status &&
+      queryBuilder.andWhere('t.status IN (:...status)', {
+        status: this._filter.status,
+      });
+
+    this._filter.type &&
+      queryBuilder.andWhere('t.type = :type', {
+        type: this._filter.type,
+      });
+
+    queryBuilder.orderBy(`t.${this._ordination.orderBy}`, this._ordination.sort);
+
+    const handleInternalError = e => {
+      if (e instanceof GeneralError) throw e;
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on transaction list',
+        detail: e,
+      });
+    };
+
+    const transactions = hasPagination
+      ? await TransactionPagination.create(queryBuilder)
+          .paginate(this._transactionPagination)
+          .then(paginationResult => paginationResult)
+          .catch(handleInternalError)
+      : await queryBuilder
+          .getMany()
+          .then(transactions => {
+            return transactions ?? [];
+          })
+          .catch(handleInternalError);
+
+    return formatTransactionsResponse(transactions) as ITransactionResponse[];
+  }
+
   async delete(id: string): Promise<boolean> {
     return await Transaction.update({ id }, { deletedAt: new Date() })
       .then(() => true)
@@ -499,11 +603,15 @@ export class TransactionService implements ITransactionService {
         const address = Address.fromString(predicate.predicateAddress).toB256();
         const provider = await Provider.create(predicate.provider);
 
+        const _perPage = Number(this._transactionPagination?.perPage ?? 100);
+        const _offset = Number(this._transactionPagination?.offset ?? 0);
+        const first = _perPage + _offset;
+
         const { transactions } = await getTransactionsSummaries({
           provider,
           filters: {
             owner: address,
-            first: 20,
+            first,
           },
         });
 
@@ -512,13 +620,13 @@ export class TransactionService implements ITransactionService {
             tx.isStatusSuccess &&
             tx.operations.some(op => op.to?.address === address),
         );
+
         const formattedTransactions = filteredTransactions.map(tx =>
           formatFuelTransaction(tx, predicate),
         );
 
         _transactions = [..._transactions, ...formattedTransactions];
       }
-
       return _transactions;
     } catch (e) {
       throw new Internal({

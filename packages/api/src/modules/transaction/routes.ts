@@ -24,6 +24,7 @@ const notificationService = new NotificationService();
 
 const {
   list,
+  listWithIncomings,
   send,
   close,
   create,
@@ -45,6 +46,7 @@ router.use(authMiddleware);
 
 router.post('/', validateAddTransactionPayload, handleResponse(create));
 router.get('/', handleResponse(list));
+router.get('/with-incomings', handleResponse(listWithIncomings));
 router.get('/pending', handleResponse(pending));
 router.get('/:id', handleResponse(findById));
 router.get('/by-hash/:hash', handleResponse(findByHash));
