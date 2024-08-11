@@ -1,24 +1,18 @@
 import { TransactionStatus } from 'bakosafe';
-import { CoinQuantity, bn } from 'fuels';
 
 import { Predicate } from '@src/models/Predicate';
 import { Workspace } from '@src/models/Workspace';
 import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
 import { IconUtils } from '@src/utils/icons';
 
-import {
-  Asset,
-  NotificationTitle,
-  Transaction,
-  TypeUser,
-  User,
-} from '@models/index';
+import { NotificationTitle, Transaction, TypeUser, User } from '@models/index';
 
 import { error } from '@utils/error';
 import {
   Responses,
   bindMethods,
   calculateBalanceUSD,
+  calculateReservedCoins,
   subCoins,
   successful,
 } from '@utils/index';
@@ -204,7 +198,7 @@ export class PredicateController {
   async hasReservedCoins({ params: { predicateId } }: IFindByIdRequest) {
     try {
       const {
-        transactions: predicate_txs,
+        transactions: predicateTxs,
         version: { code: versionCode },
         configurable,
       } = await Predicate.createQueryBuilder('p')
@@ -214,62 +208,32 @@ export class PredicateController {
             TransactionStatus.PENDING_SENDER,
           ],
         })
-        .leftJoin('t.assets', 'a')
         .leftJoin('p.version', 'pv')
-        .addSelect([
-          't',
-          'a.assetId',
-          'a.amount',
-          'p.id',
-          'p.configurable',
-          'pv.code',
-        ])
+        .addSelect(['t', 'p.id', 'p.configurable', 'pv.code'])
         .where('p.id = :predicateId', { predicateId })
         .getOne();
 
-      //todo: replace by a util on model Transaction
-      const tx_reserved_balances = predicate_txs.reduce(
-        (accumulator, transaction: Transaction) => {
-          transaction.assets.forEach((asset: Asset) => {
-            const assetId = asset.assetId;
-            const amount = bn.parseUnits(asset.amount);
-            const existingAsset = accumulator.find(
-              item => item.assetId === assetId,
-            );
-
-            if (existingAsset) {
-              existingAsset.amount = existingAsset.amount.add(amount);
-            }
-            accumulator.push({ assetId, amount });
-          });
-          return accumulator;
-        },
-        [] as CoinQuantity[],
-      );
-
+      const reservedCoins = calculateReservedCoins(predicateTxs);
       const instance = await this.predicateService.instancePredicate(
         configurable,
         versionCode,
       );
       const balances = (await instance.getBalances()).balances;
       const assets =
-        tx_reserved_balances.length > 0
-          ? subCoins(balances, tx_reserved_balances)
-          : balances;
+        reservedCoins.length > 0 ? subCoins(balances, reservedCoins) : balances;
 
       return successful(
         {
-          reservedCoinsUSD: calculateBalanceUSD(tx_reserved_balances), // locked value on USDC
+          reservedCoinsUSD: calculateBalanceUSD(reservedCoins), // locked value on USDC
           totalBalanceUSD: calculateBalanceUSD(balances),
           currentBalanceUSD: calculateBalanceUSD(assets),
           currentBalance: assets,
           totalBalance: balances,
-          reservedCoins: tx_reserved_balances, // locked coins
+          reservedCoins: reservedCoins, // locked coins
         },
         Responses.Ok,
       );
     } catch (e) {
-      console.log(e);
       return error(e.error, e.statusCode);
     }
   }

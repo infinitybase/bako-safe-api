@@ -39,9 +39,9 @@ describe('[TRANSACTION]', () => {
         'predicate.predicateAddress',
         vault.address.toString(),
       );
-      expect(data_transaction).toHaveProperty('witnesses');
-      expect(data_transaction.witnesses).toHaveLength(members.length);
       expect(data_transaction).toHaveProperty('assets');
+      expect(data_transaction).toHaveProperty('resume.witnesses');
+      expect(data_transaction.resume.witnesses).toHaveLength(members.length);
       expect(tx.getHashTxId()).toEqual(data_transaction.hash);
     },
     60 * 1000,
@@ -338,7 +338,7 @@ describe('[TRANSACTION]', () => {
       const declineTransaction = await auth.axios.put(
         `/transaction/signer/${data.id}`,
         {
-          account: data.witnesses[0].account,
+          account: data.resume.witnesses[0].account,
           confirm: false,
           signer: signature,
         },
@@ -348,7 +348,7 @@ describe('[TRANSACTION]', () => {
 
       // Confirmando/assinando a transação depois da mesma ser recusada
       const confirmTransaction = auth.axios.put(`/transaction/signer/${data.id}`, {
-        account: data.witnesses[0].account,
+        account: data.resume.witnesses[0].account,
         confirm: true,
         signer: signature,
       });
