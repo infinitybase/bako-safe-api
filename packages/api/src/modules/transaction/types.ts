@@ -2,6 +2,7 @@ import {
   ITransactionResume,
   ITransactionSummary,
   ITransferAsset,
+  IWitnesses,
   TransactionStatus,
   Transfer,
   Vault,
@@ -9,7 +10,8 @@ import {
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 import { Provider, TransactionRequest } from 'fuels';
 
-import { Transaction, TransactionType, Witness } from '@models/index';
+
+import { Transaction, TransactionType } from '@models/index';
 
 import { AuthValidatedRequest } from '@middlewares/auth/types';
 
@@ -50,7 +52,6 @@ export interface ICreateTransactionPayload {
     amount: string;
     to: string;
   }[];
-  witnesses: Partial<Witness>[];
   resume?: ITransactionResume;
   sendTime?: Date;
   gasUsed?: string;
@@ -176,11 +177,8 @@ interface IListRequestSchema extends ValidatedRequestSchema {
     type: TransactionType;
   };
 }
-export interface ITCreateService
-  extends Partial<Omit<Transaction, 'assets' | 'witnesses'>> {
-  assets: ITransferAsset[];
-  witnesses: Partial<Witness>[];
-}
+
+export type ITCreateService = Partial<Transaction>;
 
 export type ICreateTransactionRequest = AuthValidatedRequest<ICreateTransactionRequestSchema>;
 export type ICreateTransactionHistoryRequest = AuthValidatedRequest<ICreateTransactionHistoryRequestSchema>;
@@ -205,21 +203,27 @@ export interface ITransactionService {
     vault: Vault,
     witnesses: string[],
   ) => Promise<Transfer>;
-  validateStatus: (transactionId: string) => Promise<TransactionStatus>;
+  validateStatus: (
+    transaction: Transaction,
+    witnesses: IWitnesses[],
+  ) => TransactionStatus;
   checkInvalidConditions: (api_transaction: TransactionStatus) => void;
   verifyOnChain: (
     api_transaction: Transaction,
     provider: Provider,
   ) => Promise<ITransactionResume>;
   sendToChain: (transactionId: string) => Promise<void>;
-  create: (payload: ITCreateService) => Promise<Transaction>;
-  update: (id: string, payload: IUpdateTransactionPayload) => Promise<Transaction>;
+  create: (payload: ITCreateService) => Promise<ITransactionResponse>;
+  update: (
+    id: string,
+    payload: IUpdateTransactionPayload,
+  ) => Promise<ITransactionResponse>;
   list: () => Promise<
-    | IPagination<Transaction>
-    | Transaction[]
+    | IPagination<ITransactionResponse>
+    | ITransactionResponse[]
     | IPagination<ITransactionsGroupedByMonth>
     | ITransactionsGroupedByMonth
   >;
-  findById: (id: string) => Promise<Transaction>;
+  findById: (id: string) => Promise<ITransactionResponse>;
   delete: (id: string) => Promise<boolean>;
 }

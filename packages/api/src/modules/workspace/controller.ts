@@ -1,4 +1,4 @@
-import { Asset, BakoSafe, TransactionStatus } from 'bakosafe';
+import { BakoSafe, TransactionStatus } from 'bakosafe';
 
 import { Predicate, TypeUser, User, PermissionAccess } from '@src/models';
 import { PermissionRoles, Workspace } from '@src/models/Workspace';
@@ -144,13 +144,13 @@ export class WorkspaceController {
           : predicateCoins;
 
       return successful(
-        {
-          reservedCoinsUSD: calculateBalanceUSD(reservedCoins),
-          totalBalanceUSD: calculateBalanceUSD(predicateCoins),
+        {//no necessary items here (on workspace)
+          // reservedCoinsUSD: calculateBalanceUSD(reservedCoins),
+          // totalBalanceUSD: calculateBalanceUSD(predicateCoins),
           currentBalanceUSD: calculateBalanceUSD(assets),
           currentBalance: assets,
-          totalBalance: predicateCoins,
-          reservedCoins,
+          // totalBalance: predicateCoins,
+          // reservedCoins,
         },
         Responses.Ok,
       );

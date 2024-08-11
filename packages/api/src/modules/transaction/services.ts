@@ -1,8 +1,10 @@
 import {
+  IWitnesses,
   TransactionProcessStatus,
   TransactionStatus,
   Transfer,
   Vault,
+  WitnessStatus,
 } from 'bakosafe';
 import {
   hexlify,
@@ -17,12 +19,7 @@ import { Brackets } from 'typeorm';
 
 import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
 
-import {
-  NotificationTitle,
-  Transaction,
-  Witness,
-  WitnessesStatus,
-} from '@models/index';
+import { NotificationTitle, Transaction } from '@models/index';
 
 import { NotFound } from '@utils/error';
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
@@ -80,7 +77,7 @@ export class TransactionService implements ITransactionService {
   async update(
     id: string,
     payload?: IUpdateTransactionPayload,
-  ): Promise<Transaction> {
+  ): Promise<ITransactionResponse> {
     return await Transaction.update({ id }, payload)
       .then(async () => await this.findById(id))
       .catch(e => {
@@ -96,7 +93,6 @@ export class TransactionService implements ITransactionService {
     return await Transaction.findOne({
       where: { id },
       relations: [
-        'witnesses',
         'predicate',
         'predicate.members',
         'predicate.workspace',
@@ -149,7 +145,6 @@ export class TransactionService implements ITransactionService {
         't.updatedAt',
         't.type',
       ])
-      .leftJoin('t.witnesses', 'witnesses')
       .leftJoin('t.predicate', 'predicate')
       .leftJoin('predicate.members', 'members')
       .leftJoin('predicate.workspace', 'workspace')
@@ -158,10 +153,6 @@ export class TransactionService implements ITransactionService {
         'predicate.id',
         'predicate.minSigners',
         'predicate.predicateAddress',
-        'witnesses.id',
-        'witnesses.account',
-        'witnesses.signature',
-        'witnesses.status',
         'members.id',
         'members.avatar',
         'members.address',
@@ -301,59 +292,49 @@ export class TransactionService implements ITransactionService {
       });
   }
 
-  async validateStatus(transactionId: string): Promise<TransactionStatus> {
-    return await Transaction.createQueryBuilder('t')
-      .where('t.id = :id', { id: transactionId })
-      .leftJoin('t.witnesses', 'witnesses')
-      .leftJoin('t.predicate', 'predicate')
-      .addSelect(['witnesses.status', 'predicate.minSigners'])
-      .getOne()
-      .then((transaction: Transaction) => {
-        const witness: {
-          DONE: number;
-          REJECTED: number;
-          PENDING: number;
-        } = {
-          DONE: 0,
-          REJECTED: 0,
-          PENDING: 0,
-        };
-        transaction.witnesses.map((item: Witness) => {
-          witness[item.status]++;
-        });
-        const totalSigners =
-          witness[WitnessesStatus.DONE] +
-          witness[WitnessesStatus.REJECTED] +
-          witness[WitnessesStatus.PENDING];
+  validateStatus(
+    transaction: Transaction,
+    witnesses: IWitnesses[],
+  ): TransactionStatus {
+    const witness: {
+      DONE: number;
+      REJECTED: number;
+      PENDING: number;
+    } = {
+      DONE: 0,
+      REJECTED: 0,
+      PENDING: 0,
+    };
 
-        if (
-          transaction.status === TransactionStatus.SUCCESS ||
-          transaction.status === TransactionStatus.FAILED ||
-          transaction.status === TransactionStatus.PROCESS_ON_CHAIN
-        ) {
-          return transaction.status;
-        }
+    witnesses.map((item: IWitnesses) => {
+      witness[item.status]++;
+    });
 
-        if (witness[WitnessesStatus.DONE] >= transaction.predicate.minSigners) {
-          return TransactionStatus.PENDING_SENDER;
-        }
+    const totalSigners =
+      witness[WitnessStatus.DONE] +
+      witness[WitnessStatus.REJECTED] +
+      witness[WitnessStatus.PENDING];
 
-        if (
-          totalSigners - witness[WitnessesStatus.REJECTED] <
-          transaction.predicate.minSigners
-        ) {
-          return TransactionStatus.DECLINED;
-        }
+    if (
+      transaction.status === TransactionStatus.SUCCESS ||
+      transaction.status === TransactionStatus.FAILED ||
+      transaction.status === TransactionStatus.PROCESS_ON_CHAIN
+    ) {
+      return transaction.status;
+    }
 
-        return TransactionStatus.AWAIT_REQUIREMENTS;
-      })
-      .catch(e => {
-        throw new Internal({
-          type: ErrorTypes.Internal,
-          title: 'Error on transaction validateStatus',
-          detail: e,
-        });
-      });
+    if (witness[WitnessStatus.DONE] >= transaction.predicate.minSigners) {
+      return TransactionStatus.PENDING_SENDER;
+    }
+
+    if (
+      totalSigners - witness[WitnessStatus.REJECTED] <
+      transaction.predicate.minSigners
+    ) {
+      return TransactionStatus.DECLINED;
+    }
+
+    return TransactionStatus.AWAIT_REQUIREMENTS;
   }
 
   async instanceTransactionScript(
@@ -391,18 +372,9 @@ export class TransactionService implements ITransactionService {
       txData,
       status,
       resume,
-      witnesses,
     } = await Transaction.createQueryBuilder('t')
       .innerJoin('t.predicate', 'p') //predicate
-      .innerJoin('t.witnesses', 'w') //witnesses
-      .addSelect([
-        't.id',
-        't.tx_data',
-        't.resume',
-        't.status',
-        'p.provider',
-        'w.signature',
-      ])
+      .addSelect(['t.id', 't.tx_data', 't.resume', 't.status', 'p.provider'])
       .where('t.id = :id', { id: bsafe_txid })
       .getOne();
 
@@ -415,7 +387,7 @@ export class TransactionService implements ITransactionService {
         ...(txData.type === TransactionType.Create // is required add on 1st position
           ? [hexlify(txData.witnesses[txData.bytecodeWitnessIndex])]
           : []),
-        ...witnesses.filter(w => !!w.signature).map(w => w.signature),
+        ...resume.witnesses.filter(w => !!w.signature).map(w => w.signature),
       ],
     });
 

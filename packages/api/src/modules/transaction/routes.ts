@@ -3,7 +3,6 @@ import { Router } from 'express';
 import { authMiddleware } from '@src/middlewares';
 
 import { PredicateService } from '@modules/predicate/services';
-import { WitnessService } from '@modules/witness/services';
 
 import { handleResponse } from '@utils/index';
 
@@ -20,7 +19,6 @@ import {
 const router = Router();
 const transactionService = new TransactionService();
 const predicateService = new PredicateService();
-const witnessService = new WitnessService();
 const addressBookService = new AddressBookService();
 const notificationService = new NotificationService();
 
@@ -39,7 +37,6 @@ const {
 } = new TransactionController(
   transactionService,
   predicateService,
-  witnessService,
   addressBookService,
   notificationService,
 );
@@ -56,6 +53,6 @@ router.post('/send/:id', handleResponse(send));
 router.post('/verify/:id', handleResponse(verifyOnChain));
 router.put('/signer/:id', validateSignerByIdPayload, handleResponse(signByID));
 router.get('/history/:id', handleResponse(createHistory));
-router.get('/status/:id', handleResponse(transactionStatus))
+router.get('/status/:id', handleResponse(transactionStatus));
 
 export default router;

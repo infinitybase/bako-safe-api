@@ -10,13 +10,14 @@ import {
   bn,
   OutputCoin,
 } from 'fuels';
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
+
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+
 
 import { User } from '@models/User';
 
 import { Base } from './Base';
 import { Predicate } from './Predicate';
-import { Witness } from './Witness';
 import { ITransactionResponse } from '@src/modules/transaction/types';
 import { isOutputCoin } from '@src/utils/outputTypeValidate';
 
@@ -75,9 +76,6 @@ class Transaction extends Base {
   @JoinColumn({ name: 'created_by' })
   @ManyToOne(() => User)
   createdBy: User;
-
-  @OneToMany(() => Witness, witness => witness.transaction, { cascade: ['insert'] })
-  witnesses: Witness[];
 
   @Column({ name: 'predicate_id' })
   predicateId: string;
