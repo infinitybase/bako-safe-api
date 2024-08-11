@@ -10,6 +10,7 @@ import {
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 import { Provider, TransactionRequest } from 'fuels';
 
+
 import { Transaction, TransactionType } from '@models/index';
 
 import { AuthValidatedRequest } from '@middlewares/auth/types';

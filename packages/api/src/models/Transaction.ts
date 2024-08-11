@@ -10,7 +10,9 @@ import {
   bn,
   OutputCoin,
 } from 'fuels';
+
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+
 
 import { User } from '@models/User';
 
