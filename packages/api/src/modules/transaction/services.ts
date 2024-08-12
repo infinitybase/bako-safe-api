@@ -603,15 +603,11 @@ export class TransactionService implements ITransactionService {
         const address = Address.fromString(predicate.predicateAddress).toB256();
         const provider = await Provider.create(predicate.provider);
 
-        const _perPage = Number(this._transactionPagination?.perPage ?? 100);
-        const _offset = Number(this._transactionPagination?.offset ?? 0);
-        const first = _perPage + _offset;
-
         const { transactions } = await getTransactionsSummaries({
           provider,
           filters: {
             owner: address,
-            first,
+            first: 1000,
           },
         });
 
