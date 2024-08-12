@@ -10,7 +10,11 @@ import { IDeposit } from '../predicate/types';
 import { TransactionStatus } from 'bakosafe';
 import { TransactionResult } from 'fuels';
 import { formatAssets } from '@src/utils/formatAssets';
-import { IOrdination } from '@src/utils/ordination/helper';
+import {
+  IDefaultOrdination,
+  IOrdination,
+  Sort,
+} from '@src/utils/ordination/helper';
 import { isUUID } from 'class-validator';
 import { ITransactionCounter } from './types';
 import { ITransactionPagination } from './pagination';
@@ -234,7 +238,7 @@ export const formatFuelTransaction = (
 };
 
 export const mergeTransactionLists = (
-  bakoList:
+  dbList:
     | IPagination<ITransactionResponse>
     | ITransactionPagination<ITransactionResponse>
     | ITransactionResponse[],
@@ -248,21 +252,23 @@ export const mergeTransactionLists = (
     offsetFuel,
   } = params;
 
-  const _ordination = { orderBy: orderBy || 'updatedAt', sort: sort || 'DESC' };
+  const _ordination = {
+    orderBy: orderBy || IDefaultOrdination.UPDATED_AT,
+    sort: sort || Sort.DESC,
+  };
   const _perPage = perPage ? Number(perPage) : undefined;
   const _offsetDb = offsetDb ? Number(offsetDb) : undefined;
   const _offsetFuel = offsetFuel ? Number(offsetFuel) : undefined;
 
   const isPaginated = perPage && offsetDb && offsetFuel;
-  const bakoListArray: ITransactionResponse[] = Array.isArray(bakoList)
-    ? bakoList
-    : bakoList.data;
-  const _bakoList = new Set(bakoListArray.map(tx => tx.hash));
+  const dbListArray: ITransactionResponse[] = Array.isArray(dbList)
+    ? dbList
+    : dbList.data;
+  const _dbList = new Set(dbListArray.map(tx => tx.hash));
   const _fuelList = sortTransactions(fuelList, _ordination).slice(_offsetFuel);
-  const missingTxs = _fuelList.filter(tx => !_bakoList.has(tx.hash));
-  const mergedList = [...bakoListArray, ...missingTxs];
-  const sortedList = sortTransactions(mergedList, _ordination);
-  const list = isPaginated ? sortedList.slice(0, _perPage) : sortedList;
+  const missingTxs = _fuelList.filter(tx => !_dbList.has(tx.hash));
+  const mergedList = sortTransactions([...dbListArray, ...missingTxs], _ordination);
+  const list = isPaginated ? mergedList.slice(0, _perPage) : mergedList;
 
   if (!isPaginated) {
     return list;
