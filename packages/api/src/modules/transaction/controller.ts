@@ -589,10 +589,11 @@ export class TransactionController {
           _status?.some(status => status === TransactionStatus.SUCCESS)) &&
         (!type || type === TransactionType.DEPOSIT)
       ) {
-        const predicates = await new PredicateService()
+        const predicates = await this.predicateService
           .filter({
             workspace: _wk,
             signer,
+            ids: predicateId,
           })
           .list()
           .then((data: Predicate[]) => data);
