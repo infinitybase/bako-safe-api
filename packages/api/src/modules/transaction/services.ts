@@ -1,5 +1,5 @@
 import {
-  ITransactionResume,
+  BakoError,
   TransactionProcessStatus,
   TransactionStatus,
   Transfer,
@@ -181,20 +181,22 @@ export class TransactionService implements ITransactionService {
 
     // =============== specific for workspace ===============
     if (this._filter.workspaceId || this._filter.signer) {
-      queryBuilder.andWhere(new Brackets(qb => {
-        if (this._filter.workspaceId) {
-          qb.orWhere('workspace.id IN (:...workspace)', {
-            workspace: this._filter.workspaceId,
-          });
-        }
-        if (this._filter.signer) {
-          qb.orWhere('members.address = :signer', {
-            signer: this._filter.signer,
-          });
-        }
-      }));
+      queryBuilder.andWhere(
+        new Brackets(qb => {
+          if (this._filter.workspaceId) {
+            qb.orWhere('workspace.id IN (:...workspace)', {
+              workspace: this._filter.workspaceId,
+            });
+          }
+          if (this._filter.signer) {
+            qb.orWhere('members.address = :signer', {
+              signer: this._filter.signer,
+            });
+          }
+        }),
+      );
     }
-  
+
     // =============== specific for home ===============
 
     this._filter.to &&
@@ -373,7 +375,6 @@ export class TransactionService implements ITransactionService {
     }
   }
 
-
   //instance vault
   //instance tx
   //add witnesses
@@ -385,8 +386,8 @@ export class TransactionService implements ITransactionService {
       resume,
       witnesses,
     } = await Transaction.createQueryBuilder('t')
-      .innerJoin('t.predicate', 'p')//predicate
-      .innerJoin('t.witnesses', 'w')//witnesses
+      .innerJoin('t.predicate', 'p') //predicate
+      .innerJoin('t.witnesses', 'w') //witnesses
       .addSelect([
         't.id',
         't.tx_data',
@@ -404,39 +405,40 @@ export class TransactionService implements ITransactionService {
     const tx = transactionRequestify({
       ...txData,
       witnesses: [
-        ...txData.type === TransactionType.Create // is required add on 1st position
-            ? [hexlify(txData.witnesses[txData.bytecodeWitnessIndex])]
-            : [],
+        ...(txData.type === TransactionType.Create // is required add on 1st position
+          ? [hexlify(txData.witnesses[txData.bytecodeWitnessIndex])]
+          : []),
         ...witnesses.filter(w => !!w.signature).map(w => w.signature),
       ],
     });
 
     await provider.estimatePredicates(tx);
-    const encodedTransaction = hexlify(tx.toTransactionBytes())
-    
+    const encodedTransaction = hexlify(tx.toTransactionBytes());
+
     //submit
-    provider.operations.submit({encodedTransaction})
-    .then(() => {
-      this.update(bsafe_txid, { status: TransactionStatus.PROCESS_ON_CHAIN });
-    })
-    .catch(e => {
-      console.log(e)
-      this.update(bsafe_txid, { status: TransactionStatus.FAILED, resume: {
-        ...resume,
-        status: TransactionStatus.FAILED,
-        //@ts-ignore
-        error: e // todo: add reason of error here (fuels not return this reason, only logs)
-      } });
-    });
+    provider.operations
+      .submit({ encodedTransaction })
+      .then(() => {
+        this.update(bsafe_txid, { status: TransactionStatus.PROCESS_ON_CHAIN });
+      })
+      .catch(e => {
+        const error = BakoError.parse(e);
+        this.update(bsafe_txid, {
+          status: TransactionStatus.FAILED,
+          resume: {
+            ...resume,
+            status: TransactionStatus.FAILED,
+            error: error.toJSON(),
+          },
+        });
+      });
   }
 
   async verifyOnChain(api_transaction: Transaction, provider: Provider) {
     const idOnChain = `0x${api_transaction.hash}`;
     const sender = new TransactionResponse(idOnChain, provider);
     const {
-      status: {
-        type
-      }
+      status: { type },
     } = await sender.fetch();
 
     if (type === TransactionProcessStatus.SUBMITED) {
