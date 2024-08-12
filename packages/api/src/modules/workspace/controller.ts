@@ -38,11 +38,7 @@ export class WorkspaceController {
       const { user } = req;
 
       const response = await new WorkspaceService()
-        .filter({ user: user.id, single: false })
-        .list()
-        .then((response: Workspace[]) =>
-          WorkspaceService.formatToUnloggedUser(response),
-        );
+      .findByUser(user.id)
 
       return successful(response, Responses.Ok);
     } catch (e) {
@@ -144,13 +140,13 @@ export class WorkspaceController {
           : predicateCoins;
 
       return successful(
-        {
-          reservedCoinsUSD: calculateBalanceUSD(reservedCoins),
-          totalBalanceUSD: calculateBalanceUSD(predicateCoins),
+        {//no necessary items here (on workspace)
+          // reservedCoinsUSD: calculateBalanceUSD(reservedCoins),
+          // totalBalanceUSD: calculateBalanceUSD(predicateCoins),
           currentBalanceUSD: calculateBalanceUSD(assets),
           currentBalance: assets,
-          totalBalance: predicateCoins,
-          reservedCoins,
+          // totalBalance: predicateCoins,
+          // reservedCoins,
         },
         Responses.Ok,
       );

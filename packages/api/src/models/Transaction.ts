@@ -2,6 +2,7 @@ import {
   TransactionStatus,
   ITransactionResume,
   ITransactionSummary,
+  TransactionType,
 } from 'bakosafe';
 import { TransactionRequest, TransactionType as FuelTransactionType } from 'fuels';
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
@@ -13,11 +14,7 @@ import { Predicate } from './Predicate';
 import { ITransactionResponse } from '@src/modules/transaction/types';
 import { formatAssets } from '@src/utils/formatAssets';
 
-export enum TransactionType {
-  TRANSACTION_SCRIPT = 'TRANSACTION_SCRIPT',
-  TRANSACTION_CREATE = 'TRANSACTION_CREATE',
-  DEPOSIT = 'DEPOSIT',
-}
+export { TransactionStatus, TransactionType };
 
 @Entity('transactions')
 class Transaction extends Base {

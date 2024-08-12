@@ -8,6 +8,7 @@ import {
 } from '@src/utils/error/Unauthorized';
 import { validatePermissionGeneral } from '@src/utils/permissionValidate';
 
+
 import { NotificationTitle, Predicate, Transaction } from '@models/index';
 
 import { IPredicateService } from '@modules/predicate/types';
@@ -116,6 +117,7 @@ export class TransactionController {
         witnessStatus: WitnessStatus.PENDING,
         ...(hasSingle && { userAddress: user.address }),
       });
+
 
       const result = await qb.getCount();
 
