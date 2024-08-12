@@ -4,14 +4,23 @@ import {
   ITransactionSummary,
   TransactionType,
 } from 'bakosafe';
-import { TransactionRequest, TransactionType as FuelTransactionType } from 'fuels';
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
+import {
+  TransactionRequest,
+  TransactionType as FuelTransactionType,
+  TransactionRequestOutput,
+  bn,
+  OutputCoin,
+} from 'fuels';
+
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+
 
 import { User } from '@models/User';
-import { Asset } from './Asset';
+
 import { Base } from './Base';
 import { Predicate } from './Predicate';
-import { Witness } from './Witness';
+import { ITransactionResponse } from '@src/modules/transaction/types';
+import { isOutputCoin } from '@src/utils/outputTypeValidate';
 
 export { TransactionStatus, TransactionType };
 
@@ -65,12 +74,6 @@ class Transaction extends Base {
   @ManyToOne(() => User)
   createdBy: User;
 
-  @OneToMany(() => Asset, asset => asset.transaction, { cascade: ['insert'] })
-  assets: Asset[];
-
-  @OneToMany(() => Witness, witness => witness.transaction, { cascade: ['insert'] })
-  witnesses: Witness[];
-
   @Column({ name: 'predicate_id' })
   predicateId: string;
 
@@ -87,6 +90,25 @@ class Transaction extends Base {
     };
 
     return transactionType[type] ?? transactionType.default;
+  }
+
+  static formatTransactionResponse(transaction: Transaction): ITransactionResponse {
+    const assets = transaction.txData.outputs
+      .filter((output: TransactionRequestOutput) => isOutputCoin(output))
+      .map((output: OutputCoin) => {
+        const { assetId, amount, to } = output;
+        return {
+          assetId,
+          amount: bn(amount).format(),
+          to,
+        };
+      });
+
+    const result = Object.assign(transaction, {
+      assets,
+    });
+
+    return result;
   }
 }
 

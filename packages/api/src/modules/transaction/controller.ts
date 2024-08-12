@@ -1,4 +1,4 @@
-import { ITransactionResume, TransactionStatus, WitnessStatus } from 'bakosafe';
+import { TransactionStatus, WitnessStatus } from 'bakosafe';
 import { hashMessage, Provider, Signer } from 'fuels';
 
 import { PermissionRoles, Workspace } from '@src/models/Workspace';
@@ -8,22 +8,20 @@ import {
 } from '@src/utils/error/Unauthorized';
 import { validatePermissionGeneral } from '@src/utils/permissionValidate';
 
-import {
-  NotificationTitle,
-  Predicate,
-  Transaction,
-  Witness,
-  WitnessesStatus,
-} from '@models/index';
+
+import { NotificationTitle, Predicate, Transaction } from '@models/index';
 
 import { IPredicateService } from '@modules/predicate/types';
-import { IWitnessService } from '@modules/witness/types';
 
 import { error, ErrorTypes, NotFound } from '@utils/error';
-import { bindMethods, Responses, successful } from '@utils/index';
+import {
+  bindMethods,
+  generateWitnessesUpdatedAt,
+  Responses,
+  successful,
+} from '@utils/index';
 
 import { IAddressBookService } from '../addressBook/types';
-import { IAssetService } from '../asset/types';
 import { INotificationService } from '../notification/types';
 import { PredicateService } from '../predicate/services';
 import { UserService } from '../user/service';
@@ -38,29 +36,26 @@ import {
   IListRequest,
   ISendTransactionRequest,
   ISignByIdRequest,
+  ITransactionResponse,
   ITransactionService,
   TransactionHistory,
 } from './types';
+import { format } from 'date-fns';
 
 export class TransactionController {
   private transactionService: ITransactionService;
-  private witnessService: IWitnessService;
   private notificationService: INotificationService;
 
   constructor(
     transactionService: ITransactionService,
     predicateService: IPredicateService,
-    witnessService: IWitnessService,
     addressBookService: IAddressBookService,
-    assetService: IAssetService,
     notificationService: INotificationService,
   ) {
     Object.assign(this, {
       transactionService,
       predicateService,
-      witnessService,
       addressBookService,
-      assetService,
       notificationService,
     });
     bindMethods(this);
@@ -74,43 +69,61 @@ export class TransactionController {
         workspace,
         user,
       );
+
       const hasPredicate = predicateId && predicateId.length > 0;
       const hasWorkspace = workspaceList && workspaceList.length > 0;
-      
+
       const qb = Transaction.createQueryBuilder('t')
-      .innerJoin(
-        't.witnesses', 
-        'w', 
-        hasSingle 
-          ? `w.status = :pendingStatus AND w.account = :userAddress` 
-          : `w.status = :pendingStatus`, 
-        hasSingle 
-          ? { pendingStatus: WitnessStatus.PENDING, userAddress: user.address } 
-          : { pendingStatus: WitnessStatus.PENDING }
-      )
-      .innerJoin(
-        't.predicate', 
-        'p', 
-        hasPredicate ? 'p.id = :predicateId' : '1=1', 
-        hasPredicate ? { predicateId: predicateId[0] } : {}
-      )
-      .innerJoin(
-        'p.workspace', 
-        'wks', 
-        hasWorkspace ? 'wks.id IN (:...workspaceList)' : '1=1', 
-        hasWorkspace ? { workspaceList } : {}
-      )
-      .addSelect([
-        't.status'
-      ])
-      .where('t.status = :status', { status: TransactionStatus.AWAIT_REQUIREMENTS });
-      
+        .innerJoin(
+          't.predicate',
+          'p',
+          hasPredicate ? 'p.id = :predicateId' : '1=1',
+          hasPredicate ? { predicateId: predicateId[0] } : {},
+        )
+        .innerJoin(
+          'p.workspace',
+          'wks',
+          hasWorkspace ? 'wks.id IN (:...workspaceList)' : '1=1',
+          hasWorkspace ? { workspaceList } : {},
+        )
+        .addSelect(['t.status'])
+        .where('t.status = :status', {
+          status: TransactionStatus.AWAIT_REQUIREMENTS,
+        });
+
+      workspaceList?.length > 0 &&
+        qb.andWhere('p.workspace_id IN (:...workspaceList)', { workspaceList });
+
+      const witnessQuery = hasSingle
+        ? `
+          EXISTS (
+            SELECT 1
+            FROM jsonb_array_elements(t.resume->'witnesses') AS witness
+            WHERE (witness->>'status')::text = :witnessStatus
+              AND (witness->>'account')::text = :userAddress
+          )`
+        : `
+          EXISTS (
+            SELECT 1
+            FROM jsonb_array_elements(t.resume->'witnesses') AS witness
+            WHERE (witness->>'status')::text = :witnessStatus
+          )`;
+
+      qb.andWhere(witnessQuery, {
+        witnessStatus: WitnessStatus.PENDING,
+        ...(hasSingle && { userAddress: user.address }),
+      });
+
+
       const result = await qb.getCount();
 
-      return successful({
-        ofUser: result,
-        transactionsBlocked: result > 0,
-      }, Responses.Ok);
+      return successful(
+        {
+          ofUser: result,
+          transactionsBlocked: result > 0,
+        },
+        Responses.Ok,
+      );
     } catch (e) {
       return error(e.error, e.statusCode);
     }
@@ -147,8 +160,9 @@ export class TransactionController {
 
       const witnesses = predicate.members.map(member => ({
         account: member.address,
-        status: WitnessesStatus.PENDING,
+        status: WitnessStatus.PENDING,
         signature: null,
+        updatedAt: generateWitnessesUpdatedAt(),
       }));
 
       const newTransaction = await this.transactionService.create({
@@ -158,27 +172,21 @@ export class TransactionController {
         resume: {
           hash: transaction.hash,
           status: TransactionStatus.AWAIT_REQUIREMENTS,
-          witnesses: witnesses.filter(w => !!w.signature).map(w => w.signature),
-          outputs: transaction.assets.map(({ amount, to, assetId }) => ({
-            amount,
-            to,
-            assetId,
-          })),
+          witnesses,
           requiredSigners: predicate.minSigners,
           totalSigners: predicate.members.length,
           predicate: {
             id: predicate.id,
             address: predicate.predicateAddress,
           },
-          BakoSafeID: '',
+          id: '',
         },
-        witnesses,
         predicate,
         createdBy: user,
         summary,
       });
 
-      newTransaction.resume.BakoSafeID = newTransaction.id;
+      newTransaction.resume.id = newTransaction.id;
       await newTransaction.save();
 
       await new PredicateService().update(predicate.id);
@@ -224,14 +232,14 @@ export class TransactionController {
   static async formatTransactionsHistory(data: Transaction) {
     const userService = new UserService();
     const results = [];
-    const _witnesses = data.witnesses.filter(
+    const _witnesses = data.resume.witnesses.filter(
       witness =>
-        witness.status === WitnessesStatus.DONE ||
-        witness.status === WitnessesStatus.REJECTED,
+        witness.status === WitnessStatus.DONE ||
+        witness.status === WitnessStatus.REJECTED,
     );
 
-    const witnessRejected = data.witnesses.filter(
-      witness => witness.status === WitnessesStatus.REJECTED,
+    const witnessRejected = data.resume.witnesses.filter(
+      witness => witness.status === WitnessStatus.REJECTED,
     );
 
     results.push({
@@ -251,7 +259,7 @@ export class TransactionController {
 
       results.push({
         type:
-          witness.status === WitnessesStatus.REJECTED
+          witness.status === WitnessStatus.REJECTED
             ? TransactionHistory.DECLINE
             : TransactionHistory.SIGN,
         date: witness.updatedAt,
@@ -334,7 +342,7 @@ export class TransactionController {
         .filter({ hash })
         .paginate(undefined)
         .list()
-        .then((result: Transaction[]) => {
+        .then((result: ITransactionResponse[]) => {
           return result[0];
         });
       return successful(response, Responses.Ok);
@@ -350,17 +358,10 @@ export class TransactionController {
   }: ISignByIdRequest) {
     try {
       const transaction = await this.transactionService.findById(id);
-      const {
-        witnesses,
-        resume,
-        predicate,
-        name,
-        id: transactionId,
-        hash,
-      } = transaction;
+      const { resume, predicate, name, id: transactionId, hash } = transaction;
       const _resume = resume;
 
-      const witness = witnesses.find(w => w.account === account);
+      const witness = resume.witnesses.find(w => w.account === account);
 
       if (signer && confirm === 'true') {
         const acc_signed =
@@ -377,7 +378,7 @@ export class TransactionController {
       }
 
       if (witness) {
-        if (witness.status !== WitnessesStatus.PENDING) {
+        if (witness.status !== WitnessStatus.PENDING) {
           throw new NotFound({
             detail: 'Transaction was already declined.',
             title: UnauthorizedErrorTitles.INVALID_SIGNATURE,
@@ -385,13 +386,21 @@ export class TransactionController {
           });
         }
 
-        await this.witnessService.update(witness.id, {
-          signature: signer,
-          status: confirm ? WitnessesStatus.DONE : WitnessesStatus.REJECTED,
-        }),
-          _resume.witnesses.push(signer);
+        _resume.witnesses = _resume.witnesses.map(witness =>
+          witness.account === account
+            ? {
+                ...witness,
+                signature: signer,
+                status: confirm ? WitnessStatus.DONE : WitnessStatus.REJECTED,
+                updatedAt: generateWitnessesUpdatedAt(),
+              }
+            : witness,
+        );
 
-        const statusField = await this.transactionService.validateStatus(id);
+        const statusField = this.transactionService.validateStatus(
+          transaction,
+          _resume.witnesses,
+        );
 
         const result = await this.transactionService.update(id, {
           status: statusField,
@@ -402,7 +411,7 @@ export class TransactionController {
         });
 
         if (result.status === TransactionStatus.PENDING_SENDER) {
-          this.transactionService.sendToChain(id)
+          this.transactionService.sendToChain(id);
         }
 
         const notificationSummary = {
@@ -442,7 +451,6 @@ export class TransactionController {
 
       return successful(!!witness, Responses.Ok);
     } catch (e) {
-      console.log(e)
       return error(e.error, e.statusCode);
     }
   }
@@ -526,7 +534,7 @@ export class TransactionController {
 
   async send({ params: { id } }: ISendTransactionRequest) {
     try {
-      this.transactionService.sendToChain(id) // not wait for this
+      this.transactionService.sendToChain(id); // not wait for this
       return successful(true, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
