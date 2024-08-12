@@ -1,12 +1,15 @@
 import {
   BakoError,
+  IWitnesses,
   TransactionProcessStatus,
   TransactionStatus,
   Transfer,
   Vault,
+  WitnessStatus,
 } from 'bakosafe';
 import {
   hexlify,
+  OutputType,
   Provider,
   TransactionRequest,
   transactionRequestify,
@@ -17,12 +20,7 @@ import { Brackets } from 'typeorm';
 
 import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
 
-import {
-  NotificationTitle,
-  Transaction,
-  Witness,
-  WitnessesStatus,
-} from '@models/index';
+import { NotificationTitle, Transaction } from '@models/index';
 
 import { NotFound } from '@utils/error';
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
@@ -34,11 +32,12 @@ import { NotificationService } from '../notification/services';
 import {
   ICreateTransactionPayload,
   ITransactionFilterParams,
+  ITransactionResponse,
   ITransactionService,
   ITransactionsGroupedByMonth,
   IUpdateTransactionPayload,
 } from './types';
-import { groupedTransactions } from './utils';
+import { formatTransactionsResponse, groupedTransactions } from './utils';
 
 export class TransactionService implements ITransactionService {
   private _ordination: IOrdination<Transaction> = {
@@ -63,10 +62,10 @@ export class TransactionService implements ITransactionService {
     return this;
   }
 
-  async create(payload: ICreateTransactionPayload): Promise<Transaction> {
+  async create(payload: ICreateTransactionPayload): Promise<ITransactionResponse> {
     return await Transaction.create(payload)
       .save()
-      .then(transaction => transaction)
+      .then(transaction => Transaction.formatTransactionResponse(transaction))
       .catch(e => {
         throw new Internal({
           type: ErrorTypes.Internal,
@@ -79,9 +78,11 @@ export class TransactionService implements ITransactionService {
   async update(
     id: string,
     payload?: IUpdateTransactionPayload,
-  ): Promise<Transaction> {
+  ): Promise<ITransactionResponse> {
     return await Transaction.update({ id }, payload)
-      .then(async () => await this.findById(id))
+      .then(async () => {
+        return await this.findById(id)
+      })
       .catch(e => {
         throw new Internal({
           type: ErrorTypes.Internal,
@@ -91,12 +92,10 @@ export class TransactionService implements ITransactionService {
       });
   }
 
-  async findById(id: string): Promise<Transaction> {
+  async findById(id: string): Promise<ITransactionResponse> {
     return await Transaction.findOne({
       where: { id },
       relations: [
-        'assets',
-        'witnesses',
         'predicate',
         'predicate.members',
         'predicate.workspace',
@@ -113,7 +112,7 @@ export class TransactionService implements ITransactionService {
           });
         }
 
-        return transaction;
+        return Transaction.formatTransactionResponse(transaction);
       })
       .catch(e => {
         throw new Internal({
@@ -127,8 +126,8 @@ export class TransactionService implements ITransactionService {
   //todo: melhorar a valocidade de processamento dessa query
   //caso trocar inner por left atrapalha muito a performance
   async list(): Promise<
-    | IPagination<Transaction>
-    | Transaction[]
+    | IPagination<ITransactionResponse>
+    | ITransactionResponse[]
     | IPagination<ITransactionsGroupedByMonth>
     | ITransactionsGroupedByMonth
   > {
@@ -141,6 +140,7 @@ export class TransactionService implements ITransactionService {
         't.id',
         't.name',
         't.predicateId',
+        't.txData',
         't.resume',
         't.sendTime',
         't.status',
@@ -148,8 +148,6 @@ export class TransactionService implements ITransactionService {
         't.updatedAt',
         't.type',
       ])
-      .leftJoin('t.assets', 'assets')
-      .leftJoin('t.witnesses', 'witnesses')
       .leftJoin('t.predicate', 'predicate')
       .leftJoin('predicate.members', 'members')
       .leftJoin('predicate.workspace', 'workspace')
@@ -158,14 +156,6 @@ export class TransactionService implements ITransactionService {
         'predicate.id',
         'predicate.minSigners',
         'predicate.predicateAddress',
-        'witnesses.id',
-        'witnesses.account',
-        'witnesses.signature',
-        'witnesses.status',
-        'assets.id',
-        'assets.amount',
-        'assets.to',
-        'assets.assetId',
         'members.id',
         'members.avatar',
         'members.address',
@@ -200,9 +190,16 @@ export class TransactionService implements ITransactionService {
     // =============== specific for home ===============
 
     this._filter.to &&
-      queryBuilder
-        .innerJoin('t.assets', 'asset')
-        .andWhere('asset.to = :to', { to: this._filter.to });
+      queryBuilder.andWhere(
+        `
+        EXISTS (
+        SELECT 1
+        FROM jsonb_array_elements(t.tx_data->'outputs') AS output
+        WHERE (output->>'type')::int = :outputType
+          AND (output->>'to')::text = :filterTo
+      )`,
+        { outputType: OutputType.Coin, filterTo: this._filter.to },
+      );
 
     this._filter.hash &&
       queryBuilder.andWhere('LOWER(t.hash) = LOWER(:hash)', {
@@ -279,7 +276,11 @@ export class TransactionService implements ITransactionService {
           })
           .catch(handleInternalError);
 
-    return this._filter.byMonth ? groupedTransactions(transactions) : transactions;
+    const _transactions = formatTransactionsResponse(transactions);
+
+    return this._filter.byMonth
+      ? groupedTransactions(_transactions)
+      : _transactions;
   }
 
   async delete(id: string): Promise<boolean> {
@@ -294,59 +295,54 @@ export class TransactionService implements ITransactionService {
       });
   }
 
-  async validateStatus(transactionId: string): Promise<TransactionStatus> {
-    return await Transaction.createQueryBuilder('t')
-      .where('t.id = :id', { id: transactionId })
-      .leftJoin('t.witnesses', 'witnesses')
-      .leftJoin('t.predicate', 'predicate')
-      .addSelect(['witnesses.status', 'predicate.minSigners'])
-      .getOne()
-      .then((transaction: Transaction) => {
-        const witness: {
-          DONE: number;
-          REJECTED: number;
-          PENDING: number;
-        } = {
-          DONE: 0,
-          REJECTED: 0,
-          PENDING: 0,
-        };
-        transaction.witnesses.map((item: Witness) => {
-          witness[item.status]++;
-        });
-        const totalSigners =
-          witness[WitnessesStatus.DONE] +
-          witness[WitnessesStatus.REJECTED] +
-          witness[WitnessesStatus.PENDING];
+  validateStatus(
+    transaction: Transaction,
+    witnesses: IWitnesses[],
+  ): TransactionStatus {
+    const witness: {
+      DONE: number;
+      REJECTED: number;
+      PENDING: number;
+    } = {
+      DONE: 0,
+      REJECTED: 0,
+      PENDING: 0,
+    };
 
-        if (
-          transaction.status === TransactionStatus.SUCCESS ||
-          transaction.status === TransactionStatus.FAILED ||
-          transaction.status === TransactionStatus.PROCESS_ON_CHAIN
-        ) {
-          return transaction.status;
-        }
+    witnesses.map((item: IWitnesses) => {
+      witness[item.status]++;
+    });
 
-        if (witness[WitnessesStatus.DONE] >= transaction.predicate.minSigners) {
-          return TransactionStatus.PENDING_SENDER;
-        }
+    console.log({
+      witness,
+      req: transaction.predicate.minSigners,
+    })
 
-        if (
-          totalSigners - witness[WitnessesStatus.REJECTED] <
-          transaction.predicate.minSigners
-        ) {
-          return TransactionStatus.DECLINED;
-        }
+    const totalSigners =
+      witness[WitnessStatus.DONE] +
+      witness[WitnessStatus.REJECTED] +
+      witness[WitnessStatus.PENDING];
 
-        return TransactionStatus.AWAIT_REQUIREMENTS;
-      })
-      .catch(e => {
-        throw new Internal({
-          type: ErrorTypes.Internal,
-          title: 'Error on transaction validateStatus',
-          detail: e,
-        });
-      });
+    if (
+      transaction.status === TransactionStatus.SUCCESS ||
+      transaction.status === TransactionStatus.FAILED ||
+      transaction.status === TransactionStatus.PROCESS_ON_CHAIN
+    ) {
+      return transaction.status;
+    }
+
+    if (witness[WitnessStatus.DONE] >= transaction.predicate.minSigners) {
+      return TransactionStatus.PENDING_SENDER;
+    }
+
+    if (
+      totalSigners - witness[WitnessStatus.REJECTED] <
+      transaction.predicate.minSigners
+    ) {
+      return TransactionStatus.DECLINED;
+    }
+
+    return TransactionStatus.AWAIT_REQUIREMENTS;
   }
 
   async instanceTransactionScript(
@@ -384,22 +380,17 @@ export class TransactionService implements ITransactionService {
       txData,
       status,
       resume,
-      witnesses,
     } = await Transaction.createQueryBuilder('t')
       .innerJoin('t.predicate', 'p') //predicate
-      .innerJoin('t.witnesses', 'w') //witnesses
-      .addSelect([
-        't.id',
-        't.tx_data',
-        't.resume',
-        't.status',
-        'p.provider',
-        'w.signature',
-      ])
+      .addSelect(['t.id', 't.tx_data', 't.resume', 't.status', 'p.provider'])
       .where('t.id = :id', { id: bsafe_txid })
       .getOne();
 
     this.checkInvalidConditions(status);
+    if (status == TransactionStatus.PROCESS_ON_CHAIN) {
+      console.log('[JA_SUBMETIDO] - ', bsafe_txid);
+      return;
+    }
 
     const provider = await Provider.create(predicate.provider);
     const tx = transactionRequestify({
@@ -408,18 +399,18 @@ export class TransactionService implements ITransactionService {
         ...(txData.type === TransactionType.Create // is required add on 1st position
           ? [hexlify(txData.witnesses[txData.bytecodeWitnessIndex])]
           : []),
-        ...witnesses.filter(w => !!w.signature).map(w => w.signature),
+        ...resume.witnesses.filter(w => !!w.signature).map(w => w.signature),
       ],
     });
 
     await provider.estimatePredicates(tx);
-    const encodedTransaction = hexlify(tx.toTransactionBytes());
-
+    const encodedTransaction = hexlify(tx.toTransactionBytes())
+    
     //submit
-    provider.operations
+    return await provider.operations
       .submit({ encodedTransaction })
-      .then(() => {
-        this.update(bsafe_txid, { status: TransactionStatus.PROCESS_ON_CHAIN });
+      .then(async () => {
+        await this.update(bsafe_txid, { status: TransactionStatus.PROCESS_ON_CHAIN });
       })
       .catch(e => {
         const error = BakoError.parse(e);

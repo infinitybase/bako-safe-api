@@ -1,13 +1,6 @@
-import { Asset, BakoSafe, TransactionStatus } from 'bakosafe';
+import { BakoSafe, TransactionStatus } from 'bakosafe';
 
-import {
-  Predicate,
-  TypeUser,
-  User,
-  PermissionAccess,
-  Transaction,
-  Asset as AssetModel,
-} from '@src/models';
+import { Predicate, TypeUser, User, PermissionAccess } from '@src/models';
 import { PermissionRoles, Workspace } from '@src/models/Workspace';
 import Internal from '@src/utils/error/Internal';
 import {
@@ -21,6 +14,7 @@ import {
   Responses,
   assetsMapBySymbol,
   calculateBalanceUSD,
+  calculateReservedCoins,
   subCoins,
   successful,
 } from '@utils/index';
@@ -28,7 +22,6 @@ import {
 import { PredicateService } from '../predicate/services';
 import { UserService } from '../user/service';
 import { WorkspaceService } from './services';
-import { TransactionService } from '../transaction/services';
 import {
   ICreateRequest,
   IGetBalanceRequest,
@@ -45,11 +38,7 @@ export class WorkspaceController {
       const { user } = req;
 
       const response = await new WorkspaceService()
-        .filter({ user: user.id, single: false })
-        .list()
-        .then((response: Workspace[]) =>
-          WorkspaceService.formatToUnloggedUser(response),
-        );
+      .findByUser(user.id)
 
       return successful(response, Responses.Ok);
     } catch (e) {
@@ -98,15 +87,13 @@ export class WorkspaceController {
             TransactionStatus.PENDING_SENDER,
           ],
         })
-        .leftJoin('t.assets', 'a') // remove this next
         .addSelect([
           'p.id',
           'p.configurable',
           'pv.code',
           'w.id',
           't.status',
-          'a.assetId',
-          'a.amount',
+          't.txData',
         ])
         .where('w.id = :id', { id: workspace.id })
         .getMany();
@@ -138,25 +125,7 @@ export class WorkspaceController {
             return accumulator;
           }, predicateCoins);
 
-          reservedCoins = transactions.reduce((accumulator, transaction) => {
-            transaction.assets.forEach(asset => {
-              const assetId = asset.assetId;
-              const amount = bn.parseUnits(asset.amount);
-              const existingAsset = accumulator.find(
-                item => item.assetId === assetId,
-              );
-
-              if (existingAsset) {
-                existingAsset.amount = existingAsset.amount.add(amount);
-              } else {
-                accumulator.push({
-                  assetId,
-                  amount,
-                });
-              }
-            });
-            return accumulator;
-          }, reservedCoins);
+          reservedCoins = calculateReservedCoins(transactions);
 
           return balances;
         },
