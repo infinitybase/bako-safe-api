@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 import { Address } from "fuels";
 
-export class ChangeAddressType1720476154663 implements MigrationInterface {
+export class ChangeAddressType1722946398594 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         const users = await queryRunner.query(
