@@ -81,7 +81,7 @@ export class TransactionService implements ITransactionService {
   ): Promise<ITransactionResponse> {
     return await Transaction.update({ id }, payload)
       .then(async () => {
-        return await this.findById(id)
+        return await this.findById(id);
       })
       .catch(e => {
         throw new Internal({
@@ -316,7 +316,7 @@ export class TransactionService implements ITransactionService {
     console.log({
       witness,
       req: transaction.predicate.minSigners,
-    })
+    });
 
     const totalSigners =
       witness[WitnessStatus.DONE] +
@@ -404,13 +404,15 @@ export class TransactionService implements ITransactionService {
     });
 
     await provider.estimatePredicates(tx);
-    const encodedTransaction = hexlify(tx.toTransactionBytes())
-    
+    const encodedTransaction = hexlify(tx.toTransactionBytes());
+
     //submit
     return await provider.operations
       .submit({ encodedTransaction })
       .then(async () => {
-        await this.update(bsafe_txid, { status: TransactionStatus.PROCESS_ON_CHAIN });
+        await this.update(bsafe_txid, {
+          status: TransactionStatus.PROCESS_ON_CHAIN,
+        });
       })
       .catch(e => {
         const error = BakoError.parse(e);
