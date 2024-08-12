@@ -581,7 +581,7 @@ export class TransactionController {
         .transactionPaginate({ perPage, offset: offsetDb })
         .listWithIncomings();
 
-      const response = dbTxs;
+      let fuelTxs = [];
 
       if (
         _wk.length > 0 &&
@@ -598,23 +598,19 @@ export class TransactionController {
           .list()
           .then((data: Predicate[]) => data);
 
-        const fuelTxs = await this.transactionService
+        fuelTxs = await this.transactionService
           .transactionPaginate({ perPage, offset: offsetFuel })
           .fetchFuelTransactions(predicates);
-
-        const mergedList = mergeTransactionLists(dbTxs, fuelTxs, {
-          ordination,
-          perPage,
-          offsetDb,
-          offsetFuel,
-        });
-
-        const response = byMonth
-          ? groupedMergedTransactions(mergedList)
-          : mergedList;
-
-        return successful(response, Responses.Ok);
       }
+
+      const mergedList = mergeTransactionLists(dbTxs, fuelTxs, {
+        ordination,
+        perPage,
+        offsetDb,
+        offsetFuel,
+      });
+
+      const response = byMonth ? groupedMergedTransactions(mergedList) : mergedList;
 
       return successful(response, Responses.Ok);
     } catch (e) {
