@@ -1,14 +1,19 @@
 import Joi from 'joi';
 
-import { validator } from '@utils/index';
+import { AddressValidator, validator } from '@utils/index';
+import { Address } from 'fuels';
 
 export const validateAddPredicatePayload = validator.body(
   Joi.object({
     name: Joi.string().required(),
     description: Joi.string().allow('').optional(),
-    predicateAddress: Joi.string().required(),
+    predicateAddress: Joi.string().required().custom(AddressValidator.validate),
     minSigners: Joi.number().strict(true).integer().min(1).required(),
-    addresses: Joi.array().items(Joi.string()).min(1).required(),
+    addresses: Joi.array()
+      .items(Joi.string())
+      .min(1)
+      .required()
+      .custom(AddressValidator.validateMany),
     configurable: Joi.string().required(),
     provider: Joi.string().required(),
     chainId: Joi.number().strict(true),

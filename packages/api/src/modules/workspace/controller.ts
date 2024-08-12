@@ -38,11 +38,7 @@ export class WorkspaceController {
       const { user } = req;
 
       const response = await new WorkspaceService()
-        .filter({ user: user.id, single: false })
-        .list()
-        .then((response: Workspace[]) =>
-          WorkspaceService.formatToUnloggedUser(response),
-        );
+      .findByUser(user.id)
 
       return successful(response, Responses.Ok);
     } catch (e) {

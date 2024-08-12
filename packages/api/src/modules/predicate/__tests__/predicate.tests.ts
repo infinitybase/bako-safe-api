@@ -7,6 +7,7 @@ import { PermissionRoles } from '@src/models/Workspace';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
 import { generateWorkspacePayload } from '@src/utils/testUtils/Workspace';
 import { predicateVersionMock } from '@src/mocks/predicateVersion';
+import { Address } from 'fuels';
 
 describe('[PREDICATE]', () => {
   let api: AuthValidations;
@@ -20,10 +21,7 @@ describe('[PREDICATE]', () => {
   test(
     'Create predicate without version code',
     async () => {
-      const {
-        data_user1,
-        data_user2,
-      } = await generateWorkspacePayload(api);
+      const { data_user1, data_user2 } = await generateWorkspacePayload(api);
       const members = [data_user1.address, data_user2.address];
       const { predicatePayload } = await PredicateMock.create(1, members);
       const { data } = await api.axios.post('/predicate', predicatePayload);
@@ -36,9 +34,9 @@ describe('[PREDICATE]', () => {
       expect(data).toHaveProperty('id');
       expect(data).toHaveProperty(
         'predicateAddress',
-        predicatePayload.predicateAddress,
+        Address.fromString(predicatePayload.predicateAddress).toB256(),
       );
-      expect(data).toHaveProperty('owner.address', accounts['USER_1'].address);
+      expect(data).toHaveProperty('owner.address', accounts['USER_1'].account);
       expect(data).toHaveProperty('version.id');
       expect(data).toHaveProperty('version.abi');
       expect(data).toHaveProperty('version.bytes');
@@ -74,9 +72,9 @@ describe('[PREDICATE]', () => {
       expect(data).toHaveProperty('id');
       expect(data).toHaveProperty(
         'predicateAddress',
-        predicatePayload.predicateAddress,
+        Address.fromString(predicatePayload.predicateAddress).toB256(),
       );
-      expect(data).toHaveProperty('owner.address', accounts['USER_1'].address);
+      expect(data).toHaveProperty('owner.address', accounts['USER_1'].account);
       expect(data).toHaveProperty('version.id');
       expect(data).toHaveProperty('version.abi');
       expect(data).toHaveProperty('version.bytes');
@@ -182,7 +180,7 @@ describe('[PREDICATE]', () => {
     });
   });
 
-  test('Find predicate by id', async () => {    
+  test('Find predicate by id', async () => {
     const auth = new AuthValidations(networks['local'], accounts['USER_3']);
     await auth.create();
     await auth.createSession();

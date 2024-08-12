@@ -5,7 +5,7 @@ import { IconUtils } from '@utils/icons';
 import { accounts } from '../accounts';
 import { networks } from '../networks';
 
-export const ADMIN_EMAIL = 'fake_email@gmail.com'
+export const ADMIN_EMAIL = 'fake_email@gmail.com';
 
 export const generateInitialUsers = async (): Promise<Partial<User>[]> => {
   const user1: Partial<User> = {
@@ -13,7 +13,7 @@ export const generateInitialUsers = async (): Promise<Partial<User>[]> => {
     active: true,
     email: ADMIN_EMAIL,
     provider: networks['local'],
-    address: accounts['STORE'].address,
+    address: accounts['STORE'].account,
     avatar: IconUtils.user(),
     createdAt: new Date(),
     type: TypeUser.FUEL,
@@ -24,7 +24,7 @@ export const generateInitialUsers = async (): Promise<Partial<User>[]> => {
     active: true,
     email: ADMIN_EMAIL,
     provider: networks['local'],
-    address: accounts['USER_1'].address,
+    address: accounts['USER_1'].account,
     avatar: IconUtils.user(),
     createdAt: new Date(),
     type: TypeUser.FUEL,
@@ -35,7 +35,7 @@ export const generateInitialUsers = async (): Promise<Partial<User>[]> => {
     active: true,
     email: ADMIN_EMAIL,
     provider: networks['local'],
-    address: accounts['USER_2'].address,
+    address: accounts['USER_2'].account,
     avatar: IconUtils.user(),
     createdAt: new Date(),
     type: TypeUser.FUEL,
@@ -46,7 +46,7 @@ export const generateInitialUsers = async (): Promise<Partial<User>[]> => {
     active: true,
     email: ADMIN_EMAIL,
     provider: networks['local'],
-    address: accounts['USER_3'].address,
+    address: accounts['USER_3'].account,
     avatar: IconUtils.user(),
     createdAt: new Date(),
     type: TypeUser.FUEL,

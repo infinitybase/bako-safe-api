@@ -2,6 +2,7 @@ import {
   TransactionStatus,
   ITransactionResume,
   ITransactionSummary,
+  TransactionType,
 } from 'bakosafe';
 import {
   TransactionRequest,
@@ -21,11 +22,7 @@ import { Predicate } from './Predicate';
 import { ITransactionResponse } from '@src/modules/transaction/types';
 import { isOutputCoin } from '@src/utils/outputTypeValidate';
 
-export enum TransactionType {
-  TRANSACTION_SCRIPT = 'TRANSACTION_SCRIPT',
-  TRANSACTION_CREATE = 'TRANSACTION_CREATE',
-  DEPOSIT = 'DEPOSIT',
-}
+export { TransactionStatus, TransactionType };
 
 @Entity('transactions')
 class Transaction extends Base {

@@ -5,7 +5,7 @@ import { Signer, hashMessage } from 'fuels';
 import { TypeUser, User } from '@src/models';
 
 export const recoverFuelSignature = async (digest: string, signature: string) => {
-  return Signer.recoverAddress(hashMessage(digest), signature).bech32Address;
+  return Signer.recoverAddress(hashMessage(digest), signature).toHexString();
 };
 
 export const recoverWebAuthnSignature = async (
