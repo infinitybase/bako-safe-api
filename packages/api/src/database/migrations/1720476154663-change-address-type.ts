@@ -10,11 +10,20 @@ export class ChangeAddressType1720476154663 implements MigrationInterface {
         console.log(users.length)
         for (const user of users) {
             const newAddress = Address.fromString(user.address).toHexString();
-            console.log(newAddress, user.id)
-            await queryRunner.query(
-                `UPDATE users SET address = $1 WHERE id = $2`,
-                [newAddress, user.id]
+
+
+            const handleExists = await queryRunner.query(
+                `SELECT id FROM users WHERE address = $1`,
+                [newAddress],
             );
+  
+            if (handleExists.length === 0) {
+                await queryRunner.query(
+                    `UPDATE users SET address = $1 WHERE id = $2`,
+                    [newAddress, user.id]
+                );
+            }
+            
         }
     }
 
