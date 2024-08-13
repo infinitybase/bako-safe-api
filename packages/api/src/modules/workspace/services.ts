@@ -144,12 +144,17 @@ export class WorkspaceService implements IWorkspaceService {
     const a = await Workspace.query(
       `SELECT w.*,
         COUNT (p.id)::INTEGER AS predicates,
-        json_agg(DISTINCT jsonb_build_object(
-          'id', u.id,
-          'name', u.name,
-          'avatar', u.avatar,
-          'address', u.address
-        )) AS members
+        (
+          SELECT json_agg(jsonb_build_object(
+            'id', u.id,
+            'name', u.name,
+            'avatar', u.avatar,
+            'address', u.address
+          ))
+          FROM workspace_users wu
+          INNER JOIN users u ON u.id = wu.user_id
+          WHERE wu.workspace_id = w.id
+        ) AS members
       FROM workspace w
       INNER JOIN workspace_users wu ON wu.workspace_id = w.id
       INNER JOIN users u ON u.id = wu.user_id
