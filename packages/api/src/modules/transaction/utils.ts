@@ -231,7 +231,7 @@ export const formatFuelTransaction = (
         single: predicate.workspace.single,
       },
     },
-    assets: formatAssets(outputs),
+    assets: formatAssets(outputs, predicate.predicateAddress),
   };
 
   return (formattedTransaction as unknown) as ITransactionResponse;

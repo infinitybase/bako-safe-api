@@ -1,9 +1,10 @@
 import { bn, OutputCoin, TransactionRequestOutput } from 'fuels';
 import { isOutputCoin } from './outputTypeValidate';
 
-const formatAssets = (outputs: TransactionRequestOutput[]) => {
+const formatAssets = (outputs: TransactionRequestOutput[], to?: string) => {
   const assets = outputs
     .filter((output: TransactionRequestOutput) => isOutputCoin(output))
+    .filter((output: OutputCoin) => (to ? output.to === to : true))
     .map((output: OutputCoin) => {
       const { assetId, amount, to } = output;
       return {
