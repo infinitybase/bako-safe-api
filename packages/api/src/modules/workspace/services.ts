@@ -7,7 +7,7 @@ import {
   Workspace,
   defaultPermissions,
 } from '@src/models/Workspace';
-import { ErrorTypes } from '@src/utils/error';
+import { ErrorTypes, NotFound } from '@src/utils/error';
 import GeneralError from '@src/utils/error/GeneralError';
 import Internal from '@src/utils/error/Internal';
 import { IOrdination, setOrdination } from '@src/utils/ordination';
@@ -237,11 +237,25 @@ export class WorkspaceService implements IWorkspaceService {
 
   findById: (id: string) => Promise<Workspace> = async id => {
     try {
-      return await Workspace.findOne({
-        where: { id },
-        relations: ['owner', 'members'],
-      });
+      const workspace = await Workspace.createQueryBuilder('w')
+        .leftJoinAndSelect('w.owner', 'owner')
+        .leftJoinAndSelect('w.members', 'members')
+        .loadRelationCountAndMap('w.predicates', 'w.predicates')
+        .where('w.id = :id', { id })
+        .getOne();
+
+      if (!workspace) {
+        throw new NotFound({
+          type: ErrorTypes.NotFound,
+          title: 'Workspace not found',
+          detail: `Workspace with id ${id} not found`,
+        });
+      }
+
+      return workspace;
     } catch (error) {
+      if (error instanceof GeneralError) throw error;
+
       throw new Internal({
         type: ErrorTypes.Internal,
         title: 'Error on workspace find',
