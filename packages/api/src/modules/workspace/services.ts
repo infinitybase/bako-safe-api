@@ -142,11 +142,20 @@ export class WorkspaceService implements IWorkspaceService {
 
   async findByUser(user_id: string, single: boolean = false): Promise<Workspace[]> {
     const a = await Workspace.query(
-      `SELECT w.*
+      `SELECT w.*,
+        COUNT (p.id)::INTEGER AS predicates,
+        json_agg(DISTINCT jsonb_build_object(
+          'id', u.id,
+          'name', u.name,
+          'avatar', u.avatar,
+          'address', u.address
+        )) AS members
       FROM workspace w
       INNER JOIN workspace_users wu ON wu.workspace_id = w.id
       INNER JOIN users u ON u.id = wu.user_id
-      WHERE u.id = $1  AND w.single = $2`,
+      LEFT JOIN predicates p ON p.workspace_id = w.id
+      WHERE u.id = $1  AND w.single = $2
+      GROUP BY w.id`,
       [user_id, single],
     );
     return a;
