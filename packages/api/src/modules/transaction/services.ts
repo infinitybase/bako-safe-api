@@ -626,11 +626,10 @@ export class TransactionService implements ITransactionService {
           },
         });
 
-        const filteredTransactions = transactions.filter(
-          tx =>
-            tx.isStatusSuccess &&
-            tx.operations.some(op => op.to?.address === address),
-        );
+        // Filter only successful transactions and operations whose receiver is the predicate address
+        const filteredTransactions = transactions
+          .filter(tx => tx.isStatusSuccess)
+          .filter(tx => tx.operations.some(op => op.to?.address === address));
 
         const formattedTransactions = filteredTransactions.map(tx =>
           formatFuelTransaction(tx, predicate),
