@@ -8,7 +8,6 @@ import {
 } from '@src/utils/error/Unauthorized';
 import { validatePermissionGeneral } from '@src/utils/permissionValidate';
 
-
 import { NotificationTitle, Predicate, Transaction } from '@models/index';
 
 import { IPredicateService } from '@modules/predicate/types';
@@ -117,7 +116,6 @@ export class TransactionController {
         witnessStatus: WitnessStatus.PENDING,
         ...(hasSingle && { userAddress: user.address }),
       });
-
 
       const result = await qb.getCount();
 
@@ -580,7 +578,11 @@ export class TransactionController {
           type,
         })
         .ordination(ordination)
-        .transactionPaginate({ perPage, offset: offsetDb })
+        .transactionPaginate({
+          perPage,
+          offsetDb: offsetDb,
+          offsetFuel: offsetFuel,
+        })
         .listWithIncomings();
 
       let fuelTxs = [];
@@ -601,7 +603,11 @@ export class TransactionController {
           .then((data: Predicate[]) => data);
 
         fuelTxs = await this.transactionService
-          .transactionPaginate({ perPage, offset: offsetFuel })
+          .transactionPaginate({
+            perPage,
+            offsetDb: offsetDb,
+            offsetFuel: offsetFuel,
+          })
           .fetchFuelTransactions(predicates);
       }
 

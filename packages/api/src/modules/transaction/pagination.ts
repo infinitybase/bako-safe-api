@@ -9,7 +9,8 @@ export interface ITransactionPagination<T> {
 
 export interface TransactionPaginationParams {
   perPage: string;
-  offset: string;
+  offsetDb: string;
+  offsetFuel: string;
 }
 
 export class TransactionPagination<T> {
@@ -20,7 +21,7 @@ export class TransactionPagination<T> {
   }
 
   async paginate(params: TransactionPaginationParams): Promise<T[]> {
-    const offset = Number(params.offset || 0);
+    const offset = Number(params.offsetDb || 0);
     const perPage = Number(params.perPage || 10);
 
     const data = await this._queryBuilder.skip(offset).take(perPage).getMany();

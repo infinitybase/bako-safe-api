@@ -94,8 +94,8 @@ export class TransactionService implements ITransactionService {
   ): Promise<ITransactionResponse> {
     return await Transaction.update({ id }, payload)
       .then(async () => {
-        console.log('atualizado')
-        return await this.findById(id)
+        console.log('atualizado');
+        return await this.findById(id);
       })
       .catch(e => {
         throw new Internal({
@@ -299,7 +299,7 @@ export class TransactionService implements ITransactionService {
 
   async listWithIncomings(): Promise<ITransactionResponse[]> {
     const hasPagination =
-      this._transactionPagination?.perPage && this._transactionPagination?.offset;
+      this._transactionPagination?.perPage && this._transactionPagination?.offsetDb;
     const queryBuilder = Transaction.createQueryBuilder('t')
       .select([
         't.createdAt',
@@ -427,7 +427,7 @@ export class TransactionService implements ITransactionService {
     console.log({
       witness,
       req: transaction.predicate.minSigners,
-    })
+    });
 
     const totalSigners =
       witness[WitnessStatus.DONE] +
@@ -498,7 +498,7 @@ export class TransactionService implements ITransactionService {
       .getOne();
 
     this.checkInvalidConditions(status);
-    if(status == TransactionStatus.PROCESS_ON_CHAIN) {
+    if (status == TransactionStatus.PROCESS_ON_CHAIN) {
       console.log('[JA_SUBMETIDO] - ', bsafe_txid);
       return;
     }
@@ -521,7 +521,9 @@ export class TransactionService implements ITransactionService {
     return await provider.operations
       .submit({ encodedTransaction })
       .then(async () => {
-        await this.update(bsafe_txid, { status: TransactionStatus.PROCESS_ON_CHAIN });
+        await this.update(bsafe_txid, {
+          status: TransactionStatus.PROCESS_ON_CHAIN,
+        });
       })
       .catch(e => {
         console.log(e);
@@ -615,6 +617,7 @@ export class TransactionService implements ITransactionService {
         const address = Address.fromString(predicate.predicateAddress).toB256();
         const provider = await Provider.create(predicate.provider);
 
+        // TODO: change this to use pagination and order DESC
         const { transactions } = await getTransactionsSummaries({
           provider,
           filters: {
@@ -635,6 +638,7 @@ export class TransactionService implements ITransactionService {
 
         _transactions = [..._transactions, ...formattedTransactions];
       }
+
       return _transactions;
     } catch (e) {
       throw new Internal({
