@@ -259,15 +259,28 @@ export const mergeTransactionLists = (
   const _perPage = perPage ? Number(perPage) : undefined;
   const _offsetDb = offsetDb ? Number(offsetDb) : undefined;
   const _offsetFuel = offsetFuel ? Number(offsetFuel) : undefined;
-
   const isPaginated = perPage && offsetDb && offsetFuel;
+
   const dbListArray: ITransactionResponse[] = Array.isArray(dbList)
     ? dbList
     : dbList.data;
-  const _dbList = new Set(dbListArray.map(tx => tx.hash));
-  const _fuelList = sortTransactions(fuelList, _ordination).slice(_offsetFuel);
-  const missingTxs = _fuelList.filter(tx => !_dbList.has(tx.hash));
-  const mergedList = sortTransactions([...dbListArray, ...missingTxs], _ordination);
+
+  // Filter out deposits that are already in the database
+  const filteredFuelList = fuelList.filter(
+    tx =>
+      !dbListArray.some(
+        dbTx => dbTx.hash === tx.hash && dbTx.type === TransactionType.DEPOSIT,
+      ),
+  );
+
+  const sortedFuelList = sortTransactions(filteredFuelList, _ordination);
+
+  // Keeps the number of transactions according to perPage if paginated
+  const _fuelList = isPaginated
+    ? sortedFuelList.slice(_offsetFuel, _offsetFuel + _perPage)
+    : sortedFuelList;
+
+  const mergedList = sortTransactions([...dbListArray, ..._fuelList], _ordination);
   const list = isPaginated ? mergedList.slice(0, _perPage) : mergedList;
 
   if (!isPaginated) {
