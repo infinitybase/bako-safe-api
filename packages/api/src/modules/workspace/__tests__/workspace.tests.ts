@@ -31,6 +31,8 @@ describe('[WORKSPACE]', () => {
           expect(element).toHaveProperty('owner_id');
           expect(element).toHaveProperty('single', false);
           expect(element).toHaveProperty('permissions');
+          expect(element).toHaveProperty('predicates');
+          expect(element).toHaveProperty('members');
         });
       });
     },
@@ -97,6 +99,7 @@ describe('[WORKSPACE]', () => {
       expect(workspace).toHaveProperty('members');
       expect(workspace.members).toHaveLength(data.members.length);
       expect(workspace).toHaveProperty('name', data.name);
+      expect(workspace).toHaveProperty('predicates');
     },
     60 * 1000,
   );
