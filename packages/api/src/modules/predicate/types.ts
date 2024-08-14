@@ -133,5 +133,4 @@ export interface IPredicateService {
   findById: (id: string, signer?: string) => Promise<Predicate>;
   list: () => Promise<IPagination<Predicate> | Predicate[]>;
   instancePredicate: (configurable: string, version: string) => Promise<Vault>;
-  getMissingDeposits: (predicate: Predicate) => Promise<void>;
 }
