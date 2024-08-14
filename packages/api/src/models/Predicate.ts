@@ -25,7 +25,7 @@ class Predicate extends Base {
   @Column()
   name: string;
 
-  @Column()
+  @Column({ name: 'predicate_address' })
   predicateAddress: string;
 
   @Column({ nullable: true })
@@ -77,4 +77,3 @@ export { Predicate };
 
 // -- Criação de índice para a coluna 'version_id' na tabela 'predicates'
 // CREATE INDEX idx_predicates_version_id ON predicates(version_id);
-
