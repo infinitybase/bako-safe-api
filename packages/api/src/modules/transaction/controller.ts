@@ -427,7 +427,7 @@ export class TransactionController {
         });
 
         if (result.status === TransactionStatus.PENDING_SENDER) {
-          this.transactionService.sendToChain(id);
+          await this.transactionService.sendToChain(id);
         }
 
         const notificationSummary = {
