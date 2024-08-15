@@ -10,12 +10,10 @@ import { isDevMode, TVLCronJob } from '@src/utils';
 import { handleErrors } from '@middlewares/index';
 import { QuoteStorage, SessionStorage } from './storage';
 
-
 class App {
   private readonly app: Express.Application;
   private sessionCache: SessionStorage;
   private quoteCache: QuoteStorage;
-  
 
   constructor() {
     this.app = Express();
@@ -26,7 +24,6 @@ class App {
 
     this.sessionCache = SessionStorage.start();
     this.quoteCache = QuoteStorage.start();
-
   }
 
   private initMiddlewares() {
@@ -35,7 +32,10 @@ class App {
     this.app.use(cookieParser());
     this.app.use(Express.json());
     this.app.use(cors());
-    this.app.use(morgan('dev'));
+
+    if (isDevMode) {
+      this.app.use(morgan('dev'));
+    }
   }
 
   private initRoutes() {
@@ -48,13 +48,13 @@ class App {
 
   private initJobs() {
     const isValid = (!!isDevMode && !isDevMode) ?? false;
-    
+
     // run only production
-    if(isValid){
+    if (isValid) {
       TVLCronJob.start();
     }
   }
-  
+
   get serverApp() {
     return this.app;
   }
