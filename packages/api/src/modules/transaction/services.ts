@@ -1,4 +1,5 @@
 import {
+  BakoError,
   IWitnesses,
   TransactionProcessStatus,
   TransactionStatus,
@@ -94,7 +95,6 @@ export class TransactionService implements ITransactionService {
   ): Promise<ITransactionResponse> {
     return await Transaction.update({ id }, payload)
       .then(async () => {
-        console.log('atualizado');
         return await this.findById(id);
       })
       .catch(e => {
@@ -526,14 +526,13 @@ export class TransactionService implements ITransactionService {
         });
       })
       .catch(e => {
-        console.log(e);
+        const error = BakoError.parse(e);
         this.update(bsafe_txid, {
           status: TransactionStatus.FAILED,
           resume: {
             ...resume,
             status: TransactionStatus.FAILED,
-            //@ts-ignore
-            error: e, // todo: add reason of error here (fuels not return this reason, only logs)
+            error: error.toJSON(),
           },
         });
       });
