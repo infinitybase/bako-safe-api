@@ -645,7 +645,7 @@ export class TransactionController {
 
   async send({ params: { id } }: ISendTransactionRequest) {
     try {
-      this.transactionService.sendToChain(id); // not wait for this
+      await this.transactionService.sendToChain(id); // not wait for this
       return successful(true, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
