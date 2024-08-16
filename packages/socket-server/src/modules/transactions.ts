@@ -222,7 +222,7 @@ export const txRequest = async ({ data, socket, database }: IEvent<IEventTX_REQU
 				vault: {
 					name: dapp.current_vault_name,
 					description: dapp.current_vault_description,
-					address: vault.predicateAddress,
+					address: vault.predicate_address,
 					provider: dapp.current_vault_provider,
 					pending_tx: Number(tx_pending.count) > 0,
 				},

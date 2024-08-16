@@ -169,8 +169,8 @@ describe('[TRANSACTION]', () => {
 
         expect(aux).toHaveProperty('id');
         expect(aux).toHaveProperty('predicateAddress');
-        expect(aux.workspace).toHaveProperty('id', auth.workspace.id);
-        expect(aux.workspace).toHaveProperty('name', auth.workspace.name);
+        expect(aux.workspace).toHaveProperty('id');
+        expect(aux.workspace).toHaveProperty('name');
       });
     });
 

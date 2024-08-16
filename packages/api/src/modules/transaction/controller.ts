@@ -1,13 +1,12 @@
-import { TransactionStatus, WitnessStatus } from 'bakosafe';
+import { TransactionStatus, TransactionType, WitnessStatus } from 'bakosafe';
 import { hashMessage, Provider, Signer } from 'fuels';
-
+import { isUUID } from 'class-validator';
 import { PermissionRoles, Workspace } from '@src/models/Workspace';
 import {
   Unauthorized,
   UnauthorizedErrorTitles,
 } from '@src/utils/error/Unauthorized';
 import { validatePermissionGeneral } from '@src/utils/permissionValidate';
-
 
 import { NotificationTitle, Predicate, Transaction } from '@models/index';
 
@@ -34,17 +33,21 @@ import {
   IFindTransactionByHashRequest,
   IFindTransactionByIdRequest,
   IListRequest,
+  IListWithIncomingsRequest,
   ISendTransactionRequest,
   ISignByIdRequest,
   ITransactionResponse,
   ITransactionService,
   TransactionHistory,
 } from './types';
-import { format } from 'date-fns';
+import { groupedMergedTransactions, mergeTransactionLists } from './utils';
+import { IPagination } from '@src/utils/pagination/types';
+import { ITransactionPagination } from './pagination';
 
 export class TransactionController {
   private transactionService: ITransactionService;
   private notificationService: INotificationService;
+  private predicateService: IPredicateService;
 
   constructor(
     transactionService: ITransactionService,
@@ -113,7 +116,6 @@ export class TransactionController {
         witnessStatus: WitnessStatus.PENDING,
         ...(hasSingle && { userAddress: user.address }),
       });
-
 
       const result = await qb.getCount();
 
@@ -216,13 +218,27 @@ export class TransactionController {
     }
   }
 
-  async createHistory({ params: { id } }: ICreateTransactionHistoryRequest) {
+  async createHistory({
+    params: { id, predicateId },
+  }: ICreateTransactionHistoryRequest) {
     try {
-      const response = await this.transactionService
-        .findById(id)
-        .then(async (data: Transaction) => {
-          return TransactionController.formatTransactionsHistory(data);
-        });
+      const isUuid = isUUID(id);
+      let result = null;
+
+      if (isUuid) {
+        result = await this.transactionService.findById(id);
+      } else {
+        const predicate = await this.predicateService.findById(predicateId);
+        result = await this.transactionService.fetchFuelTransactionById(
+          id,
+          predicate,
+        );
+      }
+
+      const response = await TransactionController.formatTransactionsHistory(
+        result,
+      );
+
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
@@ -411,7 +427,7 @@ export class TransactionController {
         });
 
         if (result.status === TransactionStatus.PENDING_SENDER) {
-          this.transactionService.sendToChain(id);
+          await this.transactionService.sendToChain(id);
         }
 
         const notificationSummary = {
@@ -492,7 +508,7 @@ export class TransactionController {
             .then((response: Workspace[]) => response.map(wk => wk.id))
         : [workspace.id];
 
-      const result = await new TransactionService()
+      const response = await new TransactionService()
         .filter({
           id,
           to,
@@ -509,7 +525,102 @@ export class TransactionController {
         .paginate({ page, perPage })
         .list();
 
-      return successful(result, Responses.Ok);
+      return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async listWithIncomings(req: IListWithIncomingsRequest) {
+    try {
+      const {
+        status,
+        orderBy,
+        sort,
+        predicateId,
+        byMonth,
+        type,
+        perPage,
+        offsetDb,
+        offsetFuel,
+      } = req.query;
+      const { workspace, user } = req;
+
+      const singleWorkspace = await new WorkspaceService()
+        .filter({
+          user: user.id,
+          single: true,
+        })
+        .list()
+        .then((response: Workspace[]) => response[0]);
+
+      const hasSingle = singleWorkspace.id === workspace.id;
+
+      const _wk = hasSingle
+        ? await new WorkspaceService()
+            .filter({
+              user: user.id,
+            })
+            .list()
+            .then((response: Workspace[]) => response.map(wk => wk.id))
+        : [workspace.id];
+
+      const _status = status ?? undefined;
+      const signer = hasSingle ? user.address : undefined;
+      const ordination = { orderBy, sort };
+
+      const dbTxs = await new TransactionService()
+        .filter({
+          status: _status,
+          workspaceId: _wk,
+          signer,
+          predicateId: predicateId ?? undefined,
+          type,
+        })
+        .ordination(ordination)
+        .transactionPaginate({
+          perPage,
+          offsetDb: offsetDb,
+          offsetFuel: offsetFuel,
+        })
+        .listWithIncomings();
+
+      let fuelTxs = [];
+
+      if (
+        _wk.length > 0 &&
+        (!_status ||
+          _status?.some(status => status === TransactionStatus.SUCCESS)) &&
+        (!type || type === TransactionType.DEPOSIT)
+      ) {
+        const predicates = await this.predicateService
+          .filter({
+            workspace: _wk,
+            signer,
+            ids: predicateId,
+          })
+          .list()
+          .then((data: Predicate[]) => data);
+
+        fuelTxs = await this.transactionService
+          .transactionPaginate({
+            perPage,
+            offsetDb: offsetDb,
+            offsetFuel: offsetFuel,
+          })
+          .fetchFuelTransactions(predicates);
+      }
+
+      const mergedList = mergeTransactionLists(dbTxs, fuelTxs, {
+        ordination,
+        perPage,
+        offsetDb,
+        offsetFuel,
+      });
+
+      const response = byMonth ? groupedMergedTransactions(mergedList) : mergedList;
+
+      return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }
@@ -534,7 +645,7 @@ export class TransactionController {
 
   async send({ params: { id } }: ISendTransactionRequest) {
     try {
-      this.transactionService.sendToChain(id); // not wait for this
+      await this.transactionService.sendToChain(id); // not wait for this
       return successful(true, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);

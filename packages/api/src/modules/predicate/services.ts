@@ -119,141 +119,6 @@ export class PredicateService implements IPredicateService {
     }
   }
 
-  async getMissingDeposits(predicate: Predicate) {
-      if (!predicate) {
-        throw new NotFound({
-          type: ErrorTypes.NotFound,
-          title: 'Predicate not found',
-          detail: `Predicate with id ${predicate.id} not found`,
-        });
-      }
-  
-      const predicateProvider = predicate.provider;
-      const rawPredicateAddresss = Address.fromString(
-        predicate.predicateAddress,
-      ).toB256();
-  
-      const deposits = await this.getPredicateHistory(
-        rawPredicateAddresss,
-        predicateProvider,
-      );
-  
-      const depositHashes = deposits.map(deposit => `${deposit.id.slice(2)}`);
-  
-
-      const predicateTransactions = depositHashes.length > 0 ? await Transaction.createQueryBuilder('t')
-        .leftJoin('t.predicate', 'p')
-        .select(['t.id', 't.hash', 'p.id', 't.createdAt', 't.status'])
-        .where('p.id = :predicate', {
-          predicate: predicate.id,
-        })
-        .andWhere('t.type = :type', {
-          type: TransactionType.DEPOSIT,
-        })
-        .andWhere('t.hash IN (:...hashes)', {
-          hashes: depositHashes,
-        })
-        .orderBy('t.createdAt', 'DESC')
-        .getMany()
-        : [];
-  
-      const transactionHashes = new Set(predicateTransactions.map(tx => tx.hash));
-      const missingDeposits = deposits.filter(dep => !transactionHashes.has(dep.id.slice(2)));
-  
-      for (const deposit of missingDeposits) {
-        const formattedPayload = formatPayloadToCreateTransaction(
-          deposit,
-          predicate,
-          rawPredicateAddresss,
-        );
-  
-        await new TransactionService().create(formattedPayload);
-      }
-  }
-
-  async getEndCursor(endCursorParams: IGetTxEndCursorQueryProps) {
-    const { providerUrl, address, txQuantityRange } = endCursorParams;
-
-    const getEndCursorQuery = `
-     query Transactions($address: Address, $first: Int) {
-      transactionsByOwner(owner: $address, first: $first) {
-        pageInfo {
-          endCursor
-          hasNextPage
-        }
-      }
-    }
-    `;
-
-    const {
-      data: { data },
-    }: AxiosResponse<IEndCursorPayload> = await axios.post(providerUrl, {
-      query: getEndCursorQuery,
-      variables: { address, first: txQuantityRange },
-    });
-    const endCursor = data.transactionsByOwner.pageInfo.endCursor;
-    const hasNextPage = data.transactionsByOwner.pageInfo.hasNextPage;
-
-    return { endCursor, hasNextPage };
-  }
-
-  async getPredicateHistory(address: string, providerUrl: string) {
-    const provider = await Provider.create(providerUrl);
-    const { endCursor, hasNextPage } = await this.getEndCursor({
-      providerUrl,
-      address,
-      txQuantityRange: 100,
-    });
-
-    const txSummaries = await getTransactionsSummaries({
-      provider,
-      filters: {
-        owner: address,
-        ...(hasNextPage ? { last: 17, before: endCursor } : { first: 17 }),
-      },
-    });
-
-    const deposits = txSummaries.transactions.reduce((deposit, transaction) => {
-      const operations = transaction?.operations.filter(
-        filteredTx => filteredTx.to?.address === address
-      );
-
-      const {
-        gasPrice,
-        scriptGasLimit,
-        script,
-        scriptData,
-        type,
-        witnesses,
-        outputs,
-        inputs,
-      } = transaction.transaction;
-
-      if (operations.length > 0) {
-        deposit.push({
-          date: new Date(transaction.date),
-          id: transaction.id,
-          operations,
-          gasUsed: transaction.gasUsed.format(),
-          txData: {
-            gasPrice,
-            scriptGasLimit,
-            script,
-            scriptData,
-            type,
-            witnesses,
-            outputs,
-            inputs,
-          },
-        });
-      }
-
-      return deposit;
-    }, []);
-
-    return deposits;
-  }
-
   async list(): Promise<IPagination<Predicate> | Predicate[]> {
     const hasPagination = this._pagination?.page && this._pagination?.perPage;
     const hasOrdination = this._ordination?.orderBy && this._ordination?.sort;
@@ -278,6 +143,12 @@ export class PredicateService implements IPredicateService {
 
     try {
       // Aplicar filtros
+      if (this._filter.ids) {
+        queryBuilder.andWhere('p.id IN (:...ids)', {
+          ids: this._filter.ids,
+        });
+      }
+
       if (this._filter.address) {
         queryBuilder.andWhere('p.predicateAddress = :predicateAddress', {
           predicateAddress: this._filter.address,
@@ -432,10 +303,7 @@ export class PredicateService implements IPredicateService {
     }
   }
 
-  async instancePredicate(
-    configurable: string,
-    version: string,
-  ): Promise<Vault> {
+  async instancePredicate(configurable: string, version: string): Promise<Vault> {
     return Vault.create({
       configurable: JSON.parse(configurable),
       version,

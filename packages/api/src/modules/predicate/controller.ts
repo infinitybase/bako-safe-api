@@ -151,7 +151,6 @@ export class PredicateController {
   async findById({ params: { predicateId } }: IFindByIdRequest) {
     try {
       const predicate = await this.predicateService.findById(predicateId);
-      // await this.predicateService.getMissingDeposits(predicate);
 
       return successful(predicate, Responses.Ok);
     } catch (e) {
