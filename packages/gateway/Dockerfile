@@ -1,4 +1,4 @@
-FROM arm64v8/node:22-alpine
+FROM arm64v8/node:20-alpine
 
 # Install dependencies necessary for node-gyp
 RUN apk add --no-cache python3 make g++ \

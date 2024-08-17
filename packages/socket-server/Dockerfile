@@ -1,4 +1,4 @@
-FROM arm64v8/node:22-alpine
+FROM arm64v8/node:20-alpine
 
 # Create app directory
 WORKDIR /socket
