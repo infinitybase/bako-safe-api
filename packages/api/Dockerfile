@@ -1,4 +1,4 @@
-FROM arm64v8/node:20-alpine
+FROM arm64v8/node:18.18.2-alpine
 
 # Install pnpm globally
 RUN npm install -g pnpm
