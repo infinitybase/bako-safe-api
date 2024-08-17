@@ -44,11 +44,10 @@ interface ICreateRequestSchema extends ValidatedRequestSchema {
 
 interface IUpdateRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Body]: Pick<IWorkspacePayload, 'name' | 'avatar' | 'description'>;
-  [ContainerTypes.Params]: { id: string };
 }
 
 interface IUpdateMembersRequestSchema extends ValidatedRequestSchema {
-  [ContainerTypes.Params]: { id: string; member: string };
+  [ContainerTypes.Params]: { member: string };
 }
 
 interface IUpdatePermissionsRequestSchema extends ValidatedRequestSchema {
@@ -57,7 +56,7 @@ interface IUpdatePermissionsRequestSchema extends ValidatedRequestSchema {
       [key in PermissionRoles]: string[];
     };
   };
-  [ContainerTypes.Params]: { id: string; member: string };
+  [ContainerTypes.Params]: { member: string };
 }
 
 export type IListByUserRequest = AuthValidatedRequest<IListRequestSchema>;

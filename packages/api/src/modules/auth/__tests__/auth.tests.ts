@@ -17,7 +17,7 @@ describe('[AUTH]', () => {
       await auth.create();
 
       await auth.createSession().then(() => {
-        expect(auth.user.address).toBe(accounts['USER_1'].address);
+        expect(auth.user.address).toBe(accounts['USER_1'].account);
         expect(auth.workspace).toHaveProperty('id');
         expect(auth.workspace).toHaveProperty('single', true);
         expect(auth.authToken);
@@ -42,7 +42,7 @@ describe('[AUTH]', () => {
       //select workspace
       await _auth.selectWorkspace(w_upgrade.id).then(({ data }) => {
         expect(_auth.workspace.id).toEqual(w_upgrade.id);
-        expect(_auth.user).toHaveProperty('address', accounts['USER_1'].address);
+        expect(_auth.user).toHaveProperty('address', accounts['USER_1'].account);
         expect(_auth.authToken).toHaveProperty('token');
       });
     },

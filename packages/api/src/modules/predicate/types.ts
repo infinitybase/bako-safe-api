@@ -53,6 +53,7 @@ export interface IPredicateFilterParams {
   provider?: string;
   owner?: string;
   workspace?: string[];
+  ids?: string[];
 }
 
 export interface IGetTxEndCursorQueryProps {
@@ -86,7 +87,7 @@ interface IDeletePredicateRequestSchema extends ValidatedRequestSchema {
 }
 
 interface IFindByIdRequestSchema extends ValidatedRequestSchema {
-  [ContainerTypes.Params]: { id: string };
+  [ContainerTypes.Params]: { predicateId: string };
 }
 interface IFindByHashRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Params]: { address: string };
@@ -101,6 +102,7 @@ interface IFindByNameRequestSchema extends ValidatedRequestSchema {
 interface IListRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Query]: {
     q: string;
+    ids: string[];
     address: string;
     signer: string;
     provider: string;
@@ -130,6 +132,5 @@ export interface IPredicateService {
   delete: (id: string) => Promise<boolean>;
   findById: (id: string, signer?: string) => Promise<Predicate>;
   list: () => Promise<IPagination<Predicate> | Predicate[]>;
-  instancePredicate: (predicateId: string) => Promise<Vault>;
-  getMissingDeposits: (predicate: Predicate) => Promise<void>;
+  instancePredicate: (configurable: string, version: string) => Promise<Vault>;
 }

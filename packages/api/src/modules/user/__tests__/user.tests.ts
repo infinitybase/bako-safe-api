@@ -22,12 +22,13 @@ describe('[USER]', () => {
   test(
     'Create user',
     async () => {
-      const code_length = `code${Address.fromRandom().toHexString()}`.length;
+      const address = Address.fromRandom();
+      const code_length = `code${address.toHexString()}`.length;
       await api
         .post('/user/', {
           name: `${new Date().getTime()} - Create user test`,
           type: TypeUser.FUEL,
-          address: Address.fromRandom().toAddress(),
+          address: address.toAddress(),
           provider: BakoSafe.getProviders('CHAIN_URL'),
         })
         .then(({ data, status }) => {
@@ -43,21 +44,68 @@ describe('[USER]', () => {
   );
 
   test(
+    'Error when creating user with invalid payload',
+    async () => {
+      expect.assertions(3);
+      await api
+        .post('/user/', {
+          name: `${new Date().getTime()} - Create user test`,
+          type: TypeUser.FUEL,
+          address: 'invalid_address',
+          provider: BakoSafe.getProviders('CHAIN_URL'),
+        })
+        .catch(reason => {
+          const { response } = reason;
+          expect(response.status).toBe(400);
+          expect(response.data.origin).toBe('body');
+          expect(response.data.errors).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                title: 'Invalid address',
+                detail: 'Invalid address',
+              }),
+            ]),
+          );
+        });
+    },
+    40 * 1000,
+  );
+
+  test(
     'Home endpoint',
     async () => {
       const auth = new AuthValidations(networks['local'], accounts['USER_1']);
       await auth.create();
       await auth.createSession();
 
-      //list all predicates and transactions from user
-      await auth.axios.get('user/me').then(({ data, status }) => {
+      //get user info
+      await auth.axios.get('user/latest/info').then(({ data, status }) => {
         expect(status).toBe(200);
-        expect(data).toHaveProperty('predicates');
-        expect(data.predicates.data.length).toBeLessThanOrEqual(8);
+        expect(data).toHaveProperty('id');
+        expect(data).toHaveProperty('name');
+        expect(data).toHaveProperty('type');
+        expect(data).toHaveProperty('avatar');
+        expect(data).toHaveProperty('address');
+        expect(data).toHaveProperty('webauthn');
+        expect(data).toHaveProperty('onSingleWorkspace');
+        expect(data).toHaveProperty('workspace');
       });
     },
     10 * 1000,
   );
+
+  test('Home predicates endpoint', async () => {
+    const auth = new AuthValidations(networks['local'], accounts['USER_1']);
+    await auth.create();
+    await auth.createSession();
+
+    //list all predicates from user
+    await auth.axios.get('user/predicates').then(({ data, status }) => {
+      expect(status).toBe(200);
+      expect(data).toHaveProperty('predicates');
+      expect(data.predicates.data.length).toBeLessThanOrEqual(8);
+    });
+  });
 
   test('Home Transactions endpoint', async () => {
     const auth = new AuthValidations(networks['local'], accounts['USER_1']);
@@ -65,7 +113,7 @@ describe('[USER]', () => {
     await auth.createSession();
 
     //list all transactions by month,
-    await auth.axios.get('user/me/transactions').then(({ data, status }) => {
+    await auth.axios.get('user/latest/transactions').then(({ data, status }) => {
       expect(status).toBe(200);
       expect(data).toHaveProperty('data');
       expect(data.data).toBeInstanceOf(Array);
@@ -168,7 +216,7 @@ describe('[USER]', () => {
     await auth.createSession();
 
     //list all tokensIDS and usd quote,
-    await auth.axios.get('user/me/tokens').then(({ data, status }) => {
+    await auth.axios.get('user/latest/tokens').then(({ data, status }) => {
       expect(status).toBe(200);
       expect(data).toBeInstanceOf(Array);
     });

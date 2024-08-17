@@ -1,26 +1,19 @@
 import { TransactionStatus } from 'bakosafe';
-import { CoinQuantity, bn } from 'fuels';
 
 import { Predicate } from '@src/models/Predicate';
 import { Workspace } from '@src/models/Workspace';
 import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
 import { IconUtils } from '@src/utils/icons';
 
-import {
-  Asset,
-  NotificationTitle,
-  Transaction,
-  TypeUser,
-  User,
-} from '@models/index';
+import { NotificationTitle, Transaction, TypeUser, User } from '@models/index';
 
 import { error } from '@utils/error';
 import {
   Responses,
-  assetsMapBySymbol,
   bindMethods,
   calculateBalanceUSD,
-  subtractReservedCoinsFromBalances,
+  calculateReservedCoins,
+  subCoins,
   successful,
 } from '@utils/index';
 
@@ -105,7 +98,12 @@ export class PredicateController {
         workspace.id,
       );
 
-      const { id, name, members: predicateMembers, workspace: wk_predicate } = newPredicate;
+      const {
+        id,
+        name,
+        members: predicateMembers,
+        workspace: wk_predicate,
+      } = newPredicate;
       const summary = {
         vaultId: id,
         vaultName: name,
@@ -150,10 +148,9 @@ export class PredicateController {
     }
   }
 
-  async findById({ params: { id } }: IFindByIdRequest) {
+  async findById({ params: { predicateId } }: IFindByIdRequest) {
     try {
-      const predicate = await this.predicateService.findById(id);
-      // await this.predicateService.getMissingDeposits(predicate);
+      const predicate = await this.predicateService.findById(predicateId);
 
       return successful(predicate, Responses.Ok);
     } catch (e) {
@@ -197,59 +194,41 @@ export class PredicateController {
     }
   }
 
-  async hasReservedCoins({ params: { address } }: IFindByHashRequest) {
+  async hasReservedCoins({ params: { predicateId } }: IFindByIdRequest) {
     try {
-      const response = await this.transactionService
-        .filter({
-          predicateId: [address],
+      const {
+        transactions: predicateTxs,
+        version: { code: versionCode },
+        configurable,
+      } = await Predicate.createQueryBuilder('p')
+        .leftJoin('p.transactions', 't', 't.status IN (:...status)', {
+          status: [
+            TransactionStatus.AWAIT_REQUIREMENTS,
+            TransactionStatus.PENDING_SENDER,
+          ],
         })
-        .list()
-        .then((data: Transaction[]) => {
-          return data
-            .filter(
-              (transaction: Transaction) =>
-                transaction.status === TransactionStatus.AWAIT_REQUIREMENTS ||
-                transaction.status === TransactionStatus.PENDING_SENDER,
-            )
-            .reduce((accumulator, transaction: Transaction) => {
-              transaction.assets.forEach((asset: Asset) => {
-                const assetId = asset.assetId;
-                const amount = bn.parseUnits(asset.amount);
-                const existingAsset = accumulator.find(
-                  item => item.assetId === assetId,
-                );
+        .leftJoin('p.version', 'pv')
+        .addSelect(['t', 'p.id', 'p.configurable', 'pv.code'])
+        .where('p.id = :predicateId', { predicateId })
+        .getOne();
 
-                if (existingAsset) {
-                  existingAsset.amount = existingAsset.amount.add(amount);
-                } else {
-                  accumulator.push({ assetId, amount });
-                }
-              });
-              return accumulator;
-            }, [] as CoinQuantity[]);
-        })
-        .catch(() => {
-          return [
-            {
-              assetId: assetsMapBySymbol['ETH'].id,
-              amount: bn.parseUnits('0'),
-            },
-          ] as CoinQuantity[];
-        });
-
-      const predicate = await this.predicateService.findById(address, undefined);
-
-      const instance = await this.predicateService.instancePredicate(predicate.id);
-      const balances = await instance.getBalances();
-      const balancesToConvert =
-        response.length > 0
-          ? subtractReservedCoinsFromBalances(balances, response)
-          : balances;
+      const reservedCoins = calculateReservedCoins(predicateTxs);
+      const instance = await this.predicateService.instancePredicate(
+        configurable,
+        versionCode,
+      );
+      const balances = (await instance.getBalances()).balances;
+      const assets =
+        reservedCoins.length > 0 ? subCoins(balances, reservedCoins) : balances;
 
       return successful(
         {
-          balanceUSD: calculateBalanceUSD(balancesToConvert),
-          reservedCoins: response,
+          reservedCoinsUSD: calculateBalanceUSD(reservedCoins), // locked value on USDC
+          totalBalanceUSD: calculateBalanceUSD(balances),
+          currentBalanceUSD: calculateBalanceUSD(assets),
+          currentBalance: assets,
+          totalBalance: balances,
+          reservedCoins: reservedCoins, // locked coins
         },
         Responses.Ok,
       );

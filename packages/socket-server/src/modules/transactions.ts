@@ -1,5 +1,5 @@
 import { SocketEvents, SocketUsernames } from '@src/types'
-import { BakoSafe, TransactionStatus, Vault } from 'bakosafe'
+import { BakoSafe, ITransactionSummary, TransactionStatus, Vault } from 'bakosafe'
 import crypto from 'crypto'
 import { TransactionRequestLike } from 'fuels'
 import { Socket } from 'socket.io'
@@ -36,9 +36,8 @@ export const txConfirm = async ({ data, socket, database }: IEvent<IEventTX_CONF
 		console.log('[TX_CONFIRM]', {
 			origin,
 			UI_URL,
-			room
+			room,
 		})
-
 
 		if (origin != UI_URL) return
 
@@ -95,19 +94,19 @@ export const txConfirm = async ({ data, socket, database }: IEvent<IEventTX_CONF
 		// ------------------------------ [TX] ------------------------------
 
 		// ------------------------------ [SUMMARY] ------------------------------
+		const transactionSummary: ITransactionSummary = {
+			type: 'connector',
+			name: dapp.name,
+			origin: dapp.origin,
+			operations: operations.operations,
+		}
 		await database.query(
 			`
 				UPDATE transactions
 				SET summary = $1
 				WHERE id = '${_tx.BakoSafeTransactionId}'
 			`,
-			[
-				JSON.stringify({
-					operations: operations.operations,
-					name: dapp.name,
-					origin: dapp.origin,
-				}),
-			],
+			[JSON.stringify(transactionSummary)],
 		)
 		// ------------------------------ [SUMMARY] ------------------------------
 
@@ -223,7 +222,7 @@ export const txRequest = async ({ data, socket, database }: IEvent<IEventTX_REQU
 				vault: {
 					name: dapp.current_vault_name,
 					description: dapp.current_vault_description,
-					address: vault.predicateAddress,
+					address: vault.predicate_address,
 					provider: dapp.current_vault_provider,
 					pending_tx: Number(tx_pending.count) > 0,
 				},

@@ -7,6 +7,7 @@ import { PermissionRoles, defaultPermissions } from '@src/models/Workspace';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
 import { generateWorkspacePayload } from '@src/utils/testUtils/Workspace';
 import { BakoSafe } from 'bakosafe';
+import { catchApplicationError, TestError } from '@utils/testUtils/Errors';
 
 describe('[WORKSPACE]', () => {
   let api: AuthValidations;
@@ -27,14 +28,11 @@ describe('[WORKSPACE]', () => {
         data.forEach(element => {
           expect(element).toHaveProperty('id');
           expect(element).toHaveProperty('name');
-          expect(element).toHaveProperty('owner');
-          expect(element).toHaveProperty('members');
+          expect(element).toHaveProperty('owner_id');
           expect(element).toHaveProperty('single', false);
           expect(element).toHaveProperty('permissions');
-          const aux = element.members.find(
-            m => m.address === api.authToken.address,
-          );
-          expect(!!aux).toBe(true);
+          expect(element).toHaveProperty('predicates');
+          expect(element).toHaveProperty('members');
         });
       });
     },
@@ -66,6 +64,25 @@ describe('[WORKSPACE]', () => {
   );
 
   test(
+    'Error when creating workspace with invalid payload',
+    async () => {
+      const payloadError = await catchApplicationError(
+        api.axios.post(`/workspace/`, {
+          name: `[GENERATED] Workspace 1 ${new Date()}`,
+          description: '[GENERATED] Workspace 1 description',
+          members: ['asd'],
+        }),
+      );
+      TestError.expectValidation(payloadError, {
+        type: 'alternatives.match',
+        field: 'Invalid member address or id',
+        origin: 'body',
+      });
+    },
+    60 * 1000,
+  );
+
+  test(
     'Find workspace by ID',
     async () => {
       const { data } = await generateWorkspacePayload(api);
@@ -82,6 +99,7 @@ describe('[WORKSPACE]', () => {
       expect(workspace).toHaveProperty('members');
       expect(workspace.members).toHaveLength(data.members.length);
       expect(workspace).toHaveProperty('name', data.name);
+      expect(workspace).toHaveProperty('predicates');
     },
     60 * 1000,
   );
@@ -103,7 +121,7 @@ describe('[WORKSPACE]', () => {
     const {
       data: workspace_updated,
       status: status_update,
-    } = await auth_aux.axios.put(`/workspace/${data.id}`, {
+    } = await auth_aux.axios.put('/workspace', {
       name: 'Workspace 1 updated',
       description: 'Workspace 1 description updated',
     });
@@ -136,7 +154,7 @@ describe('[WORKSPACE]', () => {
 
       await api.selectWorkspace(data.id);
 
-      await api.axios.put(`/workspace/${data.id}`, {
+      await api.axios.put('/workspace', {
         name: 'Workspace 1 updated',
         description: 'Workspace 1 description updated',
       });
@@ -162,7 +180,7 @@ describe('[WORKSPACE]', () => {
 
       //update permission
       await auth_aux.axios
-        .put(`/workspace/${data.id}/permissions/${data_user1.id}`, {
+        .put(`/workspace/permissions/${data_user1.id}`, {
           permissions: defaultPermissions[PermissionRoles.MANAGER],
         })
         .then(({ data, status }) => {
@@ -179,7 +197,7 @@ describe('[WORKSPACE]', () => {
 
       //update owner
       await auth_aux.axios
-        .put(`/workspace/${data.id}/permissions/${data.owner.id}`, {
+        .put(`/workspace/permissions/${data.owner.id}`, {
           permissions: defaultPermissions[PermissionRoles.MANAGER],
         })
         .catch(({ response }) => {
@@ -191,7 +209,7 @@ describe('[WORKSPACE]', () => {
 
       //update without permission
       await api.axios
-        .put(`/workspace/${data.id}/permissions/${data_user2.id}`, {
+        .put(`/workspace/permissions/${data_user2.id}`, {
           permissions: defaultPermissions[PermissionRoles.MANAGER],
         })
         .catch(({ response }) => {
@@ -211,9 +229,9 @@ describe('[WORKSPACE]', () => {
     const { data } = await generateWorkspacePayload(auth_aux);
     await auth_aux.selectWorkspace(data.id);
 
-    const aux_address = Address.fromRandom().toAddress();
+    const aux_address = Address.fromRandom();
     const { data: data_user_aux } = await auth_aux.axios.post('/user/', {
-      address: aux_address,
+      address: aux_address.toAddress(),
       provider: BakoSafe.getProviders('CHAIN_URL'),
       name: `${new Date().getTime()} - Create user test`,
       type: TypeUser.FUEL,
@@ -225,7 +243,7 @@ describe('[WORKSPACE]', () => {
 
     //include exists on database member
     await auth_aux.axios
-      .post(`/workspace/${data.id}/members/${data_user_aux.userId}/include`)
+      .post(`/workspace/members/${data_user_aux.userId}/include`)
       .then(({ data, status }) => {
         quantityMembers++;
         expect(status).toBe(200);
@@ -233,28 +251,32 @@ describe('[WORKSPACE]', () => {
         expect(data).toHaveProperty('owner');
         expect(data).toHaveProperty('members');
         expect(data.members).toHaveLength(quantityMembers);
-        expect(data.members.find(m => m.address === aux_address)).toBeDefined();
+        expect(
+          data.members.find(m => m.address === aux_address.toB256()),
+        ).toBeDefined();
         expect(data).toHaveProperty('permissions');
       });
 
     // //include not exists on database member (create)
-    const aux_byAddress = Address.fromRandom().toAddress();
+    const aux_byAddress = Address.fromRandom();
     await auth_aux.axios
-      .post(`/workspace/${data.id}/members/${aux_byAddress}/include`)
+      .post(`/workspace/members/${aux_byAddress.toAddress()}/include`)
       .then(({ data, status }) => {
         quantityMembers++;
         expect(status).toBe(200);
         expect(data).toHaveProperty('id');
         expect(data).toHaveProperty('owner');
         expect(data).toHaveProperty('members');
-        expect(data.members.find(m => m.address === aux_byAddress)).toBeDefined();
+        expect(
+          data.members.find(m => m.address === aux_byAddress.toB256()),
+        ).toBeDefined();
         expect(data.members).toHaveLength(quantityMembers);
         expect(data).toHaveProperty('permissions');
       });
 
     //remove member
     await auth_aux.axios
-      .post(`/workspace/${data.id}/members/${data_user_aux.userId}/remove`)
+      .post(`/workspace/members/${data_user_aux.userId}/remove`)
       .then(({ data, status }) => {
         quantityMembers--;
         expect(status).toBe(200);
@@ -268,7 +290,7 @@ describe('[WORKSPACE]', () => {
 
     //remove owner
     await auth_aux.axios
-      .post(`/workspace/${data.id}/members/${workspace.owner.id}/remove`)
+      .post(`/workspace/members/${workspace.owner.id}/remove`)
       .catch(({ response }) => {
         expect(response.status).toBe(401);
         expect(response.data.detail).toEqual(
@@ -278,7 +300,7 @@ describe('[WORKSPACE]', () => {
 
     // //update without permission
     await api.axios
-      .post(`/workspace/${data.id}/members/${data_user_aux.userId}/include`)
+      .post(`/workspace/members/${data_user_aux.userId}/include`)
       .catch(({ response }) => {
         expect(response.status).toBe(401);
         expect(response.data.errors.detail).toEqual(

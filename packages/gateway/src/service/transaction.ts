@@ -4,7 +4,7 @@ import {
   Provider,
   TransactionCreate,
 } from "fuels";
-import { DeployTransfer, Vault } from "bakosafe";
+import { DeployTransfer, Vault, ITransactionSummary } from "bakosafe";
 
 import { AuthService } from "@/service/auth";
 
@@ -81,6 +81,11 @@ export class TransactionService {
       }
     );
 
+    const transactionSummary: ITransactionSummary = {
+      type: "cli",
+      operations: summaryFromRequest.operations,
+    };
+
     const query = `
 				UPDATE transactions
 				SET summary = $1
@@ -88,12 +93,7 @@ export class TransactionService {
     `;
 
     await this.authService.database.query(query, [
-      JSON.stringify({
-        name: null,
-        image: null,
-        origin: null,
-        operations: summaryFromRequest.operations,
-      }),
+      JSON.stringify(transactionSummary),
       transfer.BakoSafeTransactionId,
     ]);
   }

@@ -2,22 +2,19 @@ import {
   TransactionStatus,
   ITransactionResume,
   ITransactionSummary,
+  TransactionType,
 } from 'bakosafe';
 import { TransactionRequest, TransactionType as FuelTransactionType } from 'fuels';
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 import { User } from '@models/User';
 
-import { Asset } from './Asset';
 import { Base } from './Base';
 import { Predicate } from './Predicate';
-import { Witness } from './Witness';
+import { ITransactionResponse } from '@src/modules/transaction/types';
+import { formatAssets } from '@src/utils/formatAssets';
 
-export enum TransactionType {
-  TRANSACTION_SCRIPT = 'TRANSACTION_SCRIPT',
-  TRANSACTION_CREATE = 'TRANSACTION_CREATE',
-  DEPOSIT = 'DEPOSIT',
-}
+export { TransactionStatus, TransactionType };
 
 @Entity('transactions')
 class Transaction extends Base {
@@ -69,12 +66,6 @@ class Transaction extends Base {
   @ManyToOne(() => User)
   createdBy: User;
 
-  @OneToMany(() => Asset, asset => asset.transaction, { cascade: ['insert'] })
-  assets: Asset[];
-
-  @OneToMany(() => Witness, witness => witness.transaction, { cascade: ['insert'] })
-  witnesses: Witness[];
-
   @Column({ name: 'predicate_id' })
   predicateId: string;
 
@@ -91,6 +82,15 @@ class Transaction extends Base {
     };
 
     return transactionType[type] ?? transactionType.default;
+  }
+
+  static formatTransactionResponse(transaction: Transaction): ITransactionResponse {
+    const assets = formatAssets(transaction.txData.outputs);
+    const result = Object.assign(transaction, {
+      assets,
+    });
+
+    return result;
   }
 }
 

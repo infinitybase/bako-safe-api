@@ -7,7 +7,7 @@ class Bootstrap {
   static async connectDatabase() {
     await databaseInstance.initialize();
     await databaseInstance.runMigrations();
-    await runSeeders();
+    // await runSeeders();
   }
 
   static startEnv() {
