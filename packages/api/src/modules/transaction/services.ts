@@ -1,5 +1,5 @@
 import {
-  BakoError,
+  // BakoError,
   IWitnesses,
   TransactionProcessStatus,
   TransactionStatus,
@@ -526,13 +526,13 @@ export class TransactionService implements ITransactionService {
         });
       })
       .catch(e => {
-        const error = BakoError.parse(e);
+        // const error = BakoError.parse(e);
         this.update(bsafe_txid, {
           status: TransactionStatus.FAILED,
           resume: {
             ...resume,
             status: TransactionStatus.FAILED,
-            error: error.toJSON(),
+            error: e.toJSON(),
           },
         });
       });
