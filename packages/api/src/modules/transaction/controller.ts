@@ -549,6 +549,13 @@ export class TransactionController {
       } = req.query;
       const { workspace, user } = req;
 
+      if (id) {
+        return successful(
+          groupedTransactions([await this.transactionService.findById(id)]),
+          Responses.Ok,
+        );
+      }
+
       const singleWorkspace = await new WorkspaceService()
         .filter({
           user: user.id,
@@ -622,11 +629,7 @@ export class TransactionController {
         offsetFuel,
       });
 
-      const response = id
-        ? groupedTransactions(dbTxs)
-        : byMonth
-        ? groupedMergedTransactions(mergedList)
-        : mergedList;
+      const response = byMonth ? groupedMergedTransactions(mergedList) : mergedList;
 
       return successful(response, Responses.Ok);
     } catch (e) {
