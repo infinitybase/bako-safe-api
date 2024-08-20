@@ -1,5 +1,6 @@
 import { io, Socket } from 'socket.io-client';
 import { IMessage, SocketEvents, SocketUsernames } from './types';
+import { sha256 } from 'fuels';
 
 
 export class SocketClient {
@@ -21,6 +22,7 @@ export class SocketClient {
 
   // Método para enviar uma mensagem para o servidor
   sendMessage(message: IMessage) {
+    console.log('[EMITINDO MENSAGEM]: ', message, SocketEvents.DEFAULT);
     this.socket.emit(SocketEvents.DEFAULT, message);
   }
 
