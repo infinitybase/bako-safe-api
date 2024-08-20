@@ -40,9 +40,11 @@ import {
   ITransactionService,
   TransactionHistory,
 } from './types';
-import { groupedMergedTransactions, mergeTransactionLists } from './utils';
-import { IPagination } from '@src/utils/pagination/types';
-import { ITransactionPagination } from './pagination';
+import {
+  groupedMergedTransactions,
+  groupedTransactions,
+  mergeTransactionLists,
+} from './utils';
 
 export class TransactionController {
   private transactionService: ITransactionService;
@@ -543,8 +545,16 @@ export class TransactionController {
         perPage,
         offsetDb,
         offsetFuel,
+        id,
       } = req.query;
       const { workspace, user } = req;
+
+      if (id) {
+        return successful(
+          groupedTransactions([await this.transactionService.findById(id)]),
+          Responses.Ok,
+        );
+      }
 
       const singleWorkspace = await new WorkspaceService()
         .filter({
@@ -576,6 +586,7 @@ export class TransactionController {
           signer,
           predicateId: predicateId ?? undefined,
           type,
+          id,
         })
         .ordination(ordination)
         .transactionPaginate({

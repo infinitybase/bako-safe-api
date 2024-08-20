@@ -201,6 +201,7 @@ interface IListWithIncomingsRequestSchema extends ValidatedRequestSchema {
     type: TransactionType;
     offsetDb?: string;
     offsetFuel?: string;
+    id?: string;
   };
 }
 

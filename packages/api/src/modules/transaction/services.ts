@@ -368,6 +368,11 @@ export class TransactionService implements ITransactionService {
         type: this._filter.type,
       });
 
+    this._filter.id &&
+      queryBuilder.andWhere('t.id = :id', {
+        id: this._filter.id,
+      });
+
     queryBuilder.orderBy(`t.${this._ordination.orderBy}`, this._ordination.sort);
 
     const handleInternalError = e => {
