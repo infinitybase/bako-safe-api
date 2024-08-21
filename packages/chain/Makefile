@@ -1,5 +1,5 @@
 up:
-	docker compose -p bako-safe_dev --env-file .env.chain up -d --build > /dev/null 2>&1
+	docker compose -p bako-safe_dev --env-file .env up -d --build > /dev/null 2>&1
 
 down:
 	docker compose -p bako-safe_dev stop > /dev/null 2>&1
