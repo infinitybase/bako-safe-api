@@ -93,6 +93,10 @@ export class TransactionService implements ITransactionService {
     id: string,
     payload?: IUpdateTransactionPayload,
   ): Promise<ITransactionResponse> {
+    if (payload.status && payload.resume) {
+      payload.resume = { ...payload.resume, status: payload.status };
+    }
+
     return await Transaction.update({ id }, payload)
       .then(async () => {
         return await this.findById(id);
@@ -528,10 +532,13 @@ export class TransactionService implements ITransactionService {
       .then(async () => {
         await this.update(bsafe_txid, {
           status: TransactionStatus.PROCESS_ON_CHAIN,
+          resume,
         });
       })
       .catch(e => {
-        // const error = BakoError.parse(e);
+        if (e?.message.includes('Hash is already known')) {
+          return;
+        }
         this.update(bsafe_txid, {
           status: TransactionStatus.FAILED,
           resume: {
