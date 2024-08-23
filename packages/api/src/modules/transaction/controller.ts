@@ -40,11 +40,7 @@ import {
   ITransactionService,
   TransactionHistory,
 } from './types';
-import {
-  groupedMergedTransactions,
-  groupedTransactions,
-  mergeTransactionLists,
-} from './utils';
+import { mergeTransactionLists } from './utils';
 
 export class TransactionController {
   private transactionService: ITransactionService;
@@ -486,7 +482,6 @@ export class TransactionController {
         predicateId,
         name,
         id,
-        byMonth,
         type,
       } = req.query;
       const { workspace, user } = req;
@@ -520,7 +515,6 @@ export class TransactionController {
           workspaceId: _wk,
           signer: hasSingle ? user.address : undefined,
           predicateId: predicateId ?? undefined,
-          byMonth,
           type,
         })
         .ordination({ orderBy, sort })
@@ -540,7 +534,6 @@ export class TransactionController {
         orderBy,
         sort,
         predicateId,
-        byMonth,
         type,
         perPage,
         offsetDb,
@@ -550,10 +543,7 @@ export class TransactionController {
       const { workspace, user } = req;
 
       if (id) {
-        return successful(
-          groupedTransactions([await this.transactionService.findById(id)]),
-          Responses.Ok,
-        );
+        return successful(await this.transactionService.findById(id), Responses.Ok);
       }
 
       const singleWorkspace = await new WorkspaceService()
@@ -629,7 +619,7 @@ export class TransactionController {
         offsetFuel,
       });
 
-      const response = byMonth ? groupedMergedTransactions(mergedList) : mergedList;
+      const response = mergedList;
 
       return successful(response, Responses.Ok);
     } catch (e) {

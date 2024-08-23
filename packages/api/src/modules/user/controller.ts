@@ -82,7 +82,6 @@ export class UserController {
       );
       const transactions = await new TransactionService()
         .filter({
-          byMonth: true,
           type,
           workspaceId: [workspace.id],
           signer: hasSingle ? user.address : undefined,
