@@ -31,7 +31,12 @@ export class AuthController {
   async signIn(req: ISignInRequest) {
     try {
       const { digest, encoder, signature } = req.body;
-      
+      console.log({
+        digest,
+        encoder,
+        signature,
+      })
+
       const { userToken, signin } = await TokenUtils.createAuthToken(
         signature,
         digest,
@@ -41,6 +46,7 @@ export class AuthController {
       await app._sessionCache.addSession(userToken.token, userToken);
       return successful(signin, Responses.Ok);
     } catch (e) {
+      console.log('ERRO', e)
       if (e instanceof GeneralError) throw e;
 
       return error(e.error, e.statusCode);
@@ -59,9 +65,19 @@ export class AuthController {
 
   async generateSignCode(req: ICreateRecoverCodeRequest) {
     try {
-      const { address } = req.params;
-      const { origin } = req.headers;
+      console.log('[CODE]')
+      const { address } = req.body;
+      const { origin } = req.headers ?? {origin: 'no-agent'};
       const owner = await User.findOne({ where: { address } });
+
+      // console.log('[CODE]', owner, address, origin)
+
+      console.log({
+        owner,
+        type: RecoverCodeType.AUTH,
+        origin: origin ?? process.env.UI_URL,
+        validAt: addMinutes(new Date(), 5),
+      })
 
       const response = await new RecoverCodeService().create({
         owner,
@@ -72,6 +88,7 @@ export class AuthController {
 
       return successful(response, Responses.Ok);
     } catch (e) {
+      console.log(e)
       return error(e.error, e.statusCode);
     }
   }

@@ -17,8 +17,8 @@ export const signOutPath = '/sign-out';
 router.post('/sign-in', validateSignInPayload, handleResponse(signIn));
 
 router.post(
-  '/code/:address',
-  validateSignInCodeParams,
+  '/code',
+  // validateSignInCodeParams,
   handleResponse(generateSignCode),
 );
 
