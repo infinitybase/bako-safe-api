@@ -31,7 +31,7 @@ import {
   IUserService,
 } from './types';
 import { Not } from 'typeorm';
-import { Address } from 'fuels';
+import app from '@src/server/app';
 
 export class UserController {
   private userService: IUserService;
@@ -270,6 +270,7 @@ export class UserController {
       const { user } = req;
       const { id } = req.params;
       const { name } = req.body;
+      const { authorization: sessionId } = req.headers;
 
       if (user.id !== id) {
         throw new Unauthorized({
@@ -296,6 +297,8 @@ export class UserController {
       const response = await this.userService.update(id, {
         ...req.body,
       });
+
+      await app._sessionCache.updateSession(sessionId);
 
       return successful(response, Responses.Ok);
     } catch (e) {
