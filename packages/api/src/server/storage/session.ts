@@ -61,8 +61,6 @@ export class SessionStorage {
       default:
         break;
     }
-
-    console.log('[SESSIONS]', this.data.size);
   }
 
   public async addSession(sessionId: string, session: UserToken) {
