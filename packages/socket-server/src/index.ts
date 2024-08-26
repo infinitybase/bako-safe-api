@@ -6,7 +6,7 @@ import { txConfirm, txRequest } from '@modules/transactions'
 import { DatabaseClass } from '@utils/database'
 import { SocketEvents } from './types'
 
-const { SOCKET_PORT, SOCKET_TIMEOUT_DICONNECT, SOCKET_NAME } = process.env
+const { SOCKET_PORT, SOCKET_TIMEOUT_DICONNECT, SOCKET_NAME, API_ENVIRONMENT } = process.env
 
 const app = express()
 let database: DatabaseClass
@@ -19,9 +19,11 @@ const io = new socketIo.Server(server, {
 })
 
 // Health Check
-app.get('/health', ({ res }) =>
-    res.status(200).send({ status: 'ok', message: `Health check ${SOCKET_NAME} passed` }),
-);
+let healthcheckPath = 'health'
+if (API_ENVIRONMENT === 'staging') {
+	healthcheckPath = `stg/${healthcheckPath}`
+}
+app.get(`/${healthcheckPath}`, ({ res }) => res.status(200).send({ status: 'ok', message: `Health check ${SOCKET_NAME} passed` }))
 
 // Configuração do Socket.IO
 io.on(SocketEvents.CONNECT, async socket => {

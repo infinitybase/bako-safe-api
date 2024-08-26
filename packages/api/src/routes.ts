@@ -33,6 +33,13 @@ router.get('/ping', ({ res }) =>
 );
 
 // healthcheck route
-router.get('/healthcheck', ({ res }) => res.status(200).send({ status: 'ok' }));
+let healthcheckPath = 'healthcheck';
+if (process.env.API_ENVIRONMENT === 'staging') {
+  healthcheckPath = `stg/${healthcheckPath}`;
+}
+
+router.get(`/${healthcheckPath}`, ({ res }) =>
+  res.status(200).send({ status: 'ok' }),
+);
 
 export { router };

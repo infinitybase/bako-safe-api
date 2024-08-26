@@ -7,7 +7,8 @@ import { createGraphqlHttpHandler, createSubscriptionHandler, Database } from '@
 import { handleErrorMiddleware, tokenDecodeMiddleware } from "@/middlewares";
 
 const {
-  APP_NAME
+  APP_NAME,
+  API_ENVIRONMENT,
 } = process.env;
 
 export class GatewayServer {
@@ -25,6 +26,11 @@ export class GatewayServer {
   constructor(port: number | string) {
     this.port = Number(port);
     this.app = express();
+
+    if (API_ENVIRONMENT === 'staging') {
+      GatewayServer.ROUTES_PATHS.healthCheck =
+        `/stg${GatewayServer.ROUTES_PATHS.healthCheck}`;
+    }
   }
 
   start() {
