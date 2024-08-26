@@ -7,7 +7,7 @@ import { createGraphqlHttpHandler, createSubscriptionHandler, Database } from '@
 import { handleErrorMiddleware, tokenDecodeMiddleware } from "@/middlewares";
 
 const {
-  APP_NAME,
+  GATEWAY_NAME,
   API_ENVIRONMENT,
 } = process.env;
 
@@ -64,10 +64,6 @@ export class GatewayServer {
       limit: '50mb'
     }));
     this.app.use(cors());
-    this.app.use((req, res, next) => {
-      console.log(`[${APP_NAME}] ${req.method} ${req.url}`);
-      next();
-    })
   }
 
   private afterAllMiddlewares() {
@@ -94,7 +90,7 @@ export class GatewayServer {
     );
     this.app.get('/v1/ping', ({ res }) => res.status(200).send(
       {
-        message: `${APP_NAME} ${API_ENVIRONMENT} is running - ${new Date().toISOString()}`,
+        message: `${GATEWAY_NAME} ${API_ENVIRONMENT} is running - ${new Date().toISOString()}`,
       }
     ));
     this.app.get(GatewayServer.ROUTES_PATHS.healthCheck, ({ res }) =>
