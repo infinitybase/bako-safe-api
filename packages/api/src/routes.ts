@@ -34,14 +34,6 @@ router.get('/ping', ({ res }) =>
   res.send(`${new Date().toISOString()} ${API_NAME} ${API_ENVIRONMENT}`),
 );
 
-// healthcheck route
-let healthcheckPath = 'healthcheck';
-if (API_ENVIRONMENT === 'staging') {
-  healthcheckPath = `stg/${healthcheckPath}`;
-}
-
-router.get(`/${healthcheckPath}`, ({ res }) =>
-  res.status(200).send({ status: 'ok' }),
-);
+router.get('/healthcheck', ({ res }) => res.status(200).send({ status: 'ok' }));
 
 export { router };
