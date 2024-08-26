@@ -47,6 +47,7 @@ export class GatewayServer {
       console.log(
         `- GraphQL Subscriptions: http://localhost:${this.port}${GatewayServer.ROUTES_PATHS.graphqlSub}`
       );
+      console.log(`- Health Check: http://localhost:${this.port}${GatewayServer.ROUTES_PATHS.healthCheck}`);
     });
   }
 
