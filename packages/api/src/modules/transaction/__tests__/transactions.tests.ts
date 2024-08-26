@@ -4,7 +4,7 @@ import { Address, Provider, Wallet, bn, hash, ZeroBytes32 } from 'fuels';
 import { accounts } from '@src/mocks/accounts';
 import { networks } from '@src/mocks/networks';
 import { PredicateMock } from '@src/mocks/predicate';
-import { transaction, transactionMock } from '@src/mocks/transaction';
+import { transactionMock } from '@src/mocks/transaction';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
 import { generateWorkspacePayload } from '@src/utils/testUtils/Workspace';
 import { assetsMapBySymbol } from '@src/utils/assets';
@@ -208,13 +208,6 @@ describe('[TRANSACTION]', () => {
     await auth.axios.get('/transaction').then(({ data, status }) => {
       expect(status).toBe(200);
       expect(data).toHaveLength(0);
-    });
-
-    // by month
-    await auth.axios.get('/transaction?byMonth=true').then(({ data, status }) => {
-      expect(status).toBe(200);
-      expect(data).toHaveProperty('data');
-      expect(data.data).toBeInstanceOf(Array);
     });
   });
 

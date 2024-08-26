@@ -1,5 +1,4 @@
 import {
-  // BakoError,
   IWitnesses,
   TransactionProcessStatus,
   TransactionStatus,
@@ -37,14 +36,9 @@ import {
   ITransactionFilterParams,
   ITransactionResponse,
   ITransactionService,
-  ITransactionsGroupedByMonth,
   IUpdateTransactionPayload,
 } from './types';
-import {
-  formatFuelTransaction,
-  formatTransactionsResponse,
-  groupedTransactions,
-} from './utils';
+import { formatFuelTransaction, formatTransactionsResponse } from './utils';
 import { TransactionPagination, TransactionPaginationParams } from './pagination';
 
 export class TransactionService implements ITransactionService {
@@ -144,10 +138,7 @@ export class TransactionService implements ITransactionService {
   //todo: melhorar a valocidade de processamento dessa query
   //caso trocar inner por left atrapalha muito a performance
   async list(): Promise<
-    | IPagination<ITransactionResponse>
-    | ITransactionResponse[]
-    | IPagination<ITransactionsGroupedByMonth>
-    | ITransactionsGroupedByMonth
+    IPagination<ITransactionResponse> | ITransactionResponse[]
   > {
     const hasPagination = this._pagination?.page && this._pagination?.perPage;
     const queryBuilder = Transaction.createQueryBuilder('t')
@@ -296,9 +287,7 @@ export class TransactionService implements ITransactionService {
 
     const _transactions = formatTransactionsResponse(transactions);
 
-    return this._filter.byMonth
-      ? groupedTransactions(_transactions)
-      : _transactions;
+    return _transactions;
   }
 
   async listWithIncomings(): Promise<ITransactionResponse[]> {

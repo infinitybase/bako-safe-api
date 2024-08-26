@@ -95,7 +95,6 @@ export interface ITransactionFilterParams {
   endDate?: string;
   createdBy?: string;
   id?: string;
-  byMonth?: boolean;
   type?: TransactionType;
 }
 
@@ -104,11 +103,6 @@ export interface ITransactionsListParams {
   perPage?: string;
   offsetDb?: string;
   offsetFuel?: string;
-}
-
-export interface ITransactionsGroupedByMonth {
-  monthYear: string;
-  transactions: ITransactionResponse[];
 }
 
 export type ICloseTransactionBody = {
@@ -185,7 +179,6 @@ interface IListRequestSchema extends ValidatedRequestSchema {
     perPage: string;
     limit: number;
     id: string;
-    byMonth?: boolean;
     type: TransactionType;
   };
 }
@@ -197,7 +190,6 @@ interface IListWithIncomingsRequestSchema extends ValidatedRequestSchema {
     orderBy: OrderBy;
     sort: Sort;
     perPage?: string;
-    byMonth?: boolean;
     type: TransactionType;
     offsetDb?: string;
     offsetFuel?: string;
@@ -247,12 +239,7 @@ export interface ITransactionService {
     id: string,
     payload: IUpdateTransactionPayload,
   ) => Promise<ITransactionResponse>;
-  list: () => Promise<
-    | IPagination<ITransactionResponse>
-    | ITransactionResponse[]
-    | IPagination<ITransactionsGroupedByMonth>
-    | ITransactionsGroupedByMonth
-  >;
+  list: () => Promise<IPagination<ITransactionResponse> | ITransactionResponse[]>;
   listWithIncomings: () => Promise<ITransactionResponse[]>;
   findById: (id: string) => Promise<ITransactionResponse>;
   delete: (id: string) => Promise<boolean>;
