@@ -675,10 +675,25 @@ export class TransactionController {
   async transactionStatus({ params: { id } }: ISendTransactionRequest) {
     try {
       const result = await Transaction.createQueryBuilder('t')
-        .select(['t.status', 't.id'])
+        .select(['t.status', 't.id', 'p.provider'])
+        .leftJoin('t.predicate', 'p')
         .where('t.id = :id', { id })
         .getOne();
-      return successful(result, Responses.Ok);
+
+      if (result.status === TransactionStatus.PROCESS_ON_CHAIN) {
+        const provider = await Provider.create(result.predicate.provider);
+        const chainResult = await this.transactionService.verifyOnChain(
+          result,
+          provider,
+        );
+
+        return successful(
+          { status: chainResult.status, id: result.id },
+          Responses.Ok,
+        );
+      }
+
+      return successful({ status: result.status, id: result.id }, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }
