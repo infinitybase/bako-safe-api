@@ -2,14 +2,14 @@
     "taskDefinitionArn": "arn:aws:ecs:us-east-1:392170836981:task-definition/bako-safe-api-stg:9",
     "containerDefinitions": [
         {
-            "name": "bako-safe-api",
+            "name": "bako-safe-api-stg",
             "image": "392170836981.dkr.ecr.us-east-1.amazonaws.com/bako-safe-api-stg:v1",
             "cpu": 0,
             "portMappings": [
                 {
-                    "name": "port-3333",
-                    "containerPort": 3333,
-                    "hostPort": 3333,
+                    "name": "p-6333",
+                    "containerPort": 6333,
+                    "hostPort": 6333,
                     "protocol": "tcp",
                     "appProtocol": "http"
                 }
@@ -38,11 +38,11 @@
             "systemControls": []
         }
     ],
-    "family": "bako-safe-api",
+    "family": "bako-safe-api-stg",
     "taskRoleArn": "arn:aws:iam::392170836981:role/ecs-api-bsafe-s3-bako-safe-env",
     "executionRoleArn": "arn:aws:iam::392170836981:role/ecsTaskExecutionRole",
     "networkMode": "awsvpc",
-    "revision": 4,
+    "revision": 9,
     "volumes": [],
     "status": "ACTIVE",
     "requiresAttributes": [
@@ -85,24 +85,22 @@
     "requiresCompatibilities": [
         "FARGATE"
     ],
-    "cpu": "2048",
-    "memory": "4096",
+    "cpu": "512",
+    "memory": "1024",
     "runtimePlatform": {
         "cpuArchitecture": "ARM64",
         "operatingSystemFamily": "LINUX"
     },
-    "registeredAt": "2024-06-21T19:04:43.968Z",
+    "registeredAt": "2024-07-24T02:54:54.884Z",
     "registeredBy": "arn:aws:iam::392170836981:user/jota",
     "tags": [
         {
-            "key": "environment",
+            "key": "cluster",
             "value": "stg"
         },
         {
             "key": "nome",
-            "value": "bako-safe-api-task"
+            "value": "bako-safe-api-stg-task"
         }
     ]
 }
-
-
