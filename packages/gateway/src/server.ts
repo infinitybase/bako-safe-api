@@ -28,19 +28,6 @@ export class GatewayServer {
   constructor(port: number | string) {
     this.port = Number(port);
     this.app = express();
-
-    if (API_ENVIRONMENT === "staging") {
-      const {
-        healthCheck,
-        graphqlSub,
-        graphql,
-        ping,
-      } = GatewayServer.ROUTES_PATHS;
-      GatewayServer.ROUTES_PATHS.healthCheck = `/stg${healthCheck}`;
-      GatewayServer.ROUTES_PATHS.graphqlSub = `/stg${graphqlSub}`;
-      GatewayServer.ROUTES_PATHS.graphql = `/stg${graphql}`;
-      GatewayServer.ROUTES_PATHS.ping = `/stg${ping}`;
-    }
   }
 
   start() {

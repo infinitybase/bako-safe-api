@@ -10,8 +10,6 @@ import { isDevMode, TVLCronJob } from '@src/utils';
 import { handleErrors } from '@middlewares/index';
 import { QuoteStorage, SessionStorage } from './storage';
 
-const { API_ENVIRONMENT } = process.env;
-
 class App {
   private readonly app: Express.Application;
   private sessionCache: SessionStorage;
@@ -41,11 +39,7 @@ class App {
   }
 
   private initRoutes() {
-    if (API_ENVIRONMENT === 'staging') {
-      this.app.use('/stg', router);
-    } else {
-      this.app.use(router);
-    }
+    this.app.use(router);
   }
 
   private initErrorHandler() {
