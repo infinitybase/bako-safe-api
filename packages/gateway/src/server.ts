@@ -91,7 +91,7 @@ export class GatewayServer {
     );
     this.app.get(GatewayServer.ROUTES_PATHS.ping, ({ res }) =>
       res.status(200).send({
-        message: `${GATEWAY_NAME} ${API_ENVIRONMENT} is running - ${new Date().toISOString()}`,
+        message: `${GATEWAY_NAME} | ${API_ENVIRONMENT} is running - ${new Date().toISOString()}`,
       })
     );
     this.app.get(GatewayServer.ROUTES_PATHS.healthCheck, ({ res }) =>
