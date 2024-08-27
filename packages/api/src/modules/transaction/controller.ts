@@ -40,9 +40,7 @@ import {
   ITransactionService,
   TransactionHistory,
 } from './types';
-import { groupedMergedTransactions, mergeTransactionLists } from './utils';
-import { IPagination } from '@src/utils/pagination/types';
-import { ITransactionPagination } from './pagination';
+import { mergeTransactionLists } from './utils';
 
 export class TransactionController {
   private transactionService: ITransactionService;
@@ -484,7 +482,6 @@ export class TransactionController {
         predicateId,
         name,
         id,
-        byMonth,
         type,
       } = req.query;
       const { workspace, user } = req;
@@ -518,7 +515,6 @@ export class TransactionController {
           workspaceId: _wk,
           signer: hasSingle ? user.address : undefined,
           predicateId: predicateId ?? undefined,
-          byMonth,
           type,
         })
         .ordination({ orderBy, sort })
@@ -538,13 +534,17 @@ export class TransactionController {
         orderBy,
         sort,
         predicateId,
-        byMonth,
         type,
         perPage,
         offsetDb,
         offsetFuel,
+        id,
       } = req.query;
       const { workspace, user } = req;
+
+      if (id) {
+        return successful(await this.transactionService.findById(id), Responses.Ok);
+      }
 
       const singleWorkspace = await new WorkspaceService()
         .filter({
@@ -576,6 +576,7 @@ export class TransactionController {
           signer,
           predicateId: predicateId ?? undefined,
           type,
+          id,
         })
         .ordination(ordination)
         .transactionPaginate({
@@ -618,7 +619,7 @@ export class TransactionController {
         offsetFuel,
       });
 
-      const response = byMonth ? groupedMergedTransactions(mergedList) : mergedList;
+      const response = mergedList;
 
       return successful(response, Responses.Ok);
     } catch (e) {
@@ -674,10 +675,25 @@ export class TransactionController {
   async transactionStatus({ params: { id } }: ISendTransactionRequest) {
     try {
       const result = await Transaction.createQueryBuilder('t')
-        .select(['t.status', 't.id'])
+        .select(['t.status', 't.id', 'p.provider'])
+        .leftJoin('t.predicate', 'p')
         .where('t.id = :id', { id })
         .getOne();
-      return successful(result, Responses.Ok);
+
+      if (result.status === TransactionStatus.PROCESS_ON_CHAIN) {
+        const provider = await Provider.create(result.predicate.provider);
+        const chainResult = await this.transactionService.verifyOnChain(
+          result,
+          provider,
+        );
+
+        return successful(
+          { status: chainResult.status, id: result.id },
+          Responses.Ok,
+        );
+      }
+
+      return successful({ status: result.status, id: result.id }, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }

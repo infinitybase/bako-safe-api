@@ -3,7 +3,6 @@ import { IPagination } from '@src/utils/pagination';
 import {
   ICreateTransactionPayload,
   ITransactionResponse,
-  ITransactionsGroupedByMonth,
   ITransactionsListParams,
 } from './types';
 import { IDeposit } from '../predicate/types';
@@ -30,96 +29,6 @@ export const formatTransactionsResponse = (
       data: transactions.data.map(Transaction.formatTransactionResponse),
     };
   }
-};
-
-const convertToArray = (groupedData: { [key: string]: ITransactionResponse[] }) => {
-  return Object.keys(groupedData).map(monthYear => ({
-    monthYear,
-    transactions: groupedData[monthYear],
-  }));
-};
-
-const groupTransactions = (
-  transactions: ITransactionResponse[],
-): ITransactionsGroupedByMonth[] => {
-  const groupedData = transactions.reduce((acc, transaction) => {
-    const options = { year: 'numeric', month: 'long' } as const;
-    const monthYear = transaction.createdAt.toLocaleDateString('en-US', options);
-
-    if (!acc[monthYear]) {
-      acc[monthYear] = [];
-    }
-    acc[monthYear].push(transaction);
-    return acc;
-  }, {} as { [key: string]: ITransactionResponse[] });
-
-  const groupedArray = convertToArray(groupedData);
-
-  return groupedArray;
-};
-
-export const groupedTransactions = (
-  transactions: IPagination<ITransactionResponse> | ITransactionResponse[],
-): IPagination<ITransactionsGroupedByMonth> | ITransactionsGroupedByMonth => {
-  const isPaginated = !Array.isArray(transactions);
-  const transactionArray: ITransactionResponse[] = isPaginated
-    ? transactions.data
-    : transactions;
-
-  const groupedArray = groupTransactions(transactionArray);
-
-  if (isPaginated) {
-    return {
-      currentPage: transactions.currentPage,
-      totalPages: transactions.totalPages,
-      nextPage: transactions.nextPage,
-      prevPage: transactions.prevPage,
-      perPage: transactions.perPage,
-      total: transactions.total,
-      data: groupedArray,
-    };
-  }
-
-  // Caso a resposta não seja uma paginação, retornar com mesmo formato de uma.
-  return {
-    currentPage: 1,
-    totalPages: 1,
-    nextPage: null,
-    prevPage: null,
-    perPage: transactionArray.length,
-    total: transactionArray.length,
-    data: groupedArray,
-  };
-};
-
-export const groupedMergedTransactions = (
-  transactions:
-    | ITransactionPagination<ITransactionResponse>
-    | ITransactionResponse[],
-):
-  | ITransactionPagination<ITransactionsGroupedByMonth>
-  | ITransactionsGroupedByMonth => {
-  const isPaginated = !Array.isArray(transactions);
-  const transactionArray: ITransactionResponse[] = isPaginated
-    ? transactions.data
-    : transactions;
-
-  const groupedArray = groupTransactions(transactionArray);
-
-  if (isPaginated) {
-    return {
-      ...transactions,
-      data: groupedArray,
-    };
-  }
-
-  // Caso a resposta não seja uma paginação, retornar com mesmo formato de uma.
-  return {
-    perPage: transactionArray.length,
-    offsetDb: 0,
-    offsetFuel: 0,
-    data: groupedArray,
-  };
 };
 
 export const formatPayloadToCreateTransaction = (

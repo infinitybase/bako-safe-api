@@ -6,7 +6,7 @@ import { txConfirm, txRequest } from '@modules/transactions'
 import { DatabaseClass } from '@utils/database'
 import { SocketEvents } from './types'
 
-const { SOCKET_PORT, SOCKET_TIMEOUT_DICONNECT, SOCKET_NAME } = process.env
+const { SOCKET_PORT, SOCKET_TIMEOUT_DICONNECT, SOCKET_NAME, API_ENVIRONMENT } = process.env
 
 const app = express()
 let database: DatabaseClass
@@ -14,18 +14,15 @@ const server = http.createServer(app)
 const io = new socketIo.Server(server, {
 	connectTimeout: Number(SOCKET_TIMEOUT_DICONNECT), // 60 mins
 	cors: {
-		origin: '*'
-	}
+		origin: '*',
+	},
 })
 
 // Health Check
-app.get('/health', ({ res }) =>
-    res.status(200).send({ status: 'ok', message: `Health check ${SOCKET_NAME} passed` }),
-);
+app.get('/health', ({ res }) => res.status(200).send({ status: 'ok', message: `Health check ${SOCKET_NAME} passed` }))
 
 // Configuração do Socket.IO
 io.on(SocketEvents.CONNECT, async socket => {
-	
 	const { sessionId, username, request_id } = socket.handshake.auth
 	const requestId = request_id === undefined ? '' : request_id
 

@@ -1,5 +1,4 @@
 import {
-  // BakoError,
   IWitnesses,
   TransactionProcessStatus,
   TransactionStatus,
@@ -37,14 +36,9 @@ import {
   ITransactionFilterParams,
   ITransactionResponse,
   ITransactionService,
-  ITransactionsGroupedByMonth,
   IUpdateTransactionPayload,
 } from './types';
-import {
-  formatFuelTransaction,
-  formatTransactionsResponse,
-  groupedTransactions,
-} from './utils';
+import { formatFuelTransaction, formatTransactionsResponse } from './utils';
 import { TransactionPagination, TransactionPaginationParams } from './pagination';
 
 export class TransactionService implements ITransactionService {
@@ -93,6 +87,10 @@ export class TransactionService implements ITransactionService {
     id: string,
     payload?: IUpdateTransactionPayload,
   ): Promise<ITransactionResponse> {
+    if (payload.status && payload.resume) {
+      payload.resume = { ...payload.resume, status: payload.status };
+    }
+
     return await Transaction.update({ id }, payload)
       .then(async () => {
         return await this.findById(id);
@@ -140,10 +138,7 @@ export class TransactionService implements ITransactionService {
   //todo: melhorar a valocidade de processamento dessa query
   //caso trocar inner por left atrapalha muito a performance
   async list(): Promise<
-    | IPagination<ITransactionResponse>
-    | ITransactionResponse[]
-    | IPagination<ITransactionsGroupedByMonth>
-    | ITransactionsGroupedByMonth
+    IPagination<ITransactionResponse> | ITransactionResponse[]
   > {
     const hasPagination = this._pagination?.page && this._pagination?.perPage;
     const queryBuilder = Transaction.createQueryBuilder('t')
@@ -292,9 +287,7 @@ export class TransactionService implements ITransactionService {
 
     const _transactions = formatTransactionsResponse(transactions);
 
-    return this._filter.byMonth
-      ? groupedTransactions(_transactions)
-      : _transactions;
+    return _transactions;
   }
 
   async listWithIncomings(): Promise<ITransactionResponse[]> {
@@ -366,6 +359,11 @@ export class TransactionService implements ITransactionService {
     this._filter.type &&
       queryBuilder.andWhere('t.type = :type', {
         type: this._filter.type,
+      });
+
+    this._filter.id &&
+      queryBuilder.andWhere('t.id = :id', {
+        id: this._filter.id,
       });
 
     queryBuilder.orderBy(`t.${this._ordination.orderBy}`, this._ordination.sort);
@@ -517,25 +515,25 @@ export class TransactionService implements ITransactionService {
     await provider.estimatePredicates(tx);
     const encodedTransaction = hexlify(tx.toTransactionBytes());
 
-    //submit
-    return await provider.operations
-      .submit({ encodedTransaction })
-      .then(async () => {
-        await this.update(bsafe_txid, {
-          status: TransactionStatus.PROCESS_ON_CHAIN,
-        });
-      })
-      .catch(e => {
-        // const error = BakoError.parse(e);
-        this.update(bsafe_txid, {
-          status: TransactionStatus.FAILED,
-          resume: {
-            ...resume,
-            status: TransactionStatus.FAILED,
-            error: e.toJSON(),
-          },
-        });
+    try {
+      await provider.operations.submit({ encodedTransaction });
+      await this.update(bsafe_txid, {
+        status: TransactionStatus.PROCESS_ON_CHAIN,
+        resume,
       });
+    } catch (e) {
+      if (e?.message.includes('Hash is already known')) {
+        return;
+      }
+      await this.update(bsafe_txid, {
+        status: TransactionStatus.FAILED,
+        resume: {
+          ...resume,
+          status: TransactionStatus.FAILED,
+          error: e?.toObject(),
+        },
+      });
+    }
   }
 
   async verifyOnChain(api_transaction: Transaction, provider: Provider) {
