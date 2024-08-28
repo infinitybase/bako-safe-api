@@ -24,6 +24,7 @@ export class AuthService implements IAuthService {
           address: data.user.address,
           user_id: data.user.id,
           expired_at: data.expired_at,
+          first_login: data.user.first_login,
           workspace: {
             id: data.workspace.id,
             name: data.workspace.name,
@@ -111,6 +112,4 @@ export class AuthService implements IAuthService {
       console.log('[CLEAR_EXPIRED_TOKEN_ERROR]', e);
     }
   }
-
-
 }
