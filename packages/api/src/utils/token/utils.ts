@@ -88,10 +88,6 @@ export class TokenUtils {
   static async recoverToken(signature: string) {
     const token = await app._sessionCache.getSession(signature);
 
-    console.log('[recover]: ', JSON.stringify(token))
-    // console.log('[recover]: ', token.expired_at, new Date())
-
-
     if (!token) {
       throw new Unauthorized({
         type: ErrorTypes.Unauthorized,
@@ -100,10 +96,6 @@ export class TokenUtils {
       });
     }
 
-    console.log('[recover]: ', {
-      expire: token.expired_at, date: new Date(),
-      isPast: isPast(new Date(token.expired_at))
-    })
     if (isPast(new Date(token.expired_at))) {
       throw new Unauthorized({
         type: ErrorTypes.Unauthorized,
@@ -159,8 +151,6 @@ export class TokenUtils {
         encoder,
       });
   
-      // console.log('[createAuthToken]: ', address)
-  
       if (!address)
         throw new Unauthorized({
           type: ErrorTypes.Unauthorized,
@@ -170,7 +160,6 @@ export class TokenUtils {
   
       const user = await TokenUtils.checkUserExists(address);
   
-      // console.log('[createAuthToken]: ', user)
   
       await TokenUtils.invalidateRecoverCode(user, RecoverCodeType.AUTH);
   
