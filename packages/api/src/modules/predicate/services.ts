@@ -11,21 +11,11 @@ import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
 
 import {
-  IEndCursorPayload,
-  IGetTxEndCursorQueryProps,
   IPredicateFilterParams,
   IPredicatePayload,
   IPredicateService,
 } from './types';
 
-import { Address, Provider, bn, getTransactionsSummaries } from 'fuels';
-import axios, { AxiosResponse } from 'axios';
-import { formatPayloadToCreateTransaction } from '../transaction/utils';
-import { TransactionService } from '../transaction/services';
-
-// const FAUCET_ADDRESS = [
-//   '0xd205d74dc2a0ffd70458ef19f0fa81f05ac727e63bf671d344c590ab300e134f',
-// ];
 export class PredicateService implements IPredicateService {
   private _ordination: IOrdination<Predicate> = {
     orderBy: 'updatedAt',
