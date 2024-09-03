@@ -13,6 +13,8 @@ import vaultTemplate from '@modules/vaultTemplate/routes';
 import workspace from '@modules/workspace/routes';
 import apiToken from '@modules/apiToken/routes';
 
+const { API_ENVIRONMENT, API_NAME } = process.env;
+
 const router = Router();
 
 router.use('/auth', auth);
@@ -29,10 +31,9 @@ router.use('/api-token', apiToken);
 
 // ping route
 router.get('/ping', ({ res }) =>
-  res.send(`${new Date().toISOString()} ${process.env.API_NAME}`),
+  res.send(`${new Date().toISOString()} ${API_NAME} ${API_ENVIRONMENT}`),
 );
 
-// healthcheck route
 router.get('/healthcheck', ({ res }) => res.status(200).send({ status: 'ok' }));
 
 export { router };

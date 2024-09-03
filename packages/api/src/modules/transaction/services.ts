@@ -87,6 +87,10 @@ export class TransactionService implements ITransactionService {
     id: string,
     payload?: IUpdateTransactionPayload,
   ): Promise<ITransactionResponse> {
+    if (payload.status && payload.resume) {
+      payload.resume = { ...payload.resume, status: payload.status };
+    }
+
     return await Transaction.update({ id }, payload)
       .then(async () => {
         return await this.findById(id);
@@ -95,6 +99,37 @@ export class TransactionService implements ITransactionService {
         throw new Internal({
           type: ErrorTypes.Internal,
           title: 'Error on transaction update',
+          detail: e,
+        });
+      });
+  }
+
+  async findByHash(hash: string): Promise<ITransactionResponse> {
+    return await Transaction.findOne({
+      where: { hash },
+      relations: [
+        'predicate',
+        'predicate.members',
+        'predicate.workspace',
+        'predicate.version',
+        'createdBy',
+      ],
+    })
+      .then(transaction => {
+        if (!transaction) {
+          throw new NotFound({
+            type: ErrorTypes.NotFound,
+            title: 'Transaction not found',
+            detail: `No transaction was found for the provided hash: ${hash}.`,
+          });
+        }
+
+        return Transaction.formatTransactionResponse(transaction);
+      })
+      .catch(e => {
+        throw new Internal({
+          type: ErrorTypes.Internal,
+          title: 'Error on transaction findByHash',
           detail: e,
         });
       });
@@ -479,21 +514,18 @@ export class TransactionService implements ITransactionService {
   //instance vault
   //instance tx
   //add witnesses
-  async sendToChain(bsafe_txid: string) {
+  async sendToChain(hash: string) {
     const {
+      id,
       predicate,
       txData,
       status,
       resume,
-    } = await Transaction.createQueryBuilder('t')
-      .innerJoin('t.predicate', 'p') //predicate
-      .addSelect(['t.id', 't.tx_data', 't.resume', 't.status', 'p.provider'])
-      .where('t.id = :id', { id: bsafe_txid })
-      .getOne();
+    } = await this.findByHash(hash);
 
     this.checkInvalidConditions(status);
     if (status == TransactionStatus.PROCESS_ON_CHAIN) {
-      console.log('[JA_SUBMETIDO] - ', bsafe_txid);
+      console.log('[JA_SUBMETIDO] - ', hash);
       return;
     }
 
@@ -511,25 +543,25 @@ export class TransactionService implements ITransactionService {
     await provider.estimatePredicates(tx);
     const encodedTransaction = hexlify(tx.toTransactionBytes());
 
-    //submit
-    return await provider.operations
-      .submit({ encodedTransaction })
-      .then(async () => {
-        await this.update(bsafe_txid, {
-          status: TransactionStatus.PROCESS_ON_CHAIN,
-        });
-      })
-      .catch(e => {
-        // const error = BakoError.parse(e);
-        this.update(bsafe_txid, {
-          status: TransactionStatus.FAILED,
-          resume: {
-            ...resume,
-            status: TransactionStatus.FAILED,
-            error: e.toJSON(),
-          },
-        });
+    try {
+      await provider.operations.submit({ encodedTransaction });
+      await this.update(id, {
+        status: TransactionStatus.PROCESS_ON_CHAIN,
+        resume,
       });
+    } catch (e) {
+      if (e?.message.includes('Hash is already known')) {
+        return;
+      }
+      await this.update(id, {
+        status: TransactionStatus.FAILED,
+        resume: {
+          ...resume,
+          status: TransactionStatus.FAILED,
+          error: e?.toObject(),
+        },
+      });
+    }
   }
 
   async verifyOnChain(api_transaction: Transaction, provider: Provider) {

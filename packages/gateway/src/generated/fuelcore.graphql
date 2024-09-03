@@ -36,6 +36,8 @@ input BalanceFilterInput {
   owner: Address!
 }
 
+scalar BlobId
+
 type Block {
   consensus: Consensus!
   header: Header!
@@ -264,6 +266,7 @@ type FailureStatus {
   time: Tai64Timestamp!
   totalFee: U64!
   totalGas: U64!
+  transaction: Transaction!
   transactionId: TransactionId!
 }
 
@@ -287,6 +290,8 @@ type GasCosts {
   bal: U64!
   bhei: U64!
   bhsh: U64!
+  bldd: DependentCost
+  bsiz: DependentCost
   burn: U64!
   call: DependentCost!
   cb: U64!
@@ -303,6 +308,7 @@ type GasCosts {
   eck1: U64!
   ecr1: U64!
   ed19: U64!
+  ed19DependentCost: DependentCost!
   eq: U64!
   exp: U64!
   expi: U64!
@@ -932,12 +938,14 @@ type SuccessStatus {
   time: Tai64Timestamp!
   totalFee: U64!
   totalGas: U64!
+  transaction: Transaction!
   transactionId: TransactionId!
 }
 
 scalar Tai64Timestamp
 
 type Transaction {
+  blobId: BlobId
   bytecodeRoot: Bytes32
   bytecodeWitnessIndex: U16
   id: TransactionId!
@@ -945,6 +953,7 @@ type Transaction {
   inputContract: InputContract
   inputContracts: [ContractId!]
   inputs: [Input!]
+  isBlob: Boolean!
   isCreate: Boolean!
   isMint: Boolean!
   isScript: Boolean!
