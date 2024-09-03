@@ -34,7 +34,7 @@ export const validateSignerByIdPayload = validator.body(
       is: true,
       then: Joi.required(),
     }),
-    account: Joi.string().required(),
+    // account: Joi.string().required(),
     confirm: Joi.boolean().required(),
   }),
 );
