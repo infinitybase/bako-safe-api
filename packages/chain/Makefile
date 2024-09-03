@@ -1,8 +1,12 @@
 up:
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 	docker compose -p bako-safe_dev --env-file .env.chain up -d --build > /dev/null 2>&1
 =======
 	docker compose -p bako-safe_dev --env-file .env.chain up -d --build  > /dev/null 2>&1
+>>>>>>> Stashed changes
+=======
+	docker compose -p bako-safe_dev --env-file .env.chain up -d --build > /dev/null 2>&1
 >>>>>>> Stashed changes
 
 down:
