@@ -1,33 +1,47 @@
 import {
+  arrayify,
   getTransactionSummaryFromRequest,
+  hexlify,
   OperationName,
   Provider,
-  TransactionCreate,
+  Transaction,
+  TransactionType,
+  Witness,
 } from "fuels";
-import { DeployTransfer, Vault, ITransactionSummary } from "bakosafe";
+import {
+  DeployTransfer,
+  ITransactionSummary,
+  Vault,
+  UpgradeTransfer
+} from "bakosafe";
 
 import { AuthService } from "@/service/auth";
 
-type SubmitParams = {
+type Transfer = DeployTransfer | UpgradeTransfer;
+
+type SubmitParams<T extends TransactionType> = {
   userId: string;
   apiToken: string;
+  transaction: Transaction<T>;
 };
 
-type SetSummaryParams = {
-  transfer: DeployTransfer;
+type SetSummaryParams<T extends Transfer> = {
+  transfer: T;
   provider: Provider;
 };
 
 export class TransactionService {
-  private readonly transaction: TransactionCreate;
   private authService: AuthService;
 
-  constructor(transaction: TransactionCreate, authService: AuthService) {
+  constructor(authService: AuthService) {
     this.authService = authService;
-    this.transaction = transaction;
   }
 
-  async submit({ apiToken, userId }: SubmitParams) {
+  async submitDeploy({
+    apiToken,
+    userId,
+    transaction,
+  }: SubmitParams<TransactionType.Create>) {
     const {
       code,
       vaultId,
@@ -42,7 +56,7 @@ export class TransactionService {
     });
 
     const deployTransfer = await vault.BakoSafeDeployContract({
-      ...this.transaction,
+      ...transaction,
       name: tokenConfig.transactionTitle,
     });
 
@@ -58,28 +72,66 @@ export class TransactionService {
     };
   }
 
+  async submitUpgrade({
+    apiToken,
+    userId,
+    transaction,
+  }: SubmitParams<TransactionType.Upgrade>) {
+    const {
+      code,
+      vaultId,
+      userAddress,
+      tokenConfig,
+    } = await this.authService.getSession(apiToken, userId);
+
+    const vault = await Vault.create({
+      id: vaultId,
+      address: userAddress,
+      token: code.value,
+    });
+
+    const upgradeTransfer = await vault.BakoSafeUpgrade({
+      ...transaction,
+      name: tokenConfig.transactionTitle,
+    });
+
+    await this.setTransactionSummary({
+      transfer: upgradeTransfer,
+      provider: vault.provider,
+    });
+    await this.authService.closeSession(code.id);
+
+    return {
+      vault,
+      upgradeTransfer,
+    };
+  }
+
   private async setTransactionSummary({
     transfer,
     provider,
-  }: SetSummaryParams) {
+  }: SetSummaryParams<Transfer>) {
     const summaryFromRequest = await getTransactionSummaryFromRequest({
       transactionRequest: transfer.transactionRequest,
       provider,
     });
-    summaryFromRequest.operations = summaryFromRequest.operations.map(
-      (operation) => {
-        if (operation.name === OperationName.contractCreated) {
-          operation.assetsSent = [
-            {
-              assetId: provider.getBaseAssetId(),
-              amount: transfer.transactionRequest.maxFee,
-            },
-          ];
-        }
 
-        return operation;
-      }
-    );
+    if (transfer instanceof DeployTransfer) {
+      summaryFromRequest.operations = summaryFromRequest.operations.map(
+        (operation) => {
+          if (operation.name === OperationName.contractCreated) {
+            operation.assetsSent = [
+              {
+                assetId: provider.getBaseAssetId(),
+                amount: transfer.transactionRequest.maxFee,
+              },
+            ];
+          }
+
+          return operation;
+        }
+      );
+    }
 
     const transactionSummary: ITransactionSummary = {
       type: "cli",

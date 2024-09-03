@@ -40,6 +40,8 @@ RUN jq '.consensus_parameters = input' \
 # expose fuel node port
 EXPOSE ${FUEL_CORE_PORT}
 
+COPY ./chain_config.json .
+
 # copy over script and run
 COPY ./fuel_core.sh .
 CMD ["sh", "./fuel_core.sh"]
