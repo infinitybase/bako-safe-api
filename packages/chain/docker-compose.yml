@@ -9,7 +9,6 @@ services:
       FUEL_CORE_PORT: ${FUEL_CORE_PORT}
       NETWORK_NAME: '${PROJECT} local'
       MIN_GAS_PRICE: ${MIN_GAS_PRICE}
-      PRIVILEGED_ADDRESS: ${PRIVILEGED_ADDRESS}
       # This is the private key of the consensus.PoA.signing_key in the chainConfig.json
       # this key is responsible for validating the transactions
       CONSENSUS_KEY_SECRET: ${WALLET_SECRET}

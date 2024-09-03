@@ -1,9 +1,11 @@
 # IMPORTANT!
 # Make sure to check:
-# https://github.com/FuelLabs/chain-configuration/tree/master/upgradelog/ignition
+# https://github.com/FuelLabs/chain-configuration/tree/master/upgradelog/ignition-devnet
 # and apply the latest state_transition_function and consensus_parameter
 # when upgrading fuel-core
-FROM ghcr.io/fuellabs/fuel-core:v0.33.0
+# We should be supporting always the same fuel-core version as the fuels (ts-sdk)
+# https://github.com/FuelLabs/fuels-ts/blob/master/internal/fuel-core/VERSION
+FROM ghcr.io/fuellabs/fuel-core:v0.34.0
 
 # dependencies
 ENV DEBIAN_FRONTEND=noninteractive
@@ -22,9 +24,9 @@ RUN git clone \
 RUN cp -R /chain-configuration/local/* ./
 
 # Copy the testnet consensus parameters and state transition bytecode
-RUN cp /chain-configuration/upgradelog/ignition/consensus_parameters/5.json \
+RUN cp /chain-configuration/upgradelog/ignition-devnet/consensus_parameters/6.json \
     ./latest_consensus_parameters.json
-RUN cp /chain-configuration/upgradelog/ignition/state_transition_function/6.wasm \
+RUN cp /chain-configuration/upgradelog/ignition-devnet/state_transition_function/8.wasm \
     ./state_transition_bytecode.wasm
 
 # update local state_config with custom genesis coins config
@@ -39,8 +41,6 @@ RUN jq '.consensus_parameters = input' \
 
 # expose fuel node port
 EXPOSE ${FUEL_CORE_PORT}
-
-COPY ./chain_config.json .
 
 # copy over script and run
 COPY ./fuel_core.sh .
