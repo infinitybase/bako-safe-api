@@ -1,11 +1,6 @@
 import { Predicate, Transaction, TransactionType } from '@src/models';
 import { IPagination } from '@src/utils/pagination';
-import {
-  ICreateTransactionPayload,
-  ITransactionResponse,
-  ITransactionsListParams,
-} from './types';
-import { IDeposit } from '../predicate/types';
+import { ITransactionResponse, ITransactionsListParams } from './types';
 import { TransactionStatus } from 'bakosafe';
 import { TransactionResult } from 'fuels';
 import { formatAssets } from '@src/utils/formatAssets';
@@ -29,53 +24,6 @@ export const formatTransactionsResponse = (
       data: transactions.data.map(Transaction.formatTransactionResponse),
     };
   }
-};
-
-export const formatPayloadToCreateTransaction = (
-  deposit: IDeposit,
-  predicate: Predicate,
-  address: string,
-): ICreateTransactionPayload => {
-  const formattedAssets = deposit.operations
-    .map(operation =>
-      operation.assetsSent.map(asset => ({
-        to: operation.from.address,
-        assetId: asset.assetId,
-        //@ts-ignore
-        amount: asset.amount.format(),
-      })),
-    )
-    .flat();
-
-  const payload = {
-    txData: deposit.txData,
-    type: TransactionType.DEPOSIT,
-    name: `DEPOSIT_${deposit.id}`,
-    hash: deposit.id.slice(2),
-    sendTime: deposit.date,
-    gasUsed: deposit.gasUsed,
-    predicateId: predicate.id,
-    predicateAddress: address,
-    status: TransactionStatus.SUCCESS,
-    resume: {
-      hash: deposit.id,
-      status: TransactionStatus.SUCCESS,
-      witnesses: [],
-      requiredSigners: predicate.minSigners,
-      totalSigners: predicate.members.length,
-      predicate: {
-        id: predicate.id,
-        address: predicate.predicateAddress,
-      },
-      id: '',
-    },
-    assets: formattedAssets,
-    predicate,
-    createdBy: predicate.owner,
-    summary: null,
-  };
-
-  return payload;
 };
 
 export const formatFuelTransaction = (
@@ -112,7 +60,9 @@ export const formatFuelTransaction = (
       inputs,
     },
     status: TransactionStatus.SUCCESS,
-    summary: null,
+    summary: {
+      operations: tx.operations,
+    },
     gasUsed: tx.gasUsed.format(),
     resume: {
       hash: tx.id,
