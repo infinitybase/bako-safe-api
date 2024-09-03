@@ -36,6 +36,11 @@ input BalanceFilterInput {
   owner: Address!
 }
 
+type Blob {
+  bytecode: HexString!
+  id: BlobId!
+}
+
 scalar BlobId
 
 type Block {
@@ -707,6 +712,10 @@ type Query {
     owner: Address!
   ): Balance!
   balances(after: String, before: String, filter: BalanceFilterInput!, first: Int, last: Int): BalanceConnection!
+  blob(
+    """ID of the Blob"""
+    id: BlobId!
+  ): Blob
   block(
     """Height of the block"""
     height: U32

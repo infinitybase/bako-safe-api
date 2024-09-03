@@ -4,7 +4,11 @@ import {
   TransactionStatus,
   TransactionType,
 } from 'bakosafe';
-import { TransactionRequest, TransactionType as FuelTransactionType } from 'fuels';
+import {
+  TransactionRequest,
+  TransactionType as FuelTransactionType,
+  hexlify,
+} from 'fuels';
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 import { User } from '@models/User';
@@ -93,6 +97,30 @@ class Transaction extends Base {
     });
 
     return result;
+  }
+
+  getWitnesses() {
+    const transactionWithBytecode = [
+      FuelTransactionType.Create,
+      FuelTransactionType.Upgrade,
+      FuelTransactionType.Upload,
+    ];
+
+    const witnesses = this.resume.witnesses
+      .filter(w => !!w.signature)
+      .map(w => w.signature);
+
+    if (
+      transactionWithBytecode.includes(this.txData.type) &&
+      'bytecodeWitnessIndex' in this.txData
+    ) {
+      const { witnesses: txWitnesses, bytecodeWitnessIndex } = this.txData;
+      const bytecode = txWitnesses[bytecodeWitnessIndex];
+
+      witnesses.splice(bytecodeWitnessIndex, 0, hexlify(bytecode));
+    }
+
+    return witnesses;
   }
 }
 

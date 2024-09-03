@@ -66,6 +66,12 @@ export type BalanceFilterInput = {
   owner: Scalars['Address']['input'];
 };
 
+export type Blob = {
+  __typename?: 'Blob';
+  bytecode: Scalars['HexString']['output'];
+  id: Scalars['BlobId']['output'];
+};
+
 export type Block = {
   __typename?: 'Block';
   consensus: Consensus;
@@ -817,6 +823,7 @@ export type Query = {
   __typename?: 'Query';
   balance: Balance;
   balances: BalanceConnection;
+  blob?: Maybe<Blob>;
   block?: Maybe<Block>;
   blocks: BlockConnection;
   chain: ChainInfo;
@@ -874,6 +881,11 @@ export type QueryBalancesArgs = {
   filter: BalanceFilterInput;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryBlobArgs = {
+  id: Scalars['BlobId']['input'];
 };
 
 
@@ -1339,6 +1351,7 @@ export type ResolversTypes = ResolversObject<{
   BalanceConnection: ResolverTypeWrapper<BalanceConnection>;
   BalanceEdge: ResolverTypeWrapper<BalanceEdge>;
   BalanceFilterInput: BalanceFilterInput;
+  Blob: ResolverTypeWrapper<Blob>;
   BlobId: ResolverTypeWrapper<Scalars['BlobId']['output']>;
   Block: ResolverTypeWrapper<Omit<Block, 'consensus'> & { consensus: ResolversTypes['Consensus'] }>;
   BlockConnection: ResolverTypeWrapper<BlockConnection>;
@@ -1461,6 +1474,7 @@ export type ResolversParentTypes = ResolversObject<{
   BalanceConnection: BalanceConnection;
   BalanceEdge: BalanceEdge;
   BalanceFilterInput: BalanceFilterInput;
+  Blob: Blob;
   BlobId: Scalars['BlobId']['output'];
   Block: Omit<Block, 'consensus'> & { consensus: ResolversParentTypes['Consensus'] };
   BlockConnection: BlockConnection;
@@ -1587,6 +1601,12 @@ export type BalanceConnectionResolvers<ContextType = any, ParentType extends Res
 export type BalanceEdgeResolvers<ContextType = any, ParentType extends ResolversParentTypes['BalanceEdge'] = ResolversParentTypes['BalanceEdge']> = ResolversObject<{
   cursor?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   node?: Resolver<ResolversTypes['Balance'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+}>;
+
+export type BlobResolvers<ContextType = any, ParentType extends ResolversParentTypes['Blob'] = ResolversParentTypes['Blob']> = ResolversObject<{
+  bytecode?: Resolver<ResolversTypes['HexString'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['BlobId'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 
@@ -2163,6 +2183,7 @@ export type ProgramStateResolvers<ContextType = any, ParentType extends Resolver
 export type QueryResolvers<ContextType = any, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = ResolversObject<{
   balance?: Resolver<ResolversTypes['Balance'], ParentType, ContextType, RequireFields<QueryBalanceArgs, 'assetId' | 'owner'>>;
   balances?: Resolver<ResolversTypes['BalanceConnection'], ParentType, ContextType, RequireFields<QueryBalancesArgs, 'filter'>>;
+  blob?: Resolver<Maybe<ResolversTypes['Blob']>, ParentType, ContextType, RequireFields<QueryBlobArgs, 'id'>>;
   block?: Resolver<Maybe<ResolversTypes['Block']>, ParentType, ContextType, Partial<QueryBlockArgs>>;
   blocks?: Resolver<ResolversTypes['BlockConnection'], ParentType, ContextType, Partial<QueryBlocksArgs>>;
   chain?: Resolver<ResolversTypes['ChainInfo'], ParentType, ContextType>;
@@ -2402,6 +2423,7 @@ export type Resolvers<ContextType = any> = ResolversObject<{
   Balance?: BalanceResolvers<ContextType>;
   BalanceConnection?: BalanceConnectionResolvers<ContextType>;
   BalanceEdge?: BalanceEdgeResolvers<ContextType>;
+  Blob?: BlobResolvers<ContextType>;
   BlobId?: GraphQLScalarType;
   Block?: BlockResolvers<ContextType>;
   BlockConnection?: BlockConnectionResolvers<ContextType>;

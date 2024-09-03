@@ -1,12 +1,9 @@
 import {
-  arrayify,
   getTransactionSummaryFromRequest,
-  hexlify,
   OperationName,
   Provider,
   Transaction,
   TransactionType,
-  Witness,
 } from "fuels";
 import {
   DeployTransfer,

@@ -484,16 +484,13 @@ export class TransactionService implements ITransactionService {
   //instance tx
   //add witnesses
   async sendToChain(bsafe_txid: string) {
-    const {
-      predicate,
-      txData,
-      status,
-      resume,
-    } = await Transaction.createQueryBuilder('t')
+    const transaction = await Transaction.createQueryBuilder('t')
       .innerJoin('t.predicate', 'p') //predicate
       .addSelect(['t.id', 't.tx_data', 't.resume', 't.status', 'p.provider'])
       .where('t.id = :id', { id: bsafe_txid })
       .getOne();
+
+    const { predicate, txData, status, resume } = transaction;
 
     this.checkInvalidConditions(status);
     if (status == TransactionStatus.PROCESS_ON_CHAIN) {
@@ -504,12 +501,7 @@ export class TransactionService implements ITransactionService {
     const provider = await Provider.create(predicate.provider);
     const tx = transactionRequestify({
       ...txData,
-      witnesses: [
-        ...(txData.type === FuelTransactionType.Create // is required add on 1st position
-          ? [hexlify(txData.witnesses[txData.bytecodeWitnessIndex])]
-          : []),
-        ...resume.witnesses.filter(w => !!w.signature).map(w => w.signature),
-      ],
+      witnesses: transaction.getWitnesses(),
     });
 
     await provider.estimatePredicates(tx);
