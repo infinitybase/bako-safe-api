@@ -1,7 +1,7 @@
 import {
-  TransactionStatus,
   ITransactionResume,
   ITransactionSummary,
+  TransactionStatus,
   TransactionType,
 } from 'bakosafe';
 import { TransactionRequest, TransactionType as FuelTransactionType } from 'fuels';

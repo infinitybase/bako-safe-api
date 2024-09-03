@@ -112,8 +112,7 @@ export type ICloseTransactionBody = {
 };
 
 export interface ISignByIdPayload {
-  signer: string;
-  account: string;
+  signature: string;
   confirm: string;
 }
 
@@ -139,12 +138,12 @@ interface ICloseTransactionRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Params]: { id: string };
 }
 interface ISendTransactionRequestSchema extends ValidatedRequestSchema {
-  [ContainerTypes.Params]: { id: string };
+  [ContainerTypes.Params]: { hash: string };
 }
 
 interface ISignByIdRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Body]: ISignByIdPayload;
-  [ContainerTypes.Params]: { id: string };
+  [ContainerTypes.Params]: { hash: string };
 }
 
 interface IFindTransactionByIdRequestSchema extends ValidatedRequestSchema {
@@ -242,6 +241,7 @@ export interface ITransactionService {
   list: () => Promise<IPagination<ITransactionResponse> | ITransactionResponse[]>;
   listWithIncomings: () => Promise<ITransactionResponse[]>;
   findById: (id: string) => Promise<ITransactionResponse>;
+  findByHash: (hash: string) => Promise<ITransactionResponse>;
   delete: (id: string) => Promise<boolean>;
   fetchFuelTransactions: (
     predicates: Predicate[],

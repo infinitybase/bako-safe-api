@@ -366,21 +366,23 @@ export class TransactionController {
   }
 
   async signByID({
-    body: { account, signer, confirm },
-    params: { id },
-    user,
+    body: { signature, confirm },
+    params: { hash: txHash },
+    user: {address: account, id: userId},
   }: ISignByIdRequest) {
     try {
-      const transaction = await this.transactionService.findById(id);
+      const transaction = await Transaction.findOne({
+        where: { hash: txHash.slice(2) }
+      });
       const { resume, predicate, name, id: transactionId, hash } = transaction;
       const _resume = resume;
 
       const witness = resume.witnesses.find(w => w.account === account);
 
-      if (signer && confirm === 'true') {
+      if (signature && confirm === 'true') {
         const acc_signed =
-          Signer.recoverAddress(hashMessage(hash), signer).toString() ==
-          user.address;
+          Signer.recoverAddress(hashMessage(hash), signature).toString() ==
+          account;
         if (!acc_signed) {
           throw new NotFound({
             type: ErrorTypes.NotFound,
@@ -404,7 +406,7 @@ export class TransactionController {
           witness.account === account
             ? {
                 ...witness,
-                signature: signer,
+                signature,
                 status: confirm ? WitnessStatus.DONE : WitnessStatus.REJECTED,
                 updatedAt: generateWitnessesUpdatedAt(),
               }
@@ -416,7 +418,7 @@ export class TransactionController {
           _resume.witnesses,
         );
 
-        const result = await this.transactionService.update(id, {
+        const result = await this.transactionService.update(transactionId, {
           status: statusField,
           resume: {
             ..._resume,
@@ -425,7 +427,7 @@ export class TransactionController {
         });
 
         if (result.status === TransactionStatus.PENDING_SENDER) {
-          await this.transactionService.sendToChain(id);
+          await this.transactionService.sendToChain(transactionId);
         }
 
         const notificationSummary = {
@@ -439,7 +441,7 @@ export class TransactionController {
         // NOTIFY MEMBERS ON SIGNED TRANSACTIONS
         if (confirm) {
           const membersWithoutLoggedUser = predicate.members.filter(
-            member => member.id !== user.id,
+            member => member.id !== userId,
           );
 
           for await (const member of membersWithoutLoggedUser) {
@@ -644,18 +646,20 @@ export class TransactionController {
     }
   }
 
-  async send({ params: { id } }: ISendTransactionRequest) {
+  async send(params: ISendTransactionRequest) {
+    const { params: { hash } } = params;
     try {
-      await this.transactionService.sendToChain(id); // not wait for this
+      await this.transactionService.sendToChain(hash); // not wait for this
       return successful(true, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }
   }
 
-  async verifyOnChain({ params: { id } }: ISendTransactionRequest) {
+  async verifyOnChain(params: ISendTransactionRequest) {
+    const { params: {hash} } = params;
     try {
-      const api_transaction = await this.transactionService.findById(id);
+      const api_transaction = await this.transactionService.findByHash(hash);
       const { predicate, status } = api_transaction;
       const provider = await Provider.create(predicate.provider);
 
@@ -672,13 +676,25 @@ export class TransactionController {
     }
   }
 
-  async transactionStatus({ params: { id } }: ISendTransactionRequest) {
+  async transactionStatus(params: ISendTransactionRequest) {
+    const { params: {hash} } = params;
     try {
-      const result = await Transaction.createQueryBuilder('t')
-        .select(['t.status', 't.id'])
-        .where('t.id = :id', { id })
-        .getOne();
-      return successful(result, Responses.Ok);
+      const result = await this.transactionService.findByHash(hash);
+
+      if (result.status === TransactionStatus.PROCESS_ON_CHAIN) {
+        const provider = await Provider.create(result.predicate.provider);
+        const chainResult = await this.transactionService.verifyOnChain(
+          result,
+          provider,
+        );
+
+        return successful(
+          { status: chainResult.status, id: result.id },
+          Responses.Ok,
+        );
+      }
+
+      return successful({ status: result.status, id: result.id }, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }
