@@ -88,10 +88,6 @@ export class TokenUtils {
   static async recoverToken(signature: string) {
     const token = await app._sessionCache.getSession(signature);
 
-    // console.log('[recover]: ', JSON.stringify(token))
-    // console.log('[recover]: ', token.expired_at, new Date())
-
-
     if (!token) {
       throw new Unauthorized({
         type: ErrorTypes.Unauthorized,
@@ -155,8 +151,6 @@ export class TokenUtils {
         encoder,
       });
   
-      // console.log('[createAuthToken]: ', address)
-  
       if (!address)
         throw new Unauthorized({
           type: ErrorTypes.Unauthorized,
@@ -166,7 +160,6 @@ export class TokenUtils {
   
       const user = await TokenUtils.checkUserExists(address);
   
-      // console.log('[createAuthToken]: ', user)
   
       await TokenUtils.invalidateRecoverCode(user, RecoverCodeType.AUTH);
   
@@ -209,34 +202,35 @@ export class TokenUtils {
   }
 
   static async renewToken(token: UserToken) {
-    const expirationDate = token.expired_at.toISOString() ?? new Date().toISOString();
-    const now = new Date();
-
-    const minutesToExpiration = differenceInMinutes(
-      parseISO(expirationDate),
-      now,
-    );
-
-    // console.log('[RENEW_TOKEN]', {
-    //   minutesToExpiration,
-    //   now,
-    //   token: token.token,
-    //   exp: token.expired_at ?? 'inválid value'
-    // })
-
-    if (minutesToExpiration < Number(MINUTES_TO_RENEW)) {
-      await UserToken.update(
-        { id: token.id },
-        { expired_at: addMinutes(new Date(), Number(RENEWAL_EXPIRES_IN)) },
+    try{
+      const expirationDate = token.expired_at ? new Date(token.expired_at) : new Date() ;
+      const now = new Date();
+      console.log('[RENEW TOKEN INFO]: ', {
+        expirationDate, now, creation: token.createdAt
+      })
+  
+      const minutesToExpiration = differenceInMinutes(
+        expirationDate,
+        now,
       );
-
-      const renewedToken = await this.getTokenBySignature(token.token);
-      await app._sessionCache.addSession(token.token, renewedToken);
-
-      return renewedToken;
+  
+      if (minutesToExpiration < Number(MINUTES_TO_RENEW)) {
+        await UserToken.update(
+          { id: token.id },
+          { expired_at: addMinutes(new Date(), Number(RENEWAL_EXPIRES_IN)) },
+        );
+  
+        const renewedToken = await this.getTokenBySignature(token.token);
+        await app._sessionCache.addSession(token.token, renewedToken);
+  
+        return renewedToken;
+      }
+  
+      return token;
+    }catch(e){
+      console.log('[RENEW TOKEN ERROR]: DATA FORMAT', e)
+     return token;
     }
-
-    return token;
   }
 
   static async revokeToken(user: User) {

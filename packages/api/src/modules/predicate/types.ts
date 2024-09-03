@@ -6,7 +6,6 @@ import { IDefaultOrdination, IOrdination } from '@src/utils/ordination';
 import { IPagination, PaginationParams } from '@src/utils/pagination';
 
 import { Predicate, User } from '@models/index';
-import { Operation, TransactionRequest } from 'fuels';
 
 export enum OrderBy {
   name = 'name',
@@ -35,14 +34,6 @@ export interface IPredicatePayload {
 export interface IPredicateMemberPayload {
   user_id: string;
   predicate_id: string;
-}
-
-export interface IDeposit {
-  date: Date;
-  id: string;
-  operations: Operation[];
-  gasUsed: string;
-  txData: TransactionRequest;
 }
 
 export interface IPredicateFilterParams {

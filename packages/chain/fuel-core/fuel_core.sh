@@ -1,12 +1,6 @@
 #!/bin/bash
 
-
-
 # TODO change to --poa-interval-period 1sec \
-# TODO check if its needed --consensus-key ${CONSENSUS_KEY_SECRET} \
-
-
-
 
 # Start the Fuel Core node
 /root/fuel-core run \
@@ -19,7 +13,4 @@
     --debug \
     --min-gas-price ${MIN_GAS_PRICE} \
     --snapshot ./ \
-    --consensus-key ${CONSENSUS_KEY_SECRET} \
-    --graphql-max-complexity 10000000 \
-    --graphql-max-recursive-depth 72
-
+    --consensus-key ${CONSENSUS_KEY_SECRET}
