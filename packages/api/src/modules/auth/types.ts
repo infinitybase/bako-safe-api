@@ -3,7 +3,7 @@ import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 import { IPermissions, Workspace } from '@src/models/Workspace';
 
 import UserToken, { Encoder } from '@models/UserToken';
-import { User } from '@models/index';
+import { Predicate, User } from '@models/index';
 
 import { AuthValidatedRequest, UnloggedRequest } from '@middlewares/auth/types';
 
@@ -72,6 +72,9 @@ export interface ISignInResponse {
   expired_at: Date;
   avatar: string;
   user_id: string;
+  first_login: boolean;
+  first_vault?: Predicate;
+  address: string;
   workspace: {
     id: string;
     name: string;

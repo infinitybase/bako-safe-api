@@ -12,37 +12,47 @@ import {
   ISignInResponse,
 } from './types';
 import { LessThanOrEqual } from 'typeorm';
+import { PredicateService } from '../predicate/services';
 
 export class AuthService implements IAuthService {
   async signIn(payload: ICreateUserTokenPayload): Promise<ISignInResponse> {
-    return UserToken.create(payload)
-      .save()
-      .then(data => {
-        return {
-          accessToken: data.token,
-          avatar: data.user.avatar,
-          address: data.user.address,
-          user_id: data.user.id,
-          expired_at: data.expired_at,
-          workspace: {
-            id: data.workspace.id,
-            name: data.workspace.name,
-            avatar: data.workspace.avatar,
-            single: data.workspace.single,
-            permissions: data.workspace.permissions,
-          },
-          ...(data.user.type === 'WEB_AUTHN'
-            ? { webAuthn: data.user.webauthn }
-            : {}),
-        };
-      })
-      .catch(e => {
-        throw new Internal({
-          type: ErrorTypes.Internal,
-          title: 'Error on token creation',
-          detail: e,
-        });
+    try {
+      const data = await UserToken.create(payload).save();
+
+      let first_vault = undefined;
+
+      if (data.user.first_login) {
+        const predicateService = new PredicateService();
+        const firstVault = await predicateService
+          .filter({ owner: data.user.id })
+          .list();
+        first_vault = firstVault[0] || {};
+      }
+
+      return {
+        accessToken: data.token,
+        avatar: data.user.avatar,
+        user_id: data.user.id,
+        expired_at: data.expired_at,
+        address: data.user.address,
+        workspace: {
+          id: data.workspace.id,
+          name: data.workspace.name,
+          avatar: data.workspace.avatar,
+          single: data.workspace.single,
+          permissions: data.workspace.permissions,
+        },
+        first_login: data.user.first_login,
+        first_vault,
+        ...(data.user.type === 'WEB_AUTHN' ? { webAuthn: data.user.webauthn } : {}),
+      };
+    } catch (e) {
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on token creation',
+        detail: e,
       });
+    }
   }
 
   async signOut(user: User): Promise<void> {
@@ -111,6 +121,4 @@ export class AuthService implements IAuthService {
       console.log('[CLEAR_EXPIRED_TOKEN_ERROR]', e);
     }
   }
-
-
 }
