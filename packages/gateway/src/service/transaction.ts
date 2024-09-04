@@ -9,12 +9,13 @@ import {
   DeployTransfer,
   ITransactionSummary,
   Vault,
-  UpgradeTransfer
+  UpgradeTransfer,
+  UploadTransfer,
 } from "bakosafe";
 
 import { AuthService } from "@/service/auth";
 
-type Transfer = DeployTransfer | UpgradeTransfer;
+type Transfer = DeployTransfer | UpgradeTransfer | UploadTransfer;
 
 type SubmitParams<T extends TransactionType> = {
   userId: string;
@@ -104,16 +105,55 @@ export class TransactionService {
     };
   }
 
+  async submitUpload({
+    apiToken,
+    userId,
+    transaction,
+  }: SubmitParams<TransactionType.Upload>) {
+    const {
+      code,
+      vaultId,
+      userAddress,
+      tokenConfig,
+    } = await this.authService.getSession(apiToken, userId);
+
+    const vault = await Vault.create({
+      id: vaultId,
+      address: userAddress,
+      token: code.value,
+    });
+
+    const uploadTransfer = await vault.BakoSafeUpload({
+      ...transaction,
+      name: `${transaction.subsectionIndex + 1}/${transaction.subsectionsNumber} ${tokenConfig.transactionTitle ?? 'Upload Transaction'} `,
+    });
+
+    await this.setTransactionSummary({
+      transfer: uploadTransfer,
+      provider: vault.provider,
+    });
+    await this.authService.closeSession(code.id);
+
+    return {
+      vault,
+      uploadTransfer,
+    };
+  }
+
   private async setTransactionSummary({
     transfer,
     provider,
   }: SetSummaryParams<Transfer>) {
-    const summaryFromRequest = await getTransactionSummaryFromRequest({
-      transactionRequest: transfer.transactionRequest,
-      provider,
-    });
+    const transactionSummary: ITransactionSummary = {
+      type: "cli",
+      operations: [],
+    };
 
     if (transfer instanceof DeployTransfer) {
+      const summaryFromRequest = await getTransactionSummaryFromRequest({
+        transactionRequest: transfer.transactionRequest,
+        provider,
+      });
       summaryFromRequest.operations = summaryFromRequest.operations.map(
         (operation) => {
           if (operation.name === OperationName.contractCreated) {
@@ -128,12 +168,9 @@ export class TransactionService {
           return operation;
         }
       );
-    }
 
-    const transactionSummary: ITransactionSummary = {
-      type: "cli",
-      operations: summaryFromRequest.operations,
-    };
+      transactionSummary.operations = summaryFromRequest.operations;
+    }
 
     const query = `
 				UPDATE transactions

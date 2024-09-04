@@ -586,31 +586,31 @@ export class TransactionController {
         })
         .listWithIncomings();
 
-      let fuelTxs = [];
+      const fuelTxs = [];
 
-      if (
-        _wk.length > 0 &&
-        (!_status ||
-          _status?.some(status => status === TransactionStatus.SUCCESS)) &&
-        (!type || type === TransactionType.DEPOSIT)
-      ) {
-        const predicates = await this.predicateService
-          .filter({
-            workspace: _wk,
-            signer,
-            ids: predicateId,
-          })
-          .list()
-          .then((data: Predicate[]) => data);
-
-        fuelTxs = await this.transactionService
-          .transactionPaginate({
-            perPage,
-            offsetDb: offsetDb,
-            offsetFuel: offsetFuel,
-          })
-          .fetchFuelTransactions(predicates);
-      }
+      // if (
+      //   _wk.length > 0 &&
+      //   (!_status ||
+      //     _status?.some(status => status === TransactionStatus.SUCCESS)) &&
+      //   (!type || type === TransactionType.DEPOSIT)
+      // ) {
+      //   const predicates = await this.predicateService
+      //     .filter({
+      //       workspace: _wk,
+      //       signer,
+      //       ids: predicateId,
+      //     })
+      //     .list()
+      //     .then((data: Predicate[]) => data);
+      //
+      //   fuelTxs = await this.transactionService
+      //     .transactionPaginate({
+      //       perPage,
+      //       offsetDb: offsetDb,
+      //       offsetFuel: offsetFuel,
+      //     })
+      //     .fetchFuelTransactions(predicates);
+      // }
 
       const mergedList = mergeTransactionLists(dbTxs, fuelTxs, {
         ordination,

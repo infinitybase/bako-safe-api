@@ -1,4 +1,10 @@
-import { TransactionCreate, TransactionType, ZeroBytes32, TransactionUpgrade } from "fuels";
+import {
+  TransactionCreate,
+  TransactionType,
+  ZeroBytes32,
+  TransactionUpgrade,
+  TransactionUpload,
+} from "fuels";
 import { TAI64 } from "tai64";
 
 import { SuccessStatus } from "@/generated";
@@ -36,6 +42,16 @@ export const submitAndAwait = {
         });
         vault = submitResponse.vault;
         transactionId = submitResponse.upgradeTransfer.getHashTxId();
+      }
+
+      if (transaction.type === TransactionType.Upload) {
+        const submitResponse = await transactionService.submitUpload({
+          userId,
+          apiToken,
+          transaction: <TransactionUpload>transaction
+        });
+        vault = submitResponse.vault;
+        transactionId = submitResponse.uploadTransfer.getHashTxId();
       }
 
       console.log("[SUBSCRIPTION] Transaction sent to Bako", {

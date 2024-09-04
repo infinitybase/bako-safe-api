@@ -2,6 +2,7 @@ import {
   TransactionCreate,
   TransactionType,
   TransactionUpgrade,
+  TransactionUpload,
 } from "fuels";
 import { delegateToSchema } from "@graphql-tools/delegate";
 import { OperationTypeNode } from "graphql/language";
@@ -30,6 +31,17 @@ export const submit: MutationResolvers["submit"] = async (
     });
     return {
       id: `0x${upgradeTransfer.getHashTxId()}`,
+    };
+  }
+
+  if (transaction.type === TransactionType.Upload) {
+    const { uploadTransfer } = await transactionService.submitUpload({
+      userId,
+      apiToken,
+      transaction: <TransactionUpload>transaction,
+    });
+    return {
+      id: `0x${uploadTransfer.getHashTxId()}`,
     };
   }
 
