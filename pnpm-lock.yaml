@@ -224,7 +224,7 @@ importers:
         version: 10.0.5(graphql@16.9.0)
       bakosafe:
         specifier: 0.0.70
-        version: 0.0.70(fuels@0.94.3)(ts-node@10.9.2)(typescript@5.4.5)
+        version: 0.0.70(fuels@0.94.0)(ts-node@10.9.2)(typescript@5.4.5)
       copyfiles:
         specifier: 2.4.1
         version: 2.4.1
@@ -238,8 +238,8 @@ importers:
         specifier: 4.17.1
         version: 4.17.1
       fuels:
-        specifier: 0.94.3
-        version: 0.94.3
+        specifier: 0.94.0
+        version: 0.94.0
       graphql:
         specifier: ^16.9.0
         version: 16.9.0
@@ -255,9 +255,6 @@ importers:
       pg:
         specifier: ^8.12.0
         version: 8.12.0
-      ramda:
-        specifier: ^0.30.1
-        version: 0.30.1
       tai64:
         specifier: ^1.0.0
         version: 1.0.0
@@ -286,9 +283,6 @@ importers:
       '@types/pg':
         specifier: ^8.11.6
         version: 8.11.6
-      '@types/ramda':
-        specifier: ^0.30.2
-        version: 0.30.2
       graphql-import-node:
         specifier: ^0.0.5
         version: 0.0.5(graphql@16.9.0)
@@ -2030,7 +2024,7 @@ packages:
     dependencies:
       '@fuel-ts/crypto': 0.94.0
       '@fuel-ts/errors': 0.94.0
-      '@fuel-ts/hasher': 0.94.0
+      '@fuel-ts/hasher': 0.94.3
       '@fuel-ts/interfaces': 0.94.0
       '@fuel-ts/math': 0.94.0
       '@fuel-ts/utils': 0.94.0
@@ -2056,7 +2050,7 @@ packages:
     hasBin: true
     dependencies:
       '@fuel-ts/errors': 0.94.0
-      '@fuel-ts/interfaces': 0.94.0
+      '@fuel-ts/interfaces': 0.94.3
       '@fuel-ts/utils': 0.94.0
       '@fuel-ts/versions': 0.94.0
       commander: 12.1.0
@@ -2147,7 +2141,7 @@ packages:
       '@fuel-ts/crypto': 0.94.0
       '@fuel-ts/errors': 0.94.0
       '@fuel-ts/interfaces': 0.94.0
-      '@fuel-ts/utils': 0.94.0
+      '@fuel-ts/utils': 0.94.3
       '@noble/hashes': 1.4.0
       bech32: 2.0.0
     dev: false
@@ -2173,8 +2167,8 @@ packages:
       '@fuel-ts/crypto': 0.94.0
       '@fuel-ts/errors': 0.94.0
       '@fuel-ts/hasher': 0.94.0
-      '@fuel-ts/interfaces': 0.94.0
-      '@fuel-ts/math': 0.94.0
+      '@fuel-ts/interfaces': 0.94.3
+      '@fuel-ts/math': 0.94.3
       '@fuel-ts/merkle': 0.94.0
       '@fuel-ts/program': 0.94.0
       '@fuel-ts/transactions': 0.94.0
@@ -2217,7 +2211,7 @@ packages:
       '@fuel-ts/errors': 0.94.0
       '@fuel-ts/interfaces': 0.94.0
       '@fuel-ts/math': 0.94.0
-      '@fuel-ts/utils': 0.94.0
+      '@fuel-ts/utils': 0.94.3
       '@noble/hashes': 1.4.0
     dev: false
 
@@ -2251,7 +2245,7 @@ packages:
     engines: {node: ^18.20.3 || ^20.0.0 || ^22.0.0}
     dependencies:
       '@fuel-ts/crypto': 0.94.0
-      '@fuel-ts/interfaces': 0.94.0
+      '@fuel-ts/interfaces': 0.94.3
       '@fuel-ts/utils': 0.94.0
       '@noble/hashes': 1.4.0
     dev: false
@@ -2298,7 +2292,7 @@ packages:
     resolution: {integrity: sha512-rmCx15cutbFJi4L9ecvFQSI/eRb81GbeGtbeZNrwucmVjkKvJ2/3czNuaVE9whG0Ay0cni19EbqujldhpiLpEQ==}
     engines: {node: ^18.20.3 || ^20.0.0 || ^22.0.0}
     dependencies:
-      '@fuel-ts/hasher': 0.94.0
+      '@fuel-ts/hasher': 0.94.3
       '@fuel-ts/math': 0.94.0
     dev: false
 
@@ -2391,8 +2385,8 @@ packages:
       '@fuel-ts/abi-coder': 0.94.0
       '@fuel-ts/address': 0.94.0
       '@fuel-ts/errors': 0.94.0
-      '@fuel-ts/hasher': 0.94.0
-      '@fuel-ts/interfaces': 0.94.0
+      '@fuel-ts/hasher': 0.94.3
+      '@fuel-ts/interfaces': 0.94.3
       '@fuel-ts/math': 0.94.0
       '@fuel-ts/utils': 0.94.0
     dev: false
@@ -4084,12 +4078,6 @@ packages:
 
   /@types/qs@6.9.15:
     resolution: {integrity: sha512-uXHQKES6DQKKCLh441Xv/dwxOq1TVS3JPUMlEqoEglvlhR6Mxnlew/Xq/LRVHpLyk7iK3zODe1qYHIMltO7XGg==}
-    dev: true
-
-  /@types/ramda@0.30.2:
-    resolution: {integrity: sha512-PyzHvjCalm2BRYjAU6nIB3TprYwMNOUY/7P/N8bSzp9W/yM2YrtGtAnnVtaCNSeOZ8DzKyFDvaqQs7LnWwwmBA==}
-    dependencies:
-      types-ramda: 0.30.1
     dev: true
 
   /@types/range-parser@1.2.7:
@@ -6805,7 +6793,7 @@ packages:
       lodash.camelcase: 4.3.0
       portfinder: 1.0.32
       toml: 3.0.0
-      uglify-js: 3.18.0
+      uglify-js: 3.19.3
       yup: 1.4.0
     transitivePeerDependencies:
       - encoding
@@ -7253,7 +7241,7 @@ packages:
       source-map: 0.6.1
       wordwrap: 1.0.0
     optionalDependencies:
-      uglify-js: 3.18.0
+      uglify-js: 3.19.3
     dev: false
 
   /hard-rejection@2.1.0:
@@ -11149,10 +11137,6 @@ packages:
       yn: 3.1.1
     dev: true
 
-  /ts-toolbelt@9.6.0:
-    resolution: {integrity: sha512-nsZd8ZeNUzukXPlJmTBwUAuABDe/9qtVDelJeT/qW0ow3ZS3BsQJtNkan1802aM9Uf68/Y8ljw86Hu0h5IUW3w==}
-    dev: true
-
   /tsconfig-paths@3.15.0:
     resolution: {integrity: sha512-2Ac2RgzDe/cn48GvOe3M+o82pEFewD3UPbyoUHHdKasHwJKjds4fLXWf/Ux5kATBKN20oaFGu+jbElp1pos0mg==}
     dependencies:
@@ -11427,12 +11411,6 @@ packages:
       - supports-color
     dev: false
 
-  /types-ramda@0.30.1:
-    resolution: {integrity: sha512-1HTsf5/QVRmLzcGfldPFvkVsAdi1db1BBKzi7iW3KBUlOICg/nKnFS+jGqDJS3YD8VsWbAh7JiHeBvbsw8RPxA==}
-    dependencies:
-      ts-toolbelt: 9.6.0
-    dev: true
-
   /typescript@5.4.5:
     resolution: {integrity: sha512-vcI4UpRgg81oIRUFwR0WSIHKt11nJ7SAVlYNIu+QpqeyXP+gpQJy/Z4+F0aGxSE4MqwjyXvW/TzgkLAx2AGHwQ==}
     engines: {node: '>=14.17'}
@@ -11441,13 +11419,6 @@ packages:
   /ua-parser-js@1.0.38:
     resolution: {integrity: sha512-Aq5ppTOfvrCMgAPneW1HfWj66Xi7XL+/mIy996R1/CLS/rcyJQm6QZdsKrUeivDFQ+Oc9Wyuwor8Ze8peEoUoQ==}
     dev: true
-
-  /uglify-js@3.18.0:
-    resolution: {integrity: sha512-SyVVbcNBCk0dzr9XL/R/ySrmYf0s372K6/hFklzgcp2lBFyXtw4I7BOdDjlLhE1aVqaI/SHWXWmYdlZxuyF38A==}
-    engines: {node: '>=0.8.0'}
-    hasBin: true
-    requiresBuild: true
-    dev: false
 
   /uglify-js@3.19.3:
     resolution: {integrity: sha512-v3Xu+yuwBXisp6QYTcH4UbH+xYJXqnq2m/LtQVWKWzYc1iehYnLixoQDN9FH6/j9/oybfd6W9Ghwkl8+UMKTKQ==}
