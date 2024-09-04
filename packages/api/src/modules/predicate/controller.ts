@@ -5,7 +5,7 @@ import { Workspace } from '@src/models/Workspace';
 import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
 import { IconUtils } from '@src/utils/icons';
 
-import { NotificationTitle, Transaction, TypeUser, User } from '@models/index';
+import { NotificationTitle, TypeUser, User } from '@models/index';
 
 import { error } from '@utils/error';
 import {
@@ -69,6 +69,7 @@ export class PredicateController {
             provider: payload.provider,
             avatar: IconUtils.user(),
             type: TypeUser.FUEL,
+            name: member,
           });
         }
 

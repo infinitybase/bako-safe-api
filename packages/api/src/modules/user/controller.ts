@@ -1,6 +1,6 @@
 import { addMinutes } from 'date-fns';
 
-import { RecoverCode, RecoverCodeType } from '@src/models';
+import { PredicateVersion, RecoverCode, RecoverCodeType } from '@src/models';
 import { User } from '@src/models/User';
 import { bindMethods } from '@src/utils/bindMethods';
 
@@ -32,6 +32,9 @@ import {
 } from './types';
 import { Not } from 'typeorm';
 import app from '@src/server/app';
+import { Address, Provider } from 'fuels';
+import { BakoSafe, TypeUser, Vault } from 'bakosafe';
+import { WorkspaceService } from '../workspace/services';
 
 export class UserController {
   private userService: IUserService;
@@ -191,7 +194,7 @@ export class UserController {
   //verify used name
   async create(req: ICreateRequest) {
     try {
-      const { address, name } = req.body;
+      const { address, name, type, provider } = req.body;
 
       //verify user exists
       let existingUser = await this.userService.findByAddress(address);
@@ -213,7 +216,27 @@ export class UserController {
           address,
           name: name ?? address,
           avatar: IconUtils.user(),
+          webauthn: {
+            ...req.body.webauthn,
+            predicate_id: '',
+            predicate_address: '',
+          },
         });
+
+        if (type == TypeUser.WEB_AUTHN) {
+          const { id, predicateAddress } = await this.abstractAccount(
+            existingUser,
+            provider,
+            type == TypeUser.WEB_AUTHN,
+            name,
+          );
+          existingUser.webauthn.predicate_id = id;
+          existingUser.webauthn.predicate_address = predicateAddress;
+        } else {
+          await this.abstractAccount(existingUser, provider);
+        }
+
+        await existingUser.save();
       }
 
       const code = await new RecoverCodeService()
@@ -235,6 +258,46 @@ export class UserController {
     } catch (e) {
       return error(e.error, e.statusCode);
     }
+  }
+
+  async abstractAccount(
+    user: User,
+    provider_url: string,
+    from_webauthn?: boolean,
+    user_name?: string,
+  ) {
+    const provider = await Provider.create(provider_url);
+    const predicate = await Vault.create({
+      configurable: {
+        SIGNATURES_COUNT: 1,
+        SIGNERS: [user.address],
+        network: BakoSafe.getProviders('CHAIN_URL'),
+        chainId: provider.getChainId(),
+      },
+    });
+
+    const workspace = await new WorkspaceService().findByUser(user.id, true);
+
+    const version = await PredicateVersion.findOne({
+      where: { code: predicate.version },
+    });
+
+    return await new PredicateService().create({
+      name: from_webauthn ? `${user_name} Vault` : 'Personal Vault',
+      description:
+        'This is your first vault. It requires a single signer (you) to execute transactions; a pattern called 1-of-1',
+      predicateAddress: Address.fromString(predicate.address.toString()).toB256(),
+      minSigners: 1,
+      addresses: [user.address],
+      configurable: JSON.stringify({ ...predicate.getConfigurable() }),
+      provider: predicate.provider.url,
+      chainId: predicate.provider.getChainId(),
+      user,
+      owner: user,
+      version,
+      members: [user],
+      workspace: workspace[0],
+    });
   }
 
   async getByHardware(req: ICheckHardwareRequest) {
