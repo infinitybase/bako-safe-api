@@ -22,12 +22,12 @@ export const validateAddTransactionPayload = validator.body(
 
 export const validateSignerByIdPayload = validator.body(
   Joi.object({
-    signer: Joi.string().when('confirm', {
+    signature: Joi.string().when('confirm', {
       is: true,
       then: Joi.required(),
     }),
     // account: Joi.string().required(),
-    confirm: Joi.boolean().required(),
+    approve: Joi.boolean().required(),
   }),
 );
 

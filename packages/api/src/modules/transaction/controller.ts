@@ -413,10 +413,15 @@ export class TransactionController {
             : witness,
         );
 
+
         const statusField = this.transactionService.validateStatus(
           transaction,
           _resume.witnesses,
         );
+
+          console.log('statusField', statusField);
+
+        
 
         const result = await this.transactionService.update(transactionId, {
           status: statusField,
@@ -425,6 +430,8 @@ export class TransactionController {
             status: statusField,
           },
         });
+
+        console.log('result', result);
 
         if (result.status === TransactionStatus.PENDING_SENDER) {
           await this.transactionService.sendToChain(transactionId);
@@ -648,10 +655,12 @@ export class TransactionController {
 
   async send(params: ISendTransactionRequest) {
     const { params: { hash } } = params;
+    console.log('[SEND]')
     try {
       await this.transactionService.sendToChain(hash); // not wait for this
       return successful(true, Responses.Ok);
     } catch (e) {
+      console.log(e)
       return error(e.error, e.statusCode);
     }
   }

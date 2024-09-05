@@ -106,7 +106,7 @@ export class TransactionService implements ITransactionService {
 
   async findByHash(hash: string): Promise<ITransactionResponse> {
     return await Transaction.findOne({
-      where: { hash },
+      where: { hash: hash.slice(2) },
       relations: [
         'predicate',
         'predicate.members',
@@ -127,6 +127,7 @@ export class TransactionService implements ITransactionService {
         return Transaction.formatTransactionResponse(transaction);
       })
       .catch(e => {
+        console.log(e)
         throw new Internal({
           type: ErrorTypes.Internal,
           title: 'Error on transaction findByHash',
@@ -497,6 +498,7 @@ export class TransactionService implements ITransactionService {
   }
 
   checkInvalidConditions(status: TransactionStatus) {
+    console.log('status', status);
     const invalidConditions =
       !status ||
       status === TransactionStatus.AWAIT_REQUIREMENTS ||
@@ -523,7 +525,7 @@ export class TransactionService implements ITransactionService {
       resume,
     } = await this.findByHash(hash);
 
-    this.checkInvalidConditions(status);
+    // this.checkInvalidConditions(status);
     if (status == TransactionStatus.PROCESS_ON_CHAIN) {
       console.log('[JA_SUBMETIDO] - ', hash);
       return;

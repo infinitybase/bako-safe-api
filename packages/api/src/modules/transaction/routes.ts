@@ -51,9 +51,9 @@ router.get('/pending', handleResponse(pending));
 router.get('/:id', handleResponse(findById));
 router.get('/by-hash/:hash', handleResponse(findByHash));
 router.put('/close/:id', validateCloseTransactionPayload, handleResponse(close));
-router.post('/send/:id', handleResponse(send));
+router.post('/send/:hash', handleResponse(send));
 router.post('/verify/:id', handleResponse(verifyOnChain));
-router.put('/signer/:hash', validateSignerByIdPayload, handleResponse(signByID));
+router.put('/sign/:hash', validateSignerByIdPayload, handleResponse(signByID));
 router.get('/history/:id/:predicateId', handleResponse(createHistory));
 router.get('/status/:id', handleResponse(transactionStatus));
 

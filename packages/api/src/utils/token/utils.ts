@@ -205,9 +205,6 @@ export class TokenUtils {
     try{
       const expirationDate = token.expired_at ? new Date(token.expired_at) : new Date() ;
       const now = new Date();
-      console.log('[RENEW TOKEN INFO]: ', {
-        expirationDate, now, creation: token.createdAt
-      })
   
       const minutesToExpiration = differenceInMinutes(
         expirationDate,
