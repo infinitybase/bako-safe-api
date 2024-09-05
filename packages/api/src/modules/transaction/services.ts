@@ -497,7 +497,6 @@ export class TransactionService implements ITransactionService {
       console.log('[JA_SUBMETIDO] - ', bsafe_txid);
       return;
     }
-
     const provider = await Provider.create(predicate.provider);
     const tx = transactionRequestify({
       ...txData,

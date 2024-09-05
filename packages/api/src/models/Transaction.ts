@@ -110,14 +110,14 @@ class Transaction extends Base {
       const { bytecodeWitnessIndex } = this.txData;
       const bytecode = txWitnesses[bytecodeWitnessIndex];
 
-      witnesses.splice(bytecodeWitnessIndex, 0, hexlify(bytecode));
+      bytecode && witnesses.splice(bytecodeWitnessIndex, 0, hexlify(bytecode));
     }
 
     if ('witnessIndex' in this.txData) {
       const { witnessIndex } = this.txData;
       const bytecode = txWitnesses[witnessIndex];
 
-      witnesses.splice(witnessIndex, 0, hexlify(bytecode));
+      bytecode && witnesses.splice(witnessIndex, 0, hexlify(bytecode));
     }
 
     return witnesses;
