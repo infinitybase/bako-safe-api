@@ -1,8 +1,7 @@
 import {
   IWitnesses,
-  TransactionProcessStatus,
+  // TransactionProcessStatus,
   TransactionStatus,
-  Transfer,
   Vault,
   WitnessStatus,
 } from 'bakosafe';
@@ -12,9 +11,7 @@ import {
   hexlify,
   OutputType,
   Provider,
-  TransactionRequest,
   transactionRequestify,
-  TransactionResponse,
   TransactionType as FuelTransactionType,
   getTransactionSummary,
 } from 'fuels';
@@ -106,7 +103,7 @@ export class TransactionService implements ITransactionService {
 
   async findByHash(hash: string): Promise<ITransactionResponse> {
     return await Transaction.findOne({
-      where: { hash: hash.slice(2) },
+      where: { hash: hash },
       relations: [
         'predicate',
         'predicate.members',
@@ -127,7 +124,6 @@ export class TransactionService implements ITransactionService {
         return Transaction.formatTransactionResponse(transaction);
       })
       .catch(e => {
-        console.log(e)
         throw new Internal({
           type: ErrorTypes.Internal,
           title: 'Error on transaction findByHash',
@@ -449,16 +445,11 @@ export class TransactionService implements ITransactionService {
       REJECTED: 0,
       PENDING: 0,
     };
+    const {requiredSigners} = transaction.resume;
 
     witnesses.map((item: IWitnesses) => {
       witness[item.status]++;
     });
-
-    console.log({
-      witness,
-      req: transaction.predicate.minSigners,
-    });
-
     const totalSigners =
       witness[WitnessStatus.DONE] +
       witness[WitnessStatus.REJECTED] +
@@ -472,29 +463,18 @@ export class TransactionService implements ITransactionService {
       return transaction.status;
     }
 
-    if (witness[WitnessStatus.DONE] >= transaction.predicate.minSigners) {
+    if (witness[WitnessStatus.DONE] >= requiredSigners) {
       return TransactionStatus.PENDING_SENDER;
     }
 
     if (
       totalSigners - witness[WitnessStatus.REJECTED] <
-      transaction.predicate.minSigners
+      requiredSigners
     ) {
       return TransactionStatus.DECLINED;
     }
 
     return TransactionStatus.AWAIT_REQUIREMENTS;
-  }
-
-  async instanceTransactionScript(
-    tx_data: TransactionRequest,
-    vault: Vault,
-    witnesses: string[],
-  ): Promise<Transfer> {
-    return await vault.BakoSafeIncludeTransaction({
-      ...tx_data,
-      witnesses,
-    });
   }
 
   checkInvalidConditions(status: TransactionStatus) {
@@ -525,13 +505,16 @@ export class TransactionService implements ITransactionService {
       resume,
     } = await this.findByHash(hash);
 
-    // this.checkInvalidConditions(status);
-    if (status == TransactionStatus.PROCESS_ON_CHAIN) {
-      console.log('[JA_SUBMETIDO] - ', hash);
-      return;
+    if (status != TransactionStatus.PENDING_SENDER) {
+      return await this.findById(id);
     }
 
     const provider = await Provider.create(predicate.provider);
+    const vault = new Vault(
+      provider,
+      JSON.parse(predicate.configurable),
+    )
+
     const tx = transactionRequestify({
       ...txData,
       witnesses: [
@@ -542,97 +525,39 @@ export class TransactionService implements ITransactionService {
       ],
     });
 
-    await provider.estimatePredicates(tx);
-    const encodedTransaction = hexlify(tx.toTransactionBytes());
+    try{
+      const transactionResponse = await vault.send(tx);
+      const {gasUsed} = await transactionResponse.waitForResult();
 
-    try {
-      await provider.operations.submit({ encodedTransaction });
-      await this.update(id, {
-        status: TransactionStatus.PROCESS_ON_CHAIN,
-        resume,
-      });
-    } catch (e) {
-      if (e?.message.includes('Hash is already known')) {
-        return;
-      }
-      await this.update(id, {
-        status: TransactionStatus.FAILED,
-        resume: {
-          ...resume,
-          status: TransactionStatus.FAILED,
-          error: e?.toObject(),
-        },
-      });
-    }
-  }
-
-  async verifyOnChain(api_transaction: Transaction, provider: Provider) {
-    const idOnChain = `0x${api_transaction.hash}`;
-    const sender = new TransactionResponse(idOnChain, provider);
-    const {
-      status: { type },
-    } = await sender.fetch();
-
-    if (type === TransactionProcessStatus.SUBMITED) {
-      return api_transaction.resume;
-    } else if (
-      type === TransactionProcessStatus.SUCCESS ||
-      type === TransactionProcessStatus.FAILED
-    ) {
-      const { fee } = await sender.waitForResult();
-      const gasUsed = fee.format({ precision: 9 });
-
-      const resume = {
-        ...api_transaction.resume,
-        status:
-          type === TransactionProcessStatus.SUCCESS
-            ? TransactionStatus.SUCCESS
-            : TransactionStatus.FAILED,
-      };
       const _api_transaction: IUpdateTransactionPayload = {
-        status: resume.status,
+        status: TransactionStatus.SUCCESS,
         sendTime: new Date(),
-        gasUsed,
+        gasUsed: gasUsed.format(),
         resume: {
           ...resume,
-          gasUsed,
+          gasUsed: gasUsed.format(),
+          status: TransactionStatus.SUCCESS,
         },
       };
 
-      await this.update(api_transaction.id, _api_transaction);
-
-      // NOTIFY MEMBERS ON TRANSACTIONS SUCCESS
-      const notificationService = new NotificationService();
-
-      const summary = {
-        vaultId: api_transaction.predicate.id,
-        vaultName: api_transaction.predicate.name,
-        transactionId: api_transaction.id,
-        transactionName: api_transaction.name,
-        workspaceId: api_transaction.predicate.workspace.id,
+      await new NotificationService().transactionSuccess(id);
+      
+      return await this.update(id, _api_transaction);
+    }catch(e){
+      const _api_transaction: IUpdateTransactionPayload = {
+        status: TransactionStatus.FAILED,
+        sendTime: new Date(),
+        gasUsed: '0.0',
+        resume: {
+          ...resume,
+          gasUsed: '0.0',
+          status: TransactionStatus.FAILED,
+        },
       };
-
-      if (type === TransactionProcessStatus.SUCCESS) {
-        for await (const member of api_transaction.predicate.members) {
-          await notificationService.create({
-            title: NotificationTitle.TRANSACTION_COMPLETED,
-            summary,
-            user_id: member.id,
-          });
-
-          if (member.notify) {
-            await sendMail(EmailTemplateType.TRANSACTION_COMPLETED, {
-              to: member.email,
-              data: { summary: { ...summary, name: member?.name ?? '' } },
-            });
-          }
-        }
-      }
-      return resume;
+      return await this.update(id, _api_transaction);
     }
-
-    return api_transaction.resume;
   }
+
 
   async fetchFuelTransactions(
     predicates: Predicate[],
@@ -696,4 +621,15 @@ export class TransactionService implements ITransactionService {
       });
     }
   }
+
+
+  validateSignature(transaction: Transaction, userAddress: string): boolean {
+    const { resume: {witnesses}, hash } = transaction;
+    const hasWitness = witnesses.find(w => w.account === userAddress);
+    const validStatus = hasWitness?.status === WitnessStatus.PENDING;
+
+    return validStatus;
+
+  }
+
 }

@@ -1,5 +1,5 @@
 import { TransactionStatus, TransactionType, WitnessStatus } from 'bakosafe';
-import { hashMessage, Provider, Signer } from 'fuels';
+import { Provider } from 'fuels';
 import { isUUID } from 'class-validator';
 import { PermissionRoles, Workspace } from '@src/models/Workspace';
 import {
@@ -212,6 +212,7 @@ export class TransactionController {
 
       return successful(newTransaction, Responses.Ok);
     } catch (e) {
+      console.log(e)
       return error(e.error, e.statusCode);
     }
   }
@@ -329,18 +330,6 @@ export class TransactionController {
       const response = await this.transactionService
         .findById(id)
         .then(async (data: Transaction) => {
-          const { status, predicate } = data;
-          if (status === TransactionStatus.PROCESS_ON_CHAIN) {
-            const provider = await Provider.create(predicate.provider);
-            const result = await this.transactionService.verifyOnChain(
-              data,
-              provider,
-            );
-            return await this.transactionService.update(id, {
-              status: result.status,
-              resume: result,
-            });
-          }
           return data;
         });
 
@@ -353,7 +342,7 @@ export class TransactionController {
   async findByHash({ params: { hash } }: IFindTransactionByHashRequest) {
     try {
       const response = await this.transactionService
-        .filter({ hash })
+        .filter({ hash: hash.slice(2) })
         .paginate(undefined)
         .list()
         .then((result: ITransactionResponse[]) => {
@@ -365,8 +354,13 @@ export class TransactionController {
     }
   }
 
+
+  // verifique se o usuário que está assinando é um dos membros do vault
+  // verifique se o usuário já assinou
+  // verifique se o usuário já rejeitou
+
   async signByID({
-    body: { signature, confirm },
+    body: { signature, approve },
     params: { hash: txHash },
     user: {address: account, id: userId},
   }: ISignByIdRequest) {
@@ -374,105 +368,31 @@ export class TransactionController {
       const transaction = await Transaction.findOne({
         where: { hash: txHash.slice(2) }
       });
-      const { resume, predicate, name, id: transactionId, hash } = transaction;
-      const _resume = resume;
-
-      const witness = resume.witnesses.find(w => w.account === account);
-
-      if (signature && confirm === 'true') {
-        const acc_signed =
-          Signer.recoverAddress(hashMessage(hash), signature).toString() ==
-          account;
-        if (!acc_signed) {
-          throw new NotFound({
-            type: ErrorTypes.NotFound,
-            title: UnauthorizedErrorTitles.INVALID_SIGNATURE,
-            detail:
-              'Your signature is invalid or does not match the transaction hash',
-          });
-        }
+      const isValidSignature = this.transactionService.validateSignature(transaction, account);
+      
+      if (!transaction) {
+        return successful(false, Responses.Ok);
       }
 
-      if (witness) {
-        if (witness.status !== WitnessStatus.PENDING) {
-          throw new NotFound({
-            detail: 'Transaction was already declined.',
-            title: UnauthorizedErrorTitles.INVALID_SIGNATURE,
-            type: ErrorTypes.NotFound,
-          });
-        }
+      const witness = {
+        ...transaction.resume.witnesses.find(w => w.account === account),
+        signature: isValidSignature ? signature : null,
+        status: approve && isValidSignature ? WitnessStatus.DONE : WitnessStatus.REJECTED,
+      };
 
-        _resume.witnesses = _resume.witnesses.map(witness =>
-          witness.account === account
-            ? {
-                ...witness,
-                signature,
-                status: confirm ? WitnessStatus.DONE : WitnessStatus.REJECTED,
-                updatedAt: generateWitnessesUpdatedAt(),
-              }
-            : witness,
-        );
+      transaction.resume.witnesses = transaction.resume.witnesses.map(w => w.account === account ? witness : w);
+      const newStatus = this.transactionService.validateStatus(transaction, transaction.resume.witnesses);
+      
+      transaction.resume.status = newStatus;
+      transaction.status = newStatus;
 
-
-        const statusField = this.transactionService.validateStatus(
-          transaction,
-          _resume.witnesses,
-        );
-
-          console.log('statusField', statusField);
-
-        
-
-        const result = await this.transactionService.update(transactionId, {
-          status: statusField,
-          resume: {
-            ..._resume,
-            status: statusField,
-          },
-        });
-
-        console.log('result', result);
-
-        if (result.status === TransactionStatus.PENDING_SENDER) {
-          await this.transactionService.sendToChain(transactionId);
-        }
-
-        const notificationSummary = {
-          vaultId: predicate.id,
-          vaultName: predicate.name,
-          transactionId: transactionId,
-          transactionName: name,
-          workspaceId: predicate.workspace.id,
-        };
-
-        // NOTIFY MEMBERS ON SIGNED TRANSACTIONS
-        if (confirm) {
-          const membersWithoutLoggedUser = predicate.members.filter(
-            member => member.id !== userId,
-          );
-
-          for await (const member of membersWithoutLoggedUser) {
-            await this.notificationService.create({
-              title: NotificationTitle.TRANSACTION_SIGNED,
-              summary: notificationSummary,
-              user_id: member.id,
-            });
-          }
-        }
-
-        // NOTIFY MEMBERS ON FAILED TRANSACTIONS
-        if (statusField === TransactionStatus.DECLINED) {
-          for await (const member of predicate.members) {
-            await this.notificationService.create({
-              title: NotificationTitle.TRANSACTION_DECLINED,
-              summary: notificationSummary,
-              user_id: member.id,
-            });
-          }
-        }
+      await transaction.save();
+      
+      if(newStatus === TransactionStatus.PENDING_SENDER) {
+        await this.transactionService.sendToChain(transaction.hash);
       }
 
-      return successful(!!witness, Responses.Ok);
+      return successful(true, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }
@@ -655,57 +575,12 @@ export class TransactionController {
 
   async send(params: ISendTransactionRequest) {
     const { params: { hash } } = params;
-    console.log('[SEND]')
     try {
-      await this.transactionService.sendToChain(hash); // not wait for this
+      await this.transactionService.sendToChain(hash.slice(2)); // not wait for this
       return successful(true, Responses.Ok);
     } catch (e) {
-      console.log(e)
       return error(e.error, e.statusCode);
     }
   }
 
-  async verifyOnChain(params: ISendTransactionRequest) {
-    const { params: {hash} } = params;
-    try {
-      const api_transaction = await this.transactionService.findByHash(hash);
-      const { predicate, status } = api_transaction;
-      const provider = await Provider.create(predicate.provider);
-
-      this.transactionService.checkInvalidConditions(status);
-
-      const result = await this.transactionService.verifyOnChain(
-        api_transaction,
-        provider,
-      );
-
-      return successful(result, Responses.Ok);
-    } catch (e) {
-      return error(e.error, e.statusCode);
-    }
-  }
-
-  async transactionStatus(params: ISendTransactionRequest) {
-    const { params: {hash} } = params;
-    try {
-      const result = await this.transactionService.findByHash(hash);
-
-      if (result.status === TransactionStatus.PROCESS_ON_CHAIN) {
-        const provider = await Provider.create(result.predicate.provider);
-        const chainResult = await this.transactionService.verifyOnChain(
-          result,
-          provider,
-        );
-
-        return successful(
-          { status: chainResult.status, id: result.id },
-          Responses.Ok,
-        );
-      }
-
-      return successful({ status: result.status, id: result.id }, Responses.Ok);
-    } catch (e) {
-      return error(e.error, e.statusCode);
-    }
-  }
 }

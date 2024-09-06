@@ -1,6 +1,6 @@
 import { userInfo } from 'os';
 
-import { Notification } from '@src/models';
+import { Notification, NotificationTitle } from '@src/models';
 
 import { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
@@ -15,6 +15,8 @@ import {
 } from './types';
 import { DeepPartial } from 'typeorm';
 import { VaultTemplate } from '@src/models/VaultTemplate';
+import { TransactionService } from '../transaction/services';
+import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
 
 export class NotificationService implements INotificationService {
   private _pagination: PaginationParams;
@@ -112,4 +114,50 @@ export class NotificationService implements INotificationService {
         });
       });
   }
+
+
+  // select all members of predicate
+  // create a notification for each member
+  async transactionSuccess(txId: string) {
+    const tx = await new TransactionService().findById(txId);
+
+    if(!tx) {
+      return
+    }
+
+
+    const members = await tx.predicate.members;
+    const summary = {
+      vaultId: tx.predicate.id,
+      vaultName: tx.predicate.name,
+      transactionId: tx.id,
+      transactionName: tx.name,
+      workspaceId: tx.predicate.workspace.id,
+    };
+
+    members.forEach(async member => {
+      const payload = {
+        userId: member.id,
+        type: 'TRANSACTION_SUCCESS',
+        summary,
+      };
+
+      for await (const member of members) {
+        await this.create({
+          title: NotificationTitle.TRANSACTION_COMPLETED,
+          summary,
+          user_id: member.id,
+        });
+
+        if (member.notify) {
+          await sendMail(EmailTemplateType.TRANSACTION_COMPLETED, {
+            to: member.email,
+            data: { summary: { ...summary, name: member?.name ?? '' } },
+          });
+        }
+      }
+  })
+}
+
+
 }
