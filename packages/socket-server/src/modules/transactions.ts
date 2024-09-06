@@ -178,8 +178,10 @@ export const txRequest = async ({ data, socket, database }: IEvent<IEventTX_REQU
 
 		const vault = await database.query(
 			`
-				SELECT * from predicates
-				WHERE id = $1
+				SELECT p.*, w.id AS workspace_id
+				FROM predicates p
+				JOIN workspace w ON p.workspace_id = w.id
+				WHERE p.id = $1
 			`,
 			[dapp.current_vault_id],
 		)
@@ -220,11 +222,13 @@ export const txRequest = async ({ data, socket, database }: IEvent<IEventTX_REQU
 					origin: dapp.origin,
 				},
 				vault: {
+					id: dapp.current_vault_id,
 					name: dapp.current_vault_name,
 					description: dapp.current_vault_description,
 					address: vault.predicate_address,
 					provider: dapp.current_vault_provider,
 					pending_tx: Number(tx_pending.count) > 0,
+					workspace_id: vault.workspace_id,
 				},
 				tx: _transaction,
 				validAt: code.valid_at,
