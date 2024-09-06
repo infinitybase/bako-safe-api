@@ -31,7 +31,6 @@ export class SessionStorage {
       }
     });
 
-    // new SocketClient(API_SOCKET_SESSION_ID, API_URL);
   }
 
   private sendNotify(data, type) {
@@ -45,7 +44,6 @@ export class SessionStorage {
   }
 
   private reciveNotify({ type, data }) {
-    // console.log('[RECIVE_NOTIFY]', data.token ?? 'NO_TOKEN');
 
     if (!data || !data.token) {
       return;
@@ -135,7 +133,6 @@ export class SessionStorage {
     const _this = new SessionStorage();
 
     setInterval(() => {
-      console.log('[CLEAR_EXPIRED_TOKEN]', new Date());
       _this.clearExpiredSessions();
     }, REFRESH_TIME);
 

@@ -5,8 +5,6 @@ import { Signer, hashMessage } from 'fuels';
 import { TypeUser, User } from '@src/models';
 
 export const recoverFuelSignature = async (digest: string, signature: string) => {
-  console.log('recoverFuelSignature', digest, signature);
-  console.log(Signer.recoverAddress(hashMessage(digest), signature).toHexString())
   return Signer.recoverAddress(hashMessage(digest), signature).toHexString();
 };
 

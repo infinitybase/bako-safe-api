@@ -13,7 +13,6 @@ import { Unauthorized, UnauthorizedErrorTitles } from '@utils/error/Unauthorized
 
 import { recoverFuelSignature, recoverWebAuthnSignature } from './web3';
 import app from '@src/server/app';
-import exp from 'constants';
 
 const EXPIRES_IN = process.env.TOKEN_EXPIRATION_TIME ?? '20';
 const RENEWAL_EXPIRES_IN = process.env.RENEWAL_TOKEN_EXPIRATION_TIME ?? '10';
@@ -225,7 +224,6 @@ export class TokenUtils {
   
       return token;
     }catch(e){
-      console.log('[RENEW TOKEN ERROR]: DATA FORMAT', e)
      return token;
     }
   }
