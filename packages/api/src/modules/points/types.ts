@@ -1,58 +1,69 @@
-export enum TaskName {
+export enum TaskId {
   'REGULAR_ACCOUNT' = 'REGULAR_ACCOUNT',
   'WEBAUTHN_ACCOUNT' = 'WEBAUTHN_ACCOUNT',
   'COMPLETED_TX' = 'COMPLETED_TX',
   'COMPLETED_TX_MULTISIG' = 'COMPLETED_TX_MULTISIG',
 }
 
-export const taskUiName = {
-  [TaskName.REGULAR_ACCOUNT]: 'Conta normal',
-  [TaskName.WEBAUTHN_ACCOUNT]: 'Conta webauthn',
-  [TaskName.COMPLETED_TX]: 'Transação completa',
-  [TaskName.COMPLETED_TX_MULTISIG]: 'Transação completa em multisig',
+export const taskInfo = {
+  [TaskId.REGULAR_ACCOUNT]: {
+    name: 'Regular account',
+    description: 'Task description',
+  },
+  [TaskId.WEBAUTHN_ACCOUNT]: {
+    name: 'Webauthn account',
+    description: 'Task description',
+  },
+  [TaskId.COMPLETED_TX]: {
+    name: 'Completed transaction',
+    description: 'Task description',
+  },
+  [TaskId.COMPLETED_TX_MULTISIG]: {
+    name: 'Completed multisig transaction',
+    description: 'Task description',
+  },
 };
 
 export const taskList = [
   {
-    id: TaskName.REGULAR_ACCOUNT,
-    name: taskUiName[TaskName.REGULAR_ACCOUNT],
-    description: 'Task description',
+    id: TaskId.REGULAR_ACCOUNT,
+    name: taskInfo[TaskId.REGULAR_ACCOUNT].name,
+    description: taskInfo[TaskId.REGULAR_ACCOUNT].description,
     points: 10,
   },
   {
-    id: TaskName.WEBAUTHN_ACCOUNT,
-    name: taskUiName[TaskName.WEBAUTHN_ACCOUNT],
-    description: 'Task description',
+    id: TaskId.WEBAUTHN_ACCOUNT,
+    name: taskInfo[TaskId.WEBAUTHN_ACCOUNT].name,
+    description: taskInfo[TaskId.WEBAUTHN_ACCOUNT].description,
     points: 100,
   },
   {
-    id: TaskName.COMPLETED_TX,
-    name: taskUiName[TaskName.COMPLETED_TX],
-    description: 'Task description',
+    id: TaskId.COMPLETED_TX,
+    name: taskInfo[TaskId.COMPLETED_TX].name,
+    description: taskInfo[TaskId.COMPLETED_TX].description,
     points: 10,
   },
   {
-    id: TaskName.COMPLETED_TX_MULTISIG,
-    name: taskUiName[TaskName.COMPLETED_TX_MULTISIG],
-    description: 'Task description',
+    id: TaskId.COMPLETED_TX_MULTISIG,
+    name: taskInfo[TaskId.COMPLETED_TX_MULTISIG].name,
+    description: taskInfo[TaskId.COMPLETED_TX_MULTISIG].description,
     points: 10,
   },
 ];
 
 export type CompletedTask = {
   userId: string;
-  task: TaskName;
+  taskId: TaskId;
   date: Date; // TODO: Confirm if its really needed
 };
 
-export type CreatePointsParams = {
+export type CompleteTaskParams = {
   userId: string;
-  task: TaskName;
+  taskId: TaskId;
 };
 
 export interface IPointService {
-  create(params: CreatePointsParams): Promise<CompletedTask>;
-  // filter(filter: IFilterParams): this;
-  // ordination(ordination: IOrdination<User>): this;
-  // find(): Promise<IPagination<User> | User[]>;
+  completeTask(params: CompleteTaskParams): Promise<CompletedTask>;
+  findUserTasks(userId: string): Promise<CompletedTask[]>;
+  getUserScore(userId: string): Promise<number>;
 }
