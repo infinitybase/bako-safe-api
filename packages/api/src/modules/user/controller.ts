@@ -216,27 +216,18 @@ export class UserController {
           address,
           name: name ?? address,
           avatar: IconUtils.user(),
-          webauthn: {
-            ...req.body.webauthn,
-            predicate_id: '',
-            predicate_address: '',
-          },
         });
 
         if (type == TypeUser.WEB_AUTHN) {
-          const { id, predicateAddress } = await this.abstractAccount(
+          await this.abstractAccount(
             existingUser,
             provider,
             type == TypeUser.WEB_AUTHN,
             name,
           );
-          existingUser.webauthn.predicate_id = id;
-          existingUser.webauthn.predicate_address = predicateAddress;
         } else {
           await this.abstractAccount(existingUser, provider);
         }
-
-        await existingUser.save();
       }
 
       const code = await new RecoverCodeService()
@@ -282,7 +273,7 @@ export class UserController {
       where: { code: predicate.version },
     });
 
-    return await new PredicateService().create({
+    const vault = await new PredicateService().create({
       name: from_webauthn ? `${user_name} Vault` : 'Personal Vault',
       description:
         'This is your first vault. It requires a single signer (you) to execute transactions; a pattern called 1-of-1',
@@ -298,6 +289,10 @@ export class UserController {
       members: [user],
       workspace: workspace[0],
     });
+
+    user.default_vault = vault.id;
+
+    return await user.save();
   }
 
   async getByHardware(req: ICheckHardwareRequest) {

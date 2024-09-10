@@ -73,8 +73,7 @@ export interface ISignInResponse {
   avatar: string;
   user_id: string;
   first_login: boolean;
-  first_vault?: Predicate;
-  address: string;
+  default_vault: string;
   workspace: {
     id: string;
     name: string;
