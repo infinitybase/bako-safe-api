@@ -23,6 +23,7 @@ export class AuthService implements IAuthService {
         user_id: data.user.id,
         expired_at: data.expired_at,
         default_vault: data.user?.default_vault,
+        address: data.user?.address,
         workspace: {
           id: data.workspace.id,
           name: data.workspace.name,
