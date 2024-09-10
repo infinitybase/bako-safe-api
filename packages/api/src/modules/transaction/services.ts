@@ -40,6 +40,8 @@ import {
 } from './types';
 import { formatFuelTransaction, formatTransactionsResponse } from './utils';
 import { TransactionPagination, TransactionPaginationParams } from './pagination';
+import { PointsService } from '../points/service';
+import { TaskId } from '../points/types';
 
 export class TransactionService implements ITransactionService {
   private _ordination: IOrdination<Transaction> = {
@@ -571,9 +573,6 @@ export class TransactionService implements ITransactionService {
 
       await this.update(api_transaction.id, _api_transaction);
 
-      // NOTIFY MEMBERS ON TRANSACTIONS SUCCESS
-      const notificationService = new NotificationService();
-
       const summary = {
         vaultId: api_transaction.predicate.id,
         vaultName: api_transaction.predicate.name,
@@ -582,7 +581,11 @@ export class TransactionService implements ITransactionService {
         workspaceId: api_transaction.predicate.workspace.id,
       };
 
+      const notificationService = new NotificationService();
+      const pointsService = new PointsService();
+
       if (type === TransactionProcessStatus.SUCCESS) {
+        // TODO: Refactor to use a promise.all since they are independent operations
         for await (const member of api_transaction.predicate.members) {
           await notificationService.create({
             title: NotificationTitle.TRANSACTION_COMPLETED,
@@ -596,6 +599,13 @@ export class TransactionService implements ITransactionService {
               data: { summary: { ...summary, name: member?.name ?? '' } },
             });
           }
+
+          const isMultiSig = api_transaction.predicate.members.length > 1;
+
+          await pointsService.completeTask({
+            taskId: isMultiSig ? TaskId.COMPLETED_TX_MULTISIG : TaskId.COMPLETED_TX,
+            userId: member.id,
+          });
         }
       }
       return resume;
