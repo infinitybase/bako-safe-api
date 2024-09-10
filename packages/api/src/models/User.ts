@@ -9,8 +9,6 @@ export type WebAuthn = {
   publicKey: string;
   origin: string;
   hardware: string;
-  predicate_id: string;
-  predicate_address: string;
 };
 
 export enum TypeUser {
@@ -62,6 +60,9 @@ class User extends Base {
 
   @Column()
   avatar: string;
+
+  @Column({ type: 'uuid', nullable: true })
+  default_vault: string;
 }
 
 export { User };

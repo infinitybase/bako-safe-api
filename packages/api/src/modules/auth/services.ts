@@ -1,4 +1,3 @@
-// import { JwtUtils } from '@src/utils/jwt';
 import UserToken from '@models/UserToken';
 import { User } from '@models/index';
 
@@ -12,29 +11,18 @@ import {
   ISignInResponse,
 } from './types';
 import { LessThanOrEqual } from 'typeorm';
-import { PredicateService } from '../predicate/services';
 
 export class AuthService implements IAuthService {
   async signIn(payload: ICreateUserTokenPayload): Promise<ISignInResponse> {
     try {
       const data = await UserToken.create(payload).save();
 
-      let first_vault = undefined;
-
-      if (data.user.first_login) {
-        const predicateService = new PredicateService();
-        const firstVault = await predicateService
-          .filter({ owner: data.user.id })
-          .list();
-        first_vault = firstVault[0] || {};
-      }
-
       return {
         accessToken: data.token,
         avatar: data.user.avatar,
         user_id: data.user.id,
         expired_at: data.expired_at,
-        address: data.user.address,
+        default_vault: data.user?.default_vault,
         workspace: {
           id: data.workspace.id,
           name: data.workspace.name,
@@ -43,7 +31,6 @@ export class AuthService implements IAuthService {
           permissions: data.workspace.permissions,
         },
         first_login: data.user.first_login,
-        first_vault,
         ...(data.user.type === 'WEB_AUTHN' ? { webAuthn: data.user.webauthn } : {}),
       };
     } catch (e) {
