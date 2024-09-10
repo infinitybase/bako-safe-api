@@ -12,6 +12,7 @@ import transactions from '@modules/transaction/routes';
 import vaultTemplate from '@modules/vaultTemplate/routes';
 import workspace from '@modules/workspace/routes';
 import apiToken from '@modules/apiToken/routes';
+import points from '@modules/points/routes';
 
 const { API_ENVIRONMENT, API_NAME } = process.env;
 
@@ -28,6 +29,7 @@ router.use('/connections', dApp);
 router.use('/notifications', notifications);
 router.use('/workspace', workspace);
 router.use('/api-token', apiToken);
+router.use('/points', points);
 
 // ping route
 router.get('/ping', ({ res }) =>

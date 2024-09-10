@@ -1,7 +1,7 @@
 import { addMinutes } from 'date-fns';
 
 import { RecoverCodeType, User } from '@src/models';
-import UserToken from '@src/models/UserToken';
+import UserToken, { Encoder } from '@src/models/UserToken';
 import { Workspace } from '@src/models/Workspace';
 import GeneralError, { ErrorTypes } from '@src/utils/error/GeneralError';
 
@@ -19,24 +19,40 @@ import {
   ISignInRequest,
 } from './types';
 import app from '@src/server/app';
+import { IPointsService, TaskId } from '../points/types';
 
 export class AuthController {
   private authService: IAuthService;
+  private pointsService: IPointsService;
 
-  constructor(authService: IAuthService) {
+  constructor(authService: IAuthService, pointsService: IPointsService) {
     this.authService = authService;
+    this.pointsService = pointsService;
     bindMethods(this);
   }
 
   async signIn(req: ISignInRequest) {
     try {
       const { digest, encoder, signature } = req.body;
-      
+
       const { userToken, signin } = await TokenUtils.createAuthToken(
         signature,
         digest,
         encoder,
       );
+
+      console.log(
+        '🚀 ~ AuthController ~ signIn ~ { digest, encoder, signature }:',
+        { digest, encoder, signature },
+      );
+
+      const isWebAuthn = encoder === Encoder.WEB_AUTHN;
+
+      // TODO: Confirm if connector check is needed
+      await this.pointsService.completeTask({
+        userId: userToken.user.id,
+        taskId: isWebAuthn ? TaskId.WEBAUTHN_ACCOUNT : TaskId.REGULAR_ACCOUNT,
+      });
 
       await app._sessionCache.addSession(userToken.token, userToken);
       return successful(signin, Responses.Ok);
