@@ -105,7 +105,6 @@ export class UserController {
 
   async latestInfo(req: IMeInfoRequest) {
     const { user, workspace } = req;
-
     return successful(
       {
         id: user.id,
@@ -119,10 +118,10 @@ export class UserController {
         workspace: {
           id: workspace.id,
           name: workspace.name,
-          owner: workspace.owner,
           avatar: workspace.avatar,
-          permission: workspace.permissions[user.id],
+          single: workspace.single,
           description: workspace.description,
+          permission: workspace.permissions[user.id],
         },
       },
       Responses.Ok,
@@ -218,16 +217,7 @@ export class UserController {
           avatar: IconUtils.user(),
         });
 
-        if (type == TypeUser.WEB_AUTHN) {
-          await this.abstractAccount(
-            existingUser,
-            provider,
-            type == TypeUser.WEB_AUTHN,
-            name,
-          );
-        } else {
-          await this.abstractAccount(existingUser, provider);
-        }
+        await this.abstractAccount(existingUser, provider);
       }
 
       const code = await new RecoverCodeService()
@@ -254,8 +244,6 @@ export class UserController {
   async abstractAccount(
     user: User,
     provider_url: string,
-    from_webauthn?: boolean,
-    user_name?: string,
   ) {
     const provider = await Provider.create(provider_url);
     const predicate = await Vault.create({
@@ -274,7 +262,7 @@ export class UserController {
     });
 
     const vault = await new PredicateService().create({
-      name: from_webauthn ? `${user_name} Vault` : 'Personal Vault',
+      name: 'Personal Vault',
       description:
         'This is your first vault. It requires a single signer (you) to execute transactions; a pattern called 1-of-1',
       predicateAddress: Address.fromString(predicate.address.toString()).toB256(),
@@ -288,9 +276,8 @@ export class UserController {
       version,
       members: [user],
       workspace: workspace[0],
+      root: true,
     });
-
-    user.default_vault = vault.id;
 
     return await user.save();
   }

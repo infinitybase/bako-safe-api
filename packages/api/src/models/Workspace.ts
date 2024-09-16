@@ -76,11 +76,12 @@ export const defaultPermissions = {
   },
 };
 
+
+export type IUserPermissions = {[key in PermissionRoles]: string[]};
+
 export interface IPermissions {
-  [key: string]: {
-    [key in PermissionRoles]: string[];
-  };
-}
+  [key: string]: IUserPermissions;
+};
 /**
  * PERMISSIONS TYPING
  */

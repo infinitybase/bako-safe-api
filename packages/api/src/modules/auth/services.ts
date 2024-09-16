@@ -1,5 +1,5 @@
 import UserToken from '@models/UserToken';
-import { User } from '@models/index';
+import { Predicate, User } from '@models/index';
 
 import { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
@@ -7,7 +7,6 @@ import Internal from '@utils/error/Internal';
 import {
   IAuthService,
   ICreateUserTokenPayload,
-  IFindTokenParams,
   ISignInResponse,
 } from './types';
 import { LessThanOrEqual } from 'typeorm';
@@ -16,24 +15,7 @@ export class AuthService implements IAuthService {
   async signIn(payload: ICreateUserTokenPayload): Promise<ISignInResponse> {
     try {
       const data = await UserToken.create(payload).save();
-
-      return {
-        accessToken: data.token,
-        avatar: data.user.avatar,
-        user_id: data.user.id,
-        expired_at: data.expired_at,
-        default_vault: data.user?.default_vault,
-        address: data.user?.address,
-        workspace: {
-          id: data.workspace.id,
-          name: data.workspace.name,
-          avatar: data.workspace.avatar,
-          single: data.workspace.single,
-          permissions: data.workspace.permissions,
-        },
-        first_login: data.user.first_login,
-        ...(data.user.type === 'WEB_AUTHN' ? { webAuthn: data.user.webauthn } : {}),
-      };
+      return await AuthService.findToken(data.token);
     } catch (e) {
       throw new Internal({
         type: ErrorTypes.Internal,
@@ -57,12 +39,13 @@ export class AuthService implements IAuthService {
     }
   }
 
-  async findToken(params: IFindTokenParams): Promise<UserToken | undefined> {
-    const queryBuilder = await UserToken.createQueryBuilder('ut')
+  static async findToken(signature: string): Promise<ISignInResponse | undefined> {
+    const QBtoken = UserToken.createQueryBuilder('ut')
       .leftJoin('ut.user', 'user')
       .leftJoin('ut.workspace', 'workspace')
       .addSelect([
         'user.id',
+        'user.name',
         'user.avatar',
         'user.address',
         'user.type',
@@ -72,32 +55,42 @@ export class AuthService implements IAuthService {
         'workspace.avatar',
         'workspace.single',
         'workspace.permissions',
-      ]);
+        'workspace.description',
+      ])
+      .where('ut.token = :signature', { signature })
+      .andWhere('ut.expired_at > :now', { now: new Date() });
 
-    params.userId &&
-      queryBuilder.where('ut.user = :userId', { userId: params.userId });
+      const {user, workspace, ...token } = await QBtoken.getOne();
+      if(!token){
+        return undefined;
+      }
 
-    params.address &&
-      queryBuilder.where('user.address = :address', {
-        address: params.address,
-      });
+      // console.log('[FIND_TOKEN_INFO]: ', { user, workspace, token });
+      const QBPredicate = Predicate.createQueryBuilder('p')
+        .innerJoin('p.owner', 'owner')
+        .select(['p.id',  'p.root', 'owner.id'])
+        .where('p.owner_id = :userId', { userId: workspace.id })
+        .where('p.root = :root ', { root: true });
 
-    params.signature &&
-      queryBuilder.where('ut.token = :signature', { signature: params.signature });
-
-    params.notExpired &&
-      queryBuilder.andWhere('ut.expired_at > :now', { now: new Date() });
-
-    return await queryBuilder
-      .getOne()
-      .then(userToken => userToken)
-      .catch(e => {
-        throw new Internal({
-          type: ErrorTypes.Internal,
-          title: 'Error on user token find',
-          detail: e,
-        });
-      });
+      const {id: predicateId} = await QBPredicate.getOne();
+      
+      return {
+        //session
+        accessToken: token.token,
+        expired_at: token.expired_at,
+        // user
+        name: user.name,
+        type: user.type,
+        user_id: user.id,
+        avatar: user.avatar,
+        address: user.address,
+        rootWallet: predicateId ?? 'not found',
+        // workspace
+        workspace: {
+          ...workspace,
+          permissions: workspace.permissions[user.id],
+        },
+      };
   }
 
   static async clearExpiredTokens(): Promise<void> {
