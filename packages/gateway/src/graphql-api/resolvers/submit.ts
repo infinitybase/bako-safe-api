@@ -24,44 +24,30 @@ export const submit: MutationResolvers["submit"] = async (
   const transactionService = new TransactionService(authService);
 
   if (transaction.type === TransactionType.Upgrade) {
-    const { upgradeTransfer } = await transactionService.submitUpgrade({
+    const { hash } = await transactionService.submitUpgrade({
       userId,
       apiToken,
       transaction: <TransactionUpgrade>transaction,
     });
-    return {
-      id: `0x${upgradeTransfer.getHashTxId()}`,
-    };
+    return { id: hash };
   }
 
   if (transaction.type === TransactionType.Upload) {
-    const { uploadTransfer } = await transactionService.submitUpload({
+    const { hash } = await transactionService.submitUpload({
       userId,
       apiToken,
       transaction: <TransactionUpload>transaction,
     });
-    return {
-      id: `0x${uploadTransfer.getHashTxId()}`,
-    };
+    return { id: hash };
   }
 
   if (transaction.type === TransactionType.Create) {
-    const submitResponse = await transactionService.submitDeploy({
+    const { hash } = await transactionService.submitDeploy({
       userId,
       apiToken,
       transaction: <TransactionCreate>transaction,
     });
-    const { deployTransfer, vault } = submitResponse;
-
-    console.log("[MUTATION] Transaction sent to Bako", {
-      vault: vault.BakoSafeVaultId,
-      address: vault.address.toAddress(),
-      transactionId: deployTransfer.getHashTxId(),
-    });
-
-    return {
-      id: `0x${deployTransfer.getHashTxId()}`,
-    };
+    return { id: hash };
   }
 
   return delegateToSchema({

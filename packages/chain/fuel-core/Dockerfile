@@ -5,7 +5,7 @@
 # when upgrading fuel-core
 # We should be supporting always the same fuel-core version as the fuels (ts-sdk)
 # https://github.com/FuelLabs/fuels-ts/blob/master/internal/fuel-core/VERSION
-FROM ghcr.io/fuellabs/fuel-core:v0.34.0
+FROM ghcr.io/fuellabs/fuel-core:v0.35.0
 
 # dependencies
 ENV DEBIAN_FRONTEND=noninteractive

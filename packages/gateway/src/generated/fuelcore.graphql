@@ -755,6 +755,7 @@ type Query {
     """
     queryPerAsset: [SpendQueryElementInput!]!
   ): [[CoinType!]!]!
+  consensusParameters(version: Int!): ConsensusParameters!
   contract(
     """ID of the Contract"""
     id: ContractId!
@@ -793,6 +794,8 @@ type Query {
     """The id of the relayed tx"""
     id: RelayedTransactionId!
   ): RelayedTransactionStatus
+  stateTransitionBytecodeByRoot(root: HexString!): StateTransitionBytecode!
+  stateTransitionBytecodeByVersion(version: Int!): StateTransitionBytecode
   transaction(
     """The ID of the transaction"""
     id: TransactionId!
@@ -906,6 +909,11 @@ type SqueezedOutStatus {
   reason: String!
 }
 
+type StateTransitionBytecode {
+  bytecode: UploadedBytecode!
+  root: HexString!
+}
+
 type StateTransitionPurpose {
   root: Bytes32!
 }
@@ -937,6 +945,12 @@ type Subscription {
   Submits transaction to the `TxPool` and await either confirmation or failure.
   """
   submitAndAwait(tx: HexString!): TransactionStatus!
+  """
+  Submits the transaction to the `TxPool` and returns a stream of events.
+  Compared to the `submitAndAwait`, the stream also contains `
+  SubmittedStatus` as an intermediate state.
+  """
+  submitAndAwaitStatus(tx: HexString!): TransactionStatus!
 }
 
 type SuccessStatus {
@@ -1036,6 +1050,15 @@ scalar U32
 scalar U64
 
 union UpgradePurpose = ConsensusParametersPurpose | StateTransitionPurpose
+
+type UploadedBytecode {
+  """Combined bytecode of all uploaded subsections."""
+  bytecode: HexString!
+  """Indicates if the bytecode upload is complete."""
+  completed: Boolean!
+  """Number of uploaded subsections (if incomplete)."""
+  uploadedSubsectionsNumber: Int
+}
 
 scalar UtxoId
 

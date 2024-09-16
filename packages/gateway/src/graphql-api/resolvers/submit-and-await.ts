@@ -21,44 +21,34 @@ export const submitAndAwait = {
       const authService = new AuthService(database);
       const transactionService = new TransactionService(authService);
 
-      let vault;
       let transactionId;
 
       if (transaction.type === TransactionType.Create) {
-        const submitResponse = await transactionService.submitDeploy({
+        const { hash } = await transactionService.submitDeploy({
           userId,
           apiToken,
-          transaction: <TransactionCreate>transaction
+          transaction: <TransactionCreate>transaction,
         });
-        vault = submitResponse.vault;
-        transactionId = submitResponse.deployTransfer.getHashTxId();
+        transactionId = hash;
       }
 
       if (transaction.type === TransactionType.Upgrade) {
-        const submitResponse = await transactionService.submitUpgrade({
+        const { hash } = await transactionService.submitUpgrade({
           userId,
           apiToken,
-          transaction: <TransactionUpgrade>transaction
+          transaction: <TransactionUpgrade>transaction,
         });
-        vault = submitResponse.vault;
-        transactionId = submitResponse.upgradeTransfer.getHashTxId();
+        transactionId = hash;
       }
 
       if (transaction.type === TransactionType.Upload) {
-        const submitResponse = await transactionService.submitUpload({
+        const { hash } = await transactionService.submitUpload({
           userId,
           apiToken,
-          transaction: <TransactionUpload>transaction
+          transaction: <TransactionUpload>transaction,
         });
-        vault = submitResponse.vault;
-        transactionId = submitResponse.uploadTransfer.getHashTxId();
+        transactionId = hash;
       }
-
-      console.log("[SUBSCRIPTION] Transaction sent to Bako", {
-        vault: vault.BakoSafeVaultId,
-        address: vault.address.toAddress(),
-        transactionId
-      });
 
       yield transactionId;
     } catch (error) {

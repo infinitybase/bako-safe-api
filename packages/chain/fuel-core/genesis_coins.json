@@ -18,10 +18,37 @@
     "tx_pointer_tx_idx": 0
   },
   {
+    "owner": "0x94ffcc53b892684acefaebc8a3d4a595e528a8cf664eeb3ef36f1020b0809d0d",
+    "amount": 1000000000000,
+    "asset_id": "0xccceae45a7c23dcd4024f4083e959a0686a191694e76fa4fb76c449361ca01f7",
+    "tx_id": "0x0000000000000000000000000000000000000000000000000000000000000034",
+    "output_index": 0,
+    "tx_pointer_block_height": 0,
+    "tx_pointer_tx_idx": 0
+  },
+  {
+    "owner": "0x94ffcc53b892684acefaebc8a3d4a595e528a8cf664eeb3ef36f1020b0809d0d",
+    "amount": 1000000000000,
+    "asset_id": "0xfed3ee85624c79cb18a3a848092239f2e764ed6b0aa156ad10a18bfdbe74269f",
+    "tx_id": "0x0000000000000000000000000000000000000000000000000000000000000035",
+    "output_index": 0,
+    "tx_pointer_block_height": 0,
+    "tx_pointer_tx_idx": 0
+  },
+  {
+    "owner": "0x94ffcc53b892684acefaebc8a3d4a595e528a8cf664eeb3ef36f1020b0809d0d",
+    "amount": 1000000000000,
+    "asset_id": "0xb3238af388ac05188e342b1801db79d358e4a162734511316c937b00c8687fe9",
+    "tx_id": "0x0000000000000000000000000000000000000000000000000000000000000036",
+    "output_index": 0,
+    "tx_pointer_block_height": 0,
+    "tx_pointer_tx_idx": 0
+  },
+  {
     "owner": "0x6b63804cfbf9856e68e5b6e7aef238dc8311ec55bec04df774003a2c96e0418e",
     "amount": 1000000000000,
     "asset_id": "0xf8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad07",
-    "tx_id": "0x0000000000000000000000000000000000000000000000000000000000000034",
+    "tx_id": "0x0000000000000000000000000000000000000000000000000000000000000037",
     "output_index": 0,
     "tx_pointer_block_height": 0,
     "tx_pointer_tx_idx": 0

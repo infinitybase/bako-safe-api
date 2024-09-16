@@ -1,21 +1,21 @@
 import {
-  getTransactionSummaryFromRequest,
-  OperationName,
   Provider,
+  OutputType,
   Transaction,
+  OperationName,
   TransactionType,
+  TransactionRequest,
+  UpgradePurposeTypeEnum,
+  UploadTransactionRequest,
+  CreateTransactionRequest,
+  UpgradeTransactionRequest,
+  getTransactionSummaryFromRequest,
 } from "fuels";
 import {
-  DeployTransfer,
   ITransactionSummary,
-  Vault,
-  UpgradeTransfer,
-  UploadTransfer,
 } from "bakosafe";
 
 import { AuthService } from "@/service/auth";
-
-type Transfer = DeployTransfer | UpgradeTransfer | UploadTransfer;
 
 type SubmitParams<T extends TransactionType> = {
   userId: string;
@@ -23,8 +23,8 @@ type SubmitParams<T extends TransactionType> = {
   transaction: Transaction<T>;
 };
 
-type SetSummaryParams<T extends Transfer> = {
-  transfer: T;
+type SetSummaryParams<T extends TransactionRequest> = {
+  request: T;
   provider: Provider;
 };
 
@@ -40,33 +40,41 @@ export class TransactionService {
     userId,
     transaction,
   }: SubmitParams<TransactionType.Create>) {
-    const {
-      code,
-      vaultId,
-      userAddress,
-      tokenConfig,
-    } = await this.authService.getSession(apiToken, userId);
+    const { code, vault } = await this.authService.getSession(apiToken, userId);
 
-    const vault = await Vault.create({
-      id: vaultId,
-      address: userAddress,
-      token: code.value,
-    });
+    const contractBytecode = transaction.witnesses[transaction.bytecodeWitnessIndex];
+    const contractOutput = transaction.outputs.find(
+      (output) => output.type === OutputType.ContractCreated,
+    );
 
-    const deployTransfer = await vault.BakoSafeDeployContract({
-      ...transaction,
-      name: tokenConfig.transactionTitle,
-    });
+    const request = CreateTransactionRequest.from({
+      inputs: [],
+      salt: transaction.salt,
+      witnesses: [contractBytecode.data],
+      storageSlots: transaction.storageSlots,
+      outputs: [contractOutput],
+      bytecodeWitnessIndex: transaction.bytecodeWitnessIndex,
+    })
+
+    const { tx: transactionRequest } = await vault.BakoTransfer(request);
 
     await this.setTransactionSummary({
-      transfer: deployTransfer,
+      request: transactionRequest,
       provider: vault.provider,
     });
     await this.authService.closeSession(code.id);
 
+    const hash = transactionRequest.getTransactionId(vault.provider.getChainId()).slice(2);
+
+    console.log("[MUTATION] Transaction sent to Bako", transactionRequest.type, {
+      vault: vault.address.toB256(),
+      hash,
+    });
+
     return {
+      hash,
       vault,
-      deployTransfer,
+      transactionRequest,
     };
   }
 
@@ -75,33 +83,43 @@ export class TransactionService {
     userId,
     transaction,
   }: SubmitParams<TransactionType.Upgrade>) {
-    const {
-      code,
-      vaultId,
-      userAddress,
-      tokenConfig,
-    } = await this.authService.getSession(apiToken, userId);
+    const { code, vault } = await this.authService.getSession(apiToken, userId);
 
-    const vault = await Vault.create({
-      id: vaultId,
-      address: userAddress,
-      token: code.value,
-    });
+    const { upgradePurpose, witnesses } = transaction;
+    let request = UpgradeTransactionRequest.from({});
 
-    const upgradeTransfer = await vault.BakoSafeUpgrade({
-      ...transaction,
-      name: tokenConfig.transactionTitle,
-    });
+    /** Upgrade consensus parameter */
+    if (upgradePurpose.type === UpgradePurposeTypeEnum.ConsensusParameters) {
+      const { witnessIndex } = upgradePurpose.data;
+      const bytecode = witnesses[witnessIndex].data;
+      request.addConsensusParametersUpgradePurpose(bytecode);
+    }
+
+    /** Upgrade state transition */
+    if (upgradePurpose.type === UpgradePurposeTypeEnum.StateTransition) {
+      const { bytecodeRoot } = upgradePurpose.data;
+      request.addStateTransitionUpgradePurpose(bytecodeRoot);
+    }
+
+    const { tx: transactionRequest } = await vault.BakoTransfer(request);
 
     await this.setTransactionSummary({
-      transfer: upgradeTransfer,
+      request: transactionRequest,
       provider: vault.provider,
     });
     await this.authService.closeSession(code.id);
 
+    const hash = transactionRequest.getTransactionId(vault.provider.getChainId()).slice(2);
+
+    console.log("[MUTATION] Transaction sent to Bako", transactionRequest.type, {
+      vault: vault.address.toB256(),
+      hash,
+    });
+
     return {
+      hash,
       vault,
-      upgradeTransfer,
+      transactionRequest,
     };
   }
 
@@ -110,48 +128,60 @@ export class TransactionService {
     userId,
     transaction,
   }: SubmitParams<TransactionType.Upload>) {
+    const { code, vault } = await this.authService.getSession(apiToken, userId);
+
     const {
-      code,
-      vaultId,
-      userAddress,
-      tokenConfig,
-    } = await this.authService.getSession(apiToken, userId);
+      witnesses,
+      root,
+      witnessIndex,
+      subsectionsNumber,
+      subsectionIndex,
+      proofSet,
+    } = transaction;
 
-    const vault = await Vault.create({
-      id: vaultId,
-      address: userAddress,
-      token: code.value,
+    const request = UploadTransactionRequest.from({});
+    request.addSubsection({
+      root,
+      subsectionsNumber,
+      subsectionIndex,
+      proofSet,
+      subsection: witnesses[witnessIndex].data,
     });
 
-    const uploadTransfer = await vault.BakoSafeUpload({
-      ...transaction,
-      name: `${transaction.subsectionIndex + 1}/${transaction.subsectionsNumber} ${tokenConfig.transactionTitle ?? 'Upload Transaction'} `,
-    });
+    const { tx: transactionRequest } = await vault.BakoTransfer(request);
 
     await this.setTransactionSummary({
-      transfer: uploadTransfer,
+      request: transactionRequest,
       provider: vault.provider,
     });
     await this.authService.closeSession(code.id);
 
+    const hash = transactionRequest.getTransactionId(vault.provider.getChainId()).slice(2);
+
+    console.log("[MUTATION] Transaction sent to Bako", transactionRequest.type, {
+      vault: vault.address.toB256(),
+      hash,
+    });
+
     return {
+      hash,
       vault,
-      uploadTransfer,
+      transactionRequest,
     };
   }
 
   private async setTransactionSummary({
-    transfer,
+    request,
     provider,
-  }: SetSummaryParams<Transfer>) {
+  }: SetSummaryParams<TransactionRequest>) {
     const transactionSummary: ITransactionSummary = {
       type: "cli",
       operations: [],
     };
 
-    if (transfer instanceof DeployTransfer) {
+    if (request instanceof CreateTransactionRequest) {
       const summaryFromRequest = await getTransactionSummaryFromRequest({
-        transactionRequest: transfer.transactionRequest,
+        transactionRequest: request,
         provider,
       });
       summaryFromRequest.operations = summaryFromRequest.operations.map(
@@ -160,7 +190,7 @@ export class TransactionService {
             operation.assetsSent = [
               {
                 assetId: provider.getBaseAssetId(),
-                amount: transfer.transactionRequest.maxFee,
+                amount: request.maxFee,
               },
             ];
           }
@@ -175,12 +205,12 @@ export class TransactionService {
     const query = `
 				UPDATE transactions
 				SET summary = $1
-				WHERE id = $2
+				WHERE hash = $2
     `;
 
     await this.authService.database.query(query, [
       JSON.stringify(transactionSummary),
-      transfer.BakoSafeTransactionId,
+      request.getTransactionId(provider.getChainId()).slice(2),
     ]);
   }
 }

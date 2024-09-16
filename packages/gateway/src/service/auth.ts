@@ -1,6 +1,7 @@
 import { Address } from "fuels";
 
 import { Database } from "@/lib";
+import { BakoProvider, Vault } from "bakosafe";
 
 type GetApiToken = {
   apiToken: string;
@@ -11,13 +12,22 @@ export class AuthService {
   constructor(private db: Database) {}
 
   async getSession(apiToken: string, userId: string) {
-    const { vaultId, tokenConfig, userAddress } = await this.getTokenData({
+    const { tokenConfig, userAddress, predicate } = await this.getTokenData({
       apiToken,
       userId,
     });
     const { code, codeId } = await this.createSession(userId);
+
+    const bakoProvider = await BakoProvider.create(predicate.provider, {
+      address: userAddress,
+      token: code,
+    });
+
+    const vault = await Vault.fromAddress(predicate.address, bakoProvider);
+
     return {
-      vaultId,
+      vault,
+      provider: bakoProvider,
       userAddress,
       tokenConfig,
       code: {
@@ -34,6 +44,7 @@ export class AuthService {
       SELECT api_tokens.predicate_id,
              users.address,
              predicates.provider,
+             predicates.predicate_address,
              api_tokens.config
       FROM api_tokens
                INNER JOIN predicates ON api_tokens.predicate_id = predicates.id
@@ -54,10 +65,13 @@ export class AuthService {
     }
 
     return {
-      vaultId: result.predicate_id,
-      provider: result.provider,
       userAddress: result.address,
       tokenConfig: result.config,
+      predicate: {
+        id: result.predicate_id,
+        address: result.predicate_address,
+        provider: result.provider,
+      }
     };
   }
 

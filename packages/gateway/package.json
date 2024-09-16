@@ -29,7 +29,7 @@
     "cors": "2.8.5",
     "dotenv": "16.4.5",
     "express": "4.17.1",
-    "fuels": "0.94.3",
+    "fuels": "0.94.6",
     "graphql": "^16.9.0",
     "graphql-http": "^1.22.1",
     "graphql-playground-middleware-express": "^1.7.23",
