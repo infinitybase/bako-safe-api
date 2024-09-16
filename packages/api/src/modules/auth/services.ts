@@ -69,11 +69,11 @@ export class AuthService implements IAuthService {
       const QBPredicate = Predicate.createQueryBuilder('p')
         .innerJoin('p.owner', 'owner')
         .select(['p.id',  'p.root', 'owner.id'])
-        .where('p.owner_id = :userId', { userId: workspace.id })
+        .where('p.owner_id = :userId', { userId: user.id })
         .where('p.root = :root ', { root: true });
 
-      const {id: predicateId} = await QBPredicate.getOne();
-      
+      const predicate = await QBPredicate.getOne();
+
       return {
         //session
         accessToken: token.token,
@@ -84,7 +84,7 @@ export class AuthService implements IAuthService {
         user_id: user.id,
         avatar: user.avatar,
         address: user.address,
-        rootWallet: predicateId ?? 'not found',
+        rootWallet: predicate?.id ?? 'not found',
         // workspace
         workspace: {
           ...workspace,
