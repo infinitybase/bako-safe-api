@@ -60,9 +60,6 @@ class User extends Base {
 
   @Column()
   avatar: string;
-
-  @Column({ type: 'uuid', nullable: true })
-  default_vault: string;
 }
 
 export { User };
