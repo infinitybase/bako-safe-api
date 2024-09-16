@@ -22,7 +22,7 @@ export interface IPredicatePayload {
   predicateAddress: string;
   minSigners: number;
   addresses?: string[];
-  //owner_id: string;
+  root: boolean;
   configurable: string;
   provider: string;
   chainId?: number;
