@@ -92,6 +92,15 @@ export class AuthService implements IAuthService {
     };
   }
 
+  static async findTokenByUser(userId: string) {
+    return await UserToken.createQueryBuilder('userToken')
+      .leftJoinAndSelect('userToken.user', 'user')
+      .leftJoinAndSelect('userToken.workspace', 'workspace')
+      .where('userToken.user = :userId', { userId })
+      .andWhere('userToken.expired_at > :now', { now: new Date() })
+      .getOne();
+  }
+
   static async clearExpiredTokens(): Promise<void> {
     try {
       await UserToken.delete({

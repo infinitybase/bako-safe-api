@@ -195,13 +195,7 @@ export class TokenUtils {
   }
 
   static async getTokenByUser(userId: string) {
-    const userToken = await UserToken.createQueryBuilder('userToken')
-      .leftJoinAndSelect('userToken.user', 'user')
-      .leftJoinAndSelect('userToken.workspace', 'workspace')
-      .where('userToken.user = :userId', { userId })
-      .andWhere('userToken.expired_at > :now', { now: new Date() })
-      .getOne();
-
+    const userToken = await AuthService.findTokenByUser(userId);
     return userToken;
   }
 
