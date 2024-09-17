@@ -5,7 +5,7 @@ import { DApp, Predicate, RecoverCodeType, User } from '@src/models';
 import { SocketClient } from '@src/socket/client';
 
 import { error } from '@utils/error';
-import { Responses, bindMethods, successful } from '@utils/index';
+import { Responses, TokenUtils, bindMethods, successful } from '@utils/index';
 
 import { PredicateService } from '../predicate/services';
 import { RecoverCodeService } from '../recoverCode/services';
@@ -18,6 +18,7 @@ import {
   IDappRequest,
 } from './types';
 import { ITransactionResponse } from '../transaction/types';
+import app from '@src/server/app';
 
 const { API_URL } = process.env;
 
@@ -88,7 +89,14 @@ export class DappController {
     try {
       const { sessionId } = params;
       const origin = headers.origin || headers.Origin;
+
+      const { user } = await new DAppsService().findUserBySessionIdAndOrigin(
+        sessionId,
+        origin,
+      );
+      const userToken = await TokenUtils.getTokenByUser(user.id);
       await new DAppsService().delete(sessionId, origin);
+      await app._sessionCache.removeSession(userToken.token);
       return successful(null, Responses.NoContent);
     } catch (e) {
       return error(e.error, e.statusCode);
