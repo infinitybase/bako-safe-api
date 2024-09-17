@@ -82,7 +82,7 @@ export class DAppsService implements IDAppsService {
     }
   }
 
-  async findUserBySessionIdAndOrigin(sessionId: string, origin: string) {
+  async findDAppUserBySessionIdAndOrigin(sessionId: string, origin: string) {
     try {
       return await DApp.createQueryBuilder('d')
         .innerJoin('d.user', 'user')

@@ -90,7 +90,7 @@ export class DappController {
       const { sessionId } = params;
       const origin = headers.origin || headers.Origin;
 
-      const { user } = await new DAppsService().findUserBySessionIdAndOrigin(
+      const { user } = await new DAppsService().findDAppUserBySessionIdAndOrigin(
         sessionId,
         origin,
       );
