@@ -144,29 +144,27 @@ export class TokenUtils {
   }
 
   static async createAuthToken(signature: string, digest: string, encoder: string) {
-    try{
+    try {
       const address = await TokenUtils.verifySignature({
         signature,
         digest,
         encoder,
       });
-  
+
       if (!address)
         throw new Unauthorized({
           type: ErrorTypes.Unauthorized,
           title: UnauthorizedErrorTitles.INVALID_SIGNATURE,
           detail: `User not found`,
         });
-  
+
       const user = await TokenUtils.checkUserExists(address);
-  
-  
+
       await TokenUtils.invalidateRecoverCode(user, RecoverCodeType.AUTH);
-  
-      
+
       const workspace = await TokenUtils.findSingleWorkspace(user.id);
       await TokenUtils.revokeToken(user); // todo: verify if it's necessary
-  
+
       const sig = await new AuthService().signIn({
         token: signature,
         encoder: Encoder[encoder],
@@ -176,56 +174,61 @@ export class TokenUtils {
         user: user,
         workspace,
       });
-  
+
       return {
         userToken: await this.getTokenBySignature(sig.accessToken),
         signin: sig,
       };
-    }catch(e){
+    } catch (e) {
       throw e;
     }
   }
 
   static async getTokenBySignature(signature: string) {
-    try{
+    try {
       const userToken = AuthService.findToken(signature);
 
       return userToken;
-    }catch(e){
+    } catch (e) {
       throw e;
     }
   }
 
+  static async getTokenByUser(userId: string) {
+    const userToken = await AuthService.findTokenByUser(userId);
+    return userToken;
+  }
+
   static async renewToken(token: ISignInResponse) {
-    try{
-      const expirationDate = token.expired_at ? new Date(token.expired_at) : new Date() ;
+    try {
+      const expirationDate = token.expired_at
+        ? new Date(token.expired_at)
+        : new Date();
       const now = new Date();
       console.log('[RENEW TOKEN INFO]: ', {
-        expirationDate, now
-      })
-  
-      const minutesToExpiration = differenceInMinutes(
         expirationDate,
         now,
-      );
-  
+      });
+
+      const minutesToExpiration = differenceInMinutes(expirationDate, now);
+
       if (minutesToExpiration < Number(MINUTES_TO_RENEW)) {
         const _token = await UserToken.findOne({
           where: { token: token.accessToken },
-        })
+        });
         _token.expired_at = addMinutes(new Date(), Number(RENEWAL_EXPIRES_IN));
         await _token.save();
-  
+
         const renewedToken = await this.getTokenBySignature(token.accessToken);
         await app._sessionCache.addSession(token.accessToken, renewedToken);
-  
+
         return renewedToken;
       }
-  
+
       return token;
-    }catch(e){
-      console.log('[RENEW TOKEN ERROR]: DATA FORMAT', e)
-     return token;
+    } catch (e) {
+      console.log('[RENEW TOKEN ERROR]: DATA FORMAT', e);
+      return token;
     }
   }
 

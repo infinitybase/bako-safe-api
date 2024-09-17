@@ -56,10 +56,13 @@ export class AuthService implements IAuthService {
       .where('ut.token = :signature', { signature })
       .andWhere('ut.expired_at > :now', { now: new Date() });
 
-    const { user, workspace, ...token } = await QBtoken.getOne();
-    if (!token) {
+    const tokenResult = await QBtoken.getOne();
+
+    if (!tokenResult) {
       return undefined;
     }
+
+    const { user, workspace, ...token } = tokenResult;
 
     // console.log('[FIND_TOKEN_INFO]: ', { user, workspace, token });
     const QBPredicate = Predicate.createQueryBuilder('p')
@@ -87,6 +90,15 @@ export class AuthService implements IAuthService {
         permissions: workspace.permissions,
       },
     };
+  }
+
+  static async findTokenByUser(userId: string) {
+    return await UserToken.createQueryBuilder('userToken')
+      .leftJoinAndSelect('userToken.user', 'user')
+      .leftJoinAndSelect('userToken.workspace', 'workspace')
+      .where('userToken.user = :userId', { userId })
+      .andWhere('userToken.expired_at > :now', { now: new Date() })
+      .getOne();
   }
 
   static async clearExpiredTokens(): Promise<void> {
