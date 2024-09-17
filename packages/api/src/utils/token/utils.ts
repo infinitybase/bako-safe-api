@@ -210,10 +210,11 @@ export class TokenUtils {
       );
   
       if (minutesToExpiration < Number(MINUTES_TO_RENEW)) {
-        await UserToken.update(
-          { id: token.accessToken },
-          { expired_at: addMinutes(new Date(), Number(RENEWAL_EXPIRES_IN)) },
-        );
+        const _token = await UserToken.findOne({
+          where: { token: token.accessToken },
+        })
+        _token.expired_at = addMinutes(new Date(), Number(RENEWAL_EXPIRES_IN));
+        await _token.save();
   
         const renewedToken = await this.getTokenBySignature(token.accessToken);
         await app._sessionCache.addSession(token.accessToken, renewedToken);
