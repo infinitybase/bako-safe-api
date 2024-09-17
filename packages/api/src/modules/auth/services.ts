@@ -68,29 +68,7 @@ export class AuthService implements IAuthService {
       .where('p.owner_id = :userId', { userId: user.id })
       .andWhere('p.root = :root ', { root: true });
 
-    const result = await QBPredicate.getOne();
-
-    console.log('result:', result);
-
-    if (!result) {
-      return {
-        //session
-        accessToken: token.token,
-        expired_at: token.expired_at,
-        // user
-        name: user.name,
-        type: user.type,
-        user_id: user.id,
-        avatar: user.avatar,
-        address: user.address,
-        rootWallet: 'not found',
-        // workspace
-        workspace: {
-          ...workspace,
-          permissions: workspace.permissions[user.id],
-        },
-      };
-    }
+    const predicate = await QBPredicate.getOne();
 
     return {
       //session
@@ -102,11 +80,10 @@ export class AuthService implements IAuthService {
       user_id: user.id,
       avatar: user.avatar,
       address: user.address,
-      rootWallet: result.id,
+      rootWallet: predicate?.id ?? 'not found',
       // workspace
       workspace: {
         ...workspace,
-        permissions: workspace.permissions[user.id],
       },
     };
   }
