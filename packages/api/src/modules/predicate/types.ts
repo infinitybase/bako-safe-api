@@ -26,7 +26,6 @@ export interface IPredicatePayload {
   configurable: string;
   provider: string;
   chainId?: number;
-  user: User;
   members?: User[];
   owner?: User;
   workspace?: Workspace;

@@ -216,8 +216,6 @@ export class UserController {
           name: name ?? address,
           avatar: IconUtils.user(),
         });
-
-        await this.abstractAccount(existingUser, provider);
       }
 
       const code = await new RecoverCodeService()
@@ -239,44 +237,6 @@ export class UserController {
     } catch (e) {
       return error(e.error, e.statusCode);
     }
-  }
-
-  async abstractAccount(user: User, provider_url: string) {
-    const provider = await Provider.create(provider_url);
-    const predicate = await Vault.create({
-      configurable: {
-        SIGNATURES_COUNT: 1,
-        SIGNERS: [user.address],
-        network: BakoSafe.getProviders('CHAIN_URL'),
-        chainId: provider.getChainId(),
-      },
-    });
-
-    const workspace = await new WorkspaceService().findByUser(user.id, true);
-
-    const version = await PredicateVersion.findOne({
-      where: { code: predicate.version },
-    });
-
-    await new PredicateService().create({
-      name: 'Personal Vault',
-      description:
-        'This is your first vault. It requires a single signer (you) to execute transactions; a pattern called 1-of-1',
-      predicateAddress: Address.fromString(predicate.address.toString()).toB256(),
-      minSigners: 1,
-      addresses: [user.address],
-      configurable: JSON.stringify({ ...predicate.getConfigurable() }),
-      provider: predicate.provider.url,
-      chainId: predicate.provider.getChainId(),
-      user,
-      owner: user,
-      version,
-      members: [user],
-      workspace: workspace[0],
-      root: true,
-    });
-
-    return await user.save();
   }
 
   async getByHardware(req: ICheckHardwareRequest) {
