@@ -43,6 +43,10 @@ class Predicate extends Base {
   @Column({ nullable: true })
   chainId?: number;
 
+  // if true is the root wallet of user
+  @Column({ nullable: true, default: false })
+  root: boolean;
+
   @JoinColumn({ name: 'owner_id' })
   @OneToOne(() => User)
   owner: User;

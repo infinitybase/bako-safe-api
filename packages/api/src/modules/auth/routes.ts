@@ -8,7 +8,7 @@ import { validateSignInCodeParams, validateSignInPayload } from './validations';
 
 const router = Router();
 const authService = new AuthService();
-const { signIn, updateWorkspace, generateSignCode } = new AuthController(
+const { signIn, generateSignCode } = new AuthController(
   authService,
 );
 
@@ -23,7 +23,7 @@ router.post(
 );
 
 //todo: verify why do cant use authMiddleware here
-router.put('/workspace', handleResponse(updateWorkspace));
+// router.put('/workspace', handleResponse(updateWorkspace));
 
 //router.delete(signOutPath, authMiddleware, handleResponse(authController.signOut));
 
