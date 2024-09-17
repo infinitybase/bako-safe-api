@@ -238,8 +238,8 @@ importers:
         specifier: 4.17.1
         version: 4.17.1
       fuels:
-        specifier: 0.94.3
-        version: 0.94.3
+        specifier: 0.94.0
+        version: 0.94.0
       graphql:
         specifier: ^16.9.0
         version: 16.9.0
@@ -255,9 +255,6 @@ importers:
       pg:
         specifier: ^8.12.0
         version: 8.12.0
-      ramda:
-        specifier: ^0.30.1
-        version: 0.30.1
       tai64:
         specifier: ^1.0.0
         version: 1.0.0
@@ -286,9 +283,6 @@ importers:
       '@types/pg':
         specifier: ^8.11.6
         version: 8.11.6
-      '@types/ramda':
-        specifier: ^0.30.2
-        version: 0.30.2
       graphql-import-node:
         specifier: ^0.0.5
         version: 0.0.5(graphql@16.9.0)
@@ -7225,7 +7219,7 @@ snapshots:
     dependencies:
       '@fuel-ts/crypto': 0.94.0
       '@fuel-ts/errors': 0.94.0
-      '@fuel-ts/hasher': 0.94.0
+      '@fuel-ts/hasher': 0.94.3
       '@fuel-ts/interfaces': 0.94.0
       '@fuel-ts/math': 0.94.0
       '@fuel-ts/utils': 0.94.0
@@ -7244,7 +7238,7 @@ snapshots:
   '@fuel-ts/abi-typegen@0.94.0':
     dependencies:
       '@fuel-ts/errors': 0.94.0
-      '@fuel-ts/interfaces': 0.94.0
+      '@fuel-ts/interfaces': 0.94.3
       '@fuel-ts/utils': 0.94.0
       '@fuel-ts/versions': 0.94.0
       commander: 12.1.0
@@ -7322,7 +7316,7 @@ snapshots:
       '@fuel-ts/crypto': 0.94.0
       '@fuel-ts/errors': 0.94.0
       '@fuel-ts/interfaces': 0.94.0
-      '@fuel-ts/utils': 0.94.0
+      '@fuel-ts/utils': 0.94.3
       '@noble/hashes': 1.4.0
       bech32: 2.0.0
 
@@ -7342,8 +7336,8 @@ snapshots:
       '@fuel-ts/crypto': 0.94.0
       '@fuel-ts/errors': 0.94.0
       '@fuel-ts/hasher': 0.94.0
-      '@fuel-ts/interfaces': 0.94.0
-      '@fuel-ts/math': 0.94.0
+      '@fuel-ts/interfaces': 0.94.3
+      '@fuel-ts/math': 0.94.3
       '@fuel-ts/merkle': 0.94.0
       '@fuel-ts/program': 0.94.0
       '@fuel-ts/transactions': 0.94.0
@@ -7380,7 +7374,7 @@ snapshots:
       '@fuel-ts/errors': 0.94.0
       '@fuel-ts/interfaces': 0.94.0
       '@fuel-ts/math': 0.94.0
-      '@fuel-ts/utils': 0.94.0
+      '@fuel-ts/utils': 0.94.3
       '@noble/hashes': 1.4.0
 
   '@fuel-ts/crypto@0.94.3':
@@ -7402,7 +7396,7 @@ snapshots:
   '@fuel-ts/hasher@0.94.0':
     dependencies:
       '@fuel-ts/crypto': 0.94.0
-      '@fuel-ts/interfaces': 0.94.0
+      '@fuel-ts/interfaces': 0.94.3
       '@fuel-ts/utils': 0.94.0
       '@noble/hashes': 1.4.0
 
@@ -7431,7 +7425,7 @@ snapshots:
 
   '@fuel-ts/merkle@0.94.0':
     dependencies:
-      '@fuel-ts/hasher': 0.94.0
+      '@fuel-ts/hasher': 0.94.3
       '@fuel-ts/math': 0.94.0
 
   '@fuel-ts/merkle@0.94.3':
@@ -7506,8 +7500,8 @@ snapshots:
       '@fuel-ts/abi-coder': 0.94.0
       '@fuel-ts/address': 0.94.0
       '@fuel-ts/errors': 0.94.0
-      '@fuel-ts/hasher': 0.94.0
-      '@fuel-ts/interfaces': 0.94.0
+      '@fuel-ts/hasher': 0.94.3
+      '@fuel-ts/interfaces': 0.94.3
       '@fuel-ts/math': 0.94.0
       '@fuel-ts/utils': 0.94.0
 
@@ -8690,6 +8684,7 @@ snapshots:
       pg-types: 4.0.2
 
   '@types/qs@6.9.15': {}
+
 
   '@types/ramda@0.30.2':
     dependencies:
@@ -10457,7 +10452,7 @@ snapshots:
       lodash.camelcase: 4.3.0
       portfinder: 1.0.32
       toml: 3.0.0
-      uglify-js: 3.18.0
+      uglify-js: 3.19.3
       yup: 1.4.0
     transitivePeerDependencies:
       - encoding
@@ -13179,7 +13174,6 @@ snapshots:
       yn: 3.1.1
 
   ts-toolbelt@9.6.0: {}
-
   tsconfig-paths@3.15.0:
     dependencies:
       '@types/json5': 0.0.29
@@ -13315,6 +13309,7 @@ snapshots:
   typescript@5.4.5: {}
 
   ua-parser-js@1.0.38: {}
+
 
   uglify-js@3.18.0: {}
 
