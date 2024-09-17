@@ -96,7 +96,7 @@ export class DappController {
       );
       const userToken = await TokenUtils.getTokenByUser(user.id);
       await new DAppsService().delete(sessionId, origin);
-      await app._sessionCache.removeSession(userToken.token);
+      await app._sessionCache.removeSession(userToken?.token);
       return successful(null, Responses.NoContent);
     } catch (e) {
       return error(e.error, e.statusCode);
