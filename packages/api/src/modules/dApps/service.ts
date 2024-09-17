@@ -81,4 +81,21 @@ export class DAppsService implements IDAppsService {
       });
     }
   }
+
+  async findUserBySessionIdAndOrigin(sessionId: string, origin: string) {
+    try {
+      return await DApp.createQueryBuilder('d')
+        .innerJoin('d.user', 'user')
+        .addSelect(['user.id'])
+        .where('d.session_id = :sessionId', { sessionId })
+        .andWhere('d.origin = :origin', { origin })
+        .getOne();
+    } catch (e) {
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on find user by session id and origin',
+        detail: e,
+      });
+    }
+  }
 }
