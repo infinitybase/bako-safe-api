@@ -88,7 +88,7 @@ export class AuthService implements IAuthService {
         // workspace
         workspace: {
           ...workspace,
-          permissions: workspace.permissions[user.id],
+          permissions: workspace.permissions,
         },
       };
   }

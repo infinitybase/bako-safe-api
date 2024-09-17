@@ -193,7 +193,7 @@ export class UserController {
   //verify used name
   async create(req: ICreateRequest) {
     try {
-      const { address, name, type, provider } = req.body;
+      const { address, name, provider } = req.body;
 
       //verify user exists
       let existingUser = await this.userService.findByAddress(address);
@@ -241,10 +241,7 @@ export class UserController {
     }
   }
 
-  async abstractAccount(
-    user: User,
-    provider_url: string,
-  ) {
+  async abstractAccount(user: User, provider_url: string) {
     const provider = await Provider.create(provider_url);
     const predicate = await Vault.create({
       configurable: {
@@ -261,7 +258,7 @@ export class UserController {
       where: { code: predicate.version },
     });
 
-    const vault = await new PredicateService().create({
+    await new PredicateService().create({
       name: 'Personal Vault',
       description:
         'This is your first vault. It requires a single signer (you) to execute transactions; a pattern called 1-of-1',

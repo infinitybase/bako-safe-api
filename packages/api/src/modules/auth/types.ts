@@ -3,7 +3,12 @@ import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 import { Workspace } from '@src/models/Workspace';
 
 import { Encoder } from '@models/UserToken';
-import { IUserPermissions, TypeUser, User, WebAuthn } from '@models/index';
+import {
+  IPermissions,
+  TypeUser,
+  User,
+  WebAuthn,
+} from '@models/index';
 
 import { AuthValidatedRequest, UnloggedRequest } from '@middlewares/auth/types';
 
@@ -71,7 +76,7 @@ export type IWorkspaceSignin = {
   avatar: string;
   single: boolean;
   description: string;
-  permissions: IUserPermissions;
+  permissions: IPermissions;
 };
 
 export type IUserSignin = {
