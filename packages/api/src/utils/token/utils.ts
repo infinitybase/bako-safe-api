@@ -13,7 +13,7 @@ import { Unauthorized, UnauthorizedErrorTitles } from '@utils/error/Unauthorized
 
 import { recoverFuelSignature, recoverWebAuthnSignature } from './web3';
 import app from '@src/server/app';
-import exp from 'constants';
+import { ISignInResponse } from '@src/modules/auth/types';
 
 const EXPIRES_IN = process.env.TOKEN_EXPIRATION_TIME ?? '20';
 const RENEWAL_EXPIRES_IN = process.env.RENEWAL_TOKEN_EXPIRATION_TIME ?? '10';
@@ -186,12 +186,7 @@ export class TokenUtils {
 
   static async getTokenBySignature(signature: string) {
     try {
-      const userToken = await UserToken.createQueryBuilder('userToken')
-        .leftJoinAndSelect('userToken.user', 'user')
-        .leftJoinAndSelect('userToken.workspace', 'workspace')
-        .where('userToken.token = :token', { token: signature })
-        .andWhere('userToken.expired_at > :now', { now: new Date() })
-        .getOne();
+      const userToken = AuthService.findToken(signature);
 
       return userToken;
     } catch (e) {
@@ -210,7 +205,7 @@ export class TokenUtils {
     return userToken;
   }
 
-  static async renewToken(token: UserToken) {
+  static async renewToken(token: ISignInResponse) {
     try {
       const expirationDate = token.expired_at
         ? new Date(token.expired_at)
@@ -219,19 +214,19 @@ export class TokenUtils {
       console.log('[RENEW TOKEN INFO]: ', {
         expirationDate,
         now,
-        creation: token.createdAt,
       });
 
       const minutesToExpiration = differenceInMinutes(expirationDate, now);
 
       if (minutesToExpiration < Number(MINUTES_TO_RENEW)) {
-        await UserToken.update(
-          { id: token.id },
-          { expired_at: addMinutes(new Date(), Number(RENEWAL_EXPIRES_IN)) },
-        );
+        const _token = await UserToken.findOne({
+          where: { token: token.accessToken },
+        });
+        _token.expired_at = addMinutes(new Date(), Number(RENEWAL_EXPIRES_IN));
+        await _token.save();
 
-        const renewedToken = await this.getTokenBySignature(token.token);
-        await app._sessionCache.addSession(token.token, renewedToken);
+        const renewedToken = await this.getTokenBySignature(token.accessToken);
+        await app._sessionCache.addSession(token.accessToken, renewedToken);
 
         return renewedToken;
       }
