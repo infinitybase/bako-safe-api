@@ -84,6 +84,7 @@ export class AuthService implements IAuthService {
       avatar: user.avatar,
       address: user.address,
       rootWallet: predicate?.id ?? 'not found',
+      webauthn: user.webauthn,
       // workspace
       workspace: {
         ...workspace,
