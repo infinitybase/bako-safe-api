@@ -13,44 +13,20 @@ import { AuthService, TransactionService } from "@/service";
 
 export const submitAndAwait = {
   subscribe: async function* (_, args, context) {
-    const { apiToken, userId, database } = context;
-
+    const { schema, apiToken, userId, database } = context;
     const transaction = toTransaction(args.tx);
 
     try {
       const authService = new AuthService(database);
       const transactionService = new TransactionService(authService);
 
-      let transactionId;
+      const { hash } = await transactionService.submit({
+        userId,
+        apiToken,
+        transaction,
+      });
 
-      if (transaction.type === TransactionType.Create) {
-        const { hash } = await transactionService.submitDeploy({
-          userId,
-          apiToken,
-          transaction: <TransactionCreate>transaction,
-        });
-        transactionId = hash;
-      }
-
-      if (transaction.type === TransactionType.Upgrade) {
-        const { hash } = await transactionService.submitUpgrade({
-          userId,
-          apiToken,
-          transaction: <TransactionUpgrade>transaction,
-        });
-        transactionId = hash;
-      }
-
-      if (transaction.type === TransactionType.Upload) {
-        const { hash } = await transactionService.submitUpload({
-          userId,
-          apiToken,
-          transaction: <TransactionUpload>transaction,
-        });
-        transactionId = hash;
-      }
-
-      yield transactionId;
+      yield hash;
     } catch (error) {
       console.error(error);
       throw error;

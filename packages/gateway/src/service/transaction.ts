@@ -1,26 +1,37 @@
 import {
+  Address,
   Provider,
+  arrayify,
+  InputType,
   OutputType,
   Transaction,
   OperationName,
+  InputContract,
   TransactionType,
   TransactionRequest,
   UpgradePurposeTypeEnum,
-  UploadTransactionRequest,
+  BlobTransactionRequest,
   CreateTransactionRequest,
+  ScriptTransactionRequest,
+  UploadTransactionRequest,
   UpgradeTransactionRequest,
   getTransactionSummaryFromRequest,
+  ZeroBytes32
 } from "fuels";
-import {
-  ITransactionSummary,
-} from "bakosafe";
+import { ITransactionSummary, Vault } from "bakosafe";
 
 import { AuthService } from "@/service/auth";
 
-type SubmitParams<T extends TransactionType> = {
+type SubmitParams = {
   userId: string;
   apiToken: string;
-  transaction: Transaction<T>;
+  transaction: Transaction;
+};
+
+type SubmitTransactionParams = {
+  vault: Vault;
+  tokenConfig: { transactionTitle: string };
+  transaction: Transaction;
 };
 
 type SetSummaryParams<T extends TransactionRequest> = {
@@ -35,16 +46,63 @@ export class TransactionService {
     this.authService = authService;
   }
 
-  async submitDeploy({
+  async submit({
     apiToken,
     userId,
     transaction,
-  }: SubmitParams<TransactionType.Create>) {
-    const { code, vault } = await this.authService.getSession(apiToken, userId);
+  }: SubmitParams): Promise<{
+    hash: string;
+    vault: Vault;
+    transactionRequest: TransactionRequest;
+  }> {
+    const { code, vault, tokenConfig } = await this.authService.getSession(
+      apiToken,
+      userId
+    );
 
-    const contractBytecode = transaction.witnesses[transaction.bytecodeWitnessIndex];
+    let transactionRequest: TransactionRequest;
+    switch (transaction.type) {
+      case TransactionType.Create:
+        transactionRequest = await this.submitDeploy({ tokenConfig, vault, transaction });
+        break;
+      case TransactionType.Upgrade:
+        transactionRequest = await this.submitUpgrade({ tokenConfig, vault, transaction });
+        break;
+      case TransactionType.Upload:
+        transactionRequest = await this.submitUpload({ tokenConfig, vault, transaction });
+        break;
+      case TransactionType.Blob:
+        transactionRequest = await this.submitBlob({ tokenConfig, vault, transaction });
+        break;
+      case TransactionType.Script:
+        transactionRequest = await this.submitScript({ tokenConfig, vault, transaction });
+        break;
+      default:
+        throw new Error("Unsupported transaction type");
+    }
+
+    await this.setTransactionSummary({
+      request: transactionRequest,
+      provider: vault.provider,
+    });
+    await this.authService.closeSession(code.id);
+
+    const hash = transactionRequest
+      .getTransactionId(vault.provider.getChainId())
+      .slice(2);
+
+    return {
+      hash,
+      vault,
+      transactionRequest,
+    };
+  }
+
+  async submitDeploy({ vault, tokenConfig, transaction }: SubmitTransactionParams) {
+    const contractBytecode =
+      transaction.witnesses[transaction.bytecodeWitnessIndex];
     const contractOutput = transaction.outputs.find(
-      (output) => output.type === OutputType.ContractCreated,
+      (output) => output.type === OutputType.ContractCreated
     );
 
     const request = CreateTransactionRequest.from({
@@ -54,37 +112,16 @@ export class TransactionService {
       storageSlots: transaction.storageSlots,
       outputs: [contractOutput],
       bytecodeWitnessIndex: transaction.bytecodeWitnessIndex,
-    })
-
-    const { tx: transactionRequest } = await vault.BakoTransfer(request);
-
-    await this.setTransactionSummary({
-      request: transactionRequest,
-      provider: vault.provider,
-    });
-    await this.authService.closeSession(code.id);
-
-    const hash = transactionRequest.getTransactionId(vault.provider.getChainId()).slice(2);
-
-    console.log("[MUTATION] Transaction sent to Bako", transactionRequest.type, {
-      vault: vault.address.toB256(),
-      hash,
     });
 
-    return {
-      hash,
-      vault,
-      transactionRequest,
-    };
+    const { tx: transactionRequest } = await vault.BakoTransfer(request, {
+      name: tokenConfig.transactionTitle,
+    });
+
+    return transactionRequest;
   }
 
-  async submitUpgrade({
-    apiToken,
-    userId,
-    transaction,
-  }: SubmitParams<TransactionType.Upgrade>) {
-    const { code, vault } = await this.authService.getSession(apiToken, userId);
-
+  async submitUpgrade({ vault, tokenConfig, transaction }: SubmitTransactionParams) {
     const { upgradePurpose, witnesses } = transaction;
     let request = UpgradeTransactionRequest.from({});
 
@@ -101,35 +138,14 @@ export class TransactionService {
       request.addStateTransitionUpgradePurpose(bytecodeRoot);
     }
 
-    const { tx: transactionRequest } = await vault.BakoTransfer(request);
-
-    await this.setTransactionSummary({
-      request: transactionRequest,
-      provider: vault.provider,
-    });
-    await this.authService.closeSession(code.id);
-
-    const hash = transactionRequest.getTransactionId(vault.provider.getChainId()).slice(2);
-
-    console.log("[MUTATION] Transaction sent to Bako", transactionRequest.type, {
-      vault: vault.address.toB256(),
-      hash,
+    const { tx: transactionRequest } = await vault.BakoTransfer(request, {
+      name: tokenConfig.transactionTitle,
     });
 
-    return {
-      hash,
-      vault,
-      transactionRequest,
-    };
+    return transactionRequest;
   }
 
-  async submitUpload({
-    apiToken,
-    userId,
-    transaction,
-  }: SubmitParams<TransactionType.Upload>) {
-    const { code, vault } = await this.authService.getSession(apiToken, userId);
-
+  async submitUpload({ vault, tokenConfig, transaction }: SubmitTransactionParams) {
     const {
       witnesses,
       root,
@@ -148,26 +164,48 @@ export class TransactionService {
       subsection: witnesses[witnessIndex].data,
     });
 
-    const { tx: transactionRequest } = await vault.BakoTransfer(request);
-
-    await this.setTransactionSummary({
-      request: transactionRequest,
-      provider: vault.provider,
-    });
-    await this.authService.closeSession(code.id);
-
-    const hash = transactionRequest.getTransactionId(vault.provider.getChainId()).slice(2);
-
-    console.log("[MUTATION] Transaction sent to Bako", transactionRequest.type, {
-      vault: vault.address.toB256(),
-      hash,
+    const { tx: transactionRequest } = await vault.BakoTransfer(request, {
+      name: tokenConfig.transactionTitle,
     });
 
-    return {
-      hash,
-      vault,
-      transactionRequest,
-    };
+    return transactionRequest;
+  }
+
+  async submitBlob({ vault, tokenConfig, transaction }: SubmitTransactionParams) {
+    const { blobId, witnessIndex, witnesses } = transaction;
+    const bytecode = witnesses[witnessIndex].data;
+
+    let request = BlobTransactionRequest.from({
+      blobId,
+      witnessIndex,
+      witnesses: [bytecode],
+    });
+
+    const { tx: transactionRequest } = await vault.BakoTransfer(request, {
+      name: tokenConfig.transactionTitle,
+    });
+
+    return transactionRequest;
+  }
+
+  async submitScript({ vault, tokenConfig, transaction }: SubmitTransactionParams) {
+    const {inputs, scriptData, script} = transaction;
+
+    const request = ScriptTransactionRequest.from({});
+    const contractInput = inputs.find(input => input.type === InputType.Contract) as InputContract;
+
+    if (contractInput) {
+      request.addContractInputAndOutput(Address.fromAddressOrString(contractInput.contractID))
+    }
+
+    request.script = arrayify(script ?? ZeroBytes32);
+    request.scriptData = arrayify(scriptData ?? ZeroBytes32);
+
+    const { tx: transactionRequest } = await vault.BakoTransfer(request, {
+      name: tokenConfig.transactionTitle,
+    });
+
+    return transactionRequest;
   }
 
   private async setTransactionSummary({

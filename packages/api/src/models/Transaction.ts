@@ -84,6 +84,7 @@ class Transaction extends Base {
       [FuelTransactionType.Script]: TransactionType.TRANSACTION_SCRIPT,
       [FuelTransactionType.Upgrade]: TransactionType.TRANSACTION_UPGRADE,
       [FuelTransactionType.Upload]: TransactionType.TRANSACTION_UPLOAD,
+      [FuelTransactionType.Blob]: TransactionType.TRANSACTION_BLOB,
       default: TransactionType.TRANSACTION_SCRIPT,
     };
 
