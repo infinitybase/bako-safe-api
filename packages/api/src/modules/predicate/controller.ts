@@ -243,6 +243,7 @@ export class PredicateController {
       provider,
       address: predicateAddress,
       owner,
+      orderByRoot,
       orderBy,
       sort,
       page,
@@ -280,7 +281,7 @@ export class PredicateController {
           workspace: _wk,
           signer: hasSingle ? user.address : undefined,
         })
-        .ordination({ orderBy, sort })
+        .ordination({ orderByRoot, orderBy, sort })
         .paginate({ page, perPage })
         .list();
 

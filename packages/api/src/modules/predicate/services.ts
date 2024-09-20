@@ -1,11 +1,10 @@
-import { IConfVault, Vault } from 'bakosafe';
+import { Vault } from 'bakosafe';
 import { Brackets } from 'typeorm';
 
 import { NotFound } from '@src/utils/error';
-import { IOrdination, setOrdination } from '@src/utils/ordination';
 import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination';
 
-import { Predicate, Transaction, TransactionType } from '@models/index';
+import { Predicate } from '@models/index';
 
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
@@ -15,11 +14,13 @@ import {
   IPredicatePayload,
   IPredicateService,
 } from './types';
+import { IPredicateOrdination, setOrdination } from './ordination';
 
 export class PredicateService implements IPredicateService {
-  private _ordination: IOrdination<Predicate> = {
+  private _ordination: IPredicateOrdination = {
     orderBy: 'updatedAt',
     sort: 'DESC',
+    orderByRoot: 'false',
   };
   private _pagination: PaginationParams;
   private _filter: IPredicateFilterParams;
@@ -49,7 +50,7 @@ export class PredicateService implements IPredicateService {
     return this;
   }
 
-  ordination(ordination?: IOrdination<Predicate>) {
+  ordination(ordination?: IPredicateOrdination) {
     this._ordination = setOrdination(ordination);
     return this;
   }
@@ -210,9 +211,13 @@ export class PredicateService implements IPredicateService {
         );
       }
 
-      // Aplicar ordenação
+      if (this._ordination.orderByRoot === 'true') {
+        queryBuilder.addOrderBy('p.root', this._ordination.sort);
+      }
+
       if (hasOrdination) {
-        queryBuilder.orderBy(
+        // Aplicar ordenação
+        queryBuilder.addOrderBy(
           `p.${this._ordination.orderBy}`,
           this._ordination.sort,
         );
