@@ -36,6 +36,7 @@ export class PredicateService implements IPredicateService {
     'p.provider',
     'p.chainId',
     'p.configurable',
+    'p.root',
   ];
 
   filter(filter: IPredicateFilterParams) {
