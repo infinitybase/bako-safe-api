@@ -3,7 +3,7 @@ import { Address } from "fuels";
 import { Database } from "@/lib";
 import { BakoProvider, Vault } from "bakosafe";
 
-type GetApiToken = {
+export type GetApiToken = {
   apiToken: string;
   userId: string;
 };

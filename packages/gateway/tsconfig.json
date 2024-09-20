@@ -1,23 +1,41 @@
 {
+  "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "CommonJS",
-    "outDir": "./build",
-    "baseUrl": "./src",
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
-    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
     "esModuleInterop": true,
-    "skipLibCheck": true,
+    "lib": [
+      "ES2022",
+      "ESNext.disposable"
+    ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": [
+        "./src/*"
+      ]
     },
+    "baseUrl": "./",
     "plugins": [
       {
         "name": "ts-gql-plugin"
       }
+    ],
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "ES2022",
+    "sourceMap": true,
+    "types": [
+      "node",
+      "node-fetch",
+      "web",
+      "jest"
     ]
   },
-  "include": ["src/**/*", "src/*", "**/*.graphql"],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "**/dist",
+    "**/node_modules"
+  ]
 }
+

@@ -10,7 +10,7 @@ import {
 } from "@/lib";
 import { handleErrorMiddleware, tokenDecodeMiddleware } from "@/middlewares";
 
-const { GATEWAY_NAME, API_ENVIRONMENT } = process.env;
+const { GATEWAY_NAME, API_ENVIRONMENT, FUEL_PROVIDER } = process.env;
 
 export class GatewayServer {
   private static ROUTES_PATHS = {
@@ -22,31 +22,36 @@ export class GatewayServer {
 
   private readonly app: express.Application;
   private readonly port: number;
-  private server: Server;
-  private database: Database;
+  private server!: Server;
+  private database!: Database;
+  private fuelProvider: string;
 
-  constructor(port: number | string) {
+  constructor(port: number | string, fuelProvider: string = FUEL_PROVIDER!) {
     this.port = Number(port);
     this.app = express();
+    this.fuelProvider = fuelProvider;
   }
 
   start() {
     this.beforeAllMiddlewares();
     this.routes();
     this.afterAllMiddlewares();
-    this.server = this.app.listen(this.port, () => {
-      console.log(
-        `[GATEWAY_SERVER] Listening on http://localhost:${this.port}`
-      );
-      console.log(
-        `- GraphQL: http://localhost:${this.port}${GatewayServer.ROUTES_PATHS.graphql}`
-      );
-      console.log(
-        `- GraphQL Subscriptions: http://localhost:${this.port}${GatewayServer.ROUTES_PATHS.graphqlSub}`
-      );
-      console.log(
-        `- Health Check: http://localhost:${this.port}${GatewayServer.ROUTES_PATHS.healthCheck}`
-      );
+    return new Promise((resolve) => {
+      this.server = this.app.listen(this.port, () => {
+        console.log(
+          `[GATEWAY_SERVER] Listening on http://localhost:${this.port}`
+        );
+        console.log(
+          `- GraphQL: http://localhost:${this.port}${GatewayServer.ROUTES_PATHS.graphql}`
+        );
+        console.log(
+          `- GraphQL Subscriptions: http://localhost:${this.port}${GatewayServer.ROUTES_PATHS.graphqlSub}`
+        );
+        console.log(
+          `- Health Check: http://localhost:${this.port}${GatewayServer.ROUTES_PATHS.healthCheck}`
+        );
+      });
+      resolve(true);
     });
   }
 
@@ -65,6 +70,9 @@ export class GatewayServer {
       })
     );
     this.app.use(cors());
+    this.app.use((req, res, next) => {
+      return next();
+    });
   }
 
   private afterAllMiddlewares() {
@@ -77,7 +85,10 @@ export class GatewayServer {
       tokenDecodeMiddleware,
       createSubscriptionHandler({
         schema: subscriptionSchema,
-        defaultContext: { database: this.database },
+        defaultContext: {
+          database: this.database,
+          fuelProvider: this.fuelProvider,
+        },
       })
     );
     this.app.post(
@@ -86,15 +97,18 @@ export class GatewayServer {
       createGraphqlHttpHandler({
         appSchema: defaultSchemas.appSchema,
         fuelSchema: defaultSchemas.fuelSchema,
-        defaultContext: { database: this.database },
+        defaultContext: {
+          database: this.database,
+          fuelProvider: this.fuelProvider,
+        },
       })
     );
-    this.app.get(GatewayServer.ROUTES_PATHS.ping, ({ res }) =>
+    this.app.get(GatewayServer.ROUTES_PATHS.ping, (_, res) =>
       res.status(200).send({
         message: `${GATEWAY_NAME} | ${API_ENVIRONMENT} is running - ${new Date().toISOString()}`,
       })
     );
-    this.app.get(GatewayServer.ROUTES_PATHS.healthCheck, ({ res }) =>
+    this.app.get(GatewayServer.ROUTES_PATHS.healthCheck, (_, res) =>
       res.status(200).send({ status: "ok" })
     );
   }

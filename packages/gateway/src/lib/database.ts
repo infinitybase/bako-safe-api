@@ -24,7 +24,7 @@ export const defaultConnection: ConnectionConfig = {
 
 export class Database {
   private readonly client: Client
-  private static instance: Database;
+  protected static instance: Database;
 
   protected constructor (client: Client) {
     this.client = client

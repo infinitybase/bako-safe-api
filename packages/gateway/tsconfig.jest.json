@@ -1,0 +1,28 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "types": [
+      "jest",
+      "node"
+    ],
+    "baseUrl": "./",
+    "moduleResolution": "NodeNext",
+    "module": "NodeNext",
+    "lib": [
+      "ESNext"
+    ],
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ],
+      "@tests/*": [
+        "./test/*"
+      ]
+    }
+  },
+  "include": [
+    "src",
+    "test/**/*"
+  ]
+}

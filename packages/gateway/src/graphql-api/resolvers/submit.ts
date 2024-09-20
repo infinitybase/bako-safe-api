@@ -34,42 +34,50 @@ export const submit: MutationResolvers["submit"] = async (
   return {
     id: hash,
     isMint: false,
-    outputs: transaction.outputs.map((output) => {
-      switch (output.type) {
-        case OutputType.ContractCreated:
-          return {
-            __typename: "ContractCreated",
-            contract: output.contractId,
-            stateRoot: output.stateRoot,
-          };
-        case OutputType.Change:
-          return {
-            __typename: "ChangeOutput",
-            amount: output.amount,
-            assetId: output.assetId,
-            to: output.to,
-          };
-        case OutputType.Coin:
-          return {
-            __typename: "CoinOutput",
-            amount: output.amount,
-            assetId: output.assetId,
-            to: output.to,
-          };
-        case OutputType.Contract:
-          return {
-            __typename: "ContractOutput",
-            balanceRoot: output.balanceRoot,
-            inputIndex: output.inputIndex,
-            stateRoot: output.stateRoot,
-          };
-      }
-    }),
     isBlob: isTransactionTypeBlob(transactionRequest),
     isCreate: isTransactionTypeCreate(transactionRequest),
     isUpload: isTransactionTypeUpload(transactionRequest),
     isScript: isTransactionTypeScript(transactionRequest),
     isUpgrade: isTransactionTypeUpgrade(transactionRequest),
     rawPayload: hexlify(transactionRequest.toTransactionBytes()),
+    outputs:
+      transaction.outputs?.map((output) => {
+        switch (output.type) {
+          case OutputType.ContractCreated:
+            return {
+              __typename: "ContractCreated",
+              contract: output.contractId,
+              stateRoot: output.stateRoot,
+            };
+          case OutputType.Change:
+            return {
+              __typename: "ChangeOutput",
+              amount: output.amount,
+              assetId: output.assetId,
+              to: output.to,
+            };
+          case OutputType.Coin:
+            return {
+              __typename: "CoinOutput",
+              amount: output.amount,
+              assetId: output.assetId,
+              to: output.to,
+            };
+          case OutputType.Contract:
+            return {
+              __typename: "ContractOutput",
+              balanceRoot: output.balanceRoot,
+              inputIndex: output.inputIndex,
+              stateRoot: output.stateRoot,
+            };
+          case OutputType.Variable:
+            return {
+              __typename: "VariableOutput",
+              amount: output.amount,
+              assetId: output.assetId,
+              to: output.to,
+            };
+        }
+      }) ?? [],
   };
 };

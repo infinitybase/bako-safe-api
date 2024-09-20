@@ -13,7 +13,9 @@
     "copyFiles": "copyfiles -u 1 src/**/*.graphql ./build",
     "postbuild": "yarn run copyFiles",
     "prepare": "echo 'FIX this command!' && exit 0",
-    "run": "make -C ./ deploy env_file=.env"
+    "run": "make -C ./ deploy env_file=.env",
+    "pretest": "pnpm fuels build",
+    "test": "node --experimental-vm-modules ./node_modules/jest/bin/jest.js --runInBand"
   },
   "keywords": [],
   "author": "Infinitybase - Luis Burigo",
@@ -24,7 +26,7 @@
     "@graphql-tools/schema": "^10.0.4",
     "@graphql-tools/utils": "^10.2.2",
     "@graphql-tools/wrap": "^10.0.5",
-    "bakosafe": "0.0.70",
+    "bakosafe": "link:/Users/luisburigo/Documents/dev/infinity/bako/bako-safe-sdk/packages/sdk",
     "copyfiles": "2.4.1",
     "cors": "2.8.5",
     "dotenv": "16.4.5",
@@ -43,15 +45,21 @@
   "devDependencies": {
     "@graphql-codegen/cli": "^5.0.2",
     "@graphql-codegen/typescript-resolvers": "^4.1.0",
+    "@graphql-tools/jest-transform": "^2.0.0",
     "@types/cors": "2.8.10",
     "@types/express": "4.17.11",
+    "@types/jest": "^29.5.12",
     "@types/node": "20.6.0",
     "@types/pg": "^8.11.6",
     "@types/ramda": "^0.30.2",
     "graphql-import-node": "^0.0.5",
+    "jest": "29.6.4",
+    "jest-transform-graphql": "^2.1.0",
     "ts-gql-plugin": "^1.5.1",
+    "ts-jest": "29.1.1",
     "ts-node-dev": "2.0.0",
     "tsconfig-paths": "^4.2.0",
-    "tscpaths": "0.0.9"
+    "tscpaths": "0.0.9",
+    "typescript": "~5.4.5"
   }
 }

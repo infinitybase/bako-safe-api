@@ -6,10 +6,10 @@ import { createHandler as createHttpHandler } from 'graphql-http/lib/use/express
 const { FUEL_PROVIDER } = process.env;
 
 const httpExecutor: AsyncExecutor = async (params) => {
-  const { document, variables, operationName, extensions } = params;
+  const { document, variables, operationName, extensions, context } = params;
   const query = print(document);
   const fetchResult = await fetch(
-    FUEL_PROVIDER,
+    context.fuelProvider || FUEL_PROVIDER,
     {
       method: 'POST',
       headers: {
