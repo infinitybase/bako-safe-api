@@ -3,15 +3,9 @@ import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 import { Workspace } from '@src/models/Workspace';
 
 import { Encoder } from '@models/UserToken';
-import {
-  IPermissions,
-  TypeUser,
-  User,
-  WebAuthn,
-} from '@models/index';
+import { IPermissions, TypeUser, User, WebAuthn } from '@models/index';
 
 import { AuthValidatedRequest, UnloggedRequest } from '@middlewares/auth/types';
-
 
 export interface ICreateUserTokenPayload {
   token: string;
@@ -87,6 +81,7 @@ export type IUserSignin = {
   address: string;
   rootWallet: string;
   webauthn?: WebAuthn;
+  email?: string;
 };
 
 export interface ISignInResponse extends IUserSignin {
