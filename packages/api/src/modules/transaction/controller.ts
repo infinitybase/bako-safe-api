@@ -64,56 +64,43 @@ export class TransactionController {
 
   async pending(req: IListRequest) {
     try {
-      const { workspace, user } = req;
+      const { workspace } = req;
       const { predicateId } = req.query;
-      const { workspaceList, hasSingle } = await new UserService().workspacesByUser(
-        workspace,
-        user,
-      );
+      const predicate = predicateId && predicateId.length > 0 ? predicateId[0] : undefined;
+      
 
-      const hasPredicate = predicateId && predicateId.length > 0;
-      const hasWorkspace = workspaceList && workspaceList.length > 0;
-
-      const qb = Transaction.createQueryBuilder('t')
+      if(!predicate) {
+        const qb = Transaction.createQueryBuilder('t')
+        .innerJoinAndSelect('t.predicate', 'pred')
         .innerJoin(
-          't.predicate',
-          'p',
-          hasPredicate ? 'p.id = :predicateId' : '1=1',
-          hasPredicate ? { predicateId: predicateId[0] } : {},
-        )
-        .innerJoin(
-          'p.workspace',
+          'pred.workspace',
           'wks',
-          hasWorkspace ? 'wks.id IN (:...workspaceList)' : '1=1',
-          hasWorkspace ? { workspaceList } : {},
+          'wks.id = :workspaceId',
+          { workspaceId: workspace.id }
         )
         .addSelect(['t.status'])
         .where('t.status = :status', {
           status: TransactionStatus.AWAIT_REQUIREMENTS,
         });
+      
+        const result = await qb.getCount();
+        
+        return successful(
+          {
+            ofUser: result,
+            transactionsBlocked: result > 0,
+          },
+          Responses.Ok,
+        );
+      }
 
-      workspaceList?.length > 0 &&
-        qb.andWhere('p.workspace_id IN (:...workspaceList)', { workspaceList });
 
-      const witnessQuery = hasSingle
-        ? `
-          EXISTS (
-            SELECT 1
-            FROM jsonb_array_elements(t.resume->'witnesses') AS witness
-            WHERE (witness->>'status')::text = :witnessStatus
-              AND (witness->>'account')::text = :userAddress
-          )`
-        : `
-          EXISTS (
-            SELECT 1
-            FROM jsonb_array_elements(t.resume->'witnesses') AS witness
-            WHERE (witness->>'status')::text = :witnessStatus
-          )`;
+      const qb = Transaction.createQueryBuilder('t')
+        .where('t.status = :status', {
+          status: TransactionStatus.AWAIT_REQUIREMENTS,
+        })
+        .andWhere('t.predicateId = :predicate', { predicate });
 
-      qb.andWhere(witnessQuery, {
-        witnessStatus: WitnessStatus.PENDING,
-        ...(hasSingle && { userAddress: user.address }),
-      });
 
       const result = await qb.getCount();
 

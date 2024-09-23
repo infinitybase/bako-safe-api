@@ -519,7 +519,10 @@ export class TransactionService implements ITransactionService {
       await provider.operations.submit({ encodedTransaction });
       await this.update(bsafe_txid, {
         status: TransactionStatus.PROCESS_ON_CHAIN,
-        resume,
+        resume: {
+          ...resume,
+          status: TransactionStatus.PROCESS_ON_CHAIN,
+        },
       });
     } catch (e) {
       if (e?.message.includes('Hash is already known')) {
