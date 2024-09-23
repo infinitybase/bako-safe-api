@@ -9,7 +9,7 @@ export class TokenAuthStrategy implements AuthStrategy {
     const token = await TokenUtils.recoverToken(signature);
     await TokenUtils.renewToken(token);
 
-    return { 
+    return {
       user: {
         id: token.user_id,
         name: token.name,
@@ -17,8 +17,9 @@ export class TokenAuthStrategy implements AuthStrategy {
         address: token.address,
         type: token.type,
         webauthn: token.webauthn,
-      }, 
-      workspace: token.workspace 
+        email: token.email,
+      },
+      workspace: token.workspace,
     };
   }
 }
