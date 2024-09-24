@@ -57,3 +57,5 @@ jobs:
         service: bako-safe-api-hmg-service
         cluster: Bako-Safe-Hmg
         wait-for-service-stability: true
+
+        
