@@ -47,7 +47,7 @@ jobs:
       uses: aws-actions/amazon-ecs-render-task-definition@v1
       with:
         task-definition: ./packages/api/hml_api_task_definition.json
-        container-name: bako-safe-api-hml
+        container-name: bako-safe-api-hmg
         image: ${{ steps.build-image.outputs.image }}
 
     - name: Deploy Amazon ECS task definition
