@@ -4,6 +4,7 @@ import crypto from 'crypto'
 import { TransactionRequestLike } from 'fuels'
 import { Socket } from 'socket.io'
 import { DatabaseClass } from '@utils/database'
+import { api } from '..'
 
 export interface IEventTX_REQUEST {
 	_transaction: TransactionRequestLike
@@ -13,6 +14,13 @@ export interface IEventTX_REQUEST {
 export interface IEventTX_CONFIRM {
 	tx: TransactionRequestLike
 	operations: any
+	sign?: boolean
+}
+
+export interface IEventTX_SIGN {
+	id: string
+	hash: string
+	signedMessage: string
 }
 
 interface IEvent<D> {
@@ -23,13 +31,104 @@ interface IEvent<D> {
 
 const { UI_URL, API_URL } = process.env
 
-export const txConfirm = async ({ data, socket, database }: IEvent<IEventTX_CONFIRM>) => {
+export const txSign = async ({ data, socket, database }: IEvent<IEventTX_SIGN>) => {
 	const { sessionId, username, request_id } = socket.handshake.auth
-	const room = `${sessionId}:${SocketUsernames.CONNECTOR}:${request_id}`
 	const { origin, host } = socket.handshake.headers
 
-	const { tx, operations } = data
+	const { id, hash, signedMessage } = data
+	const room = `${sessionId}:${SocketUsernames.CONNECTOR}:${request_id}`
+
 	const { auth } = socket.handshake
+
+	try {
+		if (origin != UI_URL) return
+
+		// ------------------------------ [DAPP] ------------------------------
+		const dapp = await database.query(
+			`
+				SELECT d.*, u.id AS user_id, u.address AS user_address, c.id AS current_vault_id, c.provider AS current_vault_provider
+				FROM dapp d
+				JOIN "users" u ON d.user = u.id
+				JOIN "predicates" c ON d.current = c.id
+				WHERE d.session_id = $1  
+			`,
+			[auth.sessionId],
+		)
+
+		if (!dapp) return
+
+		// ------------------------------ [CODE] ------------------------------
+		const code = await database.query(
+			`
+				SELECT *
+				FROM recover_codes
+				WHERE origin = $1
+				AND owner = $2
+				AND used = false
+				AND valid_at > NOW()
+				ORDER BY valid_at DESC
+				LIMIT 1;
+			`,
+			[host, dapp.user_id],
+		)
+
+		if (!code) return
+
+		// ---------------------[VALIDATE SIGNATURE] -------------------------
+		await api.put(
+			`/transaction/signer/${id}`,
+			{
+				account: dapp.user_address,
+				signer: signedMessage,
+				confirm: true,
+			},
+			{
+				headers: {
+					authorization: code.code,
+					signerAddress: dapp.user_address,
+				},
+			},
+		)
+
+		// ---------------------[EXECUTE TRANSACTION] -------------------------
+		// const vault = await Vault.create({
+		// 	id: dapp.current_vault_id,
+		// 	token: code.code,
+		// 	address: dapp.user_address,
+		// })
+
+		// const transfer = await vault.BakoSafeGetTransaction(id)
+
+		// await transfer.wait()
+
+		// ------------------------------ [EMIT] ------------------------------
+		socket.to(room).emit(SocketEvents.DEFAULT, {
+			username,
+			room: sessionId,
+			request_id,
+			to: SocketUsernames.CONNECTOR,
+			type: SocketEvents.TX_CONFIRM,
+			data: {
+				id: hash,
+				status: '[SUCCESS]',
+			},
+		})
+	} catch (e) {
+		// TODO: adicionar tratamento de error
+		console.log(e)
+	}
+}
+
+export const txConfirm = async ({ data, socket, database }: IEvent<IEventTX_CONFIRM>) => {
+	const { sessionId, username, request_id } = socket.handshake.auth
+	const { origin, host } = socket.handshake.headers
+
+	const { tx, operations, sign } = data
+	const to = sign ? SocketUsernames.UI : SocketUsernames.CONNECTOR
+	const room = `${sessionId}:${to}:${request_id}`
+
+	const { auth } = socket.handshake
+
 	try {
 		// ------------------------------ [VALIDACOES] ------------------------------
 		// validar se o origin é diferente da url usada no front...adicionar um .env pra isso
@@ -125,10 +224,11 @@ export const txConfirm = async ({ data, socket, database }: IEvent<IEventTX_CONF
 			username,
 			room: sessionId,
 			request_id,
-			to: SocketUsernames.CONNECTOR,
+			to,
 			type: SocketEvents.TX_CONFIRM,
 			data: {
-				id: _tx.getHashTxId(),
+				id: _tx.BakoSafeTransactionId,
+				hash: _tx.getHashTxId(),
 				status: '[SUCCESS]',
 			},
 		})
@@ -139,7 +239,7 @@ export const txConfirm = async ({ data, socket, database }: IEvent<IEventTX_CONF
 			username,
 			room: sessionId,
 			request_id,
-			to: SocketUsernames.CONNECTOR,
+			to,
 			type: SocketEvents.TX_REQUEST,
 			data: {
 				id: undefined,
