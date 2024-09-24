@@ -12,7 +12,9 @@ const {
   FUEL_PROVIDER, 
   GAS_LIMIT, 
   MAX_FEE,
-  COIN_MARKET_CAP_API_KEY
+  COIN_MARKET_CAP_API_KEY,
+  AWS_SMTP_USER,
+  AWS_SMTP_PASS
 } = process.env;
 
 const start = async () => {
@@ -28,7 +30,9 @@ const start = async () => {
     FUEL_PROVIDER,
     GAS_LIMIT,
     MAX_FEE,
-    COIN_MARKET_CAP_API_KEY
+    COIN_MARKET_CAP_API_KEY,
+    AWS_SMTP_USER,
+    AWS_SMTP_PASS
   })
 
 
