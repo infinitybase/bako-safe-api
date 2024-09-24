@@ -18,6 +18,7 @@ export class TokenAuthStrategy implements AuthStrategy {
         type: token.type,
         webauthn: token.webauthn,
         email: token.email,
+        first_login: token.first_login,
       },
       workspace: token.workspace,
     };

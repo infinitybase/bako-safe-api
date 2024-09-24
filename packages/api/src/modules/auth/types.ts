@@ -88,6 +88,7 @@ export interface ISignInResponse extends IUserSignin {
   expired_at: Date;
   accessToken: string;
   workspace: IWorkspaceSignin;
+  first_login: boolean;
 }
 
 export interface IUpgradeWorkspace extends ValidatedRequestSchema {
