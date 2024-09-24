@@ -113,6 +113,7 @@ export class UserController {
         avatar: user.avatar,
         address: user.address,
         webauthn: user.webauthn,
+        first_login: user.first_login,
         onSingleWorkspace:
           workspace.single && workspace.name.includes(`[${user.id}]`),
         workspace: {
