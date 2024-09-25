@@ -149,6 +149,7 @@ union Consensus = Genesis | PoAConsensus
 type ConsensusParameters {
   baseAssetId: AssetId!
   blockGasLimit: U64!
+  blockTransactionSizeLimit: U64!
   chainId: U64!
   contractParams: ContractParameters!
   feeParams: FeeParameters!

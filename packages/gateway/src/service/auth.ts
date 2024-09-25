@@ -1,4 +1,4 @@
-import { Address } from "fuels";
+import { Address, bufferFromString, sha256 } from "fuels";
 
 import { Database } from "@/lib";
 import { BakoProvider, Vault } from "bakosafe";
@@ -8,7 +8,19 @@ type GetApiToken = {
   userId: string;
 };
 
+type TokenData = {
+  userAddress: string;
+  tokenConfig: string;
+  predicate: {
+    id: string;
+    address: string;
+    provider: string;
+  };
+};
+
 export class AuthService {
+  private static tokenCache: Record<string, TokenData> = {};
+
   constructor(private db: Database) {}
 
   async getSession(apiToken: string, userId: string) {
@@ -40,6 +52,11 @@ export class AuthService {
   async getTokenData(params: GetApiToken) {
     const { apiToken, userId } = params;
 
+    const cacheKey = `${apiToken}-${userId}`;
+    if (AuthService.tokenCache[cacheKey]) {
+      return AuthService.tokenCache[cacheKey];
+    }
+
     const query = `
       SELECT api_tokens.predicate_id,
              users.address,
@@ -64,15 +81,19 @@ export class AuthService {
       throw new Error("Invalid token");
     }
 
-    return {
+    const tokenData = {
       userAddress: result.address,
       tokenConfig: result.config,
       predicate: {
         id: result.predicate_id,
         address: result.predicate_address,
         provider: result.provider,
-      }
+      },
     };
+
+    AuthService.tokenCache[cacheKey] = tokenData;
+
+    return tokenData;
   }
 
   async createSession(user: string) {

@@ -16,7 +16,7 @@ import {
   UploadTransactionRequest,
   UpgradeTransactionRequest,
   getTransactionSummaryFromRequest,
-  ZeroBytes32
+  ZeroBytes32,
 } from "fuels";
 import { ITransactionSummary, Vault } from "bakosafe";
 
@@ -63,19 +63,39 @@ export class TransactionService {
     let transactionRequest: TransactionRequest;
     switch (transaction.type) {
       case TransactionType.Create:
-        transactionRequest = await this.submitDeploy({ tokenConfig, vault, transaction });
+        transactionRequest = await this.submitDeploy({
+          tokenConfig,
+          vault,
+          transaction,
+        });
         break;
       case TransactionType.Upgrade:
-        transactionRequest = await this.submitUpgrade({ tokenConfig, vault, transaction });
+        transactionRequest = await this.submitUpgrade({
+          tokenConfig,
+          vault,
+          transaction,
+        });
         break;
       case TransactionType.Upload:
-        transactionRequest = await this.submitUpload({ tokenConfig, vault, transaction });
+        transactionRequest = await this.submitUpload({
+          tokenConfig,
+          vault,
+          transaction,
+        });
         break;
       case TransactionType.Blob:
-        transactionRequest = await this.submitBlob({ tokenConfig, vault, transaction });
+        transactionRequest = await this.submitBlob({
+          tokenConfig,
+          vault,
+          transaction,
+        });
         break;
       case TransactionType.Script:
-        transactionRequest = await this.submitScript({ tokenConfig, vault, transaction });
+        transactionRequest = await this.submitScript({
+          tokenConfig,
+          vault,
+          transaction,
+        });
         break;
       default:
         throw new Error("Unsupported transaction type");
@@ -98,7 +118,11 @@ export class TransactionService {
     };
   }
 
-  async submitDeploy({ vault, tokenConfig, transaction }: SubmitTransactionParams) {
+  async submitDeploy({
+    vault,
+    tokenConfig,
+    transaction,
+  }: SubmitTransactionParams) {
     const contractBytecode =
       transaction.witnesses[transaction.bytecodeWitnessIndex];
     const contractOutput = transaction.outputs.find(
@@ -121,7 +145,11 @@ export class TransactionService {
     return transactionRequest;
   }
 
-  async submitUpgrade({ vault, tokenConfig, transaction }: SubmitTransactionParams) {
+  async submitUpgrade({
+    vault,
+    tokenConfig,
+    transaction,
+  }: SubmitTransactionParams) {
     const { upgradePurpose, witnesses } = transaction;
     let request = UpgradeTransactionRequest.from({});
 
@@ -145,7 +173,11 @@ export class TransactionService {
     return transactionRequest;
   }
 
-  async submitUpload({ vault, tokenConfig, transaction }: SubmitTransactionParams) {
+  async submitUpload({
+    vault,
+    tokenConfig,
+    transaction,
+  }: SubmitTransactionParams) {
     const {
       witnesses,
       root,
@@ -171,7 +203,11 @@ export class TransactionService {
     return transactionRequest;
   }
 
-  async submitBlob({ vault, tokenConfig, transaction }: SubmitTransactionParams) {
+  async submitBlob({
+    vault,
+    tokenConfig,
+    transaction,
+  }: SubmitTransactionParams) {
     const { blobId, witnessIndex, witnesses } = transaction;
     const bytecode = witnesses[witnessIndex].data;
 
@@ -188,14 +224,22 @@ export class TransactionService {
     return transactionRequest;
   }
 
-  async submitScript({ vault, tokenConfig, transaction }: SubmitTransactionParams) {
-    const {inputs, scriptData, script} = transaction;
+  async submitScript({
+    vault,
+    tokenConfig,
+    transaction,
+  }: SubmitTransactionParams) {
+    const { inputs, scriptData, script } = transaction;
 
     const request = ScriptTransactionRequest.from({});
-    const contractInput = inputs.find(input => input.type === InputType.Contract) as InputContract;
+    const contractInput = inputs.find(
+      (input) => input.type === InputType.Contract
+    ) as InputContract;
 
     if (contractInput) {
-      request.addContractInputAndOutput(Address.fromAddressOrString(contractInput.contractID))
+      request.addContractInputAndOutput(
+        Address.fromAddressOrString(contractInput.contractID)
+      );
     }
 
     request.script = arrayify(script ?? ZeroBytes32);

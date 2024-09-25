@@ -182,6 +182,7 @@ export type ConsensusParameters = {
   __typename?: 'ConsensusParameters';
   baseAssetId: Scalars['AssetId']['output'];
   blockGasLimit: Scalars['U64']['output'];
+  blockTransactionSizeLimit: Scalars['U64']['output'];
   chainId: Scalars['U64']['output'];
   contractParams: ContractParameters;
   feeParams: FeeParameters;
@@ -1752,6 +1753,7 @@ export type ConsensusResolvers<ContextType = any, ParentType extends ResolversPa
 export type ConsensusParametersResolvers<ContextType = any, ParentType extends ResolversParentTypes['ConsensusParameters'] = ResolversParentTypes['ConsensusParameters']> = ResolversObject<{
   baseAssetId?: Resolver<ResolversTypes['AssetId'], ParentType, ContextType>;
   blockGasLimit?: Resolver<ResolversTypes['U64'], ParentType, ContextType>;
+  blockTransactionSizeLimit?: Resolver<ResolversTypes['U64'], ParentType, ContextType>;
   chainId?: Resolver<ResolversTypes['U64'], ParentType, ContextType>;
   contractParams?: Resolver<ResolversTypes['ContractParameters'], ParentType, ContextType>;
   feeParams?: Resolver<ResolversTypes['FeeParameters'], ParentType, ContextType>;
