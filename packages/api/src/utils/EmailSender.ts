@@ -4,7 +4,7 @@ import handlebars from 'handlebars';
 import nodemailer, { SendMailOptions } from 'nodemailer';
 import path from 'path';
 
-const { AWS_SMTP_USER, AWS_SMTP_PASS, EMAIL_FROM, UI_URL } = process.env;
+const { AWS_SMTP_USER, AWS_SMTP_PASS, EMAIL_FROM, UI_URL, AWS_SMTP_HOST } = process.env;
 const YEAR = new Date().getFullYear();
 
 const LOGO = 'https://besafe-asset.s3.amazonaws.com/BAKO_SAFE.png';
@@ -27,7 +27,7 @@ export enum EmailTemplateType {
 }
 
 const transporter = nodemailer.createTransport({
-  host: 'email-smtp.sa-east-1.amazonaws.com',
+  host: AWS_SMTP_HOST,
   port: 587,
   auth: {
     user: AWS_SMTP_USER,
