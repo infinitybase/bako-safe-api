@@ -47,6 +47,7 @@ export class AuthService implements IAuthService {
         'user.type',
         'user.webauthn',
         'user.email',
+        'user.first_login',
         'workspace.id',
         'workspace.name',
         'workspace.avatar',
@@ -87,6 +88,7 @@ export class AuthService implements IAuthService {
       rootWallet: predicate?.id ?? 'not found',
       webauthn: user.webauthn,
       email: user.email,
+      first_login: user.first_login,
       // workspace
       workspace: {
         ...workspace,

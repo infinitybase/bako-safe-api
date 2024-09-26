@@ -1,5 +1,5 @@
 import { IQuote } from '@src/server/storage';
-import { tokensIDS } from './assets-token/addresses';
+import { assets as fuelAssetsList, NetworkEthereum, NetworkFuel } from 'fuels';
 
 export type IAsset = {
   symbol: string;
@@ -20,44 +20,61 @@ export type IAssetMapBySymbol = {
     id: string;
   };
 };
+export type Asset = {
+  name: string;
+  slug: string;
+  assetId: string;
+  icon?: string;
+  amount?: string;
+};
 
-export const assets: IAsset[] = [
-  {
-    symbol: 'ETH',
-    slug: 'ethereum',
-    id: tokensIDS['ETH'],
-  },
-  {
-    symbol: 'BTC',
-    slug: 'bitcoin',
-    id: tokensIDS['BTC'],
-  },
-  {
-    symbol: 'USDC',
-    slug: 'usd-coin',
-    id: tokensIDS['USDC'],
-  },
-  {
-    symbol: 'UNI',
-    slug: 'uniswap',
-    id: tokensIDS['UNI'],
-  },
-  {
-    symbol: 'DAI',
-    id: tokensIDS['DAI'],
-  },
-  {
-    symbol: 'sETH',
-    id: tokensIDS['sETH'],
-  },
-];
+export const fuelAssetsByChainId = (chainId: number): Asset[] =>
+  fuelAssetsList.reduce<Asset[]>((acc, asset) => {
+    console.log(asset);
+    const network = asset.networks.find(
+      network => network && network.chainId === chainId,
+    );
+    console.log(network);
+    if (network && network.type === 'fuel') {
+      acc.push({
+        name: asset.name,
+        slug: asset.symbol,
+        assetId: network.assetId,
+        icon: asset.icon,
+      });
+    }
+    return acc;
+  }, []);
 
-export const assetsMapById: IAssetMapById = assets.reduce(
+export const fuelAssets = (): Asset[] =>
+  fuelAssetsList.reduce<Asset[]>((acc, asset) => {
+    const network = asset.networks.find(
+      network => network.type === 'fuel',
+    ) as NetworkFuel;
+    if (network) {
+      acc.push({
+        name: asset.name,
+        slug: asset.symbol,
+        assetId: network.assetId,
+        icon: asset.icon,
+      });
+    }
+    return acc;
+  }, []);
+
+export const assets = fuelAssets().map(asset => {
+  return {
+    symbol: asset.slug,
+    id: asset.assetId,
+  };
+});
+
+export const assetsMapById: IAssetMapById = fuelAssets().reduce(
   (previousValue, currentValue) => {
     return {
       ...previousValue,
-      [currentValue.id]: {
-        symbol: currentValue.symbol,
+      [currentValue.assetId]: {
+        symbol: currentValue.slug,
         slug: currentValue.slug,
       },
     };
@@ -65,34 +82,25 @@ export const assetsMapById: IAssetMapById = assets.reduce(
   {},
 );
 
-export const assetsMapBySymbol: IAssetMapBySymbol = assets.reduce(
+export const assetsMapBySymbol: IAssetMapBySymbol = fuelAssets().reduce(
   (previousValue, currentValue) => {
     return {
       ...previousValue,
-      [currentValue.symbol]: {
+      [currentValue.slug]: {
         slug: currentValue.slug,
-        id: currentValue.id,
+        id: currentValue.assetId,
       },
     };
   },
   {},
 );
 
-export const QuotesMock: IQuote[] = [
-  {
-    assetId: assetsMapBySymbol['ETH'].id,
-    price: 3381.1556815779345,
+export const QuotesMock: IQuote[] = Object.entries(assetsMapBySymbol).map(
+  ([key, value]) => {
+    const price = Math.random() * 100;
+    return {
+      assetId: value.id,
+      price,
+    };
   },
-  {
-    assetId: assetsMapBySymbol['BTC'].id,
-    price: 61620.37310293032,
-  },
-  {
-    assetId: assetsMapBySymbol['USDC'].id,
-    price: 0.9998584312603784,
-  },
-  {
-    assetId: assetsMapBySymbol['UNI'].id,
-    price: 9.379567369214598,
-  },
-];
+);
