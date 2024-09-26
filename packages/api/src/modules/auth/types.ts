@@ -6,14 +6,15 @@ import { Encoder } from '@models/UserToken';
 import { IPermissions, TypeUser, User, WebAuthn } from '@models/index';
 
 import { AuthValidatedRequest, UnloggedRequest } from '@middlewares/auth/types';
+import { Network } from 'fuels';
 
 export interface ICreateUserTokenPayload {
-  token: string;
   user: User;
+  token: string;
+  payload: string;
   expired_at: Date;
   encoder: Encoder;
-  provider: string;
-  payload: string;
+  network: Network;
   workspace: Workspace;
 }
 

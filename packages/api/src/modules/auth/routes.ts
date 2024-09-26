@@ -5,14 +5,23 @@ import { handleResponse } from '@src/utils/index';
 import { AuthController } from './controller';
 import { AuthService } from './services';
 import { validateSignInCodeParams, validateSignInPayload } from './validations';
+import { authMiddleware } from '@src/middlewares';
 
 const router = Router();
 const authService = new AuthService();
-const { signIn, generateSignCode } = new AuthController(
-  authService,
-);
+const { signIn, generateSignCode } = new AuthController(authService);
 
-export const signOutPath = '/sign-out';
+router.post('/select-network', authMiddleware, (req, res) => {
+  console.log('--------> [api_request]');
+  console.log({
+    body: req.body,
+    query: req.query,
+    params: req.params,
+    // user: req.user,
+  });
+});
+
+// export const signOutPath = '/sign-out';
 
 router.post('/sign-in', validateSignInPayload, handleResponse(signIn));
 

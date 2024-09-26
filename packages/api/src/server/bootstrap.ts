@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 
 import { databaseInstance } from '@src/database/connection';
-import runSeeders from '@src/database/seeders';
+// import runSeeders from '@src/database/seeders';
 
 class Bootstrap {
   static async connectDatabase() {
@@ -19,7 +19,5 @@ class Bootstrap {
     await this.connectDatabase();
   }
 }
-
-
 
 export default Bootstrap;
