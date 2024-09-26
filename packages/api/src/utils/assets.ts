@@ -1,5 +1,5 @@
 import { IQuote } from '@src/server/storage';
-import { assets as fuelAssetsList, NetworkEthereum, NetworkFuel } from 'fuels';
+import { assets as fuelAssetsList, NetworkFuel } from 'fuels';
 
 export type IAsset = {
   symbol: string;
@@ -28,17 +28,19 @@ export type Asset = {
   amount?: string;
 };
 
+//const whiteList = ['ethereum', 'weth', 'usd-coin'];
+const whitelist = ['rsteth', 'mantle meth', 'rsusde', 're7lrt'];
+
 export const fuelAssetsByChainId = (chainId: number): Asset[] =>
   fuelAssetsList.reduce<Asset[]>((acc, asset) => {
-    console.log(asset);
     const network = asset.networks.find(
       network => network && network.chainId === chainId,
-    );
-    console.log(network);
+    ) as NetworkFuel;
+
     if (network && network.type === 'fuel') {
       acc.push({
         name: asset.name,
-        slug: asset.symbol,
+        slug: asset.name,
         assetId: network.assetId,
         icon: asset.icon,
       });
@@ -48,13 +50,14 @@ export const fuelAssetsByChainId = (chainId: number): Asset[] =>
 
 export const fuelAssets = (): Asset[] =>
   fuelAssetsList.reduce<Asset[]>((acc, asset) => {
+    if (whitelist.includes(asset.name.toLocaleLowerCase())) return acc;
     const network = asset.networks.find(
       network => network.type === 'fuel',
     ) as NetworkFuel;
     if (network) {
       acc.push({
         name: asset.name,
-        slug: asset.symbol,
+        slug: asset.name.toLocaleLowerCase(),
         assetId: network.assetId,
         icon: asset.icon,
       });
