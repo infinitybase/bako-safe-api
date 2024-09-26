@@ -102,12 +102,6 @@ export class QuoteStorage {
         },
       );
 
-      // console.log('[PATH]', request);
-
-      // console.log(params);
-      // console.log('[REQUEST_QUOTE] auth: ', COIN_MARKET_CAP_API_KEY);
-      // console.log(data);
-
       const aux = Object.entries(assets).map(([key, value]) => {
         return {
           assetId: value.id,
