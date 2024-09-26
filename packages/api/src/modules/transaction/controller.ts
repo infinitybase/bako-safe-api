@@ -66,25 +66,22 @@ export class TransactionController {
     try {
       const { workspace } = req;
       const { predicateId } = req.query;
-      const predicate = predicateId && predicateId.length > 0 ? predicateId[0] : undefined;
-      
+      const predicate =
+        predicateId && predicateId.length > 0 ? predicateId[0] : undefined;
 
-      if(!predicate) {
+      if (!predicate) {
         const qb = Transaction.createQueryBuilder('t')
-        .innerJoinAndSelect('t.predicate', 'pred')
-        .innerJoin(
-          'pred.workspace',
-          'wks',
-          'wks.id = :workspaceId',
-          { workspaceId: workspace.id }
-        )
-        .addSelect(['t.status'])
-        .where('t.status = :status', {
-          status: TransactionStatus.AWAIT_REQUIREMENTS,
-        });
-      
+          .innerJoinAndSelect('t.predicate', 'pred')
+          .innerJoin('pred.workspace', 'wks', 'wks.id = :workspaceId', {
+            workspaceId: workspace.id,
+          })
+          .addSelect(['t.status'])
+          .where('t.status = :status', {
+            status: TransactionStatus.AWAIT_REQUIREMENTS,
+          });
+
         const result = await qb.getCount();
-        
+
         return successful(
           {
             ofUser: result,
@@ -94,13 +91,11 @@ export class TransactionController {
         );
       }
 
-
       const qb = Transaction.createQueryBuilder('t')
         .where('t.status = :status', {
           status: TransactionStatus.AWAIT_REQUIREMENTS,
         })
         .andWhere('t.predicateId = :predicate', { predicate });
-
 
       const result = await qb.getCount();
 
@@ -610,6 +605,7 @@ export class TransactionController {
 
       return successful(response, Responses.Ok);
     } catch (e) {
+      console.log(`[INCOMING_ERROR]`, e);
       return error(e.error, e.statusCode);
     }
   }
