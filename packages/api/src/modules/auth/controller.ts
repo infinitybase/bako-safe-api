@@ -5,8 +5,6 @@ import UserToken from '@src/models/UserToken';
 import { Workspace } from '@src/models/Workspace';
 import GeneralError, { ErrorTypes } from '@src/utils/error/GeneralError';
 
-import { IAuthRequest } from '@middlewares/auth/types';
-
 import { NotFound, error } from '@utils/error';
 import { Responses, successful, bindMethods, TokenUtils } from '@utils/index';
 
@@ -19,6 +17,7 @@ import {
   ISignInRequest,
 } from './types';
 import app from '@src/server/app';
+import { Request } from 'express';
 
 export class AuthController {
   private authService: IAuthService;
@@ -35,7 +34,7 @@ export class AuthController {
         digest,
         encoder,
         signature,
-      })
+      });
 
       const { userToken, signin } = await TokenUtils.createAuthToken(
         signature,
@@ -46,18 +45,22 @@ export class AuthController {
       await app._sessionCache.addSession(userToken.accessToken, userToken);
       return successful(signin, Responses.Ok);
     } catch (e) {
-      console.log('ERRO', e)
+      console.log('ERRO', e);
       if (e instanceof GeneralError) throw e;
 
       return error(e.error, e.statusCode);
     }
   }
 
-  async signOut(req: IAuthRequest) {
+  async signOut(req: Request) {
     try {
-      const response = await this.authService.signOut(req.user);
+      const token = req?.headers?.authorization;
 
-      return successful(response, Responses.Ok);
+      if (token) {
+        await app._sessionCache.removeSession(token);
+      }
+
+      return successful(true, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }
@@ -65,9 +68,9 @@ export class AuthController {
 
   async generateSignCode(req: ICreateRecoverCodeRequest) {
     try {
-      console.log('[CODE]')
+      console.log('[CODE]');
       const { address } = req.body;
-      const { origin } = req.headers ?? {origin: 'no-agent'};
+      const { origin } = req.headers ?? { origin: 'no-agent' };
       const owner = await User.findOne({ where: { address } });
 
       // console.log('[CODE]', owner, address, origin)
@@ -77,7 +80,7 @@ export class AuthController {
         type: RecoverCodeType.AUTH,
         origin: origin ?? process.env.UI_URL,
         validAt: addMinutes(new Date(), 5),
-      })
+      });
 
       const response = await new RecoverCodeService().create({
         owner,
@@ -88,11 +91,10 @@ export class AuthController {
 
       return successful(response, Responses.Ok);
     } catch (e) {
-      console.log(e)
+      console.log(e);
       return error(e.error, e.statusCode);
     }
   }
-
 
   // change wk are desabled
   // async updateWorkspace(req: IChangeWorkspaceRequest) {
