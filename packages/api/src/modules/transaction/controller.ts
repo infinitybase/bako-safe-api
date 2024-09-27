@@ -62,6 +62,7 @@ export class TransactionController {
     bindMethods(this);
   }
 
+  // pending tx
   async pending(req: IListRequest) {
     try {
       const { workspace, user } = req;
