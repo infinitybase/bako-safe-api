@@ -1,10 +1,14 @@
-import { TransactionType } from "fuels";
+import {
+  TransactionCreate,
+  TransactionType,
+  TransactionUpgrade,
+} from "fuels";
 import { delegateToSchema } from "@graphql-tools/delegate";
 import { OperationTypeNode } from "graphql/language";
 
 import { MutationResolvers } from "@/generated";
 import { toTransaction } from "@/utils";
-import { AuthService, TransactionService } from '@/service';
+import { AuthService, TransactionService } from "@/service";
 
 export const submit: MutationResolvers["submit"] = async (
   _,
@@ -15,13 +19,29 @@ export const submit: MutationResolvers["submit"] = async (
   const { schema, apiToken, userId, database } = context;
   const transaction = toTransaction(args.tx);
 
+  const authService = new AuthService(database);
+  const transactionService = new TransactionService(authService);
+
+  if (transaction.type === TransactionType.Upgrade) {
+    const { upgradeTransfer } = await transactionService.submitUpgrade({
+      userId,
+      apiToken,
+      transaction: <TransactionUpgrade>transaction,
+    });
+    return {
+      id: `0x${upgradeTransfer.getHashTxId()}`,
+    };
+  }
+
   if (transaction.type === TransactionType.Create) {
-    const authService = new AuthService(database);
-    const transactionService = new TransactionService(transaction, authService);
-    const submitResponse = await transactionService.submit({ apiToken, userId });
+    const submitResponse = await transactionService.submitDeploy({
+      userId,
+      apiToken,
+      transaction: <TransactionCreate>transaction,
+    });
     const { deployTransfer, vault } = submitResponse;
 
-    console.log('[MUTATION] Transaction sent to Bako', {
+    console.log("[MUTATION] Transaction sent to Bako", {
       vault: vault.BakoSafeVaultId,
       address: vault.address.toAddress(),
       transactionId: deployTransfer.getHashTxId(),

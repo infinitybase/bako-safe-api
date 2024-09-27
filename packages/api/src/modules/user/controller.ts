@@ -1,6 +1,6 @@
 import { addMinutes } from 'date-fns';
 
-import { PredicateVersion, RecoverCode, RecoverCodeType } from '@src/models';
+import { RecoverCode, RecoverCodeType } from '@src/models';
 import { User } from '@src/models/User';
 import { bindMethods } from '@src/utils/bindMethods';
 
@@ -32,9 +32,6 @@ import {
 } from './types';
 import { Not } from 'typeorm';
 import app from '@src/server/app';
-import { Address, Provider } from 'fuels';
-import { BakoSafe, TypeUser, Vault } from 'bakosafe';
-import { WorkspaceService } from '../workspace/services';
 
 export class UserController {
   private userService: IUserService;
