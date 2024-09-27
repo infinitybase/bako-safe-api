@@ -19,7 +19,7 @@ import { WorkspaceService } from '../workspace/services';
 import { IFilterParams, IUserService, IUserPayload } from './types';
 import app from '@src/server/app';
 import { Provider, Address } from 'fuels';
-import { BakoSafe, Vault } from 'bakosafe';
+import { Vault } from 'bakosafe';
 import { PredicateService } from '../predicate/services';
 
 const { UI_URL } = process.env;
@@ -91,8 +91,7 @@ export class UserService implements IUserService {
     }
   }
 
-
-  //TODO: INCREASE THIS, THEY CODE ARE HERE BECAUSE ON MODEL (AFTERISERT) 
+  //TODO: INCREASE THIS, THEY CODE ARE HERE BECAUSE ON MODEL (AFTERISERT)
   //      WE HAVE A PROBLEMS WITH CIRCULAR DEPENDNCIES
   //      AND MOVE THIS INSERTS TO THE SERVICE OF WORKSPACE AND PREDICATE
   async create(payload: IUserPayload): Promise<User> {
@@ -112,28 +111,30 @@ export class UserService implements IUserService {
         });
 
         // insert a root wallet predicate
-        const provider = await Provider.create(BakoSafe.getProviders('CHAIN_URL'));
+        const provider = await Provider.create(payload.provider);
+        const configurable = {
+          SIGNATURES_COUNT: 1,
+          SIGNERS: [user.address],
+          network: provider.url,
+          chainId: provider.getChainId(),
+        };
 
-        const predicate = await Vault.create({
-          configurable: {
-            SIGNATURES_COUNT: 1,
-            SIGNERS: [user.address],
-            network: BakoSafe.getProviders('CHAIN_URL'),
-            chainId: provider.getChainId(),
-          },
-        });
-    
+        const predicate = new Vault(provider, configurable);
+
         const version = await PredicateVersion.findOne({
-          where: { code: predicate.version },
+          order: { createdAt: 'DESC' },
         });
-    
+
         await new PredicateService().create({
           name: 'Personal Vault',
-          description: 'This is your first vault. It requires a single signer (you) to execute transactions; a pattern called 1-of-1',
-          predicateAddress: Address.fromString(predicate.address.toString()).toB256(),
+          description:
+            'This is your first vault. It requires a single signer (you) to execute transactions; a pattern called 1-of-1',
+          predicateAddress: Address.fromString(
+            predicate.address.toString(),
+          ).toB256(),
           minSigners: 1,
           addresses: [user.address],
-          configurable: JSON.stringify({ ...predicate.getConfigurable() }),
+          configurable: JSON.stringify({ ...configurable, network: provider.url }),
           provider: predicate.provider.url,
           chainId: predicate.provider.getChainId(),
           owner: user,
@@ -142,7 +143,6 @@ export class UserService implements IUserService {
           workspace,
           root: true,
         });
-
 
         return user;
       })

@@ -1,4 +1,4 @@
-import { BakoSafe } from 'bakosafe';
+// import { BakoSafe } from 'bakosafe';
 
 import { TypeUser, User, PermissionAccess } from '@src/models';
 import {
@@ -18,6 +18,7 @@ import { IconUtils } from '@utils/icons';
 import { UserService } from '../user/service';
 import { IFilterParams, IWorkspaceService } from './types';
 import { AddressValidator } from '@src/utils';
+import { networks } from '@src/mocks/networks';
 
 export class WorkspaceService implements IWorkspaceService {
   private _ordination: IOrdination<Workspace> = {
@@ -199,7 +200,7 @@ export class WorkspaceService implements IWorkspaceService {
               return await new UserService().create({
                 address: member,
                 name: member,
-                provider: BakoSafe.getProviders('CHAIN_URL'),
+                provider: networks['devnet'],
                 avatar: IconUtils.user(),
                 type: TypeUser.FUEL,
               });
