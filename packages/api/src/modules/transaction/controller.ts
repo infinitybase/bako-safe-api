@@ -79,20 +79,7 @@ export class TransactionController {
           .addSelect(['t.status'])
           .where('t.status = :status', {
             status: TransactionStatus.AWAIT_REQUIREMENTS,
-          })
-          .andWhere(
-            `
-          EXISTS (
-            SELECT 1
-            FROM jsonb_array_elements(t.resume->'witnesses') AS witness
-            WHERE (witness->>'status')::text = :witnessStatus
-              AND (witness->>'account')::text = :userAddress
-          )`,
-            {
-              witnessStatus: WitnessStatus.PENDING,
-              userAddress: user.address,
-            },
-          );
+          });
 
         const result = await qb.getCount();
 
@@ -109,20 +96,7 @@ export class TransactionController {
         .where('t.status = :status', {
           status: TransactionStatus.AWAIT_REQUIREMENTS,
         })
-        .andWhere('t.predicateId = :predicate', { predicate })
-        .andWhere(
-          `
-        EXISTS (
-          SELECT 1
-          FROM jsonb_array_elements(t.resume->'witnesses') AS witness
-          WHERE (witness->>'status')::text = :witnessStatus
-            AND (witness->>'account')::text = :userAddress
-        )`,
-          {
-            witnessStatus: WitnessStatus.PENDING,
-            userAddress: user.address,
-          },
-        );
+        .andWhere('t.predicateId = :predicate', { predicate });
 
       const result = await qb.getCount();
 
