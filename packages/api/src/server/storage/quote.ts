@@ -41,10 +41,10 @@ export class QuoteStorage {
   }
 
   private async addQuotes(): Promise<void> {
-    // if (isDevMode) {
-    //   this.addMockQuotes();
-    //   return;
-    // }
+    if (isDevMode) {
+      this.addMockQuotes();
+      return;
+    }
 
     const params = this.generateParams(assets);
 
