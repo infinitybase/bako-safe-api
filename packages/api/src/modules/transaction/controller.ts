@@ -139,9 +139,17 @@ export class TransactionController {
   }
 
   async create({ body: transaction, user, workspace }: ICreateTransactionRequest) {
-    const { predicateAddress, summary } = transaction;
+    const { predicateAddress, summary, hash } = transaction;
 
     try {
+      const existsTx = await Transaction.findOne({
+        where: { hash },
+      });
+
+      if (existsTx) {
+        return successful(existsTx, Responses.Ok);
+      }
+
       const predicate = await new PredicateService()
         .filter({ address: predicateAddress })
         .list()
