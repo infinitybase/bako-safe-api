@@ -64,7 +64,7 @@ export class TransactionController {
 
   async pending(req: IListRequest) {
     try {
-      const { workspace } = req;
+      const { workspace, user } = req;
       const { predicateId } = req.query;
       const predicate =
         predicateId && predicateId.length > 0 ? predicateId[0] : undefined;
@@ -78,7 +78,20 @@ export class TransactionController {
           .addSelect(['t.status'])
           .where('t.status = :status', {
             status: TransactionStatus.AWAIT_REQUIREMENTS,
-          });
+          })
+          .andWhere(
+            `
+          EXISTS (
+            SELECT 1
+            FROM jsonb_array_elements(t.resume->'witnesses') AS witness
+            WHERE (witness->>'status')::text = :witnessStatus
+              AND (witness->>'account')::text = :userAddress
+          )`,
+            {
+              witnessStatus: WitnessStatus.PENDING,
+              userAddress: user.address,
+            },
+          );
 
         const result = await qb.getCount();
 
@@ -95,7 +108,20 @@ export class TransactionController {
         .where('t.status = :status', {
           status: TransactionStatus.AWAIT_REQUIREMENTS,
         })
-        .andWhere('t.predicateId = :predicate', { predicate });
+        .andWhere('t.predicateId = :predicate', { predicate })
+        .andWhere(
+          `
+        EXISTS (
+          SELECT 1
+          FROM jsonb_array_elements(t.resume->'witnesses') AS witness
+          WHERE (witness->>'status')::text = :witnessStatus
+            AND (witness->>'account')::text = :userAddress
+        )`,
+          {
+            witnessStatus: WitnessStatus.PENDING,
+            userAddress: user.address,
+          },
+        );
 
       const result = await qb.getCount();
 
