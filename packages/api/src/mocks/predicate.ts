@@ -1,17 +1,17 @@
 import { BakoSafe, IConfVault, Vault } from 'bakosafe';
 import crypto from 'crypto';
-import { Provider } from 'fuels';
+import { Address, Provider } from 'fuels';
 
 import { IPredicatePayload } from '@src/modules/predicate/types';
 
 export class PredicateMock {
   public BSAFEVaultconfigurable: IConfVault;
-  public predicatePayload: Omit<IPredicatePayload, 'user'>;
+  public predicatePayload: Omit<IPredicatePayload, 'user' | 'version'>;
   public vault: Vault;
 
   protected constructor(
     BSAFEVaultConfigurable: IConfVault,
-    predicatePayload: Omit<IPredicatePayload, 'user'>,
+    predicatePayload: Omit<IPredicatePayload, 'user' | 'version'>,
     vault: Vault,
   ) {
     this.BSAFEVaultconfigurable = BSAFEVaultConfigurable;
@@ -44,6 +44,7 @@ export class PredicateMock {
       minSigners: min,
       configurable: JSON.stringify({ ...vault.getConfigurable() }),
       addresses: _BSAFEVaultconfigurable.SIGNERS.map(signer => signer),
+      root: false,
     };
 
     return new PredicateMock(_BSAFEVaultconfigurable, predicatePayload, vault);

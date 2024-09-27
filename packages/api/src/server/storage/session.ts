@@ -2,9 +2,9 @@ import { User } from '@src/models';
 import UserToken from '@src/models/UserToken';
 import { Workspace } from '@src/models/Workspace';
 import { AuthService } from '@src/modules/auth/services';
+import { ISignInResponse } from '@src/modules/auth/types';
 import { SocketClient } from '@src/socket/client';
 import { AuthNotifyType, SocketEvents, SocketUsernames } from '@src/socket/types';
-import { TokenUtils } from '@src/utils';
 import { isPast } from 'date-fns';
 
 export interface ISession {
@@ -20,11 +20,11 @@ const { API_URL } = process.env;
 const { API_SOCKET_SESSION_ID } = process.env; // is a const because all clients (apis) join on the same room
 
 export class SessionStorage {
-  private data = new Map<string, UserToken>();
+  private data = new Map<string, ISignInResponse>();
   private client = new SocketClient(API_SOCKET_SESSION_ID, API_URL);
 
   protected constructor() {
-    this.data = new Map<string, UserToken>();
+    this.data = new Map<string, ISignInResponse>();
     this.client.socket.onAny((event, ...args) => {
       if (event === SocketEvents.DEFAULT) {
         this.reciveNotify(args[0]);
@@ -61,7 +61,7 @@ export class SessionStorage {
     }
   }
 
-  public async addSession(sessionId: string, session: UserToken) {
+  public async addSession(sessionId: string, session: ISignInResponse) {
     this.data.set(sessionId, session);
     this.sendNotify(
       {
@@ -100,7 +100,7 @@ export class SessionStorage {
   }
 
   public async getTokenOnDatabase(sessionId: string) {
-    const token = await TokenUtils.getTokenBySignature(sessionId);
+    const token = await AuthService.findToken(sessionId);
 
     return token;
   }

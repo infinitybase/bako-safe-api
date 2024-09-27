@@ -1,6 +1,6 @@
 import { addMinutes } from 'date-fns';
 
-import { RecoverCode, RecoverCodeType } from '@src/models';
+import { PredicateVersion, RecoverCode, RecoverCodeType } from '@src/models';
 import { User } from '@src/models/User';
 import { bindMethods } from '@src/utils/bindMethods';
 
@@ -32,6 +32,9 @@ import {
 } from './types';
 import { Not } from 'typeorm';
 import app from '@src/server/app';
+import { Address, Provider } from 'fuels';
+import { BakoSafe, TypeUser, Vault } from 'bakosafe';
+import { WorkspaceService } from '../workspace/services';
 
 export class UserController {
   private userService: IUserService;
@@ -102,7 +105,6 @@ export class UserController {
 
   async latestInfo(req: IMeInfoRequest) {
     const { user, workspace } = req;
-
     return successful(
       {
         id: user.id,
@@ -111,15 +113,16 @@ export class UserController {
         avatar: user.avatar,
         address: user.address,
         webauthn: user.webauthn,
+        first_login: user.first_login,
         onSingleWorkspace:
           workspace.single && workspace.name.includes(`[${user.id}]`),
         workspace: {
           id: workspace.id,
           name: workspace.name,
-          owner: workspace.owner,
           avatar: workspace.avatar,
-          permission: workspace.permissions[user.id],
+          single: workspace.single,
           description: workspace.description,
+          permission: workspace.permissions[user.id],
         },
       },
       Responses.Ok,
@@ -191,7 +194,7 @@ export class UserController {
   //verify used name
   async create(req: ICreateRequest) {
     try {
-      const { address, name } = req.body;
+      const { address, name, provider } = req.body;
 
       //verify user exists
       let existingUser = await this.userService.findByAddress(address);

@@ -1,6 +1,5 @@
 import { io, Socket } from 'socket.io-client';
 import { IMessage, SocketEvents, SocketUsernames } from './types';
-import { sha256 } from 'fuels';
 
 
 export class SocketClient {

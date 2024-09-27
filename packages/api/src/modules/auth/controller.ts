@@ -43,7 +43,7 @@ export class AuthController {
         encoder,
       );
 
-      await app._sessionCache.addSession(userToken.token, userToken);
+      await app._sessionCache.addSession(userToken.accessToken, userToken);
       return successful(signin, Responses.Ok);
     } catch (e) {
       console.log('ERRO', e)
@@ -93,50 +93,52 @@ export class AuthController {
     }
   }
 
-  async updateWorkspace(req: IChangeWorkspaceRequest) {
-    try {
-      const { workspace: workspaceId, user } = req.body;
-      const workspace = await new WorkspaceService()
-        .filter({ id: workspaceId })
-        .list()
-        .then((response: Workspace[]) => response[0]);
 
-      if (!workspace)
-        throw new NotFound({
-          type: ErrorTypes.NotFound,
-          title: 'Workspace not found',
-          detail: `Workspace not found`,
-        });
+  // change wk are desabled
+  // async updateWorkspace(req: IChangeWorkspaceRequest) {
+  //   try {
+  //     const { workspace: workspaceId, user } = req.body;
+  //     const workspace = await new WorkspaceService()
+  //       .filter({ id: workspaceId })
+  //       .list()
+  //       .then((response: Workspace[]) => response[0]);
 
-      const isUserMember = workspace.members.find(m => m.id === user);
+  //     if (!workspace)
+  //       throw new NotFound({
+  //         type: ErrorTypes.NotFound,
+  //         title: 'Workspace not found',
+  //         detail: `Workspace not found`,
+  //       });
 
-      const token = await TokenUtils.getTokenBySignature(req.headers.authorization);
+  //     const isUserMember = workspace.members.find(m => m.id === user);
 
-      if (isUserMember) {
-        token.workspace = workspace;
-      }
+  //     const token = await TokenUtils.getTokenBySignature(req.headers.authorization);
 
-      await app._sessionCache.addSession(token.token, token);
+  //     if (isUserMember) {
+  //       token.workspace = workspace;
+  //     }
 
-      return successful(
-        await token.save().then(({ workspace, token, user }: UserToken) => {
-          return {
-            workspace: {
-              id: workspace.id,
-              name: workspace.name,
-              avatar: workspace.avatar,
-              permissions: workspace.permissions[user.id],
-              single: workspace.single,
-            },
-            token: token,
-            avatar: user.avatar,
-            address: user.address,
-          };
-        }),
-        Responses.Ok,
-      );
-    } catch (e) {
-      return error(e.error, e.statusCode);
-    }
-  }
+  //     await app._sessionCache.addSession(token.token, token);
+
+  //     return successful(
+  //       await token.save().then(({ workspace, token, user }: UserToken) => {
+  //         return {
+  //           workspace: {
+  //             id: workspace.id,
+  //             name: workspace.name,
+  //             avatar: workspace.avatar,
+  //             permissions: workspace.permissions[user.id],
+  //             single: workspace.single,
+  //           },
+  //           token: token,
+  //           avatar: user.avatar,
+  //           address: user.address,
+  //         };
+  //       }),
+  //       Responses.Ok,
+  //     );
+  //   } catch (e) {
+  //     return error(e.error, e.statusCode);
+  //   }
+  // }
 }

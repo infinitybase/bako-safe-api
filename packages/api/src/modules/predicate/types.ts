@@ -1,12 +1,11 @@
-import { Vault } from 'bakosafe';
+import { Vault, Workspace } from 'bakosafe';
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 
 import { AuthValidatedRequest } from '@src/middlewares/auth/types';
 import { IDefaultOrdination, IOrdination } from '@src/utils/ordination';
 import { IPagination, PaginationParams } from '@src/utils/pagination';
 
-import { Predicate, User } from '@models/index';
-import { Operation, TransactionRequest } from 'fuels';
+import { Predicate, PredicateVersion, User } from '@models/index';
 
 export enum OrderBy {
   name = 'name',
@@ -23,26 +22,20 @@ export interface IPredicatePayload {
   predicateAddress: string;
   minSigners: number;
   addresses?: string[];
-  //owner_id: string;
+  root: boolean;
   configurable: string;
   provider: string;
   chainId?: number;
-  user: User;
-  //members?: User[];
+  members?: User[];
+  owner?: User;
+  workspace?: Workspace;
+  version: PredicateVersion;
   versionCode?: string;
 }
 
 export interface IPredicateMemberPayload {
   user_id: string;
   predicate_id: string;
-}
-
-export interface IDeposit {
-  date: Date;
-  id: string;
-  operations: Operation[];
-  gasUsed: string;
-  txData: TransactionRequest;
 }
 
 export interface IPredicateFilterParams {
@@ -127,7 +120,7 @@ export interface IPredicateService {
   paginate(pagination?: PaginationParams): this;
   filter(filter: IPredicateFilterParams): this;
 
-  create: (payload: Partial<Predicate>) => Promise<Predicate>;
+  create: (payload: IPredicatePayload) => Promise<Predicate>;
   update: (id: string, payload: IPredicatePayload) => Promise<Predicate>;
   delete: (id: string) => Promise<boolean>;
   findById: (id: string, signer?: string) => Promise<Predicate>;

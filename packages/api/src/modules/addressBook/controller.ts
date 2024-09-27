@@ -18,6 +18,7 @@ import {
   IUpdateAddressBookRequest,
 } from './types';
 import { IconUtils } from '@utils/icons';
+import { Address } from 'fuels';
 
 const {
   FUEL_PROVIDER
@@ -71,7 +72,7 @@ export class AddressBookController {
           provider: user.provider,
           avatar: IconUtils.user(),
           type: TypeUser.FUEL,
-          active: true,
+          name: Address.fromRandom().toB256(), 
         });
       }
 
@@ -125,8 +126,7 @@ export class AddressBookController {
           provider: user.provider,
           avatar: IconUtils.user(),
           type: TypeUser.FUEL,
-
-          active: true,
+          name: Address.fromRandom().toB256(),
         });
       }
 

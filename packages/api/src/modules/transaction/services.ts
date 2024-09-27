@@ -445,7 +445,7 @@ export class TransactionService implements ITransactionService {
       REJECTED: 0,
       PENDING: 0,
     };
-    const {requiredSigners} = transaction.resume;
+    const { requiredSigners } = transaction.resume;
 
     witnesses.map((item: IWitnesses) => {
       witness[item.status]++;
@@ -467,10 +467,7 @@ export class TransactionService implements ITransactionService {
       return TransactionStatus.PENDING_SENDER;
     }
 
-    if (
-      totalSigners - witness[WitnessStatus.REJECTED] <
-      requiredSigners
-    ) {
+    if (totalSigners - witness[WitnessStatus.REJECTED] < requiredSigners) {
       return TransactionStatus.DECLINED;
     }
 
@@ -497,23 +494,14 @@ export class TransactionService implements ITransactionService {
   //instance tx
   //add witnesses
   async sendToChain(hash: string) {
-    const {
-      id,
-      predicate,
-      txData,
-      status,
-      resume,
-    } = await this.findByHash(hash);
+    const { id, predicate, txData, status, resume } = await this.findByHash(hash);
 
     if (status != TransactionStatus.PENDING_SENDER) {
       return await this.findById(id);
     }
 
     const provider = await Provider.create(predicate.provider);
-    const vault = new Vault(
-      provider,
-      JSON.parse(predicate.configurable),
-    )
+    const vault = new Vault(provider, JSON.parse(predicate.configurable));
 
     const tx = transactionRequestify({
       ...txData,
@@ -525,9 +513,9 @@ export class TransactionService implements ITransactionService {
       ],
     });
 
-    try{
+    try {
       const transactionResponse = await vault.send(tx);
-      const {gasUsed} = await transactionResponse.waitForResult();
+      const { gasUsed } = await transactionResponse.waitForResult();
 
       const _api_transaction: IUpdateTransactionPayload = {
         status: TransactionStatus.SUCCESS,
@@ -541,9 +529,9 @@ export class TransactionService implements ITransactionService {
       };
 
       await new NotificationService().transactionSuccess(id);
-      
+
       return await this.update(id, _api_transaction);
-    }catch(e){
+    } catch (e) {
       const _api_transaction: IUpdateTransactionPayload = {
         status: TransactionStatus.FAILED,
         sendTime: new Date(),
@@ -557,7 +545,6 @@ export class TransactionService implements ITransactionService {
       return await this.update(id, _api_transaction);
     }
   }
-
 
   async fetchFuelTransactions(
     predicates: Predicate[],
@@ -622,14 +609,14 @@ export class TransactionService implements ITransactionService {
     }
   }
 
-
   validateSignature(transaction: Transaction, userAddress: string): boolean {
-    const { resume: {witnesses}, hash } = transaction;
+    const {
+      resume: { witnesses },
+      hash,
+    } = transaction;
     const hasWitness = witnesses.find(w => w.account === userAddress);
     const validStatus = hasWitness?.status === WitnessStatus.PENDING;
 
     return validStatus;
-
   }
-
 }

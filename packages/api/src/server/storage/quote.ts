@@ -15,7 +15,7 @@ export interface IQuote {
   price: number;
 }
 
-const REFRESH_TIME = 1000 * 60 * 15;  // 10 minutes
+const REFRESH_TIME = 1000 * 60 * 25; // 25 minutes
 
 export class QuoteStorage {
   private data = new Map<string, number>();
@@ -41,16 +41,16 @@ export class QuoteStorage {
   }
 
   private async addQuotes(): Promise<void> {
-    if (isDevMode) {
-      this.addMockQuotes();
-      return;
-    }
+    // if (isDevMode) {
+    //   this.addMockQuotes();
+    //   return;
+    // }
 
     const params = this.generateParams(assets);
 
     if (params) {
       const quotes = await this.fetchQuotes(params);
-
+      // console.log('[PARAMS]', quotes);
       quotes.forEach(quote => {
         this.setQuote(quote.assetId, quote.price);
       });
@@ -64,7 +64,7 @@ export class QuoteStorage {
       const _asset = assetsMapById[asset.id];
 
       if (_asset && _asset.slug) {
-        acc += (acc ? ',' : '') + _asset.slug;
+        acc += (acc ? ',' : '') + this.parseName(_asset.slug);
       }
 
       return acc;
@@ -73,29 +73,51 @@ export class QuoteStorage {
     return params;
   }
 
+  private parseName(name: string) {
+    const whitelist = {
+      usdc: 'usd-coin',
+    };
+
+    return whitelist[name] ?? name;
+  }
+
+  //   {
+  //     "bitcoin": {
+  //         "usd": 65083
+  //     },
+  //     "ethereum": {
+  //         "usd": 2651.72
+  //     }
+  // }
+
   private async fetchQuotes(params: string): Promise<IQuote[]> {
     try {
-      const { data } = await axios.get(
-        `https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest`,
+      const { data, request } = await axios.get(
+        `https://api.coingecko.com/api/v3/simple/price?vs_currencies=usd`,
         {
           params: {
-            slug: params,
+            ids: params,
           },
-          headers: { 'X-CMC_PRO_API_KEY': COIN_MARKET_CAP_API_KEY },
+          headers: { 'x-cg-demo-api-key': COIN_MARKET_CAP_API_KEY },
         },
       );
 
-      // console.log('[REQUEST_QUOTE] auth: ', COIN_MARKET_CAP_API_KEY)
-
+      const aux = Object.entries(assets).map(([key, value]) => {
+        return {
+          assetId: value.id,
+          price: data[value.symbol]?.usd ?? 0.0,
+        };
+      });
+      console.log('COINS_PRICE', aux);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const formattedData = Object.values(data.data).map((item: any) => ({
-        assetId: assetsMapBySymbol[item.symbol].id,
-        price: item.quote.USD.price,
-      }));
+      // const formattedData = Object.values(data.data).map((item: any) => ({
+      //   assetId: assetsMapBySymbol[item.symbol].id,
+      //   price: item.quote.USD.price,
+      // }));
 
-      return formattedData;
+      return aux;
     } catch (e) {
-      // console.log('[STORAGE_QUOTE] Get quots value: ', e);
+      // console.log('[STORAGE_QUOTE] Get quots value: ', e.message);
       return [];
     }
   }
