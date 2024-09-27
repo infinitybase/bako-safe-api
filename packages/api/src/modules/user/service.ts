@@ -121,7 +121,6 @@ export class UserService implements IUserService {
         };
 
         const predicate = new Vault(provider, configurable);
-
         const version = await new PredicateVersionService().findCurrentVersion();
 
         await new PredicateService().create({
@@ -133,7 +132,7 @@ export class UserService implements IUserService {
           ).toB256(),
           minSigners: 1,
           addresses: [user.address],
-          configurable: JSON.stringify({ ...configurable, network: provider.url }),
+          configurable: JSON.stringify(predicate.configurable),
           provider: predicate.provider.url,
           chainId: predicate.provider.getChainId(),
           owner: user,

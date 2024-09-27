@@ -58,7 +58,6 @@ export class PredicateController {
   async create({ body: payload, user, workspace }: ICreatePredicateRequest) {
     // const { versionCode } = payload;
     const validUsers = payload.addresses.filter(address => address !== ZeroBytes32);
-    console.log('[PAYLOAD]', payload, validUsers);
     try {
       const members: User[] = [];
 
@@ -195,7 +194,6 @@ export class PredicateController {
     try {
       const {
         transactions: predicateTxs,
-        // version: { code: versionCode },
         configurable,
         provider,
       } = await Predicate.createQueryBuilder('p')
