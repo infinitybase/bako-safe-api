@@ -199,7 +199,7 @@ export class PredicateController {
     try {
       const {
         transactions: predicateTxs,
-        version: { code: versionCode },
+        provider,
         configurable,
       } = await Predicate.createQueryBuilder('p')
         .leftJoin('p.transactions', 't', 't.status IN (:...status)', {
@@ -209,14 +209,14 @@ export class PredicateController {
           ],
         })
         .leftJoin('p.version', 'pv')
-        .addSelect(['t', 'p.id', 'p.configurable', 'pv.code'])
+        .addSelect(['t', 'p.id', 'p.provider', 'p.configurable', 'pv.code'])
         .where('p.id = :predicateId', { predicateId })
         .getOne();
 
       const reservedCoins = calculateReservedCoins(predicateTxs);
       const instance = await this.predicateService.instancePredicate(
         configurable,
-        versionCode,
+        provider,
       );
       const balances = (await instance.getBalances()).balances;
       const assets =

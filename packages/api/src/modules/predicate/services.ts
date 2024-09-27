@@ -295,9 +295,12 @@ export class PredicateService implements IPredicateService {
     }
   }
 
-  async instancePredicate(configurable: string, version: string): Promise<Vault> {
+  async instancePredicate(
+    configurable: string,
+    providerUrl: string,
+  ): Promise<Vault> {
     const conf = JSON.parse(configurable);
-    const provider = await Provider.create(conf.network);
+    const provider = await Provider.create(providerUrl);
     return new Vault(provider, conf);
   }
 }

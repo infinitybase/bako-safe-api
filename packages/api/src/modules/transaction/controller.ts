@@ -66,25 +66,22 @@ export class TransactionController {
     try {
       const { workspace } = req;
       const { predicateId } = req.query;
-      const predicate = predicateId && predicateId.length > 0 ? predicateId[0] : undefined;
-      
+      const predicate =
+        predicateId && predicateId.length > 0 ? predicateId[0] : undefined;
 
-      if(!predicate) {
+      if (!predicate) {
         const qb = Transaction.createQueryBuilder('t')
-        .innerJoinAndSelect('t.predicate', 'pred')
-        .innerJoin(
-          'pred.workspace',
-          'wks',
-          'wks.id = :workspaceId',
-          { workspaceId: workspace.id }
-        )
-        .addSelect(['t.status'])
-        .where('t.status = :status', {
-          status: TransactionStatus.AWAIT_REQUIREMENTS,
-        });
-      
+          .innerJoinAndSelect('t.predicate', 'pred')
+          .innerJoin('pred.workspace', 'wks', 'wks.id = :workspaceId', {
+            workspaceId: workspace.id,
+          })
+          .addSelect(['t.status'])
+          .where('t.status = :status', {
+            status: TransactionStatus.AWAIT_REQUIREMENTS,
+          });
+
         const result = await qb.getCount();
-        
+
         return successful(
           {
             ofUser: result,
@@ -94,13 +91,11 @@ export class TransactionController {
         );
       }
 
-
       const qb = Transaction.createQueryBuilder('t')
         .where('t.status = :status', {
           status: TransactionStatus.AWAIT_REQUIREMENTS,
         })
         .andWhere('t.predicateId = :predicate', { predicate });
-
 
       const result = await qb.getCount();
 
@@ -199,7 +194,7 @@ export class TransactionController {
 
       return successful(newTransaction, Responses.Ok);
     } catch (e) {
-      console.log(e)
+      console.log(e);
       return error(e.error, e.statusCode);
     }
   }
@@ -341,7 +336,6 @@ export class TransactionController {
     }
   }
 
-
   // verifique se o usuário que está assinando é um dos membros do vault
   // verifique se o usuário já assinou
   // verifique se o usuário já rejeitou
@@ -349,14 +343,17 @@ export class TransactionController {
   async signByID({
     body: { signature, approve },
     params: { hash: txHash },
-    user: {address: account, id: userId},
+    user: { address: account, id: userId },
   }: ISignByIdRequest) {
     try {
       const transaction = await Transaction.findOne({
-        where: { hash: txHash.slice(2) }
+        where: { hash: txHash },
       });
-      const isValidSignature = this.transactionService.validateSignature(transaction, account);
-      
+      const isValidSignature = this.transactionService.validateSignature(
+        transaction,
+        account,
+      );
+
       if (!transaction) {
         return successful(false, Responses.Ok);
       }
@@ -364,18 +361,24 @@ export class TransactionController {
       const witness = {
         ...transaction.resume.witnesses.find(w => w.account === account),
         signature: isValidSignature ? signature : null,
-        status: approve && isValidSignature ? WitnessStatus.DONE : WitnessStatus.REJECTED,
+        status:
+          approve && isValidSignature ? WitnessStatus.DONE : WitnessStatus.REJECTED,
       };
 
-      transaction.resume.witnesses = transaction.resume.witnesses.map(w => w.account === account ? witness : w);
-      const newStatus = this.transactionService.validateStatus(transaction, transaction.resume.witnesses);
-      
+      transaction.resume.witnesses = transaction.resume.witnesses.map(w =>
+        w.account === account ? witness : w,
+      );
+      const newStatus = this.transactionService.validateStatus(
+        transaction,
+        transaction.resume.witnesses,
+      );
+
       transaction.resume.status = newStatus;
       transaction.status = newStatus;
 
       await transaction.save();
-      
-      if(newStatus === TransactionStatus.PENDING_SENDER) {
+
+      if (newStatus === TransactionStatus.PENDING_SENDER) {
         await this.transactionService.sendToChain(transaction.hash);
       }
 
@@ -561,7 +564,9 @@ export class TransactionController {
   }
 
   async send(params: ISendTransactionRequest) {
-    const { params: { hash } } = params;
+    const {
+      params: { hash },
+    } = params;
     try {
       await this.transactionService.sendToChain(hash.slice(2)); // not wait for this
       return successful(true, Responses.Ok);
@@ -569,5 +574,4 @@ export class TransactionController {
       return error(e.error, e.statusCode);
     }
   }
-
 }
