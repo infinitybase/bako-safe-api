@@ -551,6 +551,7 @@ export class TransactionController {
 
       return successful(response, Responses.Ok);
     } catch (e) {
+      console.log(`[INCOMING_ERROR]`, e);
       return error(e.error, e.statusCode);
     }
   }
