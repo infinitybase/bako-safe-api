@@ -26,6 +26,7 @@ export type Asset = {
   assetId: string;
   icon?: string;
   amount?: string;
+  units: number;
 };
 
 //const whiteList = ['ethereum', 'weth', 'usd-coin'];
@@ -43,6 +44,7 @@ export const fuelAssetsByChainId = (chainId: number): Asset[] =>
         slug: asset.name,
         assetId: network.assetId,
         icon: asset.icon,
+        units: network.decimals,
       });
     }
     return acc;
@@ -60,6 +62,7 @@ export const fuelAssets = (): Asset[] =>
         slug: asset.name.toLocaleLowerCase(),
         assetId: network.assetId,
         icon: asset.icon,
+        units: network.decimals,
       });
     }
     return acc;
