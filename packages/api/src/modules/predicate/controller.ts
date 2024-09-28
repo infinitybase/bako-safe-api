@@ -229,7 +229,7 @@ export class PredicateController {
         Responses.Ok,
       );
     } catch (e) {
-      console.log('[ERROR]', e);
+      console.log(`[RESERVED_COINS_ERROR]`, e);
       return error(e.error, e.statusCode);
     }
   }
