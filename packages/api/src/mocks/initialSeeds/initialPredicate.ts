@@ -6,8 +6,7 @@ import { Predicate } from '@src/models/Predicate';
 
 import { generateInitialUsers } from './initialUsers';
 import { predicateVersionMock } from '../predicateVersion';
-
-import { BakoSafe } from 'bakosafe';
+import { networks } from '../networks';
 
 export const generateInitialPredicate = async (): Promise<Partial<Predicate>> => {
   const users = (await generateInitialUsers()).map(u => u.name);
@@ -20,7 +19,7 @@ export const generateInitialPredicate = async (): Promise<Partial<Predicate>> =>
       SIGNATURES_COUNT: 1,
       SIGNERS: [owner?.address],
     }),
-    provider: BakoSafe.getProviders('CHAIN_URL'),
+    provider: networks['devnet'],
     chainId: 0,
   };
   const members = await User.find({

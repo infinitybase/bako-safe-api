@@ -78,6 +78,8 @@ class Transaction extends Base {
     const transactionType = {
       [FuelTransactionType.Create]: TransactionType.TRANSACTION_CREATE,
       [FuelTransactionType.Script]: TransactionType.TRANSACTION_SCRIPT,
+      [FuelTransactionType.Upgrade]: TransactionType.TRANSACTION_UPGRADE,
+      [FuelTransactionType.Upload]: TransactionType.TRANSACTION_UPLOAD,
       default: TransactionType.TRANSACTION_SCRIPT,
     };
 

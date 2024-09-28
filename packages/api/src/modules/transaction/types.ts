@@ -4,7 +4,6 @@ import {
   ITransferAsset,
   IWitnesses,
   TransactionStatus,
-  Transfer,
   Vault,
 } from 'bakosafe';
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
@@ -112,9 +111,8 @@ export type ICloseTransactionBody = {
 };
 
 export interface ISignByIdPayload {
-  signer: string;
-  account: string;
-  confirm: string;
+  signature: string;
+  approve: string;
 }
 
 interface ICreateTransactionRequestSchema extends ValidatedRequestSchema {
@@ -139,12 +137,12 @@ interface ICloseTransactionRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Params]: { id: string };
 }
 interface ISendTransactionRequestSchema extends ValidatedRequestSchema {
-  [ContainerTypes.Params]: { id: string };
+  [ContainerTypes.Params]: { hash: string };
 }
 
 interface ISignByIdRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Body]: ISignByIdPayload;
-  [ContainerTypes.Params]: { id: string };
+  [ContainerTypes.Params]: { hash: string };
 }
 
 interface IFindTransactionByIdRequestSchema extends ValidatedRequestSchema {
@@ -219,21 +217,10 @@ export interface ITransactionService {
   transactionPaginate(pagination?: TransactionPaginationParams): this;
   filter(filter: ITransactionFilterParams): this;
 
-  instanceTransactionScript: (
-    api_transaction: TransactionRequest,
-    vault: Vault,
-    witnesses: string[],
-  ) => Promise<Transfer>;
-  validateStatus: (
-    transaction: Transaction,
-    witnesses: IWitnesses[],
-  ) => TransactionStatus;
-  checkInvalidConditions: (api_transaction: TransactionStatus) => void;
-  verifyOnChain: (
-    api_transaction: Transaction,
-    provider: Provider,
-  ) => Promise<ITransactionResume>;
-  sendToChain: (transactionId: string) => Promise<void>;
+  // bakosafe
+  sendToChain: (transactionId: string) => Promise<ITransactionResponse>;
+  
+  // crud
   create: (payload: ITCreateService) => Promise<ITransactionResponse>;
   update: (
     id: string,
@@ -242,7 +229,10 @@ export interface ITransactionService {
   list: () => Promise<IPagination<ITransactionResponse> | ITransactionResponse[]>;
   listWithIncomings: () => Promise<ITransactionResponse[]>;
   findById: (id: string) => Promise<ITransactionResponse>;
+  findByHash: (hash: string) => Promise<ITransactionResponse>;
   delete: (id: string) => Promise<boolean>;
+
+  // graphql
   fetchFuelTransactions: (
     predicates: Predicate[],
   ) => Promise<ITransactionResponse[]>;
@@ -250,4 +240,12 @@ export interface ITransactionService {
     id: string,
     predicate: Predicate,
   ) => Promise<ITransactionResponse>;
+
+  // validations
+  validateStatus: (
+    transaction: Transaction,
+    witnesses: IWitnesses[],
+  ) => TransactionStatus;
+  checkInvalidConditions: (api_transaction: TransactionStatus) => void;
+  validateSignature: (transaction: Transaction, userAddress: string) => boolean;
 }

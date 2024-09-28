@@ -1,12 +1,12 @@
 import { Address } from 'fuels';
 
 import { accounts } from '@src/mocks/accounts';
-import { networks, providers } from '@src/mocks/networks';
+import { networks } from '@src/mocks/networks';
 import { TypeUser } from '@src/models';
 import { PermissionRoles, defaultPermissions } from '@src/models/Workspace';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
 import { generateWorkspacePayload } from '@src/utils/testUtils/Workspace';
-import { BakoSafe } from 'bakosafe';
+
 import { catchApplicationError, TestError } from '@utils/testUtils/Errors';
 
 describe('[WORKSPACE]', () => {
@@ -232,7 +232,7 @@ describe('[WORKSPACE]', () => {
     const aux_address = Address.fromRandom();
     const { data: data_user_aux } = await auth_aux.axios.post('/user/', {
       address: aux_address.toAddress(),
-      provider: BakoSafe.getProviders('CHAIN_URL'),
+      provider: networks['devnet'],
       name: `${new Date().getTime()} - Create user test`,
       type: TypeUser.FUEL,
     });

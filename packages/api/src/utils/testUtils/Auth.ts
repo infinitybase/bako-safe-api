@@ -1,5 +1,5 @@
-import axios, { AxiosError, AxiosInstance } from 'axios';
-import { IBakoSafeApi } from 'bakosafe';
+import axios, { AxiosInstance } from 'axios';
+// import { IBakoSafeApi } from 'bakosafe';
 import { Provider, Wallet } from 'fuels';
 
 import { TypeUser } from '@src/models';
@@ -27,7 +27,7 @@ type AuthenticateWorkspace = AuthenticateUser & {
 //todo: repply this class on SDK to user autentication resource
 export class AuthValidations {
   public user: IUserAuth;
-  public authToken: IBakoSafeApi;
+  // public authToken: IBakoSafeApi;
   public axios: AxiosInstance;
   public workspace: {
     id: string;
@@ -79,10 +79,10 @@ export class AuthValidations {
 
     this.axios.defaults.headers.common['Authorization'] = data.accessToken;
     this.axios.defaults.headers.common['Signeraddress'] = data.address;
-    this.authToken = {
-      address: data.address,
-      token: data.accessToken,
-    };
+    // this.authToken = {
+    //   address: data.address,
+    //   token: data.accessToken,
+    // };
 
     this.user = {
       id: data.user_id,
@@ -97,7 +97,7 @@ export class AuthValidations {
     const { data } = await this.axios.put('/auth/workspace', {
       workspace: workspaceId,
       user: this.user.id,
-      ...this.authToken,
+      // ...this.authToken,
     });
 
     this.workspace = data.workspace;
