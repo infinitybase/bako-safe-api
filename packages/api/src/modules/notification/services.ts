@@ -115,16 +115,14 @@ export class NotificationService implements INotificationService {
       });
   }
 
-
   // select all members of predicate
   // create a notification for each member
   async transactionSuccess(txId: string) {
     const tx = await new TransactionService().findById(txId);
 
-    if(!tx) {
-      return
+    if (!tx) {
+      return;
     }
-
 
     const members = await tx.predicate.members;
     const summary = {
@@ -135,29 +133,27 @@ export class NotificationService implements INotificationService {
       workspaceId: tx.predicate.workspace.id,
     };
 
-    members.forEach(async member => {
-      const payload = {
-        userId: member.id,
-        type: 'TRANSACTION_SUCCESS',
+    // members.forEach(async member => {
+    //   const payload = {
+    //     userId: member.id,
+    //     type: 'TRANSACTION_SUCCESS',
+    //     summary,
+    //   };
+
+    for await (const member of members) {
+      await this.create({
+        title: NotificationTitle.TRANSACTION_COMPLETED,
         summary,
-      };
+        user_id: member.id,
+      });
 
-      for await (const member of members) {
-        await this.create({
-          title: NotificationTitle.TRANSACTION_COMPLETED,
-          summary,
-          user_id: member.id,
+      if (member.notify) {
+        await sendMail(EmailTemplateType.TRANSACTION_COMPLETED, {
+          to: member.email,
+          data: { summary: { ...summary, name: member?.name ?? '' } },
         });
-
-        if (member.notify) {
-          await sendMail(EmailTemplateType.TRANSACTION_COMPLETED, {
-            to: member.email,
-            data: { summary: { ...summary, name: member?.name ?? '' } },
-          });
-        }
       }
-  })
-}
-
-
+    }
+    // })
+  }
 }
