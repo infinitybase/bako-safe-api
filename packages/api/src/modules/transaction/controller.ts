@@ -62,9 +62,10 @@ export class TransactionController {
     bindMethods(this);
   }
 
+  // pending tx
   async pending(req: IListRequest) {
     try {
-      const { workspace } = req;
+      const { workspace, user } = req;
       const { predicateId } = req.query;
       const predicate =
         predicateId && predicateId.length > 0 ? predicateId[0] : undefined;
@@ -112,9 +113,17 @@ export class TransactionController {
   }
 
   async create({ body: transaction, user, workspace }: ICreateTransactionRequest) {
-    const { predicateAddress, summary } = transaction;
+    const { predicateAddress, summary, hash } = transaction;
 
     try {
+      const existsTx = await Transaction.findOne({
+        where: { hash },
+      });
+
+      if (existsTx) {
+        return successful(existsTx, Responses.Ok);
+      }
+
       const predicate = await new PredicateService()
         .filter({ address: predicateAddress })
         .list()
@@ -194,7 +203,6 @@ export class TransactionController {
 
       return successful(newTransaction, Responses.Ok);
     } catch (e) {
-      console.log(e);
       return error(e.error, e.statusCode);
     }
   }
@@ -542,6 +550,7 @@ export class TransactionController {
 
       return successful(response, Responses.Ok);
     } catch (e) {
+      console.log(`[INCOMING_ERROR]`, e);
       return error(e.error, e.statusCode);
     }
   }

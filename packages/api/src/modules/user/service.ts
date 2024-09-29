@@ -21,6 +21,7 @@ import app from '@src/server/app';
 import { Provider, Address } from 'fuels';
 import { Vault } from 'bakosafe';
 import { PredicateService } from '../predicate/services';
+import { PredicateVersionService } from '../predicateVersion/services';
 
 const { UI_URL } = process.env;
 
@@ -120,10 +121,7 @@ export class UserService implements IUserService {
         };
 
         const predicate = new Vault(provider, configurable);
-
-        const version = await PredicateVersion.findOne({
-          order: { createdAt: 'DESC' },
-        });
+        const version = await new PredicateVersionService().findCurrentVersion();
 
         await new PredicateService().create({
           name: 'Personal Vault',
@@ -134,7 +132,7 @@ export class UserService implements IUserService {
           ).toB256(),
           minSigners: 1,
           addresses: [user.address],
-          configurable: JSON.stringify({ ...configurable, network: provider.url }),
+          configurable: JSON.stringify(predicate.configurable),
           provider: predicate.provider.url,
           chainId: predicate.provider.getChainId(),
           owner: user,

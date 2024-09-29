@@ -26,10 +26,26 @@ export type Asset = {
   assetId: string;
   icon?: string;
   amount?: string;
+  units: number;
 };
 
 //const whiteList = ['ethereum', 'weth', 'usd-coin'];
 const whitelist = ['rsteth', 'mantle meth', 'rsusde', 're7lrt'];
+const replaceList = {
+  usdc: 'usd-coin',
+};
+
+const replace = (name: string) => {
+  console.log({
+    name,
+    has: replaceList.hasOwnProperty(name.toLocaleLowerCase())
+      ? replaceList[name.toLocaleLowerCase()]
+      : name,
+  });
+  return replaceList.hasOwnProperty(name.toLocaleLowerCase())
+    ? replaceList[name.toLocaleLowerCase()]
+    : name.toLocaleLowerCase();
+};
 
 export const fuelAssetsByChainId = (chainId: number): Asset[] =>
   fuelAssetsList.reduce<Asset[]>((acc, asset) => {
@@ -40,13 +56,29 @@ export const fuelAssetsByChainId = (chainId: number): Asset[] =>
     if (network && network.type === 'fuel') {
       acc.push({
         name: asset.name,
-        slug: asset.name,
+        slug: replace(asset.name),
         assetId: network.assetId,
         icon: asset.icon,
+        units: network.decimals,
       });
     }
     return acc;
   }, []);
+
+export const fuelUnitAssets = (chainId: number, assetId: string): number => {
+  const result =
+    fuelAssetsList
+      .map(asset => {
+        const network = asset.networks.find(
+          network => network && network.chainId === chainId,
+        ) as NetworkFuel;
+
+        if (network && network.assetId === assetId) return network.decimals;
+      })
+      .find(units => units !== undefined) ?? 8;
+
+  return result;
+};
 
 export const fuelAssets = (): Asset[] =>
   fuelAssetsList.reduce<Asset[]>((acc, asset) => {
@@ -57,9 +89,10 @@ export const fuelAssets = (): Asset[] =>
     if (network) {
       acc.push({
         name: asset.name,
-        slug: asset.name.toLocaleLowerCase(),
+        slug: replace(asset.name),
         assetId: network.assetId,
         icon: asset.icon,
+        units: network.decimals,
       });
     }
     return acc;
