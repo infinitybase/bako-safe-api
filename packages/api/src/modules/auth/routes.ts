@@ -9,6 +9,7 @@ import { authMiddleware } from '@src/middlewares';
 
 const router = Router();
 const authService = new AuthService();
+
 const { signIn, generateSignCode } = new AuthController(authService);
 
 router.post('/select-network', authMiddleware, (req, res) => {
@@ -26,14 +27,14 @@ router.post('/select-network', authMiddleware, (req, res) => {
 router.post('/sign-in', validateSignInPayload, handleResponse(signIn));
 
 router.post(
-  '/code/:address',
-  validateSignInCodeParams,
+  '/code',
+  // validateSignInCodeParams,
   handleResponse(generateSignCode),
 );
 
 //todo: verify why do cant use authMiddleware here
 // router.put('/workspace', handleResponse(updateWorkspace));
 
-//router.delete(signOutPath, authMiddleware, handleResponse(authController.signOut));
+router.delete('/sign-out', handleResponse(signOut));
 
 export default router;

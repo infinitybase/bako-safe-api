@@ -5,8 +5,6 @@ import UserToken from '@src/models/UserToken';
 import { Workspace } from '@src/models/Workspace';
 import GeneralError, { ErrorTypes } from '@src/utils/error/GeneralError';
 
-import { IAuthRequest } from '@middlewares/auth/types';
-
 import { NotFound, error } from '@utils/error';
 import { Responses, successful, bindMethods, TokenUtils } from '@utils/index';
 
@@ -19,6 +17,7 @@ import {
   ISignInRequest,
 } from './types';
 import app from '@src/server/app';
+import { Request } from 'express';
 
 export class AuthController {
   private authService: IAuthService;
@@ -31,7 +30,7 @@ export class AuthController {
   async signIn(req: ISignInRequest) {
     try {
       const { digest, encoder, signature } = req.body;
-      
+
       const { userToken, signin } = await TokenUtils.createAuthToken(
         signature,
         digest,
@@ -47,11 +46,15 @@ export class AuthController {
     }
   }
 
-  async signOut(req: IAuthRequest) {
+  async signOut(req: Request) {
     try {
-      const response = await this.authService.signOut(req.user);
+      const token = req?.headers?.authorization;
 
-      return successful(response, Responses.Ok);
+      if (token) {
+        await app._sessionCache.removeSession(token);
+      }
+
+      return successful(true, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }
@@ -59,8 +62,8 @@ export class AuthController {
 
   async generateSignCode(req: ICreateRecoverCodeRequest) {
     try {
-      const { address } = req.params;
-      const { origin } = req.headers;
+      const { address } = req.body;
+      const { origin } = req.headers ?? { origin: 'no-agent' };
       const owner = await User.findOne({ where: { address } });
 
       const response = await new RecoverCodeService().create({
@@ -75,7 +78,6 @@ export class AuthController {
       return error(e.error, e.statusCode);
     }
   }
-
 
   // change wk are desabled
   // async updateWorkspace(req: IChangeWorkspaceRequest) {

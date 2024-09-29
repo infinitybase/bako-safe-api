@@ -3,6 +3,7 @@ import { BN, CoinQuantity, OutputCoin, TransactionRequestOutput, bn } from 'fuel
 import app from '@src/server/app';
 import { Transaction } from '@src/models';
 import { isOutputCoin } from './outputTypeValidate';
+import { fuelUnitAssets } from './assets';
 
 const calculateReservedCoins = (transactions: Transaction[]): CoinQuantity[] => {
   const reservedMap = new Map<string, BN>();
@@ -27,11 +28,19 @@ const calculateReservedCoins = (transactions: Transaction[]): CoinQuantity[] => 
   return result;
 };
 
-const calculateBalanceUSD = (balances: CoinQuantity[]): string => {
+const calculateBalanceUSD = (
+  balances: CoinQuantity[],
+  chainId: number = 9889,
+): string => {
   let balanceUSD = 0;
 
   balances?.forEach(balance => {
-    const formattedAmount = parseFloat(balance.amount.format());
+    const units = fuelUnitAssets(chainId, balance.assetId);
+    const formattedAmount = parseFloat(
+      balance.amount.format({
+        units,
+      }),
+    );
     const priceUSD = app._quoteCache.getQuote(balance.assetId);
     balanceUSD += formattedAmount * priceUSD;
   });

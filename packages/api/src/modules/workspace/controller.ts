@@ -1,4 +1,4 @@
-import { BakoSafe, TransactionStatus } from 'bakosafe';
+import { TransactionStatus } from 'bakosafe';
 
 import { Predicate, TypeUser, User, PermissionAccess } from '@src/models';
 import { PermissionRoles, Workspace } from '@src/models/Workspace';
@@ -31,14 +31,14 @@ import {
   IUpdateRequest,
 } from './types';
 import { CoinQuantity, bn } from 'fuels';
+import { networks } from '@src/mocks/networks';
 
 export class WorkspaceController {
   async listByUser(req: IListByUserRequest) {
     try {
       const { user } = req;
 
-      const response = await new WorkspaceService()
-      .findByUser(user.id)
+      const response = await new WorkspaceService().findByUser(user.id);
 
       return successful(response, Responses.Ok);
     } catch (e) {
@@ -90,6 +90,7 @@ export class WorkspaceController {
         .addSelect([
           'p.id',
           'p.configurable',
+          'p.provider',
           'pv.code',
           'w.id',
           't.status',
@@ -100,10 +101,10 @@ export class WorkspaceController {
 
       // Fetches the balance of each predicate
       const balancePromises = predicates.map(
-        async ({ configurable, version: { code: versionCode }, transactions }) => {
+        async ({ configurable, transactions, provider }) => {
           const vault = await predicateService.instancePredicate(
             configurable,
-            versionCode,
+            provider,
           );
           const balances = (await vault.getBalances()).balances;
 
@@ -140,7 +141,8 @@ export class WorkspaceController {
           : predicateCoins;
 
       return successful(
-        {//no necessary items here (on workspace)
+        {
+          //no necessary items here (on workspace)
           // reservedCoinsUSD: calculateBalanceUSD(reservedCoins),
           // totalBalanceUSD: calculateBalanceUSD(predicateCoins),
           currentBalanceUSD: calculateBalanceUSD(assets),
@@ -151,6 +153,7 @@ export class WorkspaceController {
         Responses.Ok,
       );
     } catch (error) {
+      console.log(error);
       reservedCoins = [
         {
           assetId: assetsMapBySymbol['ETH'].id,
@@ -368,7 +371,7 @@ export class WorkspaceController {
                   return await new UserService().create({
                     address: member,
                     name: member,
-                    provider: BakoSafe.getProviders('CHAIN_URL'),
+                    provider: networks['devnet'],
                     avatar: IconUtils.user(),
                     type: TypeUser.FUEL,
                   });
