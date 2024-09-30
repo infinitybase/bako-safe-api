@@ -4,7 +4,11 @@ import {
   TransactionStatus,
   TransactionType,
 } from 'bakosafe';
-import { TransactionRequest, TransactionType as FuelTransactionType } from 'fuels';
+import {
+  TransactionRequest,
+  TransactionType as FuelTransactionType,
+  Network,
+} from 'fuels';
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 import { User } from '@models/User';
@@ -61,6 +65,12 @@ class Transaction extends Base {
     name: 'resume',
   })
   resume: ITransactionResume;
+
+  @Column({
+    type: 'jsonb',
+    name: 'network',
+  })
+  network: Network;
 
   @JoinColumn({ name: 'created_by' })
   @ManyToOne(() => User)

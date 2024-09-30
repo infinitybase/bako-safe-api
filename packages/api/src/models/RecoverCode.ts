@@ -1,4 +1,4 @@
-import { Address } from 'fuels';
+import { Address, Network } from 'fuels';
 import { Column, Entity, BeforeInsert, JoinColumn, OneToOne } from 'typeorm';
 
 import { Base } from './Base';
@@ -25,6 +25,12 @@ class RecoverCode extends Base {
 
   @Column()
   code: string;
+
+  @Column({
+    type: 'jsonb',
+    name: 'network',
+  })
+  network: Network;
 
   @Column({ name: 'valid_at' })
   validAt: Date;
