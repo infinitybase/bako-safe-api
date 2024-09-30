@@ -64,7 +64,7 @@ export class AuthController {
 
   async generateSignCode(req: ICreateRecoverCodeRequest) {
     try {
-      const { address } = req.body;
+      const { address, networkUrl } = req.body;
       const { origin } = req.headers ?? { origin: 'no-agent' };
       const owner = await User.findOne({ where: { address } });
 

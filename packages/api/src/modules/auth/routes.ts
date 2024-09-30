@@ -19,7 +19,10 @@ router.post('/select-network', authMiddleware, (req, res) => {
     query: req.query,
     params: req.params,
     // user: req.user,
+    // network: req.network,
   });
+
+  res.json({ message: 'select-network' });
 });
 
 // export const signOutPath = '/sign-out';

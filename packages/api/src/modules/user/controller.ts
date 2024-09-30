@@ -102,7 +102,7 @@ export class UserController {
   }
 
   async latestInfo(req: IMeInfoRequest) {
-    const { user, workspace } = req;
+    const { user, workspace, network } = req;
     return successful(
       {
         id: user.id,
@@ -112,6 +112,7 @@ export class UserController {
         address: user.address,
         webauthn: user.webauthn,
         first_login: user.first_login,
+        network,
         onSingleWorkspace:
           workspace.single && workspace.name.includes(`[${user.id}]`),
         workspace: {

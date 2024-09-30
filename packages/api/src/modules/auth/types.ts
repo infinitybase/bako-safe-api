@@ -103,6 +103,7 @@ export interface IUpgradeWorkspace extends ValidatedRequestSchema {
 export interface ICreateRecoverCodeRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Params]: {
     address: string;
+    networkUrl: string;
   };
 }
 

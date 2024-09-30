@@ -54,8 +54,11 @@ describe('[AUTH]', () => {
     // get a route with required auth
     const { data: userInfo } = await api.get(`/user/latest/info`);
 
-    // todo: verify info about network
     expect(userInfo).toHaveProperty('address', newUser.address);
     expect(userInfo).toHaveProperty('name', newUser.name);
+    expect(userInfo).toHaveProperty('network', {
+      url: provider.url,
+      chainId: provider.getChainId(),
+    });
   });
 });
