@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Brackets } from 'typeorm';
 
-import { User } from '@src/models';
+import { PredicateVersion, User } from '@src/models';
 import {
   PermissionRoles,
   Workspace,
@@ -18,6 +18,10 @@ import { IconUtils } from '@utils/icons';
 import { WorkspaceService } from '../workspace/services';
 import { IFilterParams, IUserService, IUserPayload } from './types';
 import app from '@src/server/app';
+import { Provider, Address } from 'fuels';
+import { Vault } from 'bakosafe';
+import { PredicateService } from '../predicate/services';
+import { PredicateVersionService } from '../predicateVersion/services';
 
 const { UI_URL } = process.env;
 
@@ -88,21 +92,57 @@ export class UserService implements IUserService {
     }
   }
 
+  //TODO: INCREASE THIS, THEY CODE ARE HERE BECAUSE ON MODEL (AFTERISERT)
+  //      WE HAVE A PROBLEMS WITH CIRCULAR DEPENDNCIES
+  //      AND MOVE THIS INSERTS TO THE SERVICE OF WORKSPACE AND PREDICATE
   async create(payload: IUserPayload): Promise<User> {
     return await User.create(payload)
       .save()
-      .then(async data => {
-        await new WorkspaceService().create({
-          name: `singleWorkspace[${data.id}]`,
-          owner: data,
-          members: [data],
+      .then(async user => {
+        // insert new workspace
+        const workspace = await new WorkspaceService().create({
+          name: `singleWorkspace[${user.id}]`,
+          owner: user,
+          members: [user],
           avatar: IconUtils.user(),
           permissions: {
-            [data.id]: defaultPermissions[PermissionRoles.OWNER],
+            [user.id]: defaultPermissions[PermissionRoles.OWNER],
           },
           single: true,
         });
-        return data;
+
+        // insert a root wallet predicate
+        const provider = await Provider.create(payload.provider);
+        const configurable = {
+          SIGNATURES_COUNT: 1,
+          SIGNERS: [user.address],
+          network: provider.url,
+          chainId: provider.getChainId(),
+        };
+
+        const predicate = new Vault(provider, configurable);
+        const version = await new PredicateVersionService().findCurrentVersion();
+
+        await new PredicateService().create({
+          name: 'Personal Vault',
+          description:
+            'This is your first vault. It requires a single signer (you) to execute transactions; a pattern called 1-of-1',
+          predicateAddress: Address.fromString(
+            predicate.address.toString(),
+          ).toB256(),
+          minSigners: 1,
+          addresses: [user.address],
+          configurable: JSON.stringify(predicate.configurable),
+          provider: predicate.provider.url,
+          chainId: predicate.provider.getChainId(),
+          owner: user,
+          version,
+          members: [user],
+          workspace,
+          root: true,
+        });
+
+        return user;
       })
       .catch(error => {
         if (error instanceof GeneralError) throw error;

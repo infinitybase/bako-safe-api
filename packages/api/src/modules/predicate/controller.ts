@@ -5,7 +5,7 @@ import { Workspace } from '@src/models/Workspace';
 import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
 import { IconUtils } from '@src/utils/icons';
 
-import { NotificationTitle, Transaction, TypeUser, User } from '@models/index';
+import { NotificationTitle, TypeUser, User } from '@models/index';
 
 import { error } from '@utils/error';
 import {
@@ -31,6 +31,7 @@ import {
   IPredicateService,
 } from './types';
 import { IPredicateVersionService } from '../predicateVersion/types';
+import { ZeroBytes32 } from 'fuels';
 
 export class PredicateController {
   private userService: IUserService;
@@ -55,12 +56,12 @@ export class PredicateController {
   }
 
   async create({ body: payload, user, workspace }: ICreatePredicateRequest) {
-    const { versionCode } = payload;
-
+    // const { versionCode } = payload;
+    const validUsers = payload.addresses.filter(address => address !== ZeroBytes32);
     try {
       const members: User[] = [];
 
-      for await (const member of payload.addresses) {
+      for await (const member of validUsers) {
         let user = await this.userService.findByAddress(member);
 
         if (!user) {
@@ -69,19 +70,14 @@ export class PredicateController {
             provider: payload.provider,
             avatar: IconUtils.user(),
             type: TypeUser.FUEL,
+            name: member,
           });
         }
 
         members.push(user);
       }
 
-      let version = null;
-
-      if (versionCode) {
-        version = await this.predicateVersionService.findByCode(versionCode);
-      } else {
-        version = await this.predicateVersionService.findCurrentVersion();
-      }
+      const version = await this.predicateVersionService.findCurrentVersion();
 
       const newPredicate = await this.predicateService.create({
         ...payload,
@@ -198,8 +194,8 @@ export class PredicateController {
     try {
       const {
         transactions: predicateTxs,
-        version: { code: versionCode },
         configurable,
+        provider,
       } = await Predicate.createQueryBuilder('p')
         .leftJoin('p.transactions', 't', 't.status IN (:...status)', {
           status: [
@@ -215,7 +211,7 @@ export class PredicateController {
       const reservedCoins = calculateReservedCoins(predicateTxs);
       const instance = await this.predicateService.instancePredicate(
         configurable,
-        versionCode,
+        provider,
       );
       const balances = (await instance.getBalances()).balances;
       const assets =
@@ -233,6 +229,7 @@ export class PredicateController {
         Responses.Ok,
       );
     } catch (e) {
+      console.log(`[RESERVED_COINS_ERROR]`, e);
       return error(e.error, e.statusCode);
     }
   }

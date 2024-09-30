@@ -1,19 +1,20 @@
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 
-import { IPermissions, Workspace } from '@src/models/Workspace';
+import { Workspace } from '@src/models/Workspace';
 
-import UserToken, { Encoder } from '@models/UserToken';
-import { User } from '@models/index';
+import { Encoder } from '@models/UserToken';
+import { IPermissions, TypeUser, User, WebAuthn } from '@models/index';
 
 import { AuthValidatedRequest, UnloggedRequest } from '@middlewares/auth/types';
+import { Network } from 'fuels';
 
 export interface ICreateUserTokenPayload {
-  token: string;
   user: User;
+  token: string;
+  payload: string;
   expired_at: Date;
   encoder: Encoder;
-  provider: string;
-  payload: string;
+  network: Network;
   workspace: Workspace;
 }
 
@@ -61,24 +62,34 @@ interface IAuthorizeDappRequestSchema extends ValidatedRequestSchema {
 }
 
 export interface IFindTokenParams {
-  userId?: string;
-  address?: string;
   signature?: string;
-  notExpired?: boolean;
 }
 
-export interface ISignInResponse {
-  accessToken: string;
-  expired_at: Date;
+export type IWorkspaceSignin = {
+  id: string;
+  name: string;
   avatar: string;
+  single: boolean;
+  description: string;
+  permissions: IPermissions;
+};
+
+export type IUserSignin = {
   user_id: string;
-  workspace: {
-    id: string;
-    name: string;
-    avatar: string;
-    permissions: IPermissions;
-    single: boolean;
-  };
+  name: string;
+  type: TypeUser;
+  avatar: string;
+  address: string;
+  rootWallet: string;
+  webauthn?: WebAuthn;
+  email?: string;
+};
+
+export interface ISignInResponse extends IUserSignin {
+  expired_at: Date;
+  accessToken: string;
+  workspace: IWorkspaceSignin;
+  first_login: boolean;
 }
 
 export interface IUpgradeWorkspace extends ValidatedRequestSchema {
@@ -106,5 +117,5 @@ export type ICreateRecoverCodeRequest = UnloggedRequest<ICreateRecoverCodeReques
 export interface IAuthService {
   signIn(payload: ICreateUserTokenPayload): Promise<ISignInResponse>;
   signOut(user: User): Promise<void>;
-  findToken(params: IFindTokenParams): Promise<UserToken | undefined>;
+  // findToken(params: IFindTokenParams): Promise<UserToken | undefined>;
 }

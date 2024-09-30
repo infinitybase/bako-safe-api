@@ -1,8 +1,9 @@
 import { Predicate, TotalValueLocked } from '@src/models';
-import { Asset, IConfVault, Vault } from 'bakosafe';
+import { Asset, Vault } from 'bakosafe';
 import cron from 'node-cron';
 import { assetsMapById } from '../assets';
 import app from '@src/server/app';
+import { Provider } from 'fuels';
 const { FUEL_PROVIDER } = process.env;
 
 const VALID_PROVIDERS = [FUEL_PROVIDER];
@@ -40,15 +41,15 @@ const TVLCronJob = cron.schedule('0 0 * * *', async () => {
 
     for await (const predicate of predicates) {
       try {
-        const configurable: IConfVault = {
-          ...JSON.parse(predicate.configurable),
-        };
+        // const configurable: IConfVault = {
+        //   ...JSON.parse(predicate.configurable),
+        // };
+
+        const provider = await Provider.create(predicate.provider);
+        const conf = JSON.parse(predicate.configurable);
 
         // Instancia cada vault
-        const vault = await Vault.create({
-          configurable,
-          version: predicate.version.code,
-        });
+        const vault = new Vault(provider, conf);
 
         // Obtém os balances de cada vault e adiciona no array de balances
         const { balances } = await vault.getBalances();

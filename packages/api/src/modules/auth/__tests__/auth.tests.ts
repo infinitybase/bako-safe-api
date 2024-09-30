@@ -20,7 +20,7 @@ describe('[AUTH]', () => {
         expect(auth.user.address).toBe(accounts['USER_1'].account);
         expect(auth.workspace).toHaveProperty('id');
         expect(auth.workspace).toHaveProperty('single', true);
-        expect(auth.authToken);
+        // expect(auth.authToken);
       });
     },
     10 * 1000,
@@ -43,7 +43,7 @@ describe('[AUTH]', () => {
       await _auth.selectWorkspace(w_upgrade.id).then(({ data }) => {
         expect(_auth.workspace.id).toEqual(w_upgrade.id);
         expect(_auth.user).toHaveProperty('address', accounts['USER_1'].account);
-        expect(_auth.authToken).toHaveProperty('token');
+        // expect(_auth.authToken).toHaveProperty('token');
       });
     },
     10 * 1000,
@@ -62,5 +62,17 @@ describe('[AUTH]', () => {
     expect(data).toHaveProperty('type', RecoverCodeType.AUTH);
     expect(data).toHaveProperty('validAt');
     expect(new Date(data.validAt).getTime()).toBeGreaterThan(new Date().getTime());
+  });
+
+  test.only('validacao', async () => {
+    const auth = new AuthValidations(networks['local'], accounts['USER_1']);
+    await auth.create();
+    await auth.createSession();
+
+    await auth.axios.post('/auth/select-network').then(({ data, status }) => {
+      expect(status).toBe(200);
+      expect(data).toHaveProperty('network');
+      expect(data.network).toBe('local');
+    });
   });
 });

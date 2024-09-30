@@ -6,6 +6,7 @@ import { Workspace } from '@src/models/Workspace';
 
 import UserToken from '@models/UserToken';
 import { User } from '@models/index';
+import { Network } from 'fuels';
 
 export interface AuthValidatedRequest<T extends ValidatedRequestSchema>
   extends Request {
@@ -17,6 +18,7 @@ export interface AuthValidatedRequest<T extends ValidatedRequestSchema>
   user?: User;
   userToken?: UserToken;
   workspace?: Workspace;
+  network?: Network;
 }
 
 export interface UnloggedRequest<T extends ValidatedRequestSchema> extends Request {

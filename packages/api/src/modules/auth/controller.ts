@@ -5,8 +5,6 @@ import UserToken from '@src/models/UserToken';
 import { Workspace } from '@src/models/Workspace';
 import GeneralError, { ErrorTypes } from '@src/utils/error/GeneralError';
 
-import { IAuthRequest } from '@middlewares/auth/types';
-
 import { NotFound, error } from '@utils/error';
 import { Responses, successful, bindMethods, TokenUtils } from '@utils/index';
 
@@ -19,6 +17,7 @@ import {
   ISignInRequest,
 } from './types';
 import app from '@src/server/app';
+import { Request } from 'express';
 
 export class AuthController {
   private authService: IAuthService;
@@ -31,14 +30,14 @@ export class AuthController {
   async signIn(req: ISignInRequest) {
     try {
       const { digest, encoder, signature } = req.body;
-      
+
       const { userToken, signin } = await TokenUtils.createAuthToken(
         signature,
         digest,
         encoder,
       );
 
-      await app._sessionCache.addSession(userToken.token, userToken);
+      await app._sessionCache.addSession(userToken.accessToken, userToken);
       return successful(signin, Responses.Ok);
     } catch (e) {
       if (e instanceof GeneralError) throw e;
@@ -47,11 +46,15 @@ export class AuthController {
     }
   }
 
-  async signOut(req: IAuthRequest) {
+  async signOut(req: Request) {
     try {
-      const response = await this.authService.signOut(req.user);
+      const token = req?.headers?.authorization;
 
-      return successful(response, Responses.Ok);
+      if (token) {
+        await app._sessionCache.removeSession(token);
+      }
+
+      return successful(true, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }
@@ -59,8 +62,8 @@ export class AuthController {
 
   async generateSignCode(req: ICreateRecoverCodeRequest) {
     try {
-      const { address } = req.params;
-      const { origin } = req.headers;
+      const { address } = req.body;
+      const { origin } = req.headers ?? { origin: 'no-agent' };
       const owner = await User.findOne({ where: { address } });
 
       const response = await new RecoverCodeService().create({
@@ -76,50 +79,51 @@ export class AuthController {
     }
   }
 
-  async updateWorkspace(req: IChangeWorkspaceRequest) {
-    try {
-      const { workspace: workspaceId, user } = req.body;
-      const workspace = await new WorkspaceService()
-        .filter({ id: workspaceId })
-        .list()
-        .then((response: Workspace[]) => response[0]);
+  // change wk are desabled
+  // async updateWorkspace(req: IChangeWorkspaceRequest) {
+  //   try {
+  //     const { workspace: workspaceId, user } = req.body;
+  //     const workspace = await new WorkspaceService()
+  //       .filter({ id: workspaceId })
+  //       .list()
+  //       .then((response: Workspace[]) => response[0]);
 
-      if (!workspace)
-        throw new NotFound({
-          type: ErrorTypes.NotFound,
-          title: 'Workspace not found',
-          detail: `Workspace not found`,
-        });
+  //     if (!workspace)
+  //       throw new NotFound({
+  //         type: ErrorTypes.NotFound,
+  //         title: 'Workspace not found',
+  //         detail: `Workspace not found`,
+  //       });
 
-      const isUserMember = workspace.members.find(m => m.id === user);
+  //     const isUserMember = workspace.members.find(m => m.id === user);
 
-      const token = await TokenUtils.getTokenBySignature(req.headers.authorization);
+  //     const token = await TokenUtils.getTokenBySignature(req.headers.authorization);
 
-      if (isUserMember) {
-        token.workspace = workspace;
-      }
+  //     if (isUserMember) {
+  //       token.workspace = workspace;
+  //     }
 
-      await app._sessionCache.addSession(token.token, token);
+  //     await app._sessionCache.addSession(token.token, token);
 
-      return successful(
-        await token.save().then(({ workspace, token, user }: UserToken) => {
-          return {
-            workspace: {
-              id: workspace.id,
-              name: workspace.name,
-              avatar: workspace.avatar,
-              permissions: workspace.permissions[user.id],
-              single: workspace.single,
-            },
-            token: token,
-            avatar: user.avatar,
-            address: user.address,
-          };
-        }),
-        Responses.Ok,
-      );
-    } catch (e) {
-      return error(e.error, e.statusCode);
-    }
-  }
+  //     return successful(
+  //       await token.save().then(({ workspace, token, user }: UserToken) => {
+  //         return {
+  //           workspace: {
+  //             id: workspace.id,
+  //             name: workspace.name,
+  //             avatar: workspace.avatar,
+  //             permissions: workspace.permissions[user.id],
+  //             single: workspace.single,
+  //           },
+  //           token: token,
+  //           avatar: user.avatar,
+  //           address: user.address,
+  //         };
+  //       }),
+  //       Responses.Ok,
+  //     );
+  //   } catch (e) {
+  //     return error(e.error, e.statusCode);
+  //   }
+  // }
 }

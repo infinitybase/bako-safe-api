@@ -1,4 +1,4 @@
-import { IConfVault, Vault } from 'bakosafe';
+import { Vault } from 'bakosafe';
 import { Brackets } from 'typeorm';
 
 import { NotFound } from '@src/utils/error';
@@ -15,6 +15,7 @@ import {
   IPredicatePayload,
   IPredicateService,
 } from './types';
+import { Provider } from 'fuels';
 
 export class PredicateService implements IPredicateService {
   private _ordination: IOrdination<Predicate> = {
@@ -294,10 +295,9 @@ export class PredicateService implements IPredicateService {
     }
   }
 
-  async instancePredicate(configurable: string, version: string): Promise<Vault> {
-    return Vault.create({
-      configurable: JSON.parse(configurable),
-      version,
-    });
+  async instancePredicate(configurable: string, provider: string): Promise<Vault> {
+    const conf = JSON.parse(configurable);
+    const _provider = await Provider.create(provider);
+    return new Vault(_provider, conf);
   }
 }

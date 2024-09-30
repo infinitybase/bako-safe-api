@@ -1,5 +1,3 @@
-import { BakoSafe } from 'bakosafe';
-
 import app from './app';
 import Bootstrap from './bootstrap';
 
@@ -12,7 +10,9 @@ const {
   FUEL_PROVIDER, 
   GAS_LIMIT, 
   MAX_FEE,
-  COIN_MARKET_CAP_API_KEY
+  COIN_MARKET_CAP_API_KEY,
+  AWS_SMTP_USER,
+  AWS_SMTP_PASS
 } = process.env;
 
 const start = async () => {
@@ -28,7 +28,9 @@ const start = async () => {
     FUEL_PROVIDER,
     GAS_LIMIT,
     MAX_FEE,
-    COIN_MARKET_CAP_API_KEY
+    COIN_MARKET_CAP_API_KEY,
+    AWS_SMTP_USER,
+    AWS_SMTP_PASS
   })
 
 
@@ -43,17 +45,6 @@ const start = async () => {
     console.log(`[APP] Application running in http://localhost:${port} mode ${API_ENVIRONMENT}`);
   });
 };
-
-BakoSafe.setProviders({
-  SERVER_URL: API_URL,
-  CLIENT_URL: UI_URL,
-  CHAIN_URL: FUEL_PROVIDER,
-});
-
-BakoSafe.setGasConfig({
-  GAS_LIMIT: Number(GAS_LIMIT) ?? 10000000,
-  MAX_FEE: Number(MAX_FEE) ?? 1000000,
-});
 
 try {
   start();
