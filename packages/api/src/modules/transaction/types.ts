@@ -4,10 +4,9 @@ import {
   ITransferAsset,
   IWitnesses,
   TransactionStatus,
-  Vault,
 } from 'bakosafe';
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
-import { Provider, TransactionRequest } from 'fuels';
+import { TransactionRequest } from 'fuels';
 
 import { Predicate, Transaction, TransactionType } from '@models/index';
 
