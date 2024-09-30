@@ -3,13 +3,13 @@ import axios from 'axios';
 import { networks } from '@src/mocks/networks';
 import { Encoder } from '@src/models';
 
-import { Address, Provider, Signer, Wallet } from 'fuels';
+import { Address, Provider, Wallet } from 'fuels';
 import { TypeUser } from 'bakosafe';
 
 const { API_URL } = process.env;
 
 describe('[AUTH]', () => {
-  it.only('should handle the token strategy correctly', async () => {
+  it('should handle the TOKEN strategy correctly', async () => {
     const api = axios.create({
       baseURL: API_URL,
     });
