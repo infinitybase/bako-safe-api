@@ -107,6 +107,12 @@ export interface ICreateRecoverCodeRequestSchema extends ValidatedRequestSchema 
   };
 }
 
+export interface IChangeNetworkRequest extends ValidatedRequestSchema {
+  [ContainerTypes.Body]: {
+    network: string;
+  };
+}
+
 export type IListRequest = AuthValidatedRequest<IListRequestSchema>;
 export type ISignInRequest = UnloggedRequest<ISignInRequestSchema>;
 export type IGoToSingleWorkspaceRequest = AuthValidatedRequest<ValidatedRequestSchema>;
@@ -115,6 +121,7 @@ export type IActiveSession = AuthValidatedRequest<IActiveSessionRequestSchema>;
 export type IChangeWorkspaceRequest = AuthValidatedRequest<IUpgradeWorkspace>;
 export type IAuthorizeDappRequest = AuthValidatedRequest<IAuthorizeDappRequestSchema>;
 export type ICreateRecoverCodeRequest = UnloggedRequest<ICreateRecoverCodeRequestSchema>;
+export type IChangenetworkRequest = AuthValidatedRequest<IChangeNetworkRequest>;
 
 export interface IAuthService {
   signIn(payload: ICreateUserTokenPayload): Promise<ISignInResponse>;

@@ -31,6 +31,7 @@ async function authMiddleware(
     req.user = user;
     req.workspace = workspace;
     req.network = network;
+
     return next();
   } catch (e) {
     return next(e);

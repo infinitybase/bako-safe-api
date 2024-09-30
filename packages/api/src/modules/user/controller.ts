@@ -12,7 +12,7 @@ import {
   error,
 } from '@utils/error';
 import { IconUtils } from '@utils/icons';
-import { Responses, successful } from '@utils/index';
+import { Responses, successful, TokenUtils } from '@utils/index';
 
 import { PredicateService } from '../predicate/services';
 import { RecoverCodeService } from '../recoverCode/services';
@@ -33,6 +33,7 @@ import {
 import { Not } from 'typeorm';
 import app from '@src/server/app';
 import { Provider } from 'fuels';
+import { IChangenetworkRequest } from '../auth/types';
 
 export class UserController {
   private userService: IUserService;
@@ -325,5 +326,12 @@ export class UserController {
     } catch (e) {
       return error(e.error, e.statusCode);
     }
+  }
+
+  async changeNetwork({ user, body }: IChangenetworkRequest) {
+    const { network } = body;
+    const result = await TokenUtils.changeNetwork(user.id, network);
+
+    return successful(!!result, Responses.Ok);
   }
 }

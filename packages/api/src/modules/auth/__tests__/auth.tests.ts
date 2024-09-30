@@ -60,5 +60,24 @@ describe('[AUTH]', () => {
       url: provider.url,
       chainId: provider.getChainId(),
     });
+
+    // change network
+    const newNetwork = networks['devnet'];
+
+    // update network
+    await api.post(`/user/select-network`, {
+      network: newNetwork,
+    });
+
+    // console.log('updatedSession', updatedSession);
+
+    const { data: updatedNetwork } = await api.get(`/user/latest/info`);
+
+    const newProvider = await Provider.create(newNetwork);
+
+    expect(updatedNetwork).toHaveProperty('network', {
+      url: newProvider.url,
+      chainId: newProvider.getChainId(),
+    });
   });
 });

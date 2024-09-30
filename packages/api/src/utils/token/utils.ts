@@ -16,6 +16,7 @@ import app from '@src/server/app';
 import { ISignInResponse } from '@src/modules/auth/types';
 
 import { MoreThan } from 'typeorm';
+import { Provider } from 'fuels';
 
 const EXPIRES_IN = process.env.TOKEN_EXPIRATION_TIME ?? '20';
 const RENEWAL_EXPIRES_IN = process.env.RENEWAL_TOKEN_EXPIRATION_TIME ?? '10';
@@ -143,6 +144,25 @@ export class TokenUtils {
     }
 
     return workspace;
+  }
+
+  static async changeNetwork(userId: string, network: string) {
+    const provider = await Provider.create(network);
+    const _token = await UserToken.findOne({
+      where: { user_id: userId },
+      relations: ['workspace'],
+    });
+
+    const _network = {
+      url: provider.url,
+      chainId: provider.getChainId(),
+    };
+    _token.network = _network;
+
+    await _token.save();
+    await app._sessionCache.updateSession(_token.token);
+
+    return true;
   }
 
   static async createAuthToken(
