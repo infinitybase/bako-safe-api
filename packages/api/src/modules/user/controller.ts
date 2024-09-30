@@ -32,6 +32,7 @@ import {
 } from './types';
 import { Not } from 'typeorm';
 import app from '@src/server/app';
+import { Provider } from 'fuels';
 
 export class UserController {
   private userService: IUserService;
@@ -216,12 +217,21 @@ export class UserController {
         });
       }
 
+      const _provider = await Provider.create(
+        provider ?? process.env.FUEL_PROVIDER,
+      );
+
       const code = await new RecoverCodeService()
         .create({
           owner: existingUser,
           type: RecoverCodeType.AUTH,
           origin: req.headers.origin ?? process.env.UI_URL,
-          validAt: addMinutes(new Date(), 5), //todo: change this number to dynamic
+          // todo: validate this info about the time UTC -3horas
+          validAt: addMinutes(new Date(), 180 + 5), //todo: change this number to dynamic
+          network: {
+            url: _provider.url,
+            chainId: _provider.getChainId(),
+          },
         })
         .then((data: RecoverCode) => {
           const { owner, ...rest } = data;
