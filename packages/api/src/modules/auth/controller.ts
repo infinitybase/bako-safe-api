@@ -68,11 +68,25 @@ export class AuthController {
       const { origin } = req.headers ?? { origin: 'no-agent' };
       const owner = await User.findOne({ where: { address } });
 
+      if (!owner) {
+        throw new NotFound({
+          type: ErrorTypes.NotFound,
+          title: 'User not found',
+          detail: `User not found`,
+        });
+      }
+
+      const provider = await Provider.create(networkUrl ?? FUEL_PROVIDER);
+
       const response = await new RecoverCodeService().create({
         owner,
         type: RecoverCodeType.AUTH,
         origin: origin ?? process.env.UI_URL,
         validAt: addMinutes(new Date(), 5),
+        network: {
+          url: networkUrl,
+          chainId: provider.getChainId(),
+        },
       });
 
       return successful(response, Responses.Ok);
