@@ -32,9 +32,6 @@ class Predicate extends Base {
   description?: string;
 
   @Column()
-  minSigners: number;
-
-  @Column()
   configurable: string;
 
   // if true is the root wallet of user
