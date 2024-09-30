@@ -20,6 +20,8 @@
   "dependencies": {
     "@noble/curves": "1.3.0",
     "@passwordless-id/webauthn": "1.4.0",
+    "@sentry/node": "8.32.0",
+    "@sentry/profiling-node": "8.32.0",
     "axios": "1.5.1",
     "bakosafe": "0.0.80-beta",
     "bcrypt": "5.1.0",
