@@ -475,7 +475,6 @@ export class TransactionService implements ITransactionService {
   }
 
   checkInvalidConditions(status: TransactionStatus) {
-    console.log('status', status);
     const invalidConditions =
       !status ||
       status === TransactionStatus.AWAIT_REQUIREMENTS ||

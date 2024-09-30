@@ -152,7 +152,6 @@ export class WorkspaceController {
         Responses.Ok,
       );
     } catch (error) {
-      console.log(error);
       reservedCoins = [
         {
           assetId: assetsMapBySymbol['ETH'].id,
