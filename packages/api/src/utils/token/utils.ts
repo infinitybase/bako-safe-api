@@ -14,6 +14,7 @@ import { Unauthorized, UnauthorizedErrorTitles } from '@utils/error/Unauthorized
 import { recoverFuelSignature, recoverWebAuthnSignature } from './web3';
 import app from '@src/server/app';
 import { ISignInResponse } from '@src/modules/auth/types';
+import { Network } from 'fuels';
 
 const EXPIRES_IN = process.env.TOKEN_EXPIRATION_TIME ?? '20';
 const RENEWAL_EXPIRES_IN = process.env.RENEWAL_TOKEN_EXPIRATION_TIME ?? '10';
@@ -143,7 +144,12 @@ export class TokenUtils {
     return workspace;
   }
 
-  static async createAuthToken(signature: string, digest: string, encoder: string) {
+  static async createAuthToken(
+    signature: string,
+    digest: string,
+    encoder: string,
+    network: Network,
+  ) {
     try {
       const address = await TokenUtils.verifySignature({
         signature,
@@ -169,7 +175,7 @@ export class TokenUtils {
       const sig = await new AuthService().signIn({
         token: signature,
         encoder: Encoder[encoder],
-        provider: user.provider,
+        network,
         expired_at: addMinutes(new Date(), Number(EXPIRES_IN)),
         payload: digest,
         user: user,

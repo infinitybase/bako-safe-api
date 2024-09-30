@@ -83,6 +83,7 @@ export type IUserSignin = {
   rootWallet: string;
   webauthn?: WebAuthn;
   email?: string;
+  network: Network;
 };
 
 export interface ISignInResponse extends IUserSignin {

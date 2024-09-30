@@ -18,6 +18,8 @@ import {
 } from './types';
 import app from '@src/server/app';
 import { Request } from 'express';
+import { Network, Provider } from 'fuels';
+const { FUEL_PROVIDER } = process.env;
 
 export class AuthController {
   private authService: IAuthService;
@@ -31,10 +33,20 @@ export class AuthController {
     try {
       const { digest, encoder, signature } = req.body;
 
+      // move to request body
+      const networkUrl = FUEL_PROVIDER;
+      const fuelProvider = await Provider.create(networkUrl);
+
+      const network: Network = {
+        url: networkUrl,
+        chainId: fuelProvider.getChainId(),
+      };
+
       const { userToken, signin } = await TokenUtils.createAuthToken(
         signature,
         digest,
         encoder,
+        network,
       );
 
       await app._sessionCache.addSession(userToken.accessToken, userToken);

@@ -32,12 +32,12 @@ import {
 } from './types';
 import { IPredicateVersionService } from '../predicateVersion/types';
 import { ZeroBytes32 } from 'fuels';
+const { FUEL_PROVIDER } = process.env;
 
 export class PredicateController {
   private userService: IUserService;
   private predicateService: IPredicateService;
   private predicateVersionService: IPredicateVersionService;
-  private transactionService: ITransactionService;
   private notificationService: INotificationService;
 
   constructor(
@@ -50,7 +50,6 @@ export class PredicateController {
     this.userService = userService;
     this.predicateService = predicateService;
     this.predicateVersionService = predicateVersionService;
-    this.transactionService = transactionService;
     this.notificationService = notificationService;
     bindMethods(this);
   }
@@ -195,7 +194,6 @@ export class PredicateController {
       const {
         transactions: predicateTxs,
         configurable,
-        provider,
       } = await Predicate.createQueryBuilder('p')
         .leftJoin('p.transactions', 't', 't.status IN (:...status)', {
           status: [
@@ -209,9 +207,10 @@ export class PredicateController {
         .getOne();
 
       const reservedCoins = calculateReservedCoins(predicateTxs);
+
       const instance = await this.predicateService.instancePredicate(
         configurable,
-        provider,
+        FUEL_PROVIDER,
       );
       const balances = (await instance.getBalances()).balances;
       const assets =

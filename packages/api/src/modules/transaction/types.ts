@@ -218,8 +218,11 @@ export interface ITransactionService {
   filter(filter: ITransactionFilterParams): this;
 
   // bakosafe
-  sendToChain: (transactionId: string) => Promise<ITransactionResponse>;
-  
+  sendToChain: (
+    transactionId: string,
+    providerUrl: string,
+  ) => Promise<ITransactionResponse>;
+
   // crud
   create: (payload: ITCreateService) => Promise<ITransactionResponse>;
   update: (
@@ -235,10 +238,12 @@ export interface ITransactionService {
   // graphql
   fetchFuelTransactions: (
     predicates: Predicate[],
+    providerUrl: string,
   ) => Promise<ITransactionResponse[]>;
   fetchFuelTransactionById: (
     id: string,
     predicate: Predicate,
+    providerUrl: string,
   ) => Promise<ITransactionResponse>;
 
   // validations

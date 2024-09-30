@@ -36,9 +36,6 @@ class UserToken extends Base {
   @Column()
   encoder: Encoder;
 
-  @Column()
-  provider: string;
-
   @Column({ type: 'jsonb' })
   payload: string;
 

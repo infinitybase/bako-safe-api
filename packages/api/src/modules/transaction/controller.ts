@@ -1,5 +1,4 @@
 import { TransactionStatus, TransactionType, WitnessStatus } from 'bakosafe';
-import { Provider } from 'fuels';
 import { isUUID } from 'class-validator';
 import { PermissionRoles, Workspace } from '@src/models/Workspace';
 import {
@@ -41,6 +40,9 @@ import {
   TransactionHistory,
 } from './types';
 import { mergeTransactionLists } from './utils';
+
+// todo: use this provider by session, and move to transactions
+const { FUEL_PROVIDER } = process.env;
 
 export class TransactionController {
   private transactionService: ITransactionService;
@@ -221,6 +223,7 @@ export class TransactionController {
         result = await this.transactionService.fetchFuelTransactionById(
           id,
           predicate,
+          FUEL_PROVIDER,
         );
       }
 
@@ -387,7 +390,7 @@ export class TransactionController {
       await transaction.save();
 
       if (newStatus === TransactionStatus.PENDING_SENDER) {
-        await this.transactionService.sendToChain(transaction.hash);
+        await this.transactionService.sendToChain(transaction.hash, FUEL_PROVIDER);
       }
 
       return successful(true, Responses.Ok);
@@ -536,7 +539,8 @@ export class TransactionController {
             offsetDb: offsetDb,
             offsetFuel: offsetFuel,
           })
-          .fetchFuelTransactions(predicates);
+          // todo: use this provider by session
+          .fetchFuelTransactions(predicates, FUEL_PROVIDER);
       }
 
       const mergedList = mergeTransactionLists(dbTxs, fuelTxs, {
@@ -577,7 +581,7 @@ export class TransactionController {
       params: { hash },
     } = params;
     try {
-      await this.transactionService.sendToChain(hash.slice(2)); // not wait for this
+      await this.transactionService.sendToChain(hash.slice(2), FUEL_PROVIDER); // not wait for this
       return successful(true, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);

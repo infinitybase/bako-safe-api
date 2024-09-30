@@ -34,8 +34,6 @@ export class PredicateService implements IPredicateService {
     'p.description',
     'p.minSigners',
     'p.owner',
-    'p.provider',
-    'p.chainId',
     'p.configurable',
   ];
 
@@ -144,12 +142,6 @@ export class PredicateService implements IPredicateService {
       if (this._filter.address) {
         queryBuilder.andWhere('p.predicateAddress = :predicateAddress', {
           predicateAddress: this._filter.address,
-        });
-      }
-
-      if (this._filter.provider) {
-        queryBuilder.andWhere('LOWER(p.provider) = LOWER(:provider)', {
-          provider: `${this._filter.provider}`,
         });
       }
 

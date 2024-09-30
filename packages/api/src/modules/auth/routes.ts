@@ -4,13 +4,13 @@ import { handleResponse } from '@src/utils/index';
 
 import { AuthController } from './controller';
 import { AuthService } from './services';
-import { validateSignInCodeParams, validateSignInPayload } from './validations';
+import { validateSignInPayload } from './validations';
 import { authMiddleware } from '@src/middlewares';
 
 const router = Router();
 const authService = new AuthService();
 
-const { signIn, generateSignCode } = new AuthController(authService);
+const { signIn, generateSignCode, signOut } = new AuthController(authService);
 
 router.post('/select-network', authMiddleware, (req, res) => {
   console.log('--------> [api_request]');
