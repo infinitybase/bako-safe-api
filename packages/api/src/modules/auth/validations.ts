@@ -14,6 +14,7 @@ export const validateSignInPayload = validator.body(
       .required(),
     signature: Joi.string().required(),
     digest: Joi.string().required(),
+    userAddress: Joi.string().required(),
     //todo: apply this network on sdk
     // networkUrl: Joi.string().required(),
   }),

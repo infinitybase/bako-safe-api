@@ -29,12 +29,13 @@ export class AuthController {
 
   async signIn(req: ISignInRequest) {
     try {
-      const { digest, encoder, signature } = req.body;
+      const { digest, encoder, signature, userAddress } = req.body;
 
       const { userToken, signin } = await TokenUtils.createAuthToken(
         signature,
         digest,
         encoder,
+        userAddress,
       );
 
       await app._sessionCache.addSession(userToken.accessToken, userToken);
@@ -86,6 +87,8 @@ export class AuthController {
           chainId: provider.getChainId(),
         },
       });
+
+      console.log('response', response);
 
       return successful(response, Responses.Ok);
     } catch (e) {
