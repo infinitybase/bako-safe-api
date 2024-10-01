@@ -9,6 +9,7 @@ import { isDevMode, TVLCronJob } from '@src/utils';
 
 import { handleErrors } from '@middlewares/index';
 import { QuoteStorage, SessionStorage } from './storage';
+import Monitoring from './monitoring';
 
 class App {
   private readonly app: Express.Application;
@@ -19,6 +20,7 @@ class App {
     this.app = Express();
     this.initMiddlewares();
     this.initRoutes();
+    this.setupMonitoring();
     this.initErrorHandler();
     this.initJobs();
 
@@ -44,6 +46,10 @@ class App {
 
   private initErrorHandler() {
     this.app.use(handleErrors);
+  }
+
+  private setupMonitoring() {
+    Monitoring.setup(this.app);
   }
 
   private initJobs() {
