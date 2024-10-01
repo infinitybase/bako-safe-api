@@ -18,8 +18,7 @@ import {
 } from '@utils/index';
 
 import { INotificationService } from '../notification/types';
-import { ITransactionService } from '../transaction/types';
-import { IUserService } from '../user/types';
+
 import { WorkspaceService } from '../workspace/services';
 import {
   ICreatePredicateRequest,
@@ -30,108 +29,62 @@ import {
   IListRequest,
   IPredicateService,
 } from './types';
-import { IPredicateVersionService } from '../predicateVersion/types';
-import { ZeroBytes32 } from 'fuels';
+
+import { PredicateService } from './services';
+const { FUEL_PROVIDER } = process.env;
 
 export class PredicateController {
-  private userService: IUserService;
   private predicateService: IPredicateService;
-  private predicateVersionService: IPredicateVersionService;
-  private transactionService: ITransactionService;
   private notificationService: INotificationService;
 
   constructor(
-    userService: IUserService,
     predicateService: IPredicateService,
-    predicateVersionService: IPredicateVersionService,
-    transactionService: ITransactionService,
     notificationService: INotificationService,
   ) {
-    this.userService = userService;
     this.predicateService = predicateService;
-    this.predicateVersionService = predicateVersionService;
-    this.transactionService = transactionService;
     this.notificationService = notificationService;
     bindMethods(this);
   }
 
-  async create({ body: payload, user, workspace }: ICreatePredicateRequest) {
-    // const { versionCode } = payload;
-    const validUsers = payload.addresses.filter(address => address !== ZeroBytes32);
-    try {
-      const members: User[] = [];
+  async create({
+    body: payload,
+    user,
+    network,
+    workspace,
+  }: ICreatePredicateRequest) {
+    const predicateService = new PredicateService();
+    const predicate = await predicateService.create(
+      payload,
+      network,
+      user,
+      workspace,
+    );
 
-      for await (const member of validUsers) {
-        let user = await this.userService.findByAddress(member);
+    const notifyDestination = predicate.members.filter(
+      member => user.id !== member.id,
+    );
+    const notifyContent = {
+      vaultId: predicate.id,
+      vaultName: predicate.name,
+      workspaceId: predicate.workspace.id,
+    };
 
-        if (!user) {
-          user = await this.userService.create({
-            address: member,
-            provider: payload.provider,
-            avatar: IconUtils.user(),
-            type: TypeUser.FUEL,
-            name: member,
-          });
-        }
-
-        members.push(user);
-      }
-
-      const version = await this.predicateVersionService.findCurrentVersion();
-
-      const newPredicate = await this.predicateService.create({
-        ...payload,
-        owner: user,
-        members,
-        workspace,
-        version,
+    for await (const member of notifyDestination) {
+      await this.notificationService.create({
+        title: NotificationTitle.NEW_VAULT_CREATED,
+        user_id: member.id,
+        summary: notifyContent,
       });
 
-      // include signer permission to vault on workspace
-      await new WorkspaceService().includeSigner(
-        members.map(member => member.id),
-        newPredicate.id,
-        workspace.id,
-      );
-
-      const {
-        id,
-        name,
-        members: predicateMembers,
-        workspace: wk_predicate,
-      } = newPredicate;
-      const summary = {
-        vaultId: id,
-        vaultName: name,
-        workspaceId: wk_predicate.id,
-      };
-      const membersWithoutLoggedUser = predicateMembers.filter(
-        member => member.id !== user.id,
-      );
-
-      for await (const member of membersWithoutLoggedUser) {
-        await this.notificationService.create({
-          title: NotificationTitle.NEW_VAULT_CREATED,
-          user_id: member.id,
-          summary,
+      if (member.notify) {
+        await sendMail(EmailTemplateType.VAULT_CREATED, {
+          to: member.email,
+          data: { summary: { ...notifyContent, name: member?.name ?? '' } },
         });
-
-        if (member.notify) {
-          await sendMail(EmailTemplateType.VAULT_CREATED, {
-            to: member.email,
-            data: { summary: { ...summary, name: member?.name ?? '' } },
-          });
-        }
       }
-
-      const result = await this.predicateService
-        .filter(undefined)
-        .findById(newPredicate.id);
-
-      return successful(result, Responses.Ok);
-    } catch (e) {
-      return error(e.error, e.statusCode);
     }
+
+    return successful(predicate, Responses.Ok);
   }
 
   async delete({ params: { id } }: IDeletePredicateRequest) {
@@ -156,14 +109,9 @@ export class PredicateController {
 
   async findByAddress({ params: { address } }: IFindByHashRequest) {
     try {
-      const response = await Predicate.findOne({
+      const predicate = await Predicate.findOne({
         where: { predicateAddress: address },
       });
-
-      const predicate = await this.predicateService.findById(
-        response.id,
-        undefined,
-      );
 
       return successful(predicate, Responses.Ok);
     } catch (e) {
@@ -195,7 +143,6 @@ export class PredicateController {
       const {
         transactions: predicateTxs,
         configurable,
-        provider,
       } = await Predicate.createQueryBuilder('p')
         .leftJoin('p.transactions', 't', 't.status IN (:...status)', {
           status: [
@@ -209,9 +156,10 @@ export class PredicateController {
         .getOne();
 
       const reservedCoins = calculateReservedCoins(predicateTxs);
+
       const instance = await this.predicateService.instancePredicate(
         configurable,
-        provider,
+        FUEL_PROVIDER,
       );
       const balances = (await instance.getBalances()).balances;
       const assets =

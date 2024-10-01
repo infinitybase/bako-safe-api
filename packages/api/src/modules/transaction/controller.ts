@@ -12,7 +12,7 @@ import { NotificationTitle, Predicate, Transaction } from '@models/index';
 
 import { IPredicateService } from '@modules/predicate/types';
 
-import { error, ErrorTypes, NotFound } from '@utils/error';
+import { error, ErrorTypes } from '@utils/error';
 import {
   bindMethods,
   generateWitnessesUpdatedAt,
@@ -41,6 +41,9 @@ import {
   TransactionHistory,
 } from './types';
 import { mergeTransactionLists } from './utils';
+
+// todo: use this provider by session, and move to transactions
+const { FUEL_PROVIDER } = process.env;
 
 export class TransactionController {
   private transactionService: ITransactionService;
@@ -112,7 +115,12 @@ export class TransactionController {
     }
   }
 
-  async create({ body: transaction, user, workspace }: ICreateTransactionRequest) {
+  async create({
+    body: transaction,
+    user,
+    workspace,
+    network,
+  }: ICreateTransactionRequest) {
     const { predicateAddress, summary, hash } = transaction;
 
     try {
@@ -156,6 +164,8 @@ export class TransactionController {
         updatedAt: generateWitnessesUpdatedAt(),
       }));
 
+      const config = JSON.parse(predicate.configurable);
+
       const newTransaction = await this.transactionService.create({
         ...transaction,
         type: Transaction.getTypeFromTransactionRequest(transaction.txData),
@@ -164,7 +174,7 @@ export class TransactionController {
           hash: transaction.hash,
           status: TransactionStatus.AWAIT_REQUIREMENTS,
           witnesses,
-          requiredSigners: predicate.minSigners,
+          requiredSigners: config.SIGNATURES_COUNT ?? 1,
           totalSigners: predicate.members.length,
           predicate: {
             id: predicate.id,
@@ -175,6 +185,7 @@ export class TransactionController {
         predicate,
         createdBy: user,
         summary,
+        network,
       });
 
       newTransaction.resume.id = newTransaction.id;
@@ -221,6 +232,7 @@ export class TransactionController {
         result = await this.transactionService.fetchFuelTransactionById(
           id,
           predicate,
+          FUEL_PROVIDER,
         );
       }
 
@@ -387,7 +399,7 @@ export class TransactionController {
       await transaction.save();
 
       if (newStatus === TransactionStatus.PENDING_SENDER) {
-        await this.transactionService.sendToChain(transaction.hash);
+        await this.transactionService.sendToChain(transaction.hash, FUEL_PROVIDER);
       }
 
       return successful(true, Responses.Ok);
@@ -513,31 +525,32 @@ export class TransactionController {
         })
         .listWithIncomings();
 
-      const fuelTxs = [];
+      let fuelTxs = [];
 
-      // if (
-      //   _wk.length > 0 &&
-      //   (!_status ||
-      //     _status?.some(status => status === TransactionStatus.SUCCESS)) &&
-      //   (!type || type === TransactionType.DEPOSIT)
-      // ) {
-      //   const predicates = await this.predicateService
-      //     .filter({
-      //       workspace: _wk,
-      //       signer,
-      //       ids: predicateId,
-      //     })
-      //     .list()
-      //     .then((data: Predicate[]) => data);
-      //
-      //   fuelTxs = await this.transactionService
-      //     .transactionPaginate({
-      //       perPage,
-      //       offsetDb: offsetDb,
-      //       offsetFuel: offsetFuel,
-      //     })
-      //     .fetchFuelTransactions(predicates);
-      // }
+      if (
+        _wk.length > 0 &&
+        (!_status ||
+          _status?.some(status => status === TransactionStatus.SUCCESS)) &&
+        (!type || type === TransactionType.DEPOSIT)
+      ) {
+        const predicates = await this.predicateService
+          .filter({
+            workspace: _wk,
+            signer,
+            ids: predicateId,
+          })
+          .list()
+          .then((data: Predicate[]) => data);
+
+        fuelTxs = await this.transactionService
+          .transactionPaginate({
+            perPage,
+            offsetDb: offsetDb,
+            offsetFuel: offsetFuel,
+          })
+          // todo: use this provider by session
+          .fetchFuelTransactions(predicates, FUEL_PROVIDER);
+      }
 
       const mergedList = mergeTransactionLists(dbTxs, fuelTxs, {
         ordination,
@@ -577,7 +590,7 @@ export class TransactionController {
       params: { hash },
     } = params;
     try {
-      await this.transactionService.sendToChain(hash.slice(2)); // not wait for this
+      await this.transactionService.sendToChain(hash.slice(2), FUEL_PROVIDER); // not wait for this
       return successful(true, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);

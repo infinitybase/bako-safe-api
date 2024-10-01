@@ -108,7 +108,7 @@ export class QuoteStorage {
           price: data[value.symbol]?.usd ?? 0.0,
         };
       });
-      console.log('COINS_PRICE', aux);
+      // console.log('COINS_PRICE', aux);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       // const formattedData = Object.values(data.data).map((item: any) => ({
       //   assetId: assetsMapBySymbol[item.symbol].id,

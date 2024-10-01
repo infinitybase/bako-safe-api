@@ -26,10 +26,12 @@ async function authMiddleware(
     }
 
     const authStrategy = AuthStrategyFactory.createStrategy(signature);
-    const { user, workspace } = await authStrategy.authenticate(req);
+    const { user, workspace, network } = await authStrategy.authenticate(req);
 
     req.user = user;
     req.workspace = workspace;
+    req.network = network;
+
     return next();
   } catch (e) {
     return next(e);

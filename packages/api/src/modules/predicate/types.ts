@@ -6,6 +6,7 @@ import { IDefaultOrdination, IOrdination } from '@src/utils/ordination';
 import { IPagination, PaginationParams } from '@src/utils/pagination';
 
 import { Predicate, PredicateVersion, User } from '@models/index';
+import { Network } from 'fuels';
 
 export enum OrderBy {
   name = 'name',
@@ -20,17 +21,14 @@ export interface IPredicatePayload {
   name: string;
   description: string;
   predicateAddress: string;
-  minSigners: number;
-  addresses?: string[];
-  root: boolean;
+  // minSigners: number;
+  root?: boolean;
   configurable: string;
-  provider: string;
-  chainId?: number;
-  members?: User[];
-  owner?: User;
-  workspace?: Workspace;
-  version: PredicateVersion;
+  version?: PredicateVersion;
   versionCode?: string;
+  owner?: User;
+  members?: User[];
+  workspace?: Workspace;
 }
 
 export interface IPredicateMemberPayload {
@@ -120,7 +118,12 @@ export interface IPredicateService {
   paginate(pagination?: PaginationParams): this;
   filter(filter: IPredicateFilterParams): this;
 
-  create: (payload: IPredicatePayload) => Promise<Predicate>;
+  create: (
+    payload: IPredicatePayload,
+    network: Network,
+    user: User,
+    workspace: Workspace,
+  ) => Promise<Predicate>;
   update: (id: string, payload: IPredicatePayload) => Promise<Predicate>;
   delete: (id: string) => Promise<boolean>;
   findById: (id: string, signer?: string) => Promise<Predicate>;

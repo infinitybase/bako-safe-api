@@ -191,7 +191,6 @@ export class TransactionService implements ITransactionService {
       .addSelect([
         'predicate.name',
         'predicate.id',
-        'predicate.minSigners',
         'predicate.predicateAddress',
         'members.id',
         'members.avatar',
@@ -343,7 +342,6 @@ export class TransactionService implements ITransactionService {
       .addSelect([
         'predicate.name',
         'predicate.id',
-        'predicate.minSigners',
         'predicate.predicateAddress',
         'members.id',
         'members.avatar',
@@ -475,7 +473,6 @@ export class TransactionService implements ITransactionService {
   }
 
   checkInvalidConditions(status: TransactionStatus) {
-    console.log('status', status);
     const invalidConditions =
       !status ||
       status === TransactionStatus.AWAIT_REQUIREMENTS ||
@@ -493,7 +490,7 @@ export class TransactionService implements ITransactionService {
   //instance vault
   //instance tx
   //add witnesses
-  async sendToChain(hash: string) {
+  async sendToChain(hash: string, providerUrl: string) {
     const transaction = await this.findByHash(hash);
     const { id, predicate, txData, status, resume } = transaction;
 
@@ -501,7 +498,7 @@ export class TransactionService implements ITransactionService {
       return await this.findById(id);
     }
 
-    const provider = await Provider.create(predicate.provider);
+    const provider = await Provider.create(providerUrl);
     const vault = new Vault(provider, JSON.parse(predicate.configurable));
 
     const tx = transactionRequestify({
@@ -544,13 +541,14 @@ export class TransactionService implements ITransactionService {
 
   async fetchFuelTransactions(
     predicates: Predicate[],
+    providerUrl: string,
   ): Promise<ITransactionResponse[]> {
     try {
       let _transactions: ITransactionResponse[] = [];
 
       for await (const predicate of predicates) {
         const address = Address.fromString(predicate.predicateAddress).toB256();
-        const provider = await Provider.create(predicate.provider);
+        const provider = await Provider.create(providerUrl);
 
         // TODO: change this to use pagination and order DESC
         const { transactions } = await getTransactionsSummaries({
@@ -586,9 +584,10 @@ export class TransactionService implements ITransactionService {
   async fetchFuelTransactionById(
     id: string,
     predicate: Predicate,
+    providerUrl: string,
   ): Promise<ITransactionResponse> {
     try {
-      const provider = await Provider.create(predicate.provider);
+      const provider = await Provider.create(providerUrl);
 
       const tx = await getTransactionSummary({
         id,
