@@ -55,6 +55,7 @@ export class APITokenService implements IAPITokenService {
         name: payload.name,
         config: payload.config,
         predicate: payload.predicate,
+        network: payload.network,
       });
       return apiToken.save();
     } catch (e) {

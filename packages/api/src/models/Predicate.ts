@@ -32,16 +32,7 @@ class Predicate extends Base {
   description?: string;
 
   @Column()
-  minSigners: number;
-
-  @Column()
   configurable: string;
-
-  @Column()
-  provider: string;
-
-  @Column({ nullable: true })
-  chainId?: number;
 
   // if true is the root wallet of user
   @Column({ nullable: true, default: false })

@@ -18,7 +18,7 @@ import { IconUtils } from '@utils/icons';
 import { WorkspaceService } from '../workspace/services';
 import { IFilterParams, IUserService, IUserPayload } from './types';
 import app from '@src/server/app';
-import { Provider, Address } from 'fuels';
+import { Provider, Address, Network } from 'fuels';
 import { Vault } from 'bakosafe';
 import { PredicateService } from '../predicate/services';
 import { PredicateVersionService } from '../predicateVersion/services';
@@ -122,25 +122,30 @@ export class UserService implements IUserService {
 
         const predicate = new Vault(provider, configurable);
         const version = await new PredicateVersionService().findCurrentVersion();
+        const network: Network = {
+          url: provider.url,
+          chainId: provider.getChainId(),
+        };
 
-        await new PredicateService().create({
-          name: 'Personal Vault',
-          description:
-            'This is your first vault. It requires a single signer (you) to execute transactions; a pattern called 1-of-1',
-          predicateAddress: Address.fromString(
-            predicate.address.toString(),
-          ).toB256(),
-          minSigners: 1,
-          addresses: [user.address],
-          configurable: JSON.stringify(predicate.configurable),
-          provider: predicate.provider.url,
-          chainId: predicate.provider.getChainId(),
-          owner: user,
-          version,
-          members: [user],
+        await new PredicateService().create(
+          {
+            name: 'Personal Vault',
+            description:
+              'This is your first vault. It requires a single signer (you) to execute transactions; a pattern called 1-of-1',
+            predicateAddress: Address.fromString(
+              predicate.address.toString(),
+            ).toB256(),
+            configurable: JSON.stringify(predicate.configurable),
+            owner: user,
+            version,
+            members: [user],
+            workspace,
+            root: true,
+          },
+          network,
+          user,
           workspace,
-          root: true,
-        });
+        );
 
         return user;
       })

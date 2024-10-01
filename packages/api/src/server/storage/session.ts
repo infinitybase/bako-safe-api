@@ -30,7 +30,6 @@ export class SessionStorage {
         this.reciveNotify(args[0]);
       }
     });
-
   }
 
   private sendNotify(data, type) {
@@ -44,7 +43,6 @@ export class SessionStorage {
   }
 
   private reciveNotify({ type, data }) {
-
     if (!data || !data.token) {
       return;
     }

@@ -15,12 +15,15 @@ import { recoverFuelSignature, recoverWebAuthnSignature } from './web3';
 import app from '@src/server/app';
 import { ISignInResponse } from '@src/modules/auth/types';
 
+import { MoreThan } from 'typeorm';
+import { Provider } from 'fuels';
+
 const EXPIRES_IN = process.env.TOKEN_EXPIRATION_TIME ?? '20';
 const RENEWAL_EXPIRES_IN = process.env.RENEWAL_TOKEN_EXPIRATION_TIME ?? '10';
 const MINUTES_TO_RENEW = process.env.MINUTES_TO_RENEW_TOKEN ?? 2;
 
 export class TokenUtils {
-  static async verifySignature({ signature, digest, encoder }) {
+  static async verifySignature({ signature, digest, encoder }): Promise<string> {
     //todo: verify type of signature and decode it
     let address;
     switch (encoder) {
@@ -143,8 +146,50 @@ export class TokenUtils {
     return workspace;
   }
 
-  static async createAuthToken(signature: string, digest: string, encoder: string) {
+  static async changeNetwork(userId: string, network: string) {
+    const provider = await Provider.create(network);
+    const _token = await UserToken.findOne({
+      where: { user_id: userId },
+      relations: ['workspace'],
+    });
+
+    const _network = {
+      url: provider.url,
+      chainId: provider.getChainId(),
+    };
+    _token.network = _network;
+
+    await _token.save();
+    await app._sessionCache.updateSession(_token.token);
+
+    return true;
+  }
+
+  static async createAuthToken(
+    signature: string,
+    digest: string,
+    encoder: string,
+    userAddress: string,
+    // network: Network,
+  ) {
     try {
+      const code = await RecoverCode.findOne({
+        where: {
+          owner: { address: userAddress },
+          type: RecoverCodeType.AUTH,
+          validAt: MoreThan(new Date()),
+        },
+        relations: ['owner'],
+      });
+
+      if (!code) {
+        throw new Unauthorized({
+          type: ErrorTypes.Unauthorized,
+          title: UnauthorizedErrorTitles.INVALID_RECOVER_CODE,
+          detail: 'The provided recover code is invalid',
+        });
+      }
+
       const address = await TokenUtils.verifySignature({
         signature,
         digest,
@@ -169,7 +214,7 @@ export class TokenUtils {
       const sig = await new AuthService().signIn({
         token: signature,
         encoder: Encoder[encoder],
-        provider: user.provider,
+        network: code.network,
         expired_at: addMinutes(new Date(), Number(EXPIRES_IN)),
         payload: digest,
         user: user,

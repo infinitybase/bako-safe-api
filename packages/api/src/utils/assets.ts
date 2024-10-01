@@ -36,12 +36,6 @@ const replaceList = {
 };
 
 const replace = (name: string) => {
-  console.log({
-    name,
-    has: replaceList.hasOwnProperty(name.toLocaleLowerCase())
-      ? replaceList[name.toLocaleLowerCase()]
-      : name,
-  });
   return replaceList.hasOwnProperty(name.toLocaleLowerCase())
     ? replaceList[name.toLocaleLowerCase()]
     : name.toLocaleLowerCase();

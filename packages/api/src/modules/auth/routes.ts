@@ -4,36 +4,16 @@ import { handleResponse } from '@src/utils/index';
 
 import { AuthController } from './controller';
 import { AuthService } from './services';
-import { validateSignInCodeParams, validateSignInPayload } from './validations';
-import { authMiddleware } from '@src/middlewares';
+
+import { validateSignInPayload } from './validations';
 
 const router = Router();
 const authService = new AuthService();
 
-const { signIn, generateSignCode } = new AuthController(authService);
-
-router.post('/select-network', authMiddleware, (req, res) => {
-  console.log('--------> [api_request]');
-  console.log({
-    body: req.body,
-    query: req.query,
-    params: req.params,
-    // user: req.user,
-  });
-});
-
+const { signIn, generateSignCode, signOut } = new AuthController(authService);
 
 router.post('/sign-in', validateSignInPayload, handleResponse(signIn));
-
-router.post(
-  '/code',
-  // validateSignInCodeParams,
-  handleResponse(generateSignCode),
-);
-
-//todo: verify why do cant use authMiddleware here
-// router.put('/workspace', handleResponse(updateWorkspace));
-
+router.post('/code', handleResponse(generateSignCode));
 router.delete('/sign-out', handleResponse(signOut));
 
 export default router;
