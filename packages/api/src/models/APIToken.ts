@@ -2,8 +2,10 @@ import { Base } from '@models/Base';
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { Predicate } from '@models/Predicate';
 import { Network } from 'fuels';
+import { networks } from '@src/mocks/networks';
 
 export const DEFAULT_TRANSACTION_TITLE = 'Contract deployment';
+const { FUEL_PROVIDER, FUEL_PROVIDER_CHAIN_ID } = process.env;
 
 export interface APITokenConfig {
   transactionTitle: string;
@@ -27,6 +29,10 @@ class APIToken extends Base {
   @Column({
     type: 'jsonb',
     name: 'network',
+    default: {
+      url: FUEL_PROVIDER ?? networks['devnet'],
+      chainId: Number(FUEL_PROVIDER_CHAIN_ID) ?? 0,
+    },
   })
   network: Network;
 

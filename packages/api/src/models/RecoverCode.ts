@@ -4,6 +4,9 @@ import { Column, Entity, BeforeInsert, JoinColumn, OneToOne } from 'typeorm';
 import { Base } from './Base';
 
 import { User } from './User';
+import { networks } from '@src/mocks/networks';
+
+const { FUEL_PROVIDER, FUEL_PROVIDER_CHAIN_ID } = process.env;
 
 export enum RecoverCodeType {
   AUTH = 'AUTH',
@@ -29,6 +32,10 @@ class RecoverCode extends Base {
   @Column({
     type: 'jsonb',
     name: 'network',
+    default: {
+      url: FUEL_PROVIDER ?? networks['devnet'],
+      chainId: Number(FUEL_PROVIDER_CHAIN_ID) ?? 0,
+    },
   })
   network: Network;
 

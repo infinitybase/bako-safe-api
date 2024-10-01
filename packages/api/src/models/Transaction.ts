@@ -66,16 +66,16 @@ class Transaction extends Base {
   @Column({
     type: 'jsonb',
     name: 'resume',
-    default: {
-      url: FUEL_PROVIDER ?? networks['devnet'],
-      chainId: Number(FUEL_PROVIDER_CHAIN_ID) ?? 0,
-    },
   })
   resume: ITransactionResume;
 
   @Column({
     type: 'jsonb',
     name: 'network',
+    default: {
+      url: FUEL_PROVIDER ?? networks['devnet'],
+      chainId: Number(FUEL_PROVIDER_CHAIN_ID) ?? 0,
+    },
   })
   network: Network;
 
