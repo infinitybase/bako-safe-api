@@ -18,7 +18,7 @@ import {
 } from '@utils/index';
 
 import { INotificationService } from '../notification/types';
-import { IUserService } from '../user/types';
+
 import { WorkspaceService } from '../workspace/services';
 import {
   ICreatePredicateRequest,
@@ -29,26 +29,19 @@ import {
   IListRequest,
   IPredicateService,
 } from './types';
-import { IPredicateVersionService } from '../predicateVersion/types';
 
 import { PredicateService } from './services';
 const { FUEL_PROVIDER } = process.env;
 
 export class PredicateController {
-  private userService: IUserService;
   private predicateService: IPredicateService;
-  private predicateVersionService: IPredicateVersionService;
   private notificationService: INotificationService;
 
   constructor(
-    userService: IUserService,
     predicateService: IPredicateService,
-    predicateVersionService: IPredicateVersionService,
     notificationService: INotificationService,
   ) {
-    this.userService = userService;
     this.predicateService = predicateService;
-    this.predicateVersionService = predicateVersionService;
     this.notificationService = notificationService;
     bindMethods(this);
   }

@@ -80,16 +80,4 @@ describe('[AUTH]', () => {
       chainId: newProvider.getChainId(),
     });
   });
-
-  test.only('validacao', async () => {
-    const auth = new AuthValidations(networks['local'], accounts['USER_1']);
-    await auth.create();
-    await auth.createSession();
-
-    await auth.axios.post('/auth/select-network').then(({ data, status }) => {
-      expect(status).toBe(200);
-      expect(data).toHaveProperty('network');
-      expect(data.network).toBe('local');
-    });
-  });
 });
