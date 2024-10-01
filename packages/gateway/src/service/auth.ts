@@ -33,6 +33,7 @@ export class AuthService {
     const bakoProvider = await BakoProvider.create(predicate.provider, {
       address: userAddress,
       token: code,
+      serverApi: process.env.API_URL!,
     });
 
     const vault = await Vault.fromAddress(predicate.address, bakoProvider);
