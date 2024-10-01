@@ -1,66 +1,83 @@
 import axios from 'axios';
 
-import { accounts } from '@src/mocks/accounts';
-import { generateInitialUsers } from '@src/mocks/initialSeeds/initialUsers';
 import { networks } from '@src/mocks/networks';
-import { RecoverCodeType } from '@src/models';
-import { AuthValidations } from '@src/utils/testUtils/Auth';
+import { Encoder } from '@src/models';
+
+import { Address, Provider, Wallet } from 'fuels';
+import { TypeUser } from 'bakosafe';
 
 const { API_URL } = process.env;
 
 describe('[AUTH]', () => {
-  test(
-    'Sign in with personal workspace',
-    async () => {
-      const auth = new AuthValidations(networks['local'], accounts['USER_1']);
-
-      await auth.create();
-
-      await auth.createSession().then(() => {
-        expect(auth.user.address).toBe(accounts['USER_1'].account);
-        expect(auth.workspace).toHaveProperty('id');
-        expect(auth.workspace).toHaveProperty('single', true);
-        expect(auth.authToken);
-      });
-    },
-    10 * 1000,
-  );
-
-  test(
-    'Sign in with personal workspace and select other workspace',
-    async () => {
-      //crate a session
-      const _auth = new AuthValidations(networks['local'], accounts['USER_1']);
-      await _auth.create();
-      await _auth.createSession();
-
-      //select a other workspace
-      const { data } = await _auth.axios.get(`/workspace/by-user`);
-
-      const w_upgrade = data.find(w => w.id !== _auth.workspace.id);
-
-      //select workspace
-      await _auth.selectWorkspace(w_upgrade.id).then(({ data }) => {
-        expect(_auth.workspace.id).toEqual(w_upgrade.id);
-        expect(_auth.user).toHaveProperty('address', accounts['USER_1'].account);
-        expect(_auth.authToken).toHaveProperty('token');
-      });
-    },
-    10 * 1000,
-  );
-
-  test('generate a code with register user', async () => {
+  it('should handle the TOKEN strategy correctly', async () => {
     const api = axios.create({
       baseURL: API_URL,
     });
+    const provider = await Provider.create(networks['local']);
 
-    const [user1] = await generateInitialUsers();
+    // create a new user
+    const wallet = Wallet.generate();
+    const newUser = {
+      address: wallet.address.toB256(),
+      provider: networks['local'],
+      name: `test mock - ${Address.fromRandom().toB256()}`,
+      type: TypeUser.FUEL,
+    };
 
-    const { data } = await api.post(`/auth/code/${user1.address}`);
+    // create a new user, and recive a new code to sign-in
+    const { data: user } = await api.post(`/user`, newUser);
+    expect(user).toHaveProperty('code');
 
-    expect(data).toHaveProperty('code');
-    expect(data).toHaveProperty('type', RecoverCodeType.AUTH);
-    expect(data).toHaveProperty('validAt');
-    expect(new Date(data.validAt).getTime()).toBeGreaterThan(new Date().getTime());
+    // sign message code
+    const token = await Wallet.fromPrivateKey(wallet.privateKey).signMessage(
+      user.code,
+    );
+
+    // sign-in with code
+    const { data: session } = await api.post(`/auth/sign-in`, {
+      encoder: Encoder.FUEL,
+      signature: token,
+      digest: user.code,
+    });
+
+    expect(session).toHaveProperty('accessToken', token);
+    expect(session).toHaveProperty('workspace');
+    expect(session).toHaveProperty('user_id', user.userId);
+    expect(session).toHaveProperty('network', {
+      url: provider.url,
+      chainId: provider.getChainId(),
+    });
+
+    api.defaults.headers.common['Authorization'] = session.accessToken;
+    api.defaults.headers.common['Signeraddress'] = provider.url;
+
+    // get a route with required auth
+    const { data: userInfo } = await api.get(`/user/latest/info`);
+
+    expect(userInfo).toHaveProperty('address', newUser.address);
+    expect(userInfo).toHaveProperty('name', newUser.name);
+    expect(userInfo).toHaveProperty('network', {
+      url: provider.url,
+      chainId: provider.getChainId(),
+    });
+
+    // change network
+    const newNetwork = networks['devnet'];
+
+    // update network
+    await api.post(`/user/select-network`, {
+      network: newNetwork,
+    });
+
+    // console.log('updatedSession', updatedSession);
+
+    const { data: updatedNetwork } = await api.get(`/user/latest/info`);
+
+    const newProvider = await Provider.create(newNetwork);
+
+    expect(updatedNetwork).toHaveProperty('network', {
+      url: newProvider.url,
+      chainId: newProvider.getChainId(),
+    });
   });
 });

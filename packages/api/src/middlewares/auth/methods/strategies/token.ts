@@ -2,14 +2,18 @@ import { IAuthRequest } from '@middlewares/auth/types';
 
 import { AuthStrategy } from './type';
 import { TokenUtils } from '@src/utils/token/utils';
+import { Network } from 'fuels';
 
 export class TokenAuthStrategy implements AuthStrategy {
-  async authenticate(req: IAuthRequest): Promise<{ user: any; workspace: any }> {
+  async authenticate(
+    req: IAuthRequest,
+    // todo: check this types
+  ): Promise<{ user: any; workspace: any; network: Network }> {
     const signature = req.headers.authorization;
     const token = await TokenUtils.recoverToken(signature);
     await TokenUtils.renewToken(token);
 
-    return { 
+    return {
       user: {
         id: token.user_id,
         name: token.name,
@@ -17,8 +21,11 @@ export class TokenAuthStrategy implements AuthStrategy {
         address: token.address,
         type: token.type,
         webauthn: token.webauthn,
-      }, 
-      workspace: token.workspace 
+        email: token.email,
+        first_login: token.first_login,
+      },
+      network: token.network,
+      workspace: token.workspace,
     };
   }
 }

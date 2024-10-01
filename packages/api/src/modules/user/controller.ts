@@ -1,6 +1,6 @@
 import { addMinutes } from 'date-fns';
 
-import { PredicateVersion, RecoverCode, RecoverCodeType } from '@src/models';
+import { RecoverCode, RecoverCodeType } from '@src/models';
 import { User } from '@src/models/User';
 import { bindMethods } from '@src/utils/bindMethods';
 
@@ -12,7 +12,7 @@ import {
   error,
 } from '@utils/error';
 import { IconUtils } from '@utils/icons';
-import { Responses, successful } from '@utils/index';
+import { Responses, successful, TokenUtils } from '@utils/index';
 
 import { PredicateService } from '../predicate/services';
 import { RecoverCodeService } from '../recoverCode/services';
@@ -32,9 +32,8 @@ import {
 } from './types';
 import { Not } from 'typeorm';
 import app from '@src/server/app';
-import { Address, Provider } from 'fuels';
-import { BakoSafe, TypeUser, Vault } from 'bakosafe';
-import { WorkspaceService } from '../workspace/services';
+import { Provider } from 'fuels';
+import { IChangenetworkRequest } from '../auth/types';
 
 export class UserController {
   private userService: IUserService;
@@ -104,7 +103,7 @@ export class UserController {
   }
 
   async latestInfo(req: IMeInfoRequest) {
-    const { user, workspace } = req;
+    const { user, workspace, network } = req;
     return successful(
       {
         id: user.id,
@@ -113,6 +112,8 @@ export class UserController {
         avatar: user.avatar,
         address: user.address,
         webauthn: user.webauthn,
+        first_login: user.first_login,
+        network,
         onSingleWorkspace:
           workspace.single && workspace.name.includes(`[${user.id}]`),
         workspace: {
@@ -218,12 +219,21 @@ export class UserController {
         });
       }
 
+      const _provider = await Provider.create(
+        provider ?? process.env.FUEL_PROVIDER,
+      );
+
       const code = await new RecoverCodeService()
         .create({
           owner: existingUser,
           type: RecoverCodeType.AUTH,
           origin: req.headers.origin ?? process.env.UI_URL,
-          validAt: addMinutes(new Date(), 5), //todo: change this number to dynamic
+          // todo: validate this info about the time UTC -3horas
+          validAt: addMinutes(new Date(), 180 + 5), //todo: change this number to dynamic
+          network: {
+            url: _provider.url,
+            chainId: _provider.getChainId(),
+          },
         })
         .then((data: RecoverCode) => {
           const { owner, ...rest } = data;
@@ -235,6 +245,7 @@ export class UserController {
 
       return successful(code, Responses.Created);
     } catch (e) {
+      console.log(e);
       return error(e.error, e.statusCode);
     }
   }
@@ -316,5 +327,12 @@ export class UserController {
     } catch (e) {
       return error(e.error, e.statusCode);
     }
+  }
+
+  async changeNetwork({ user, body }: IChangenetworkRequest) {
+    const { network } = body;
+    const result = await TokenUtils.changeNetwork(user.id, network);
+
+    return successful(!!result, Responses.Ok);
   }
 }

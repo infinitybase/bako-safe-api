@@ -1,5 +1,5 @@
 import { IQuote } from '@src/server/storage';
-import { tokensIDS } from './assets-token/addresses';
+import { assets as fuelAssetsList, NetworkFuel } from 'fuels';
 
 export type IAsset = {
   symbol: string;
@@ -20,44 +20,91 @@ export type IAssetMapBySymbol = {
     id: string;
   };
 };
+export type Asset = {
+  name: string;
+  slug: string;
+  assetId: string;
+  icon?: string;
+  amount?: string;
+  units: number;
+};
 
-export const assets: IAsset[] = [
-  {
-    symbol: 'ETH',
-    slug: 'ethereum',
-    id: tokensIDS['ETH'],
-  },
-  {
-    symbol: 'BTC',
-    slug: 'bitcoin',
-    id: tokensIDS['BTC'],
-  },
-  {
-    symbol: 'USDC',
-    slug: 'usd-coin',
-    id: tokensIDS['USDC'],
-  },
-  {
-    symbol: 'UNI',
-    slug: 'uniswap',
-    id: tokensIDS['UNI'],
-  },
-  {
-    symbol: 'DAI',
-    id: tokensIDS['DAI'],
-  },
-  {
-    symbol: 'sETH',
-    id: tokensIDS['sETH'],
-  },
-];
+//const whiteList = ['ethereum', 'weth', 'usd-coin'];
+const whitelist = ['rsteth', 'mantle meth', 'rsusde', 're7lrt'];
+const replaceList = {
+  usdc: 'usd-coin',
+};
 
-export const assetsMapById: IAssetMapById = assets.reduce(
+const replace = (name: string) => {
+  return replaceList.hasOwnProperty(name.toLocaleLowerCase())
+    ? replaceList[name.toLocaleLowerCase()]
+    : name.toLocaleLowerCase();
+};
+
+export const fuelAssetsByChainId = (chainId: number): Asset[] =>
+  fuelAssetsList.reduce<Asset[]>((acc, asset) => {
+    const network = asset.networks.find(
+      network => network && network.chainId === chainId,
+    ) as NetworkFuel;
+
+    if (network && network.type === 'fuel') {
+      acc.push({
+        name: asset.name,
+        slug: replace(asset.name),
+        assetId: network.assetId,
+        icon: asset.icon,
+        units: network.decimals,
+      });
+    }
+    return acc;
+  }, []);
+
+export const fuelUnitAssets = (chainId: number, assetId: string): number => {
+  const result =
+    fuelAssetsList
+      .map(asset => {
+        const network = asset.networks.find(
+          network => network && network.chainId === chainId,
+        ) as NetworkFuel;
+
+        if (network && network.assetId === assetId) return network.decimals;
+      })
+      .find(units => units !== undefined) ?? 8;
+
+  return result;
+};
+
+export const fuelAssets = (): Asset[] =>
+  fuelAssetsList.reduce<Asset[]>((acc, asset) => {
+    if (whitelist.includes(asset.name.toLocaleLowerCase())) return acc;
+    const network = asset.networks.find(
+      network => network.type === 'fuel',
+    ) as NetworkFuel;
+    if (network) {
+      acc.push({
+        name: asset.name,
+        slug: replace(asset.name),
+        assetId: network.assetId,
+        icon: asset.icon,
+        units: network.decimals,
+      });
+    }
+    return acc;
+  }, []);
+
+export const assets = fuelAssets().map(asset => {
+  return {
+    symbol: asset.slug,
+    id: asset.assetId,
+  };
+});
+
+export const assetsMapById: IAssetMapById = fuelAssets().reduce(
   (previousValue, currentValue) => {
     return {
       ...previousValue,
-      [currentValue.id]: {
-        symbol: currentValue.symbol,
+      [currentValue.assetId]: {
+        symbol: currentValue.slug,
         slug: currentValue.slug,
       },
     };
@@ -65,34 +112,25 @@ export const assetsMapById: IAssetMapById = assets.reduce(
   {},
 );
 
-export const assetsMapBySymbol: IAssetMapBySymbol = assets.reduce(
+export const assetsMapBySymbol: IAssetMapBySymbol = fuelAssets().reduce(
   (previousValue, currentValue) => {
     return {
       ...previousValue,
-      [currentValue.symbol]: {
+      [currentValue.slug]: {
         slug: currentValue.slug,
-        id: currentValue.id,
+        id: currentValue.assetId,
       },
     };
   },
   {},
 );
 
-export const QuotesMock: IQuote[] = [
-  {
-    assetId: assetsMapBySymbol['ETH'].id,
-    price: 3381.1556815779345,
+export const QuotesMock: IQuote[] = Object.entries(assetsMapBySymbol).map(
+  ([key, value]) => {
+    const price = Math.random() * 100;
+    return {
+      assetId: value.id,
+      price,
+    };
   },
-  {
-    assetId: assetsMapBySymbol['BTC'].id,
-    price: 61620.37310293032,
-  },
-  {
-    assetId: assetsMapBySymbol['USDC'].id,
-    price: 0.9998584312603784,
-  },
-  {
-    assetId: assetsMapBySymbol['UNI'].id,
-    price: 9.379567369214598,
-  },
-];
+);

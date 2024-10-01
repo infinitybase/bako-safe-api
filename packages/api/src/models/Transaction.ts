@@ -4,7 +4,11 @@ import {
   TransactionStatus,
   TransactionType,
 } from 'bakosafe';
-import { TransactionRequest, TransactionType as FuelTransactionType } from 'fuels';
+import {
+  TransactionRequest,
+  TransactionType as FuelTransactionType,
+  Network,
+} from 'fuels';
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 import { User } from '@models/User';
@@ -13,6 +17,9 @@ import { Base } from './Base';
 import { Predicate } from './Predicate';
 import { ITransactionResponse } from '@src/modules/transaction/types';
 import { formatAssets } from '@src/utils/formatAssets';
+import { networks } from '@src/mocks/networks';
+
+const { FUEL_PROVIDER, FUEL_PROVIDER_CHAIN_ID } = process.env;
 
 export { TransactionStatus, TransactionType };
 
@@ -62,6 +69,16 @@ class Transaction extends Base {
   })
   resume: ITransactionResume;
 
+  @Column({
+    type: 'jsonb',
+    name: 'network',
+    default: {
+      url: FUEL_PROVIDER ?? networks['devnet'],
+      chainId: Number(FUEL_PROVIDER_CHAIN_ID) ?? 0,
+    },
+  })
+  network: Network;
+
   @JoinColumn({ name: 'created_by' })
   @ManyToOne(() => User)
   createdBy: User;
@@ -78,6 +95,8 @@ class Transaction extends Base {
     const transactionType = {
       [FuelTransactionType.Create]: TransactionType.TRANSACTION_CREATE,
       [FuelTransactionType.Script]: TransactionType.TRANSACTION_SCRIPT,
+      [FuelTransactionType.Upgrade]: TransactionType.TRANSACTION_UPGRADE,
+      [FuelTransactionType.Upload]: TransactionType.TRANSACTION_UPLOAD,
       default: TransactionType.TRANSACTION_SCRIPT,
     };
 

@@ -3,6 +3,10 @@ import { Column, Entity, JoinColumn, OneToOne } from 'typeorm';
 import { Base } from './Base';
 import { User } from './User';
 import { Workspace } from './Workspace';
+import { Network } from 'fuels';
+import { networks } from '@src/mocks/networks';
+
+const { FUEL_PROVIDER, FUEL_PROVIDER_CHAIN_ID } = process.env;
 
 export enum Encoder {
   FUEL = 'FUEL',
@@ -35,9 +39,6 @@ class UserToken extends Base {
   @Column()
   encoder: Encoder;
 
-  @Column()
-  provider: string;
-
   @Column({ type: 'jsonb' })
   payload: string;
 
@@ -45,6 +46,16 @@ class UserToken extends Base {
     name: 'expired_at',
   })
   expired_at?: Date;
+
+  @Column({
+    type: 'jsonb',
+    name: 'network',
+    default: {
+      url: FUEL_PROVIDER ?? networks['devnet'],
+      chainId: Number(FUEL_PROVIDER_CHAIN_ID) ?? 0,
+    },
+  })
+  network: Network;
 
   @JoinColumn({ name: 'workspace_id' })
   @OneToOne(() => Workspace)

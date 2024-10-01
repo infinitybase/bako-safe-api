@@ -41,6 +41,8 @@ export const formatFuelTransaction = (
     inputs,
   } = tx.transaction;
 
+  const config = JSON.parse(predicate.configurable);
+
   const formattedTransaction = {
     id: tx.id,
     name: `DEPOSIT_${tx.id}`, // TODO: change this
@@ -68,7 +70,7 @@ export const formatFuelTransaction = (
       hash: tx.id,
       status: TransactionStatus.SUCCESS,
       witnesses: [],
-      requiredSigners: predicate.minSigners,
+      requiredSigners: config.SIGNATURES_COUNT ?? 1,
       totalSigners: predicate.members.length,
       predicate: {
         id: predicate.id,
@@ -81,7 +83,7 @@ export const formatFuelTransaction = (
     predicate: {
       id: predicate.id,
       name: predicate.name,
-      minSigners: predicate.minSigners,
+      minSigners: config.SIGNATURES_COUNT ?? 1,
       predicateAddress: predicate.predicateAddress,
       members: predicate.members,
       workspace: {

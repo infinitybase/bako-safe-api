@@ -1,8 +1,9 @@
 import { Predicate, TotalValueLocked } from '@src/models';
-import { Asset, IConfVault, Vault } from 'bakosafe';
+import { Asset, Vault } from 'bakosafe';
 import cron from 'node-cron';
 import { assetsMapById } from '../assets';
 import app from '@src/server/app';
+import { Provider } from 'fuels';
 const { FUEL_PROVIDER } = process.env;
 
 const VALID_PROVIDERS = [FUEL_PROVIDER];
@@ -27,11 +28,8 @@ const TVLCronJob = cron.schedule('0 0 * * *', async () => {
     // Busca dados de todos os vaults
     const predicates = await Predicate.createQueryBuilder('p')
       .leftJoinAndSelect('p.version', 'version')
-      .select(['p.id', 'p.configurable', 'p.provider', 'version.code'])
-      .where('p.provider IN (:...providers)', {
-        providers: VALID_PROVIDERS,
-      })
-      .andWhere('version.name NOT LIKE :fakeName', {
+      .select(['p.id', 'p.configurable', 'version.code'])
+      .where('version.name NOT LIKE :fakeName', {
         fakeName: '%fake_name%',
       })
       .getMany();
@@ -40,15 +38,16 @@ const TVLCronJob = cron.schedule('0 0 * * *', async () => {
 
     for await (const predicate of predicates) {
       try {
-        const configurable: IConfVault = {
-          ...JSON.parse(predicate.configurable),
-        };
+        // const configurable: IConfVault = {
+        //   ...JSON.parse(predicate.configurable),
+        // };
+        // todo: get by session or run a map to get for each valid networks
+
+        const provider = await Provider.create(FUEL_PROVIDER);
+        const conf = JSON.parse(predicate.configurable);
 
         // Instancia cada vault
-        const vault = await Vault.create({
-          configurable,
-          version: predicate.version.code,
-        });
+        const vault = new Vault(provider, conf);
 
         // Obtém os balances de cada vault e adiciona no array de balances
         const { balances } = await vault.getBalances();
