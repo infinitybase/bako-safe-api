@@ -114,7 +114,12 @@ export class TransactionController {
     }
   }
 
-  async create({ body: transaction, user, workspace }: ICreateTransactionRequest) {
+  async create({
+    body: transaction,
+    user,
+    workspace,
+    network,
+  }: ICreateTransactionRequest) {
     const { predicateAddress, summary, hash } = transaction;
 
     try {
@@ -179,6 +184,7 @@ export class TransactionController {
         predicate,
         createdBy: user,
         summary,
+        network,
       });
 
       newTransaction.resume.id = newTransaction.id;
