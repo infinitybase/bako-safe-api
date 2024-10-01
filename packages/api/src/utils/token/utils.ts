@@ -209,6 +209,7 @@ export class TokenUtils {
 
       const workspace = await TokenUtils.findSingleWorkspace(user.id);
       await TokenUtils.revokeToken(user); // todo: verify if it's necessary
+      // const;
 
       const sig = await new AuthService().signIn({
         token: signature,

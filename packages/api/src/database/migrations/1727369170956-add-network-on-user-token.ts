@@ -12,7 +12,6 @@ export class AddNetworkOnUserToken1727369170956 implements MigrationInterface {
     );
 
     await queryRunner.query(`DELETE FROM user_tokens WHERE network IS NULL`);
-
     await queryRunner.dropColumn('user_tokens', 'provider');
   }
 
