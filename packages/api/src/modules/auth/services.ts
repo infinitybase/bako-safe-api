@@ -89,6 +89,8 @@ export class AuthService implements IAuthService {
       webauthn: user.webauthn,
       email: user.email,
       first_login: user.first_login,
+      // network
+      network: token.network,
       // workspace
       workspace: {
         ...workspace,

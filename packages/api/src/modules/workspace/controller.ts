@@ -75,9 +75,9 @@ export class WorkspaceController {
     let reservedCoins: CoinQuantity[] = [];
     let predicateCoins: CoinQuantity[] = [];
     try {
-      const { workspace } = req;
+      const { workspace, network } = req;
       const predicateService = new PredicateService();
-
+      const providerUrl = network.url;
       const predicates = await Predicate.createQueryBuilder('p')
         .leftJoin('p.workspace', 'w')
         .leftJoin('p.version', 'pv')
@@ -90,7 +90,6 @@ export class WorkspaceController {
         .addSelect([
           'p.id',
           'p.configurable',
-          'p.provider',
           'pv.code',
           'w.id',
           't.status',
@@ -101,10 +100,10 @@ export class WorkspaceController {
 
       // Fetches the balance of each predicate
       const balancePromises = predicates.map(
-        async ({ configurable, transactions, provider }) => {
+        async ({ configurable, transactions }) => {
           const vault = await predicateService.instancePredicate(
             configurable,
-            provider,
+            providerUrl,
           );
           const balances = (await vault.getBalances()).balances;
 
@@ -153,7 +152,6 @@ export class WorkspaceController {
         Responses.Ok,
       );
     } catch (error) {
-      console.log(error);
       reservedCoins = [
         {
           assetId: assetsMapBySymbol['ETH'].id,

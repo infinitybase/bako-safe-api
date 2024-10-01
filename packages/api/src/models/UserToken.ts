@@ -3,6 +3,7 @@ import { Column, Entity, JoinColumn, OneToOne } from 'typeorm';
 import { Base } from './Base';
 import { User } from './User';
 import { Workspace } from './Workspace';
+import { Network } from 'fuels';
 
 export enum Encoder {
   FUEL = 'FUEL',
@@ -35,9 +36,6 @@ class UserToken extends Base {
   @Column()
   encoder: Encoder;
 
-  @Column()
-  provider: string;
-
   @Column({ type: 'jsonb' })
   payload: string;
 
@@ -45,6 +43,12 @@ class UserToken extends Base {
     name: 'expired_at',
   })
   expired_at?: Date;
+
+  @Column({
+    type: 'jsonb',
+    name: 'network',
+  })
+  network: Network;
 
   @JoinColumn({ name: 'workspace_id' })
   @OneToOne(() => Workspace)

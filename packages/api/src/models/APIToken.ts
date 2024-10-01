@@ -1,6 +1,7 @@
 import { Base } from '@models/Base';
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { Predicate } from '@models/Predicate';
+import { Network } from 'fuels';
 
 export const DEFAULT_TRANSACTION_TITLE = 'Contract deployment';
 
@@ -22,6 +23,12 @@ class APIToken extends Base {
   config: APITokenConfig = {
     transactionTitle: DEFAULT_TRANSACTION_TITLE,
   };
+
+  @Column({
+    type: 'jsonb',
+    name: 'network',
+  })
+  network: Network;
 
   @JoinColumn({ name: 'predicate_id' })
   @ManyToOne(() => Predicate)

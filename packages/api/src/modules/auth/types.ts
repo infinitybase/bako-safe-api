@@ -6,14 +6,15 @@ import { Encoder } from '@models/UserToken';
 import { IPermissions, TypeUser, User, WebAuthn } from '@models/index';
 
 import { AuthValidatedRequest, UnloggedRequest } from '@middlewares/auth/types';
+import { Network } from 'fuels';
 
 export interface ICreateUserTokenPayload {
-  token: string;
   user: User;
+  token: string;
+  payload: string;
   expired_at: Date;
   encoder: Encoder;
-  provider: string;
-  payload: string;
+  network: Network;
   workspace: Workspace;
 }
 
@@ -21,6 +22,7 @@ export interface ISignInPayload {
   encoder: Encoder;
   signature: string;
   digest: string;
+  userAddress: string;
 }
 
 interface IActiveSessionRequestSchema extends ValidatedRequestSchema {
@@ -82,6 +84,7 @@ export type IUserSignin = {
   rootWallet: string;
   webauthn?: WebAuthn;
   email?: string;
+  network: Network;
 };
 
 export interface ISignInResponse extends IUserSignin {
@@ -101,6 +104,13 @@ export interface IUpgradeWorkspace extends ValidatedRequestSchema {
 export interface ICreateRecoverCodeRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Params]: {
     address: string;
+    networkUrl: string;
+  };
+}
+
+export interface IChangeNetworkRequest extends ValidatedRequestSchema {
+  [ContainerTypes.Body]: {
+    network: string;
   };
 }
 
@@ -112,6 +122,7 @@ export type IActiveSession = AuthValidatedRequest<IActiveSessionRequestSchema>;
 export type IChangeWorkspaceRequest = AuthValidatedRequest<IUpgradeWorkspace>;
 export type IAuthorizeDappRequest = AuthValidatedRequest<IAuthorizeDappRequestSchema>;
 export type ICreateRecoverCodeRequest = UnloggedRequest<ICreateRecoverCodeRequestSchema>;
+export type IChangenetworkRequest = AuthValidatedRequest<IChangeNetworkRequest>;
 
 export interface IAuthService {
   signIn(payload: ICreateUserTokenPayload): Promise<ISignInResponse>;
