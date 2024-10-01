@@ -24,8 +24,8 @@ importers:
         specifier: 1.5.1
         version: 1.5.1
       bakosafe:
-        specifier: /Users/guimroque/Infinity/bsafe/bako-safe/packages/sdk/bakosafe-0.0.80-betadmsa.tgz
-        version: file:../bako-safe/packages/sdk/bakosafe-0.0.80-betadmsa.tgz(fuels@0.94.8)
+        specifier: /Users/guimroque/Infinity/bsafe/bako-safe/packages/sdk/bakosafe-0.0.80-betadnspa.tgz
+        version: file:../bako-safe/packages/sdk/bakosafe-0.0.80-betadnspa.tgz(fuels@0.94.8)
       bcrypt:
         specifier: 5.1.0
         version: 5.1.0
@@ -223,8 +223,8 @@ importers:
         specifier: ^10.0.5
         version: 10.0.5(graphql@16.9.0)
       bakosafe:
-        specifier: 0.0.80-beta
-        version: 0.0.80-beta(fuels@0.94.8)
+        specifier: /Users/guimroque/Infinity/bsafe/bako-safe/packages/sdk/bakosafe-0.0.80-betadnspa.tgz
+        version: file:../bako-safe/packages/sdk/bakosafe-0.0.80-betadnspa.tgz(fuels@0.94.8)
       copyfiles:
         specifier: 2.4.1
         version: 2.4.1
@@ -310,8 +310,8 @@ importers:
   packages/socket-server:
     dependencies:
       bakosafe:
-        specifier: 0.0.80-beta
-        version: 0.0.80-beta(fuels@0.94.8)
+        specifier: /Users/guimroque/Infinity/bsafe/bako-safe/packages/sdk/bakosafe-0.0.80-betadnspa.tgz
+        version: file:../bako-safe/packages/sdk/bakosafe-0.0.80-betadnspa.tgz(fuels@0.94.8)
       express:
         specifier: 4.17.1
         version: 4.17.1
@@ -4344,20 +4344,6 @@ packages:
       babel-plugin-jest-hoist: 29.6.3
       babel-preset-current-node-syntax: 1.0.1(@babel/core@7.24.6)
     dev: true
-
-  /bakosafe@0.0.80-beta(fuels@0.94.8):
-    resolution: {integrity: sha512-zhh3s4whM340toVZme5FFxt8EuUL8TXHe2Jnx8NxGJgvR6J7zRuwvStPYpk9vYWaxqZluAvD9IhGuJ9phk4W+A==}
-    requiresBuild: true
-    peerDependencies:
-      fuels: 0.94.6
-    dependencies:
-      '@noble/curves': 1.6.0
-      axios: 1.5.1
-      fuels: 0.94.8
-      uuid: 9.0.1
-    transitivePeerDependencies:
-      - debug
-    dev: false
 
   /balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
@@ -11221,9 +11207,9 @@ packages:
       type-fest: 2.19.0
     dev: false
 
-  file:../bako-safe/packages/sdk/bakosafe-0.0.80-betadmsa.tgz(fuels@0.94.8):
-    resolution: {integrity: sha512-l8bVjCtsqeOXINO6csgeQmodCBeaU9+zr9n6Vfbsj3nRw03z8HxgmZcsXMe0JOV1fj5AlBTb78a57M4lOA92cw==, tarball: file:../bako-safe/packages/sdk/bakosafe-0.0.80-betadmsa.tgz}
-    id: file:../bako-safe/packages/sdk/bakosafe-0.0.80-betadmsa.tgz
+  file:../bako-safe/packages/sdk/bakosafe-0.0.80-betadnspa.tgz(fuels@0.94.8):
+    resolution: {integrity: sha512-eAqB2ZBFi4TTyKMxlWB3zwvSpcTZ2CNjO81qVSr05IWnqOSHPZ/JOBpTvn2N7LiO6FGMmKKMtuvDMoAujTQZEg==, tarball: file:../bako-safe/packages/sdk/bakosafe-0.0.80-betadnspa.tgz}
+    id: file:../bako-safe/packages/sdk/bakosafe-0.0.80-betadnspa.tgz
     name: bakosafe
     version: 0.0.80-beta
     requiresBuild: true
