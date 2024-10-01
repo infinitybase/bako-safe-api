@@ -17,6 +17,9 @@ import { Base } from './Base';
 import { Predicate } from './Predicate';
 import { ITransactionResponse } from '@src/modules/transaction/types';
 import { formatAssets } from '@src/utils/formatAssets';
+import { networks } from '@src/mocks/networks';
+
+const { FUEL_PROVIDER, FUEL_PROVIDER_CHAIN_ID } = process.env;
 
 export { TransactionStatus, TransactionType };
 
@@ -63,6 +66,10 @@ class Transaction extends Base {
   @Column({
     type: 'jsonb',
     name: 'resume',
+    default: {
+      url: FUEL_PROVIDER ?? networks['devnet'],
+      chainId: Number(FUEL_PROVIDER_CHAIN_ID) ?? 0,
+    },
   })
   resume: ITransactionResume;
 
