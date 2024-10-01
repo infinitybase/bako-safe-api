@@ -11,7 +11,7 @@ import { NotificationTitle, Predicate, Transaction } from '@models/index';
 
 import { IPredicateService } from '@modules/predicate/types';
 
-import { error, ErrorTypes, NotFound } from '@utils/error';
+import { error, ErrorTypes } from '@utils/error';
 import {
   bindMethods,
   generateWitnessesUpdatedAt,
@@ -158,6 +158,8 @@ export class TransactionController {
         updatedAt: generateWitnessesUpdatedAt(),
       }));
 
+      const config = JSON.parse(predicate.configurable);
+
       const newTransaction = await this.transactionService.create({
         ...transaction,
         type: Transaction.getTypeFromTransactionRequest(transaction.txData),
@@ -166,7 +168,7 @@ export class TransactionController {
           hash: transaction.hash,
           status: TransactionStatus.AWAIT_REQUIREMENTS,
           witnesses,
-          requiredSigners: predicate.minSigners,
+          requiredSigners: config.SIGNATURES_COUNT ?? 1,
           totalSigners: predicate.members.length,
           predicate: {
             id: predicate.id,

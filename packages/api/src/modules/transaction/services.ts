@@ -191,7 +191,6 @@ export class TransactionService implements ITransactionService {
       .addSelect([
         'predicate.name',
         'predicate.id',
-        'predicate.minSigners',
         'predicate.predicateAddress',
         'members.id',
         'members.avatar',
@@ -343,7 +342,6 @@ export class TransactionService implements ITransactionService {
       .addSelect([
         'predicate.name',
         'predicate.id',
-        'predicate.minSigners',
         'predicate.predicateAddress',
         'members.id',
         'members.avatar',
