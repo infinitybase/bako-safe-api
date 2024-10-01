@@ -1,4 +1,7 @@
+import { Provider } from 'fuels';
 import { MigrationInterface, QueryRunner, TableColumn } from 'typeorm';
+
+const { FUEL_PROVIDER } = process.env;
 
 export class AddNetworkOnApiTokens1727717621119 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -9,6 +12,19 @@ export class AddNetworkOnApiTokens1727717621119 implements MigrationInterface {
         type: 'jsonb',
         isNullable: true,
       }),
+    );
+
+    const provider = await Provider.create(FUEL_PROVIDER);
+    const network = {
+      url: provider.url,
+      chainId: provider.getChainId(),
+    };
+
+    const networkString = JSON.stringify(network);
+
+    await queryRunner.query(
+      `UPDATE transactions SET network = $1 WHERE network IS NULL`,
+      [networkString],
     );
   }
 

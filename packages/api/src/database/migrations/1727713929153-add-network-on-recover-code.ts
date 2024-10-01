@@ -10,6 +10,8 @@ export class AddNetworkOnRecoverCode1727713929153 implements MigrationInterface 
         isNullable: true,
       }),
     );
+
+    await queryRunner.query(`DELETE FROM recover_codes WHERE network IS NULL`);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
