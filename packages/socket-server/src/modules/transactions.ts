@@ -1,5 +1,5 @@
 import { SocketEvents, SocketUsernames } from '@src/types'
-import { BakoSafe, ITransactionSummary, TransactionStatus, Vault } from 'bakosafe'
+import { BakoProvider, ITransactionSummary, TransactionStatus, Vault } from 'bakosafe'
 import crypto from 'crypto'
 import { TransactionRequestLike } from 'fuels'
 import { Socket } from 'socket.io'
@@ -146,7 +146,7 @@ export const txConfirm = async ({ data, socket, database }: IEvent<IEventTX_CONF
 		// ------------------------------ [DAPP] ------------------------------
 		const dapp = await database.query(
 			`
-				SELECT d.*, u.id AS user_id, u.address AS user_address, c.id AS current_vault_id, c.provider AS current_vault_provider
+				SELECT d.*, u.id AS user_id, u.address AS user_address, c.id AS current_vault_id, c.predicate_address AS current_vault_address
 				FROM dapp d
 				JOIN "users" u ON d.user = u.id
 				JOIN "predicates" c ON d.current = c.id
@@ -177,22 +177,14 @@ export const txConfirm = async ({ data, socket, database }: IEvent<IEventTX_CONF
 		// ------------------------------ [CODE] ------------------------------
 
 		// ------------------------------ [TX] ------------------------------
-		BakoSafe.setProviders({
-			SERVER_URL: API_URL,
-			CHAIN_URL: dapp.current_vault_provider,
-		})
-		const predicate = await Vault.create({
-			id: dapp.current_vault_id,
-			address: dapp.user_address,
+		const vaultProvider = await BakoProvider.create(dapp.network.url, {
 			token: code.code,
+			address: dapp.user_address,
+			serverApi: API_URL,
 		})
-		const _tx = await predicate
-			.BakoSafeIncludeTransaction(tx)
-			.then(tx => tx)
-			.catch(e => {
-				console.log('[ERRO NA TX]', e)
-				return undefined
-			})
+		const vault = await Vault.fromAddress(dapp.current_vault_address, vaultProvider)
+		const _tx = await vault.BakoTransfer(tx)
+
 		// ------------------------------ [TX] ------------------------------
 
 		// ------------------------------ [SUMMARY] ------------------------------
@@ -206,7 +198,7 @@ export const txConfirm = async ({ data, socket, database }: IEvent<IEventTX_CONF
 			`
 				UPDATE transactions
 				SET summary = $1
-				WHERE id = '${_tx.BakoSafeTransactionId}'
+				WHERE hash = '${_tx.hashTxId}'
 			`,
 			[JSON.stringify(transactionSummary)],
 		)
@@ -232,8 +224,8 @@ export const txConfirm = async ({ data, socket, database }: IEvent<IEventTX_CONF
 			type: SocketEvents.TX_CONFIRM,
 			data: {
 				//id: _tx.BakoSafeTransactionId, [CONNECTOR SIGNATURE]
-				//hash: _tx.getHashTxId(), [CONNECTOR SIGNATURE]
-				id: _tx.getHashTxId(),
+				//hash: _tx.hashTxId, [CONNECTOR SIGNATURE]
+				id: _tx.hashTxId,
 				status: '[SUCCESS]',
 			},
 		})
@@ -268,8 +260,7 @@ export const txRequest = async ({ data, socket, database }: IEvent<IEventTX_REQU
 				u.address AS user_address,
 				c.id AS current_vault_id, 
 				c.name AS current_vault_name, 
-				c.description AS current_vault_description, 
-				c.provider AS current_vault_provider
+				c.description AS current_vault_description
 				FROM dapp d
 				JOIN "users" u ON d.user = u.id
 				JOIN "predicates" c ON d.current = c.id
@@ -331,7 +322,7 @@ export const txRequest = async ({ data, socket, database }: IEvent<IEventTX_REQU
 					name: dapp.current_vault_name,
 					description: dapp.current_vault_description,
 					address: vault.predicate_address,
-					provider: dapp.current_vault_provider,
+					provider: dapp.network.url,
 					pending_tx: Number(tx_pending.count) > 0,
 					configurable: vault.configurable,
 					version: vault.version_code,
