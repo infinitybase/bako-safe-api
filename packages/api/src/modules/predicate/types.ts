@@ -2,10 +2,11 @@ import { Vault, Workspace } from 'bakosafe';
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 
 import { AuthValidatedRequest } from '@src/middlewares/auth/types';
-import { IDefaultOrdination, IOrdination } from '@src/utils/ordination';
+import { IDefaultOrdination } from '@src/utils/ordination';
 import { IPagination, PaginationParams } from '@src/utils/pagination';
 
 import { Predicate, PredicateVersion, User } from '@models/index';
+import { IPredicateOrdination } from './ordination';
 import { Network } from 'fuels';
 
 export enum OrderBy {
@@ -98,6 +99,7 @@ interface IListRequestSchema extends ValidatedRequestSchema {
     signer: string;
     provider: string;
     owner: string;
+    orderByRoot: string;
     orderBy: IDefaultOrdination | OrderBy;
     sort: Sort;
     page: string;
@@ -114,7 +116,7 @@ export type IListRequest = AuthValidatedRequest<IListRequestSchema>;
 export type IFindByNameRequest = AuthValidatedRequest<IFindByNameRequestSchema>;
 
 export interface IPredicateService {
-  ordination(ordination?: IOrdination<Predicate>): this;
+  ordination(ordination?: IPredicateOrdination): this;
   paginate(pagination?: PaginationParams): this;
   filter(filter: IPredicateFilterParams): this;
 

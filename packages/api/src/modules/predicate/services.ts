@@ -2,7 +2,6 @@ import { Vault } from 'bakosafe';
 import { Brackets } from 'typeorm';
 
 import { NotFound } from '@src/utils/error';
-import { IOrdination, setOrdination } from '@src/utils/ordination';
 import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination';
 
 import { Predicate, TypeUser, User, Workspace } from '@models/index';
@@ -15,15 +14,17 @@ import {
   IPredicatePayload,
   IPredicateService,
 } from './types';
+import { IPredicateOrdination, setOrdination } from './ordination';
 import { Network, Provider, ZeroBytes32 } from 'fuels';
 import { UserService } from '../user/service';
 import { IconUtils } from '@src/utils/icons';
 import { PredicateVersionService } from '../predicateVersion/services';
 
 export class PredicateService implements IPredicateService {
-  private _ordination: IOrdination<Predicate> = {
+  private _ordination: IPredicateOrdination = {
     orderBy: 'updatedAt',
     sort: 'DESC',
+    orderByRoot: 'false',
   };
   private _pagination: PaginationParams;
   private _filter: IPredicateFilterParams;
@@ -37,6 +38,7 @@ export class PredicateService implements IPredicateService {
     'p.description',
     'p.owner',
     'p.configurable',
+    'p.root',
   ];
 
   filter(filter: IPredicateFilterParams) {
@@ -49,7 +51,7 @@ export class PredicateService implements IPredicateService {
     return this;
   }
 
-  ordination(ordination?: IOrdination<Predicate>) {
+  ordination(ordination?: IPredicateOrdination) {
     this._ordination = setOrdination(ordination);
     return this;
   }
@@ -241,9 +243,13 @@ export class PredicateService implements IPredicateService {
         );
       }
 
-      // Aplicar ordenação
+      if (this._ordination.orderByRoot === 'true') {
+        queryBuilder.addOrderBy('p.root', this._ordination.sort);
+      }
+
       if (hasOrdination) {
-        queryBuilder.orderBy(
+        // Aplicar ordenação
+        queryBuilder.addOrderBy(
           `p.${this._ordination.orderBy}`,
           this._ordination.sort,
         );

@@ -1,12 +1,13 @@
 import http from 'http'
 import express from 'express'
 import socketIo from 'socket.io'
+//import axios from 'axios' [CONNECTOR SIGNATURE]
 
 import { txConfirm, txRequest } from '@modules/transactions'
 import { DatabaseClass } from '@utils/database'
 import { SocketEvents } from './types'
 
-const { SOCKET_PORT, SOCKET_TIMEOUT_DICONNECT, SOCKET_NAME, API_ENVIRONMENT } = process.env
+const { SOCKET_PORT, SOCKET_TIMEOUT_DICONNECT, SOCKET_NAME, API_URL } = process.env
 
 const app = express()
 let database: DatabaseClass
@@ -17,6 +18,10 @@ const io = new socketIo.Server(server, {
 		origin: '*',
 	},
 })
+//[CONNECTOR SIGNATURE]
+// export const api = axios.create({
+// 	baseURL: API_URL,
+// })
 
 // Health Check
 app.get('/health', ({ res }) => res.status(200).send({ status: 'ok', message: `Health check ${SOCKET_NAME} passed` }))
@@ -44,6 +49,8 @@ io.on(SocketEvents.CONNECT, async socket => {
 			- todo: nao muito importante, mas é necessário tipar operations
 	*/
 	socket.on(SocketEvents.TX_CONFIRM, data => txConfirm({ data, socket, database }))
+
+	//socket.on(SocketEvents.TX_SIGN, data => txSign({ data, socket, database })) // [CONNECTOR SIGNATURE]
 
 	/*
 		[CONNECTOR] emite esse evento quando o usuário quer criar uma transação
