@@ -4,10 +4,9 @@ import {
   ITransferAsset,
   IWitnesses,
   TransactionStatus,
-  Vault,
 } from 'bakosafe';
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
-import { Provider, TransactionRequest } from 'fuels';
+import { TransactionRequest } from 'fuels';
 
 import { Predicate, Transaction, TransactionType } from '@models/index';
 
@@ -218,8 +217,11 @@ export interface ITransactionService {
   filter(filter: ITransactionFilterParams): this;
 
   // bakosafe
-  sendToChain: (transactionId: string) => Promise<ITransactionResponse>;
-  
+  sendToChain: (
+    transactionId: string,
+    providerUrl: string,
+  ) => Promise<ITransactionResponse>;
+
   // crud
   create: (payload: ITCreateService) => Promise<ITransactionResponse>;
   update: (
@@ -235,10 +237,12 @@ export interface ITransactionService {
   // graphql
   fetchFuelTransactions: (
     predicates: Predicate[],
+    providerUrl: string,
   ) => Promise<ITransactionResponse[]>;
   fetchFuelTransactionById: (
     id: string,
     predicate: Predicate,
+    providerUrl: string,
   ) => Promise<ITransactionResponse>;
 
   // validations

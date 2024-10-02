@@ -3,12 +3,84 @@
 // import { TestError, catchApplicationError } from '@utils/testUtils/Errors';
 // // import { SetupApi } from '@src/utils/testUtils/setup';
 
-// const tokenMock = {
-//   name: 'Test API Token',
-//   config: {
-//     transactionTitle: 'BakoSafe contract deployment',
-//   },
-// };
+import { networks } from '@src/mocks/networks';
+import { Encoder } from '@src/models';
+import { IPredicatePayload } from '@src/modules/predicate/types';
+import axios from 'axios';
+import { TypeUser, Vault } from 'bakosafe';
+import { Provider, Wallet, Address } from 'fuels';
+const { API_URL } = process.env;
+
+const tokenMock = {
+  name: 'Test API Token',
+  config: {
+    transactionTitle: 'BakoSafe contract deployment',
+  },
+};
+
+describe('[API TOKEN]', () => {
+  it('should handle the TOKEN strategy correctly', async () => {
+    const api = axios.create({
+      baseURL: API_URL,
+    });
+    const provider = await Provider.create(networks['local']);
+
+    // create a new user
+    const wallet = Wallet.generate();
+    const newUser = {
+      address: wallet.address.toB256(),
+      provider: networks['local'],
+      name: `test mock - ${Address.fromRandom().toB256()}`,
+      type: TypeUser.FUEL,
+    };
+
+    // create a new user, and recive a new code to sign-in
+    const { data: user } = await api.post(`/user`, newUser);
+    expect(user).toHaveProperty('code');
+
+    // sign message code
+    const token = await Wallet.fromPrivateKey(wallet.privateKey).signMessage(
+      user.code,
+    );
+
+    // sign-in with code
+    const { data: session } = await api.post(`/auth/sign-in`, {
+      encoder: Encoder.FUEL,
+      signature: token,
+      digest: user.code,
+    });
+
+    api.defaults.headers.common['Authorization'] = session.accessToken;
+    api.defaults.headers.common['Signeraddress'] = provider.url;
+
+    // create a new predicate
+    const predicate = new Vault(provider, {
+      SIGNATURES_COUNT: 1,
+      SIGNERS: [wallet.address.toB256()],
+    });
+    const payload: IPredicatePayload = {
+      name: `mock name ${Address.fromRandom().toB256()}`,
+      description: '',
+      predicateAddress: predicate.address.toB256(),
+      configurable: JSON.stringify(predicate.configurable),
+    };
+
+    const { data: predicateSaved } = await api.post(`/predicate`, payload);
+
+    const { data: apiTokenWithTitle } = await api.post(
+      `/api-token/${predicateSaved.id}`,
+      tokenMock,
+    );
+
+    expect(apiTokenWithTitle).toHaveProperty('token');
+    expect(apiTokenWithTitle).toHaveProperty('name', tokenMock.name);
+    expect(apiTokenWithTitle).toHaveProperty('network.url', provider.url);
+    expect(apiTokenWithTitle).toHaveProperty(
+      'network.chainId',
+      provider.getChainId(),
+    );
+  });
+});
 
 // describe('[API TOKEN]', () => {
 //   let api: AuthValidations;

@@ -20,7 +20,7 @@ import {
 import { ITransactionResponse } from '../transaction/types';
 import app from '@src/server/app';
 
-const { API_URL } = process.env;
+const { API_URL, FUEL_PROVIDER } = process.env;
 
 export class DappController {
   private _dappService: IDAppsService;
@@ -141,6 +141,10 @@ export class DappController {
             name: name,
           },
         },
+        network: {
+          url: '',
+          chainId: 0,
+        },
       });
 
       return successful(
@@ -174,7 +178,9 @@ export class DappController {
         headers.origin || headers.Origin,
       );
 
-      const result = dapp?.currentVault.provider ?? null;
+      //todo: add support to switch network on connector
+      //const result = dapp?.currentVault.provider ?? null;
+      const result = FUEL_PROVIDER;
 
       return successful(result, Responses.Ok);
     } catch (e) {

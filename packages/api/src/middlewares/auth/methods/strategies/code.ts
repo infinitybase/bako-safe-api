@@ -49,6 +49,7 @@ export class CodeAuthStrategy implements AuthStrategy {
           owner: recover.owner,
         },
       }),
+      network: recover.network,
     };
   }
 }
