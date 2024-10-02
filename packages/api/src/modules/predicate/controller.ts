@@ -3,9 +3,8 @@ import { TransactionStatus } from 'bakosafe';
 import { Predicate } from '@src/models/Predicate';
 import { Workspace } from '@src/models/Workspace';
 import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
-import { IconUtils } from '@src/utils/icons';
 
-import { NotificationTitle, TypeUser, User } from '@models/index';
+import { NotificationTitle } from '@models/index';
 
 import { error } from '@utils/error';
 import {
@@ -167,9 +166,9 @@ export class PredicateController {
 
       return successful(
         {
-          reservedCoinsUSD: calculateBalanceUSD(reservedCoins), // locked value on USDC
-          totalBalanceUSD: calculateBalanceUSD(balances),
-          currentBalanceUSD: calculateBalanceUSD(assets),
+          reservedCoinsUSD: await calculateBalanceUSD(reservedCoins), // locked value on USDC
+          totalBalanceUSD: await calculateBalanceUSD(balances),
+          currentBalanceUSD: await calculateBalanceUSD(assets),
           currentBalance: assets,
           totalBalance: balances,
           reservedCoins: reservedCoins, // locked coins

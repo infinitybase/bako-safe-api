@@ -12,9 +12,9 @@ import { IconUtils } from '@src/utils/icons';
 import { ErrorTypes, error } from '@utils/error';
 import {
   Responses,
-  assetsMapBySymbol,
   calculateBalanceUSD,
   calculateReservedCoins,
+  getAssetsMaps,
   subCoins,
   successful,
 } from '@utils/index';
@@ -152,6 +152,7 @@ export class WorkspaceController {
         Responses.Ok,
       );
     } catch (error) {
+      const { assetsMapBySymbol } = await getAssetsMaps();
       reservedCoins = [
         {
           assetId: assetsMapBySymbol['ETH'].id,

@@ -3,7 +3,8 @@ import { BN, CoinQuantity, OutputCoin, TransactionRequestOutput, bn } from 'fuel
 import app from '@src/server/app';
 import { Transaction } from '@src/models';
 import { isOutputCoin } from './outputTypeValidate';
-import { fuelUnitAssets } from './assets';
+import { getAssetsMaps } from './assets';
+import { isDevMode } from './runMode';
 
 const calculateReservedCoins = (transactions: Transaction[]): CoinQuantity[] => {
   const reservedMap = new Map<string, BN>();
@@ -28,11 +29,12 @@ const calculateReservedCoins = (transactions: Transaction[]): CoinQuantity[] => 
   return result;
 };
 
-const calculateBalanceUSD = (
+const calculateBalanceUSD = async (
   balances: CoinQuantity[],
-  chainId: number = 9889,
-): string => {
+  chainId: number = isDevMode ? 0 : 9889,
+): Promise<string> => {
   let balanceUSD = 0;
+  const { fuelUnitAssets } = await getAssetsMaps();
 
   balances?.forEach(balance => {
     const units = fuelUnitAssets(chainId, balance.assetId);

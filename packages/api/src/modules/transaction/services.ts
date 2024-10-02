@@ -1,10 +1,4 @@
-import {
-  IWitnesses,
-  // TransactionProcessStatus,
-  TransactionStatus,
-  Vault,
-  WitnessStatus,
-} from 'bakosafe';
+import { IWitnesses, TransactionStatus, Vault, WitnessStatus } from 'bakosafe';
 import {
   Address,
   getTransactionsSummaries,
@@ -17,9 +11,7 @@ import {
 } from 'fuels';
 import { Brackets } from 'typeorm';
 
-import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
-
-import { NotificationTitle, Predicate, Transaction } from '@models/index';
+import { Predicate, Transaction } from '@models/index';
 
 import { NotFound } from '@utils/error';
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
@@ -568,8 +560,9 @@ export class TransactionService implements ITransactionService {
           .filter(tx => tx.isStatusSuccess)
           .filter(tx => tx.operations.some(op => op.to?.address === address));
 
-        const formattedTransactions = filteredTransactions.map(tx =>
-          formatFuelTransaction(tx, predicate),
+        // formatFueLTransactio needs to be async because of the request to get fuels tokens up to date and use them to get the network units
+        const formattedTransactions = await Promise.all(
+          filteredTransactions.map(tx => formatFuelTransaction(tx, predicate)),
         );
 
         _transactions = [..._transactions, ...formattedTransactions];
