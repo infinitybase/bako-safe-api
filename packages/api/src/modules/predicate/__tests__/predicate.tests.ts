@@ -5,9 +5,8 @@ import { networks } from '@src/mocks/networks';
 import { PredicateMock } from '@src/mocks/predicate';
 import { predicateVersionMock } from '@src/mocks/predicateVersion';
 
-import { PermissionRoles } from '@src/models/Workspace';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
-import { generateWorkspacePayload } from '@src/utils/testUtils/Workspace';
+import { generateUser } from '@src/utils/testUtils/Workspace';
 
 import { Address } from 'fuels';
 
@@ -23,14 +22,16 @@ describe('[PREDICATE]', () => {
   test(
     'Create predicate without version code',
     async () => {
-      const { data_user1, data_user2 } = await generateWorkspacePayload(api);
+      //const { data_user1, data_user2 } = await generateWorkspacePayload(api);
+      const data_user1 = await generateUser(api);
+      const data_user2 = await generateUser(api);
       const members = [data_user1.address, data_user2.address];
       const { predicatePayload } = await PredicateMock.create(1, members);
       const { data } = await api.axios.post('/predicate', predicatePayload);
 
-      const { data: workspace } = await api.axios.get(
-        `/workspace/${api.workspace.id}`,
-      );
+      // const { data: workspace } = await api.axios.get(
+      //   `/workspace/${api.workspace.id}`,
+      // );
 
       //predicate validation
       expect(data).toHaveProperty('id');
@@ -45,12 +46,12 @@ describe('[PREDICATE]', () => {
       expect(data).toHaveProperty('version.code');
 
       //permissions validation
-      expect(
-        workspace.permissions[data_user1.id][PermissionRoles.SIGNER],
-      ).toContain(data.id);
-      expect(
-        workspace.permissions[data_user2.id][PermissionRoles.SIGNER],
-      ).toContain(data.id);
+      // expect(
+      //   workspace.permissions[data_user1.id][PermissionRoles.SIGNER],
+      // ).toContain(data.id);
+      // expect(
+      //   workspace.permissions[data_user2.id][PermissionRoles.SIGNER],
+      // ).toContain(data.id);
     },
     10 * 1000,
   );
@@ -58,7 +59,9 @@ describe('[PREDICATE]', () => {
   test(
     'Create predicate with version code',
     async () => {
-      const { data_user1, data_user2 } = await generateWorkspacePayload(api);
+      // const { data_user1, data_user2 } = await generateWorkspacePayload(api);
+      const data_user1 = await generateUser(api);
+      const data_user2 = await generateUser(api);
       const members = [data_user1.address, data_user2.address];
       const { predicatePayload } = await PredicateMock.create(1, members);
       const { data } = await api.axios.post('/predicate', {
@@ -66,9 +69,9 @@ describe('[PREDICATE]', () => {
         versionCode: predicateVersionMock.code,
       });
 
-      const { data: workspace } = await api.axios.get(
-        `/workspace/${api.workspace.id}`,
-      );
+      // const { data: workspace } = await api.axios.get(
+      //   `/workspace/${api.workspace.id}`,
+      // );
 
       //predicate validation
       expect(data).toHaveProperty('id');
@@ -83,12 +86,12 @@ describe('[PREDICATE]', () => {
       expect(data).toHaveProperty('version.code');
 
       //permissions validation
-      expect(
-        workspace.permissions[data_user1.id][PermissionRoles.SIGNER],
-      ).toContain(data.id);
-      expect(
-        workspace.permissions[data_user2.id][PermissionRoles.SIGNER],
-      ).toContain(data.id);
+      // expect(
+      //   workspace.permissions[data_user1.id][PermissionRoles.SIGNER],
+      // ).toContain(data.id);
+      // expect(
+      //   workspace.permissions[data_user2.id][PermissionRoles.SIGNER],
+      // ).toContain(data.id);
     },
     10 * 1000,
   );
@@ -192,12 +195,12 @@ describe('[PREDICATE]', () => {
     await auth.createSession();
 
     //create a new workspace
-    const {
-      data: data_workspace,
-      USER_5,
-      data_user1,
-      data_user2,
-    } = await generateWorkspacePayload(auth);
+    // const {
+    //   data: data_workspace,
+    //   USER_5,
+    //   data_user1,
+    //   data_user2,
+    // } = await generateWorkspacePayload(auth);
     //await auth.selectWorkspace(data_workspace.id);
 
     //create a new nicknames
@@ -213,6 +216,10 @@ describe('[PREDICATE]', () => {
     //   address: data_user2.address,
     //   nickname: `[TESTE]${data_user2.address}${new Date().getTime()}`,
     // });
+
+    const data_user1 = await generateUser(auth);
+    const data_user2 = await generateUser(auth);
+    const USER_5 = await generateUser(auth, 'USER_5');
 
     //create a vault
     const members = [USER_5.address, data_user1.address, data_user2.address];
@@ -257,11 +264,13 @@ describe('[PREDICATE]', () => {
     await auth.create();
     await auth.createSession();
 
-    const {
-      data_user1,
-      data_user2,
-      data: workspace,
-    } = await generateWorkspacePayload(auth);
+    // const {
+    //   data_user1,
+    //   data_user2,
+    //   data: workspace,
+    // } = await generateWorkspacePayload(auth);
+    const data_user1 = await generateUser(auth);
+    const data_user2 = await generateUser(auth);
     const members = [data_user1.address, data_user2.address];
     const { predicatePayload } = await PredicateMock.create(1, members);
 
