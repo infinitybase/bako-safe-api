@@ -1,4 +1,5 @@
 import { TransactionStatus, TransactionType, WitnessStatus } from 'bakosafe';
+import { Provider } from 'fuels';
 import { isUUID } from 'class-validator';
 import { PermissionRoles, Workspace } from '@src/models/Workspace';
 import {
