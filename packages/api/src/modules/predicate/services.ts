@@ -134,7 +134,6 @@ export class PredicateService implements IPredicateService {
           'addressBook.id',
           'addressBook.user_id',
           'adb_workspace.id',
-          'workspace.permissions',
         ])
         .getOne();
     } catch (e) {
@@ -167,7 +166,6 @@ export class PredicateService implements IPredicateService {
         'owner.avatar',
         'workspace.id',
         'workspace.name',
-        'workspace.permissions',
         'workspace.single',
         'workspace.avatar',
       ]);
