@@ -60,10 +60,10 @@ export class AuthService {
 
     const query = `
       SELECT api_tokens.predicate_id,
+             api_tokens.network,
+             api_tokens.config,
              users.address,
-             predicates.provider,
-             predicates.predicate_address,
-             api_tokens.config
+             predicates.predicate_address
       FROM api_tokens
                INNER JOIN predicates ON api_tokens.predicate_id = predicates.id
                INNER JOIN predicate_members ON api_tokens.predicate_id = predicate_members.predicate_id
@@ -88,7 +88,7 @@ export class AuthService {
       predicate: {
         id: result.predicate_id,
         address: result.predicate_address,
-        provider: result.provider,
+        provider: result.network.url,
       },
     };
 
