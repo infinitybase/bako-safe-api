@@ -176,6 +176,7 @@ export class TransactionService implements ITransactionService {
         't.summary',
         't.updatedAt',
         't.type',
+        't.network',
       ])
       .leftJoin('t.predicate', 'predicate')
       .leftJoin('predicate.members', 'members')
@@ -330,6 +331,7 @@ export class TransactionService implements ITransactionService {
         't.summary',
         't.updatedAt',
         't.type',
+        't.network',
       ])
       .leftJoin('t.predicate', 'predicate')
       .leftJoin('predicate.members', 'members')
@@ -553,7 +555,7 @@ export class TransactionService implements ITransactionService {
           provider,
           filters: {
             owner: address,
-            first: 1000,
+            first: 100,
           },
         });
 
