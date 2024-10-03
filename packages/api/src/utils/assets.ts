@@ -1,5 +1,6 @@
 import { IQuote } from '@src/server/storage';
-import { assets as fuelAssetsList, NetworkFuel } from 'fuels';
+import { fetchFuelAssets } from '@src/server/storage/fuelAssetsFetcher';
+import { Assets, NetworkFuel } from 'fuels';
 
 export type IAsset = {
   symbol: string;
@@ -29,20 +30,23 @@ export type Asset = {
   units: number;
 };
 
-//const whiteList = ['ethereum', 'weth', 'usd-coin'];
 const whitelist = ['rsteth', 'mantle meth', 'rsusde', 're7lrt'];
 const replaceList = {
   usdc: 'usd-coin',
 };
 
 const replace = (name: string) => {
+  // eslint-disable-next-line no-prototype-builtins
   return replaceList.hasOwnProperty(name.toLocaleLowerCase())
     ? replaceList[name.toLocaleLowerCase()]
     : name.toLocaleLowerCase();
 };
 
-export const fuelAssetsByChainId = (chainId: number): Asset[] =>
-  fuelAssetsList.reduce<Asset[]>((acc, asset) => {
+export const fuelAssetsByChainId = (
+  chainId: number,
+  fuelAssetsList: Assets,
+): Asset[] => {
+  return fuelAssetsList.reduce<Asset[]>((acc, asset) => {
     const network = asset.networks.find(
       network => network && network.chainId === chainId,
     ) as NetworkFuel;
@@ -58,79 +62,89 @@ export const fuelAssetsByChainId = (chainId: number): Asset[] =>
     }
     return acc;
   }, []);
-
-export const fuelUnitAssets = (chainId: number, assetId: string): number => {
-  const result =
-    fuelAssetsList
-      .map(asset => {
-        const network = asset.networks.find(
-          network => network && network.chainId === chainId,
-        ) as NetworkFuel;
-
-        if (network && network.assetId === assetId) return network.decimals;
-      })
-      .find(units => units !== undefined) ?? 8;
-
-  return result;
 };
 
-export const fuelAssets = (): Asset[] =>
-  fuelAssetsList.reduce<Asset[]>((acc, asset) => {
-    if (whitelist.includes(asset.name.toLocaleLowerCase())) return acc;
-    const network = asset.networks.find(
-      network => network.type === 'fuel',
-    ) as NetworkFuel;
-    if (network) {
-      acc.push({
-        name: asset.name,
-        slug: replace(asset.name),
-        assetId: network.assetId,
-        icon: asset.icon,
-        units: network.decimals,
-      });
-    }
-    return acc;
-  }, []);
+export const getAssetsMaps = async () => {
+  const fuelAssetsList = await fetchFuelAssets();
 
-export const assets = fuelAssets().map(asset => {
-  return {
-    symbol: asset.slug,
-    id: asset.assetId,
+  const fuelUnitAssets = (chainId: number, assetId: string): number => {
+    const result =
+      fuelAssetsList
+        .map(asset => {
+          const network = asset.networks.find(
+            network => network && network.chainId === chainId,
+          ) as NetworkFuel;
+
+          if (network && network.assetId === assetId) return network.decimals;
+        })
+        .find(units => units !== undefined) ?? 8;
+
+    return result;
   };
-});
 
-export const assetsMapById: IAssetMapById = fuelAssets().reduce(
-  (previousValue, currentValue) => {
-    return {
-      ...previousValue,
-      [currentValue.assetId]: {
-        symbol: currentValue.slug,
-        slug: currentValue.slug,
-      },
-    };
-  },
-  {},
-);
+  const fuelAssets = (): Asset[] =>
+    fuelAssetsList.reduce<Asset[]>((acc, asset) => {
+      if (whitelist.includes(asset.name.toLocaleLowerCase())) return acc;
 
-export const assetsMapBySymbol: IAssetMapBySymbol = fuelAssets().reduce(
-  (previousValue, currentValue) => {
-    return {
-      ...previousValue,
-      [currentValue.slug]: {
-        slug: currentValue.slug,
-        id: currentValue.assetId,
-      },
-    };
-  },
-  {},
-);
+      const network = asset.networks.find(
+        network => network && network.chainId === 0,
+      ) as NetworkFuel;
 
-export const QuotesMock: IQuote[] = Object.entries(assetsMapBySymbol).map(
-  ([key, value]) => {
-    const price = Math.random() * 100;
+      if (network && network.type === 'fuel') {
+        acc.push({
+          name: asset.name,
+          slug: replace(asset.name),
+          assetId: network.assetId,
+          icon: asset.icon,
+          units: network.decimals,
+          // units: 9,
+        });
+      }
+      return acc;
+    }, []);
+
+  const assets = fuelAssets().map(asset => {
     return {
-      assetId: value.id,
-      price,
+      symbol: asset.slug,
+      id: asset.assetId,
     };
-  },
-);
+  });
+
+  const assetsMapById: IAssetMapById = fuelAssets().reduce(
+    (previousValue, currentValue) => {
+      return {
+        ...previousValue,
+        [currentValue.assetId]: {
+          symbol: currentValue.slug,
+          slug: currentValue.slug,
+        },
+      };
+    },
+    {},
+  );
+
+  const assetsMapBySymbol: IAssetMapBySymbol = fuelAssets().reduce(
+    (previousValue, currentValue) => {
+      return {
+        ...previousValue,
+        [currentValue.slug]: {
+          slug: currentValue.slug,
+          id: currentValue.assetId,
+        },
+      };
+    },
+    {},
+  );
+
+  const QuotesMock: IQuote[] = Object.entries(assetsMapBySymbol).map(
+    ([key, value]) => {
+      const price = Math.random() * 100;
+      return {
+        assetId: value.id,
+        price,
+      };
+    },
+  );
+
+  return { QuotesMock, assets, assetsMapById, assetsMapBySymbol, fuelUnitAssets };
+};

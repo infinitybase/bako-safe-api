@@ -12,6 +12,7 @@ import {
 import { isUUID } from 'class-validator';
 import { ITransactionCounter } from './types';
 import { ITransactionPagination } from './pagination';
+import { getAssetsMaps } from '@src/utils';
 
 export const formatTransactionsResponse = (
   transactions: IPagination<Transaction> | Transaction[],
@@ -26,10 +27,11 @@ export const formatTransactionsResponse = (
   }
 };
 
-export const formatFuelTransaction = (
+export const formatFuelTransaction = async (
   tx: TransactionResult,
   predicate: Predicate,
-): ITransactionResponse => {
+): Promise<ITransactionResponse> => {
+  const { fuelUnitAssets } = await getAssetsMaps();
   const {
     gasPrice,
     scriptGasLimit,
@@ -92,7 +94,7 @@ export const formatFuelTransaction = (
         single: predicate.workspace.single,
       },
     },
-    assets: formatAssets(outputs, predicate.predicateAddress),
+    assets: formatAssets(outputs, predicate.predicateAddress, fuelUnitAssets),
   };
 
   return (formattedTransaction as unknown) as ITransactionResponse;

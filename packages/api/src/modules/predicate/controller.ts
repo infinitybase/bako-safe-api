@@ -3,9 +3,8 @@ import { TransactionStatus } from 'bakosafe';
 import { Predicate } from '@src/models/Predicate';
 import { Workspace } from '@src/models/Workspace';
 import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
-import { IconUtils } from '@src/utils/icons';
 
-import { NotificationTitle, TypeUser, User } from '@models/index';
+import { NotificationTitle } from '@models/index';
 
 import { error } from '@utils/error';
 import {
@@ -162,14 +161,18 @@ export class PredicateController {
         network.url ?? FUEL_PROVIDER,
       );
       const balances = (await instance.getBalances()).balances;
+      console.log('banacclen', (await instance.getBalance()).format());
       const assets =
         reservedCoins.length > 0 ? subCoins(balances, reservedCoins) : balances;
 
       return successful(
         {
-          reservedCoinsUSD: calculateBalanceUSD(reservedCoins), // locked value on USDC
-          totalBalanceUSD: calculateBalanceUSD(balances),
-          currentBalanceUSD: calculateBalanceUSD(assets),
+          reservedCoinsUSD: await calculateBalanceUSD(
+            reservedCoins,
+            network.chainId,
+          ), // locked value on USDC
+          totalBalanceUSD: await calculateBalanceUSD(balances, network.chainId),
+          currentBalanceUSD: await calculateBalanceUSD(assets, network.chainId),
           currentBalance: assets,
           totalBalance: balances,
           reservedCoins: reservedCoins, // locked coins
