@@ -7,6 +7,7 @@ import {
 import {
   TransactionRequest,
   TransactionType as FuelTransactionType,
+  hexlify,
   Network,
 } from 'fuels';
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
@@ -97,6 +98,7 @@ class Transaction extends Base {
       [FuelTransactionType.Script]: TransactionType.TRANSACTION_SCRIPT,
       [FuelTransactionType.Upgrade]: TransactionType.TRANSACTION_UPGRADE,
       [FuelTransactionType.Upload]: TransactionType.TRANSACTION_UPLOAD,
+      [FuelTransactionType.Blob]: TransactionType.TRANSACTION_BLOB,
       default: TransactionType.TRANSACTION_SCRIPT,
     };
 
@@ -110,6 +112,30 @@ class Transaction extends Base {
     });
 
     return result;
+  }
+
+  getWitnesses() {
+    const witnesses = this.resume.witnesses
+      .filter(w => !!w.signature)
+      .map(w => w.signature);
+
+    const { witnesses: txWitnesses } = this.txData;
+
+    if ('bytecodeWitnessIndex' in this.txData) {
+      const { bytecodeWitnessIndex } = this.txData;
+      const bytecode = txWitnesses[bytecodeWitnessIndex];
+
+      bytecode && witnesses.splice(bytecodeWitnessIndex, 0, hexlify(bytecode));
+    }
+
+    if ('witnessIndex' in this.txData) {
+      const { witnessIndex } = this.txData;
+      const bytecode = txWitnesses[witnessIndex];
+
+      bytecode && witnesses.splice(witnessIndex, 0, hexlify(bytecode));
+    }
+
+    return witnesses;
   }
 }
 
