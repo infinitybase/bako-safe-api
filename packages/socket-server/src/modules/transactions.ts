@@ -125,8 +125,6 @@ export const txConfirm = async ({ data, socket, database }: IEvent<IEventTX_CONF
 	const { origin, host } = socket.handshake.headers
 
 	const { tx, operations } = data
-	//const to = sign ? SocketUsernames.UI : SocketUsernames.CONNECTOR [CONNECTOR SIGNATURE]
-	//const room = `${sessionId}:${to}:${request_id}` [CONNECTOR SIGNATURE]
 
 	const room = `${sessionId}:${SocketUsernames.CONNECTOR}:${request_id}`
 
@@ -139,6 +137,7 @@ export const txConfirm = async ({ data, socket, database }: IEvent<IEventTX_CONF
 			origin,
 			UI_URL,
 			room,
+			_origin: origin != UI_URL,
 		})
 
 		if (origin != UI_URL) return
@@ -304,7 +303,14 @@ export const txRequest = async ({ data, socket, database }: IEvent<IEventTX_REQU
 			`,
 			[vault.id, TransactionStatus.AWAIT_REQUIREMENTS],
 		)
-		//console.log('[TX_PENDING]', tx_pending, Number(tx_pending.count) > 0)
+		const provider = await BakoProvider.create(dapp.network.url, {
+			token: code.code,
+			address: dapp.user_address,
+			serverApi: API_URL,
+		})
+
+		const vaultInstance = await Vault.fromAddress(vault.predicate_address, provider)
+		await vaultInstance.BakoTransfer(_transaction)
 
 		const room = `${sessionId}:${SocketUsernames.UI}:${request_id}`
 		socket.to(room).emit(SocketEvents.DEFAULT, {

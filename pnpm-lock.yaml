@@ -30,8 +30,8 @@ importers:
         specifier: 1.5.1
         version: 1.5.1
       bakosafe:
-        specifier: 0.0.82-beta
-        version: 0.0.82-beta(fuels@0.94.8)
+        specifier: /Users/guimroque/Infinity/bsafe/bako-safe/packages/sdk/bakosafe-0.0.82-beta.tgz
+        version: file:../bako-safe/packages/sdk/bakosafe-0.0.82-beta.tgz(fuels@0.94.8)
       bcrypt:
         specifier: 5.1.0
         version: 5.1.0
@@ -229,8 +229,8 @@ importers:
         specifier: ^10.0.5
         version: 10.0.5(graphql@16.9.0)
       bakosafe:
-        specifier: 0.0.82-beta
-        version: 0.0.82-beta(fuels@0.94.8)
+        specifier: /Users/guimroque/Infinity/bsafe/bako-safe/packages/sdk/bakosafe-0.0.82-beta.tgz
+        version: file:../bako-safe/packages/sdk/bakosafe-0.0.82-beta.tgz(fuels@0.94.8)
       copyfiles:
         specifier: 2.4.1
         version: 2.4.1
@@ -315,9 +315,12 @@ importers:
 
   packages/socket-server:
     dependencies:
+      axios:
+        specifier: 1.5.1
+        version: 1.5.1
       bakosafe:
-        specifier: 0.0.82-beta
-        version: 0.0.82-beta(fuels@0.94.8)
+        specifier: /Users/guimroque/Infinity/bsafe/bako-safe/packages/sdk/bakosafe-0.0.82-beta.tgz
+        version: file:../bako-safe/packages/sdk/bakosafe-0.0.82-beta.tgz(fuels@0.94.8)
       express:
         specifier: 4.17.1
         version: 4.17.1
@@ -4909,20 +4912,6 @@ packages:
       babel-plugin-jest-hoist: 29.6.3
       babel-preset-current-node-syntax: 1.0.1(@babel/core@7.24.6)
     dev: true
-
-  /bakosafe@0.0.82-beta(fuels@0.94.8):
-    resolution: {integrity: sha512-K82nO1Ewi0ai7sm0CAZwxOK7AJnGDUIPIq/u16DUvW4VqAJ3wj3R+ypvEIlZKPYRLZzNdRKNm3Gren4iAhRVpQ==}
-    requiresBuild: true
-    peerDependencies:
-      fuels: 0.94.6
-    dependencies:
-      '@noble/curves': 1.6.0
-      axios: 1.5.1
-      fuels: 0.94.8
-      uuid: 9.0.1
-    transitivePeerDependencies:
-      - debug
-    dev: false
 
   /balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
@@ -11806,4 +11795,21 @@ packages:
       tiny-case: 1.0.3
       toposort: 2.0.2
       type-fest: 2.19.0
+    dev: false
+
+  file:../bako-safe/packages/sdk/bakosafe-0.0.82-beta.tgz(fuels@0.94.8):
+    resolution: {integrity: sha512-3DrcA4m33VaQsst32q4xT7i3JHiLQdmuemtnyrSWGGkgFCFA1+Yk5RvfN9hEJj5RGElAJITOFM2rWlIc8ha4Kg==, tarball: file:../bako-safe/packages/sdk/bakosafe-0.0.82-beta.tgz}
+    id: file:../bako-safe/packages/sdk/bakosafe-0.0.82-beta.tgz
+    name: bakosafe
+    version: 0.0.82-beta
+    requiresBuild: true
+    peerDependencies:
+      fuels: 0.94.6
+    dependencies:
+      '@noble/curves': 1.6.0
+      axios: 1.5.1
+      fuels: 0.94.8
+      uuid: 9.0.1
+    transitivePeerDependencies:
+      - debug
     dev: false

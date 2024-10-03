@@ -33,7 +33,7 @@ export class DappController {
   async connect({ body }: ICreateRequest) {
     try {
       const { vaultId, sessionId, name, origin, userAddress, request_id } = body;
-      const predicate = await new PredicateService().findById(vaultId);
+      const predicate = await Predicate.findOne({ where: { id: vaultId } });
       let dapp = await new DAppsService().findBySessionID(sessionId, origin);
       const user = await User.findOne({ where: { address: userAddress } });
       const { network } = await TokenUtils.getTokenByUser(user.id);
