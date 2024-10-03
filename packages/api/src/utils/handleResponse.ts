@@ -16,7 +16,7 @@ type ExpressRequest = (
 ) => Promise<unknown>;
 
 const handleResponse = (controllerEndpoint: ControllerEndpoint) => {
-  const response: ExpressRequest = async (req, res, next) => {
+  const response: ExpressRequest = async function _handleResponse(req, res, next) {
     try {
       const result = await controllerEndpoint(req, res, next);
       /**
