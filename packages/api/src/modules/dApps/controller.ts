@@ -33,9 +33,10 @@ export class DappController {
   async connect({ body }: ICreateRequest) {
     try {
       const { vaultId, sessionId, name, origin, userAddress, request_id } = body;
-      const predicate = await new PredicateService().findById(vaultId);
+      const predicate = await Predicate.findOne({ where: { id: vaultId } });
       let dapp = await new DAppsService().findBySessionID(sessionId, origin);
       const user = await User.findOne({ where: { address: userAddress } });
+      const { network } = await TokenUtils.getTokenByUser(user.id);
       if (!dapp) {
         dapp = await new DAppsService().create({
           sessionId,
@@ -44,6 +45,7 @@ export class DappController {
           vaults: [predicate],
           currentVault: predicate,
           user,
+          network,
         });
       }
 
@@ -53,6 +55,8 @@ export class DappController {
         dapp.vaults = [...dapp.vaults, predicate];
       }
       dapp.currentVault = predicate;
+      dapp.network = network;
+
       await dapp.save();
       const socket = new SocketClient(sessionId, API_URL);
 
@@ -173,14 +177,12 @@ export class DappController {
 
   async currentNetwork({ params, headers }: IDappRequest) {
     try {
-      const dapp = await this._dappService.findBySessionID(
+      const { network } = await this._dappService.findBySessionID(
         params.sessionId,
         headers.origin || headers.Origin,
       );
 
-      //todo: add support to switch network on connector
-      //const result = dapp?.currentVault.provider ?? null;
-      const result = FUEL_PROVIDER;
+      const result = network.url ?? FUEL_PROVIDER;
 
       return successful(result, Responses.Ok);
     } catch (e) {
@@ -207,10 +209,33 @@ export class DappController {
         await this._dappService
           .findBySessionID(params.sessionId, headers.origin || headers.Origin)
           .then((data: DApp) => {
-            return !!data; // todo: verify return more info about the dapp and validate on connector
+            return !!data;
           }),
         Responses.Ok,
       );
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async selectNetwork({ body, headers, params }: IDappRequest) {
+    try {
+      const { networkUrl } = body;
+      const { sessionId } = params;
+      const origin = headers.origin || headers.Origin;
+
+      const dapp = await new DAppsService().findBySessionID(sessionId, origin);
+
+      // set on connector
+      if (!dapp) return successful(false, Responses.Ok);
+      dapp.network = networkUrl;
+      await dapp.save();
+
+      // TODO: VERIFY HERE
+      // set on bakosafesession
+      await TokenUtils.changeNetwork(dapp.user.id, networkUrl);
+
+      return successful(true, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }

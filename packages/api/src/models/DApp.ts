@@ -10,6 +10,10 @@ import {
 import { Base } from './Base';
 import { Predicate } from './Predicate';
 import { User } from './User';
+import { Network } from 'fuels';
+import { networks } from '@src/mocks/networks';
+
+const { FUEL_PROVIDER, FUEL_PROVIDER_CHAIN_ID } = process.env;
 
 @Entity('dapp')
 class DApp extends Base {
@@ -21,6 +25,16 @@ class DApp extends Base {
 
   @Column({ nullable: true })
   name: string;
+
+  @Column({
+    type: 'jsonb',
+    name: 'network',
+    default: {
+      url: FUEL_PROVIDER ?? networks['devnet'],
+      chainId: Number(FUEL_PROVIDER_CHAIN_ID) ?? 0,
+    },
+  })
+  network: Network;
 
   @JoinTable({
     name: 'apps_connected',

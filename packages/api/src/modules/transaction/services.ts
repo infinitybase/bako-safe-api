@@ -190,7 +190,10 @@ export class TransactionService implements ITransactionService {
         'workspace.id',
         'workspace.name',
         'workspace.single',
-      ]);
+      ])
+      .andWhere(`t.network->>'url' = :network`, {
+        network: this._filter.network,
+      });
 
     this._filter.predicateAddress &&
       queryBuilder.andWhere('predicate.predicateAddress = :address', {
@@ -341,7 +344,10 @@ export class TransactionService implements ITransactionService {
         'workspace.id',
         'workspace.name',
         'workspace.single',
-      ]);
+      ])
+      .andWhere(`t.network->>'url' = :network`, {
+        network: this._filter.network,
+      });
 
     // =============== specific for workspace ===============
     if (this._filter.workspaceId || this._filter.signer) {
@@ -482,24 +488,20 @@ export class TransactionService implements ITransactionService {
   //instance vault
   //instance tx
   //add witnesses
-  async sendToChain(hash: string, providerUrl: string) {
-    const { id, predicate, txData, status, resume } = await this.findByHash(hash);
+  async sendToChain(hash: string) {
+    const transaction = await this.findByHash(hash);
+    const { id, predicate, txData, status, resume } = transaction;
 
     if (status != TransactionStatus.PENDING_SENDER) {
       return await this.findById(id);
     }
 
-    const provider = await Provider.create(providerUrl);
+    const provider = await Provider.create(transaction.network.url);
     const vault = new Vault(provider, JSON.parse(predicate.configurable));
 
     const tx = transactionRequestify({
       ...txData,
-      witnesses: [
-        ...(txData.type === FuelTransactionType.Create // is required add on 1st position
-          ? [hexlify(txData.witnesses[txData.bytecodeWitnessIndex])]
-          : []),
-        ...resume.witnesses.filter(w => !!w.signature).map(w => w.signature),
-      ],
+      witnesses: transaction.getWitnesses(),
     });
 
     try {

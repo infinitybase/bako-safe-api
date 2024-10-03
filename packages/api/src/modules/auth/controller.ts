@@ -8,12 +8,7 @@ import { Responses, successful, bindMethods, TokenUtils } from '@utils/index';
 
 import { RecoverCodeService } from '../recoverCode/services';
 
-import {
-  IAuthService,
-  IChangenetworkRequest,
-  ICreateRecoverCodeRequest,
-  ISignInRequest,
-} from './types';
+import { IAuthService, ICreateRecoverCodeRequest, ISignInRequest } from './types';
 import app from '@src/server/app';
 import { Request } from 'express';
 import { Provider } from 'fuels';
@@ -83,7 +78,7 @@ export class AuthController {
         origin: origin ?? process.env.UI_URL,
         validAt: addMinutes(new Date(), 5),
         network: {
-          url: networkUrl,
+          url: provider.url,
           chainId: provider.getChainId(),
         },
       });

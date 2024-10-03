@@ -30,8 +30,8 @@ importers:
         specifier: 1.5.1
         version: 1.5.1
       bakosafe:
-        specifier: 0.0.82-beta
-        version: 0.0.82-beta(fuels@0.94.8)
+        specifier: 0.0.87-beta
+        version: 0.0.87-beta(fuels@0.94.8)
       bcrypt:
         specifier: 5.1.0
         version: 5.1.0
@@ -229,8 +229,8 @@ importers:
         specifier: ^10.0.5
         version: 10.0.5(graphql@16.9.0)
       bakosafe:
-        specifier: 0.0.82-beta
-        version: 0.0.82-beta(fuels@0.94.8)
+        specifier: 0.0.87-beta
+        version: 0.0.87-beta(fuels@0.94.8)
       copyfiles:
         specifier: 2.4.1
         version: 2.4.1
@@ -315,9 +315,12 @@ importers:
 
   packages/socket-server:
     dependencies:
+      axios:
+        specifier: 1.5.1
+        version: 1.5.1
       bakosafe:
-        specifier: 0.0.82-beta
-        version: 0.0.82-beta(fuels@0.94.8)
+        specifier: 0.0.87-beta
+        version: 0.0.87-beta(fuels@0.94.8)
       express:
         specifier: 4.17.1
         version: 4.17.1
@@ -4910,8 +4913,8 @@ packages:
       babel-preset-current-node-syntax: 1.0.1(@babel/core@7.24.6)
     dev: true
 
-  /bakosafe@0.0.82-beta(fuels@0.94.8):
-    resolution: {integrity: sha512-K82nO1Ewi0ai7sm0CAZwxOK7AJnGDUIPIq/u16DUvW4VqAJ3wj3R+ypvEIlZKPYRLZzNdRKNm3Gren4iAhRVpQ==}
+  /bakosafe@0.0.87-beta(fuels@0.94.8):
+    resolution: {integrity: sha512-IU5Vmp4fJnEug4HuOeUNTAHIDCZY8VhE1kdIgVH7jwe4v2XkjFG+pSnyYH2ZTy6avVdc836Fsv2QVJbotgTvfg==}
     requiresBuild: true
     peerDependencies:
       fuels: 0.94.6

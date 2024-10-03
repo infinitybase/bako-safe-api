@@ -23,7 +23,7 @@ class APIToken extends Base {
     type: 'jsonb',
   })
   config: APITokenConfig = {
-    transactionTitle: DEFAULT_TRANSACTION_TITLE,
+    transactionTitle: '',
   };
 
   @Column({

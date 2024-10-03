@@ -1,5 +1,5 @@
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
-import { TransactionRequestLike } from 'fuels';
+import { Network, TransactionRequestLike } from 'fuels';
 
 import { AuthValidatedRequest } from '@src/middlewares/auth/types';
 import { UnloggedRequest } from '@src/middlewares/auth/types';
@@ -12,6 +12,7 @@ export interface IDAPPCreatePayload {
   vaults: Predicate[];
   currentVault: Predicate;
   user: User;
+  network: Network;
 }
 
 export interface IDAPPCreateRecoverCode {

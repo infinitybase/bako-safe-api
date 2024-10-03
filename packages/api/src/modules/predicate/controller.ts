@@ -158,7 +158,7 @@ export class PredicateController {
 
       const instance = await this.predicateService.instancePredicate(
         configurable,
-        FUEL_PROVIDER,
+        network.url ?? FUEL_PROVIDER,
       );
       const balances = (await instance.getBalances()).balances;
       console.log('banacclen', (await instance.getBalance()).format());

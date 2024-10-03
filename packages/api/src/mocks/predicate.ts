@@ -35,12 +35,8 @@ export class PredicateMock {
     const predicatePayload: IPredicateMockPayload = {
       name: crypto.randomUUID(),
       description: crypto.randomUUID(),
-      provider: FUEL_PROVIDER,
-      chainId: _provider.getChainId(),
       predicateAddress: vault.address.toString(),
-      minSigners: signaturesCount,
       configurable: JSON.stringify(_configurable),
-      addresses: signers,
     };
 
     return new PredicateMock(_configurable, predicatePayload, vault);

@@ -77,7 +77,6 @@ export class GatewayServer {
       tokenDecodeMiddleware,
       createSubscriptionHandler({
         schema: subscriptionSchema,
-        defaultContext: { database: this.database },
       })
     );
     this.app.post(
@@ -86,7 +85,6 @@ export class GatewayServer {
       createGraphqlHttpHandler({
         appSchema: defaultSchemas.appSchema,
         fuelSchema: defaultSchemas.fuelSchema,
-        defaultContext: { database: this.database },
       })
     );
     this.app.get(GatewayServer.ROUTES_PATHS.ping, ({ res }) =>

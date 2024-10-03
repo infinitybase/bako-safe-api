@@ -1,4 +1,5 @@
 import { TransactionStatus, TransactionType, WitnessStatus } from 'bakosafe';
+import { Provider } from 'fuels';
 import { isUUID } from 'class-validator';
 import { PermissionRoles, Workspace } from '@src/models/Workspace';
 import {
@@ -67,7 +68,7 @@ export class TransactionController {
   // pending tx
   async pending(req: IListRequest) {
     try {
-      const { workspace, user } = req;
+      const { workspace, user, network } = req;
       const { predicateId } = req.query;
       const predicate =
         predicateId && predicateId.length > 0 ? predicateId[0] : undefined;
@@ -81,6 +82,9 @@ export class TransactionController {
           .addSelect(['t.status'])
           .where('t.status = :status', {
             status: TransactionStatus.AWAIT_REQUIREMENTS,
+          })
+          .andWhere(`t.network->>'url' = :network`, {
+            network: network.url,
           });
 
         const result = await qb.getCount();
@@ -98,7 +102,10 @@ export class TransactionController {
         .where('t.status = :status', {
           status: TransactionStatus.AWAIT_REQUIREMENTS,
         })
-        .andWhere('t.predicateId = :predicate', { predicate });
+        .andWhere('t.predicateId = :predicate', { predicate })
+        .andWhere(`t.network->>'url' = :network`, {
+          network: network.url,
+        });
 
       const result = await qb.getCount();
 
@@ -219,6 +226,7 @@ export class TransactionController {
 
   async createHistory({
     params: { id, predicateId },
+    network,
   }: ICreateTransactionHistoryRequest) {
     try {
       const isUuid = isUUID(id);
@@ -231,7 +239,7 @@ export class TransactionController {
         result = await this.transactionService.fetchFuelTransactionById(
           id,
           predicate,
-          FUEL_PROVIDER,
+          network.url ?? FUEL_PROVIDER,
         );
       }
 
@@ -398,11 +406,12 @@ export class TransactionController {
       await transaction.save();
 
       if (newStatus === TransactionStatus.PENDING_SENDER) {
-        await this.transactionService.sendToChain(transaction.hash, FUEL_PROVIDER);
+        await this.transactionService.sendToChain(transaction.hash);
       }
 
       return successful(true, Responses.Ok);
     } catch (e) {
+      console.log(e);
       return error(e.error, e.statusCode);
     }
   }
@@ -422,7 +431,7 @@ export class TransactionController {
         id,
         type,
       } = req.query;
-      const { workspace, user } = req;
+      const { workspace, user, network } = req;
 
       const singleWorkspace = await new WorkspaceService()
         .filter({
@@ -454,6 +463,7 @@ export class TransactionController {
           signer: hasSingle ? user.address : undefined,
           predicateId: predicateId ?? undefined,
           type,
+          network: network.url,
         })
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })
@@ -478,7 +488,7 @@ export class TransactionController {
         offsetFuel,
         id,
       } = req.query;
-      const { workspace, user } = req;
+      const { workspace, user, network } = req;
 
       if (id) {
         return successful(await this.transactionService.findById(id), Responses.Ok);
@@ -515,6 +525,7 @@ export class TransactionController {
           predicateId: predicateId ?? undefined,
           type,
           id,
+          network: network.url,
         })
         .ordination(ordination)
         .transactionPaginate({
@@ -548,7 +559,7 @@ export class TransactionController {
             offsetFuel: offsetFuel,
           })
           // todo: use this provider by session
-          .fetchFuelTransactions(predicates, FUEL_PROVIDER);
+          .fetchFuelTransactions(predicates, network.url || FUEL_PROVIDER);
       }
 
       const mergedList = mergeTransactionLists(dbTxs, fuelTxs, {
@@ -589,9 +600,10 @@ export class TransactionController {
       params: { hash },
     } = params;
     try {
-      await this.transactionService.sendToChain(hash.slice(2), FUEL_PROVIDER); // not wait for this
+      await this.transactionService.sendToChain(hash.slice(2)); // not wait for this
       return successful(true, Responses.Ok);
     } catch (e) {
+      console.log(e);
       return error(e.error, e.statusCode);
     }
   }

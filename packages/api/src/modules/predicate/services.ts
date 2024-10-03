@@ -69,7 +69,7 @@ export class PredicateService implements IPredicateService {
       const versionService = new PredicateVersionService();
 
       // create a pending users
-      const { SIGNERS, SIGNATURES_COUNT } = JSON.parse(payload.configurable);
+      const { SIGNERS } = JSON.parse(payload.configurable);
       const validUsers = SIGNERS.filter(address => address !== ZeroBytes32);
 
       for await (const member of validUsers) {
@@ -98,6 +98,7 @@ export class PredicateService implements IPredicateService {
       }).save();
 
       return await this.findById(predicate.id);
+      // return predicate;
     } catch (e) {
       console.log(e);
       throw new Internal({
@@ -139,6 +140,7 @@ export class PredicateService implements IPredicateService {
         ])
         .getOne();
     } catch (e) {
+      console.log(e);
       if (e instanceof GeneralError) {
         throw e;
       }
