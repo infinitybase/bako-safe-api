@@ -1,23 +1,46 @@
-import { Address } from "fuels";
+import { Address, bufferFromString, sha256 } from "fuels";
 
 import { Database } from "@/lib";
+import { BakoProvider, Vault } from "bakosafe";
 
 type GetApiToken = {
   apiToken: string;
   userId: string;
 };
 
+type TokenData = {
+  userAddress: string;
+  tokenConfig: string;
+  predicate: {
+    id: string;
+    address: string;
+    provider: string;
+  };
+};
+
 export class AuthService {
+  private static tokenCache: Record<string, TokenData> = {};
+
   constructor(private db: Database) {}
 
   async getSession(apiToken: string, userId: string) {
-    const { vaultId, tokenConfig, userAddress } = await this.getTokenData({
+    const { tokenConfig, userAddress, predicate } = await this.getTokenData({
       apiToken,
       userId,
     });
     const { code, codeId } = await this.createSession(userId);
+
+    const bakoProvider = await BakoProvider.create(predicate.provider, {
+      address: userAddress,
+      token: code,
+      serverApi: process.env.API_URL!,
+    });
+
+    const vault = await Vault.fromAddress(predicate.address, bakoProvider);
+
     return {
-      vaultId,
+      vault,
+      provider: bakoProvider,
       userAddress,
       tokenConfig,
       code: {
@@ -30,11 +53,17 @@ export class AuthService {
   async getTokenData(params: GetApiToken) {
     const { apiToken, userId } = params;
 
+    const cacheKey = `${apiToken}-${userId}`;
+    if (AuthService.tokenCache[cacheKey]) {
+      return AuthService.tokenCache[cacheKey];
+    }
+
     const query = `
       SELECT api_tokens.predicate_id,
+             api_tokens.network,
+             api_tokens.config,
              users.address,
-             predicates.provider,
-             api_tokens.config
+             predicates.predicate_address
       FROM api_tokens
                INNER JOIN predicates ON api_tokens.predicate_id = predicates.id
                INNER JOIN predicate_members ON api_tokens.predicate_id = predicate_members.predicate_id
@@ -53,12 +82,19 @@ export class AuthService {
       throw new Error("Invalid token");
     }
 
-    return {
-      vaultId: result.predicate_id,
-      provider: result.provider,
+    const tokenData = {
       userAddress: result.address,
       tokenConfig: result.config,
+      predicate: {
+        id: result.predicate_id,
+        address: result.predicate_address,
+        provider: result.network.url,
+      },
     };
+
+    AuthService.tokenCache[cacheKey] = tokenData;
+
+    return tokenData;
   }
 
   async createSession(user: string) {

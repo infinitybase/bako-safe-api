@@ -13,4 +13,6 @@
     --debug \
     --min-gas-price ${MIN_GAS_PRICE} \
     --snapshot ./ \
-    --consensus-key ${CONSENSUS_KEY_SECRET}
+    --consensus-key ${CONSENSUS_KEY_SECRET} \
+    --graphql-max-complexity 10000000 \
+    --graphql-max-recursive-depth 72
