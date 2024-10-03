@@ -4,7 +4,8 @@ import app from '@src/server/app';
 import { Transaction } from '@src/models';
 import { isOutputCoin } from './outputTypeValidate';
 import { getAssetsMaps } from './assets';
-import { isDevMode } from './runMode';
+
+const { FUEL_PROVIDER_CHAIN_ID } = process.env;
 
 const calculateReservedCoins = (transactions: Transaction[]): CoinQuantity[] => {
   const reservedMap = new Map<string, BN>();
@@ -31,20 +32,23 @@ const calculateReservedCoins = (transactions: Transaction[]): CoinQuantity[] => 
 
 const calculateBalanceUSD = async (
   balances: CoinQuantity[],
-  chainId: number = isDevMode ? 0 : 9889,
+  chainId: number = Number(FUEL_PROVIDER_CHAIN_ID),
 ): Promise<string> => {
   let balanceUSD = 0;
   const { fuelUnitAssets } = await getAssetsMaps();
 
+  console.log('chainId:', chainId);
+
   balances?.forEach(balance => {
     const units = fuelUnitAssets(chainId, balance.assetId);
-    const formattedAmount = parseFloat(
-      balance.amount.format({
+    const formattedAmount = balance.amount
+      .format({
         units,
-      }),
-    );
+      })
+      .slice(0, 5);
+
     const priceUSD = app._quoteCache.getQuote(balance.assetId);
-    balanceUSD += formattedAmount * priceUSD;
+    balanceUSD += parseFloat(formattedAmount) * priceUSD;
   });
 
   return balanceUSD.toFixed(2);

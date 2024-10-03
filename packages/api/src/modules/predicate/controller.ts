@@ -137,7 +137,7 @@ export class PredicateController {
     }
   }
 
-  async hasReservedCoins({ params: { predicateId } }: IFindByIdRequest) {
+  async hasReservedCoins({ params: { predicateId }, network }: IFindByIdRequest) {
     try {
       const {
         transactions: predicateTxs,
@@ -161,14 +161,18 @@ export class PredicateController {
         FUEL_PROVIDER,
       );
       const balances = (await instance.getBalances()).balances;
+      console.log('banacclen', (await instance.getBalance()).format());
       const assets =
         reservedCoins.length > 0 ? subCoins(balances, reservedCoins) : balances;
 
       return successful(
         {
-          reservedCoinsUSD: await calculateBalanceUSD(reservedCoins), // locked value on USDC
-          totalBalanceUSD: await calculateBalanceUSD(balances),
-          currentBalanceUSD: await calculateBalanceUSD(assets),
+          reservedCoinsUSD: await calculateBalanceUSD(
+            reservedCoins,
+            network.chainId,
+          ), // locked value on USDC
+          totalBalanceUSD: await calculateBalanceUSD(balances, network.chainId),
+          currentBalanceUSD: await calculateBalanceUSD(assets, network.chainId),
           currentBalance: assets,
           totalBalance: balances,
           reservedCoins: reservedCoins, // locked coins
