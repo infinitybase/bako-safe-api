@@ -77,7 +77,8 @@ export class UserController {
   async meTransactions(req: IMeRequest) {
     try {
       const { type } = req.query;
-      const { workspace, user } = req;
+      const { workspace, user, network } = req;
+
       const { hasSingle } = await new UserService().workspacesByUser(
         workspace,
         user,
@@ -87,6 +88,7 @@ export class UserController {
           type,
           workspaceId: [workspace.id],
           signer: hasSingle ? user.address : undefined,
+          network: network.url,
         })
         .paginate({ page: '0', perPage: '6' })
         .ordination({ orderBy: 'createdAt', sort: 'DESC' })
@@ -195,6 +197,7 @@ export class UserController {
   async create(req: ICreateRequest) {
     try {
       const { address, name, provider } = req.body;
+      const { network } = req;
 
       //verify user exists
       let existingUser = await this.userService.findByAddress(address);

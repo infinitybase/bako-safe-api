@@ -559,7 +559,7 @@ export class TransactionController {
             offsetFuel: offsetFuel,
           })
           // todo: use this provider by session
-          .fetchFuelTransactions(predicates, FUEL_PROVIDER);
+          .fetchFuelTransactions(predicates, network.url || FUEL_PROVIDER);
       }
 
       const mergedList = mergeTransactionLists(dbTxs, fuelTxs, {
