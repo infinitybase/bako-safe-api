@@ -1,7 +1,7 @@
 import { Predicate, TotalValueLocked } from '@src/models';
 import { Asset, Vault } from 'bakosafe';
 import cron from 'node-cron';
-import { assetsMapById } from '../assets';
+import { getAssetsMaps } from '../assets';
 import app from '@src/server/app';
 import { Provider } from 'fuels';
 const { FUEL_PROVIDER } = process.env;
@@ -60,14 +60,14 @@ const TVLCronJob = cron.schedule('0 0 * * *', async () => {
         continue;
       }
     }
-
+    const _asset = await getAssetsMaps();
     const assetsTVL = await Asset.assetsGroupById(
       vaultsBalance.map(item => ({ ...item, amount: item.amount.format() })),
     );
     const validAssetsTVL = Object.entries(assetsTVL)
       // Filtro para considerar apenas assets existentes no dicionário
       .filter(([assetId, amount]) => {
-        const asset = assetsMapById[assetId];
+        const asset = _asset.assetsMapById[assetId];
         return asset !== undefined;
       })
       .map(([assetId, amount]) => {
