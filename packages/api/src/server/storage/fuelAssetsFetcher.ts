@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { Assets } from 'fuels';
 
 const ASSETS_URL = 'https://verified-assets.fuel.network/assets.json';
@@ -11,12 +10,18 @@ export const fetchFuelAssets = async (): Promise<Assets> => {
   }
 
   try {
-    const response = await axios.get<Assets>(ASSETS_URL);
-    cachedAssets = response.data;
+    const response = await fetch(ASSETS_URL);
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch data');
+    }
+
+    const data: Assets = await response.json();
+    cachedAssets = data;
 
     return cachedAssets;
   } catch (error) {
     console.error('Error fetching fuel assets:', error);
-    return [];
+    return [] as Assets;
   }
 };
