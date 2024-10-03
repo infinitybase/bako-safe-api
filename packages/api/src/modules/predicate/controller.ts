@@ -138,7 +138,7 @@ export class PredicateController {
     }
   }
 
-  async hasReservedCoins({ params: { predicateId } }: IFindByIdRequest) {
+  async hasReservedCoins({ params: { predicateId }, network }: IFindByIdRequest) {
     try {
       const {
         transactions: predicateTxs,
@@ -159,7 +159,7 @@ export class PredicateController {
 
       const instance = await this.predicateService.instancePredicate(
         configurable,
-        FUEL_PROVIDER,
+        network.url ?? FUEL_PROVIDER,
       );
       const balances = (await instance.getBalances()).balances;
       const assets =

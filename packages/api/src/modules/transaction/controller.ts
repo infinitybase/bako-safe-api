@@ -220,6 +220,7 @@ export class TransactionController {
 
   async createHistory({
     params: { id, predicateId },
+    network,
   }: ICreateTransactionHistoryRequest) {
     try {
       const isUuid = isUUID(id);
@@ -232,7 +233,7 @@ export class TransactionController {
         result = await this.transactionService.fetchFuelTransactionById(
           id,
           predicate,
-          FUEL_PROVIDER,
+          network.url ?? FUEL_PROVIDER,
         );
       }
 
@@ -364,6 +365,7 @@ export class TransactionController {
     body: { signature, approve },
     params: { hash: txHash },
     user: { address: account, id: userId },
+    network,
   }: ISignByIdRequest) {
     try {
       const transaction = await Transaction.findOne({
@@ -399,7 +401,7 @@ export class TransactionController {
       await transaction.save();
 
       if (newStatus === TransactionStatus.PENDING_SENDER) {
-        await this.transactionService.sendToChain(transaction.hash, FUEL_PROVIDER);
+        await this.transactionService.sendToChain(transaction.hash, network.url);
       }
 
       return successful(true, Responses.Ok);

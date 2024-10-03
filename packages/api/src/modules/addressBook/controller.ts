@@ -20,10 +20,6 @@ import {
 import { IconUtils } from '@utils/icons';
 import { Address } from 'fuels';
 
-const {
-  FUEL_PROVIDER
-} = process.env;
-
 export class AddressBookController {
   private addressBookService: IAddressBookService;
   private userService: IUserService;
@@ -72,7 +68,7 @@ export class AddressBookController {
           provider: user.provider,
           avatar: IconUtils.user(),
           type: TypeUser.FUEL,
-          name: Address.fromRandom().toB256(), 
+          name: Address.fromRandom().toB256(),
         });
       }
 
