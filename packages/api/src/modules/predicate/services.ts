@@ -112,7 +112,7 @@ export class PredicateService implements IPredicateService {
   async findById(id: string): Promise<Predicate> {
     try {
       return await Predicate.createQueryBuilder('p')
-        .where({ predicateAddress: id })
+        .where({ id })
         .leftJoinAndSelect('p.members', 'members')
         .leftJoinAndSelect('p.owner', 'owner')
         .leftJoin('p.version', 'version')
