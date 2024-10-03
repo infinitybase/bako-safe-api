@@ -287,11 +287,11 @@ export const txRequest = async ({ data, socket, database }: IEvent<IEventTX_REQU
 
 		const code = await database.query(
 			`
-				INSERT INTO recover_codes (origin, owner, type, code, valid_at, metadata, used)
-				VALUES ($1, $2, 'AUTH_ONCE', $3, NOW() + INTERVAL '2 minutes', $4, false)
+				INSERT INTO recover_codes (origin, owner, type, code, valid_at, metadata, used, network)
+				VALUES ($1, $2, 'AUTH_ONCE', $3, NOW() + INTERVAL '2 minutes', $4, false, $5)
 				RETURNING *;
 			`,
-			[host, dapp.user_id, `code${crypto.randomUUID()}`, `${JSON.stringify({ uses: 0 })}`],
+			[host, dapp.user_id, `code${crypto.randomUUID()}`, `${JSON.stringify({ uses: 0 })}`, JSON.stringify(dapp.network)],
 		)
 
 		const tx_pending = await database.query(
@@ -304,15 +304,6 @@ export const txRequest = async ({ data, socket, database }: IEvent<IEventTX_REQU
 			`,
 			[vault.id, TransactionStatus.AWAIT_REQUIREMENTS],
 		)
-		// const provider = await BakoProvider.create(dapp.network.url, {
-		// 	token: code.code,
-		// 	address: dapp.user_address,
-		// 	serverApi: API_URL,
-		// })
-
-		// // here
-		// const vaultInstance = await Vault.fromAddress(vault.predicate_address, provider)
-		// await vaultInstance.BakoTransfer(_transaction)
 
 		const provider = await Provider.create(dapp.network.url)
 		const vaultInstance = new Vault(provider, JSON.parse(vault.configurable))
