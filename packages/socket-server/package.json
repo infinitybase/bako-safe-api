@@ -12,8 +12,8 @@
 	},
 	"keywords": [],
 	"dependencies": {
-    "axios": "1.5.1",
-		"bakosafe": "0.0.83-beta",
+		"axios": "1.5.1",
+		"bakosafe": "0.0.84-beta",
 		"express": "4.17.1",
 		"express-joi-validation": "5.0.0",
 		"fuels": "0.94.8",
