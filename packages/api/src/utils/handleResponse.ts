@@ -28,11 +28,6 @@ const handleResponse = (controllerEndpoint: ControllerEndpoint) => {
       }
 
       /**
-       * Set the header to allow the browser to profile the js.
-       */
-      res.set('Document-Policy', 'js-profiling');
-
-      /**
        * Let's return using a normal json.
        */
       return res.status(200).json(result);
