@@ -83,7 +83,7 @@ export class AuthController {
         origin: origin ?? process.env.UI_URL,
         validAt: addMinutes(new Date(), 5),
         network: {
-          url: networkUrl,
+          url: provider.url,
           chainId: provider.getChainId(),
         },
       });
