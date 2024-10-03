@@ -68,7 +68,7 @@ export class TransactionController {
   // pending tx
   async pending(req: IListRequest) {
     try {
-      const { workspace, user } = req;
+      const { workspace, user, network } = req;
       const { predicateId } = req.query;
       const predicate =
         predicateId && predicateId.length > 0 ? predicateId[0] : undefined;
@@ -82,6 +82,9 @@ export class TransactionController {
           .addSelect(['t.status'])
           .where('t.status = :status', {
             status: TransactionStatus.AWAIT_REQUIREMENTS,
+          })
+          .andWhere(`t.network->>'url' = :network`, {
+            network: network.url,
           });
 
         const result = await qb.getCount();
@@ -99,7 +102,10 @@ export class TransactionController {
         .where('t.status = :status', {
           status: TransactionStatus.AWAIT_REQUIREMENTS,
         })
-        .andWhere('t.predicateId = :predicate', { predicate });
+        .andWhere('t.predicateId = :predicate', { predicate })
+        .andWhere(`t.network->>'url' = :network`, {
+          network: network.url,
+        });
 
       const result = await qb.getCount();
 
@@ -425,7 +431,7 @@ export class TransactionController {
         id,
         type,
       } = req.query;
-      const { workspace, user } = req;
+      const { workspace, user, network } = req;
 
       const singleWorkspace = await new WorkspaceService()
         .filter({
@@ -457,6 +463,7 @@ export class TransactionController {
           signer: hasSingle ? user.address : undefined,
           predicateId: predicateId ?? undefined,
           type,
+          network: network.url,
         })
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })
@@ -481,7 +488,7 @@ export class TransactionController {
         offsetFuel,
         id,
       } = req.query;
-      const { workspace, user } = req;
+      const { workspace, user, network } = req;
 
       if (id) {
         return successful(await this.transactionService.findById(id), Responses.Ok);
@@ -518,6 +525,7 @@ export class TransactionController {
           predicateId: predicateId ?? undefined,
           type,
           id,
+          network: network.url,
         })
         .ordination(ordination)
         .transactionPaginate({

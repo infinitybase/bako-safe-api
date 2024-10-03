@@ -198,7 +198,10 @@ export class TransactionService implements ITransactionService {
         'workspace.id',
         'workspace.name',
         'workspace.single',
-      ]);
+      ])
+      .andWhere(`t.network->>'url' = :network`, {
+        network: this._filter.network,
+      });
 
     this._filter.predicateAddress &&
       queryBuilder.andWhere('predicate.predicateAddress = :address', {
@@ -349,7 +352,10 @@ export class TransactionService implements ITransactionService {
         'workspace.id',
         'workspace.name',
         'workspace.single',
-      ]);
+      ])
+      .andWhere(`t.network->>'url' = :network`, {
+        network: this._filter.network,
+      });
 
     // =============== specific for workspace ===============
     if (this._filter.workspaceId || this._filter.signer) {

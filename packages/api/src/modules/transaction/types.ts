@@ -94,6 +94,7 @@ export interface ITransactionFilterParams {
   createdBy?: string;
   id?: string;
   type?: TransactionType;
+  network?: string;
 }
 
 export interface ITransactionsListParams {
