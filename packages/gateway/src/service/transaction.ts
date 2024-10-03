@@ -153,21 +153,24 @@ export class TransactionService {
     const { upgradePurpose, witnesses } = transaction;
     let request = UpgradeTransactionRequest.from({});
 
+    let transactionName = tokenConfig.transactionTitle;
     /** Upgrade consensus parameter */
     if (upgradePurpose.type === UpgradePurposeTypeEnum.ConsensusParameters) {
       const { witnessIndex } = upgradePurpose.data;
       const bytecode = witnesses[witnessIndex].data;
       request.addConsensusParametersUpgradePurpose(bytecode);
+      transactionName = transactionName || "Upgrade Consensus Parameters";
     }
 
     /** Upgrade state transition */
     if (upgradePurpose.type === UpgradePurposeTypeEnum.StateTransition) {
       const { bytecodeRoot } = upgradePurpose.data;
       request.addStateTransitionUpgradePurpose(bytecodeRoot);
+      transactionName = transactionName || "Upgrade State Transition";
     }
 
     const { tx: transactionRequest } = await vault.BakoTransfer(request, {
-      name: tokenConfig.transactionTitle,
+      name: transactionName,
     });
 
     return transactionRequest;
@@ -197,7 +200,7 @@ export class TransactionService {
     });
 
     const { tx: transactionRequest } = await vault.BakoTransfer(request, {
-      name: tokenConfig.transactionTitle,
+      name: tokenConfig.transactionTitle || "Transaction Upload",
     });
 
     return transactionRequest;
@@ -218,7 +221,7 @@ export class TransactionService {
     });
 
     const { tx: transactionRequest } = await vault.BakoTransfer(request, {
-      name: tokenConfig.transactionTitle,
+      name: tokenConfig.transactionTitle || "Transaction Blob",
     });
 
     return transactionRequest;
