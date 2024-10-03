@@ -490,7 +490,7 @@ export class TransactionService implements ITransactionService {
   //instance vault
   //instance tx
   //add witnesses
-  async sendToChain(hash: string, providerUrl: string) {
+  async sendToChain(hash: string) {
     const transaction = await this.findByHash(hash);
     const { id, predicate, txData, status, resume } = transaction;
 
@@ -498,7 +498,7 @@ export class TransactionService implements ITransactionService {
       return await this.findById(id);
     }
 
-    const provider = await Provider.create(providerUrl);
+    const provider = await Provider.create(transaction.network.url);
     const vault = new Vault(provider, JSON.parse(predicate.configurable));
 
     const tx = transactionRequestify({

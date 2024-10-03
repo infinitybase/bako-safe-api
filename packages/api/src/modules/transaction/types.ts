@@ -217,10 +217,7 @@ export interface ITransactionService {
   filter(filter: ITransactionFilterParams): this;
 
   // bakosafe
-  sendToChain: (
-    transactionId: string,
-    providerUrl: string,
-  ) => Promise<ITransactionResponse>;
+  sendToChain: (transactionId: string) => Promise<ITransactionResponse>;
 
   // crud
   create: (payload: ITCreateService) => Promise<ITransactionResponse>;

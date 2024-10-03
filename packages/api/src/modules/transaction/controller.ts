@@ -365,7 +365,6 @@ export class TransactionController {
     body: { signature, approve },
     params: { hash: txHash },
     user: { address: account, id: userId },
-    network,
   }: ISignByIdRequest) {
     try {
       const transaction = await Transaction.findOne({
@@ -401,11 +400,12 @@ export class TransactionController {
       await transaction.save();
 
       if (newStatus === TransactionStatus.PENDING_SENDER) {
-        await this.transactionService.sendToChain(transaction.hash, network.url);
+        await this.transactionService.sendToChain(transaction.hash);
       }
 
       return successful(true, Responses.Ok);
     } catch (e) {
+      console.log(e);
       return error(e.error, e.statusCode);
     }
   }
@@ -592,9 +592,10 @@ export class TransactionController {
       params: { hash },
     } = params;
     try {
-      await this.transactionService.sendToChain(hash.slice(2), FUEL_PROVIDER); // not wait for this
+      await this.transactionService.sendToChain(hash.slice(2)); // not wait for this
       return successful(true, Responses.Ok);
     } catch (e) {
+      console.log(e);
       return error(e.error, e.statusCode);
     }
   }
