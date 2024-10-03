@@ -1,7 +1,7 @@
 import { SocketEvents, SocketUsernames } from '@src/types'
 import { BakoProvider, ITransactionSummary, TransactionStatus, Vault } from 'bakosafe'
 import crypto from 'crypto'
-import { TransactionRequestLike } from 'fuels'
+import { Provider, TransactionRequestLike } from 'fuels'
 import { Socket } from 'socket.io'
 import { DatabaseClass } from '@utils/database'
 
@@ -120,6 +120,7 @@ const { UI_URL, API_URL } = process.env
 // 	}
 // }
 
+// [MOSTRAR TX]
 export const txConfirm = async ({ data, socket, database }: IEvent<IEventTX_CONFIRM>) => {
 	const { sessionId, username, request_id } = socket.handshake.auth
 	const { origin, host } = socket.handshake.headers
@@ -303,14 +304,19 @@ export const txRequest = async ({ data, socket, database }: IEvent<IEventTX_REQU
 			`,
 			[vault.id, TransactionStatus.AWAIT_REQUIREMENTS],
 		)
-		const provider = await BakoProvider.create(dapp.network.url, {
-			token: code.code,
-			address: dapp.user_address,
-			serverApi: API_URL,
-		})
+		// const provider = await BakoProvider.create(dapp.network.url, {
+		// 	token: code.code,
+		// 	address: dapp.user_address,
+		// 	serverApi: API_URL,
+		// })
 
-		const vaultInstance = await Vault.fromAddress(vault.predicate_address, provider)
-		await vaultInstance.BakoTransfer(_transaction)
+		// // here
+		// const vaultInstance = await Vault.fromAddress(vault.predicate_address, provider)
+		// await vaultInstance.BakoTransfer(_transaction)
+
+		const provider = await Provider.create(dapp.network.url)
+		const vaultInstance = new Vault(provider, JSON.parse(vault.configurable))
+		const { tx } = await vaultInstance.BakoTransfer(_transaction)
 
 		const room = `${sessionId}:${SocketUsernames.UI}:${request_id}`
 		socket.to(room).emit(SocketEvents.DEFAULT, {
@@ -333,7 +339,7 @@ export const txRequest = async ({ data, socket, database }: IEvent<IEventTX_REQU
 					configurable: vault.configurable,
 					version: vault.version_code,
 				},
-				tx: _transaction,
+				tx,
 				validAt: code.valid_at,
 			},
 		})
