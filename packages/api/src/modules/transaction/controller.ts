@@ -348,10 +348,10 @@ export class TransactionController {
     }
   }
 
-  async findByHash({ params: { hash } }: IFindTransactionByHashRequest) {
+  async findByHash({ params: { hash }, network }: IFindTransactionByHashRequest) {
     try {
       const response = await this.transactionService
-        .filter({ hash: hash.slice(2) })
+        .filter({ hash: hash.slice(2), network: network.url })
         .paginate(undefined)
         .list()
         .then((result: ITransactionResponse[]) => {
