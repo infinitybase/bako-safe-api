@@ -87,7 +87,7 @@ export const getAssetsMaps = async () => {
       if (whitelist.includes(asset.name.toLocaleLowerCase())) return acc;
 
       const network = asset.networks.find(
-        network => network && network.chainId === 0,
+        network => network && network.type === 'fuel',
       ) as NetworkFuel;
 
       if (network && network.type === 'fuel') {
@@ -97,7 +97,6 @@ export const getAssetsMaps = async () => {
           assetId: network.assetId,
           icon: asset.icon,
           units: network.decimals,
-          // units: 9,
         });
       }
       return acc;
