@@ -12,6 +12,7 @@ import {
 import { isUUID } from 'class-validator';
 import { ITransactionCounter } from './types';
 import { ITransactionPagination } from './pagination';
+import { getAssetsMaps } from '@src/utils';
 
 export const formatTransactionsResponse = (
   transactions: IPagination<Transaction> | Transaction[],
@@ -26,10 +27,11 @@ export const formatTransactionsResponse = (
   }
 };
 
-export const formatFuelTransaction = (
+export const formatFuelTransaction = async (
   tx: TransactionResult,
   predicate: Predicate,
-): ITransactionResponse => {
+): Promise<ITransactionResponse> => {
+  const { fuelUnitAssets } = await getAssetsMaps();
   const {
     gasPrice,
     scriptGasLimit,
@@ -40,6 +42,8 @@ export const formatFuelTransaction = (
     outputs,
     inputs,
   } = tx.transaction;
+
+  const config = JSON.parse(predicate.configurable);
 
   const formattedTransaction = {
     id: tx.id,
@@ -68,7 +72,7 @@ export const formatFuelTransaction = (
       hash: tx.id,
       status: TransactionStatus.SUCCESS,
       witnesses: [],
-      requiredSigners: predicate.minSigners,
+      requiredSigners: config.SIGNATURES_COUNT ?? 1,
       totalSigners: predicate.members.length,
       predicate: {
         id: predicate.id,
@@ -81,7 +85,7 @@ export const formatFuelTransaction = (
     predicate: {
       id: predicate.id,
       name: predicate.name,
-      minSigners: predicate.minSigners,
+      minSigners: config.SIGNATURES_COUNT ?? 1,
       predicateAddress: predicate.predicateAddress,
       members: predicate.members,
       workspace: {
@@ -90,7 +94,7 @@ export const formatFuelTransaction = (
         single: predicate.workspace.single,
       },
     },
-    assets: formatAssets(outputs, predicate.predicateAddress),
+    assets: formatAssets(outputs, predicate.predicateAddress, fuelUnitAssets),
   };
 
   return (formattedTransaction as unknown) as ITransactionResponse;

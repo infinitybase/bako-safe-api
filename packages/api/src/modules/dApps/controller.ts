@@ -5,7 +5,7 @@ import { DApp, Predicate, RecoverCodeType, User } from '@src/models';
 import { SocketClient } from '@src/socket/client';
 
 import { error } from '@utils/error';
-import { Responses, bindMethods, successful } from '@utils/index';
+import { Responses, TokenUtils, bindMethods, successful } from '@utils/index';
 
 import { PredicateService } from '../predicate/services';
 import { RecoverCodeService } from '../recoverCode/services';
@@ -18,8 +18,9 @@ import {
   IDappRequest,
 } from './types';
 import { ITransactionResponse } from '../transaction/types';
+import app from '@src/server/app';
 
-const { API_URL } = process.env;
+const { API_URL, FUEL_PROVIDER } = process.env;
 
 export class DappController {
   private _dappService: IDAppsService;
@@ -32,9 +33,10 @@ export class DappController {
   async connect({ body }: ICreateRequest) {
     try {
       const { vaultId, sessionId, name, origin, userAddress, request_id } = body;
-      const predicate = await new PredicateService().findById(vaultId);
+      const predicate = await Predicate.findOne({ where: { id: vaultId } });
       let dapp = await new DAppsService().findBySessionID(sessionId, origin);
       const user = await User.findOne({ where: { address: userAddress } });
+      const { network } = await TokenUtils.getTokenByUser(user.id);
       if (!dapp) {
         dapp = await new DAppsService().create({
           sessionId,
@@ -43,6 +45,7 @@ export class DappController {
           vaults: [predicate],
           currentVault: predicate,
           user,
+          network,
         });
       }
 
@@ -52,6 +55,8 @@ export class DappController {
         dapp.vaults = [...dapp.vaults, predicate];
       }
       dapp.currentVault = predicate;
+      dapp.network = network;
+
       await dapp.save();
       const socket = new SocketClient(sessionId, API_URL);
 
@@ -88,7 +93,14 @@ export class DappController {
     try {
       const { sessionId } = params;
       const origin = headers.origin || headers.Origin;
+
+      const { user } = await new DAppsService().findDAppUserBySessionIdAndOrigin(
+        sessionId,
+        origin,
+      );
+      const userToken = await TokenUtils.getTokenByUser(user.id);
       await new DAppsService().delete(sessionId, origin);
+      await app._sessionCache.removeSession(userToken?.token);
       return successful(null, Responses.NoContent);
     } catch (e) {
       return error(e.error, e.statusCode);
@@ -133,6 +145,10 @@ export class DappController {
             name: name,
           },
         },
+        network: {
+          url: '',
+          chainId: 0,
+        },
       });
 
       return successful(
@@ -161,12 +177,12 @@ export class DappController {
 
   async currentNetwork({ params, headers }: IDappRequest) {
     try {
-      const dapp = await this._dappService.findBySessionID(
+      const { network } = await this._dappService.findBySessionID(
         params.sessionId,
         headers.origin || headers.Origin,
       );
 
-      const result = dapp?.currentVault.provider ?? null;
+      const result = network.url ?? FUEL_PROVIDER;
 
       return successful(result, Responses.Ok);
     } catch (e) {
@@ -193,10 +209,33 @@ export class DappController {
         await this._dappService
           .findBySessionID(params.sessionId, headers.origin || headers.Origin)
           .then((data: DApp) => {
-            return !!data; // todo: verify return more info about the dapp and validate on connector
+            return !!data;
           }),
         Responses.Ok,
       );
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async selectNetwork({ body, headers, params }: IDappRequest) {
+    try {
+      const { networkUrl } = body;
+      const { sessionId } = params;
+      const origin = headers.origin || headers.Origin;
+
+      const dapp = await new DAppsService().findBySessionID(sessionId, origin);
+
+      // set on connector
+      if (!dapp) return successful(false, Responses.Ok);
+      dapp.network = networkUrl;
+      await dapp.save();
+
+      // TODO: VERIFY HERE
+      // set on bakosafesession
+      await TokenUtils.changeNetwork(dapp.user.id, networkUrl);
+
+      return successful(true, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }

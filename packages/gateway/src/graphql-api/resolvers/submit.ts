@@ -1,10 +1,15 @@
-import { TransactionType } from "fuels";
-import { delegateToSchema } from "@graphql-tools/delegate";
-import { OperationTypeNode } from "graphql/language";
-
 import { MutationResolvers } from "@/generated";
 import { toTransaction } from "@/utils";
-import { AuthService, TransactionService } from '@/service';
+import { AuthService, TransactionService } from "@/service";
+import {
+  hexlify,
+  isTransactionTypeBlob,
+  isTransactionTypeCreate,
+  isTransactionTypeScript,
+  isTransactionTypeUpgrade,
+  isTransactionTypeUpload,
+  OutputType,
+} from "fuels";
 
 export const submit: MutationResolvers["submit"] = async (
   _,
@@ -13,31 +18,58 @@ export const submit: MutationResolvers["submit"] = async (
   info
 ) => {
   const { schema, apiToken, userId, database } = context;
-  const transaction = toTransaction(args.tx);
+  let transaction = toTransaction(args.tx);
 
-  if (transaction.type === TransactionType.Create) {
-    const authService = new AuthService(database);
-    const transactionService = new TransactionService(transaction, authService);
-    const submitResponse = await transactionService.submit({ apiToken, userId });
-    const { deployTransfer, vault } = submitResponse;
+  const authService = new AuthService(database);
+  const transactionService = new TransactionService(authService);
 
-    console.log('[MUTATION] Transaction sent to Bako', {
-      vault: vault.BakoSafeVaultId,
-      address: vault.address.toAddress(),
-      transactionId: deployTransfer.getHashTxId(),
-    });
-
-    return {
-      id: `0x${deployTransfer.getHashTxId()}`,
-    };
-  }
-
-  return delegateToSchema({
-    schema,
-    operation: OperationTypeNode.MUTATION,
-    fieldName: "submit",
-    args,
-    context,
-    info,
+  const { hash, transactionRequest } = await transactionService.submit({
+    userId,
+    apiToken,
+    transaction,
   });
+
+  transaction = transactionRequest.toTransaction();
+
+  return {
+    id: hash,
+    isMint: false,
+    outputs: transaction.outputs.map((output) => {
+      switch (output.type) {
+        case OutputType.ContractCreated:
+          return {
+            __typename: "ContractCreated",
+            contract: output.contractId,
+            stateRoot: output.stateRoot,
+          };
+        case OutputType.Change:
+          return {
+            __typename: "ChangeOutput",
+            amount: output.amount,
+            assetId: output.assetId,
+            to: output.to,
+          };
+        case OutputType.Coin:
+          return {
+            __typename: "CoinOutput",
+            amount: output.amount,
+            assetId: output.assetId,
+            to: output.to,
+          };
+        case OutputType.Contract:
+          return {
+            __typename: "ContractOutput",
+            balanceRoot: output.balanceRoot,
+            inputIndex: output.inputIndex,
+            stateRoot: output.stateRoot,
+          };
+      }
+    }),
+    isBlob: isTransactionTypeBlob(transactionRequest),
+    isCreate: isTransactionTypeCreate(transactionRequest),
+    isUpload: isTransactionTypeUpload(transactionRequest),
+    isScript: isTransactionTypeScript(transactionRequest),
+    isUpgrade: isTransactionTypeUpgrade(transactionRequest),
+    rawPayload: hexlify(transactionRequest.toTransactionBytes()),
+  };
 };

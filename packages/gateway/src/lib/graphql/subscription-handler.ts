@@ -108,7 +108,7 @@ async function processSubscription({
   }
 }
 
-export const createSubscriptionHandler = ({ schema, defaultContext }) => {
+export const createSubscriptionHandler = ({ schema, defaultContext = {} }) => {
   return async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     // @ts-ignore
     const graphQLParameters = getGraphQLParameters(req);

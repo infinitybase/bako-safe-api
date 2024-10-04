@@ -1,11 +1,10 @@
-import { IConfVault, Vault } from 'bakosafe';
+import { Vault } from 'bakosafe';
 import { Brackets } from 'typeorm';
 
 import { NotFound } from '@src/utils/error';
-import { IOrdination, setOrdination } from '@src/utils/ordination';
 import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination';
 
-import { Predicate, Transaction, TransactionType } from '@models/index';
+import { Predicate, TypeUser, User, Workspace } from '@models/index';
 
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
@@ -15,11 +14,17 @@ import {
   IPredicatePayload,
   IPredicateService,
 } from './types';
+import { IPredicateOrdination, setOrdination } from './ordination';
+import { Network, Provider, ZeroBytes32 } from 'fuels';
+import { UserService } from '../user/service';
+import { IconUtils } from '@src/utils/icons';
+import { PredicateVersionService } from '../predicateVersion/services';
 
 export class PredicateService implements IPredicateService {
-  private _ordination: IOrdination<Predicate> = {
+  private _ordination: IPredicateOrdination = {
     orderBy: 'updatedAt',
     sort: 'DESC',
+    orderByRoot: 'false',
   };
   private _pagination: PaginationParams;
   private _filter: IPredicateFilterParams;
@@ -31,11 +36,9 @@ export class PredicateService implements IPredicateService {
     'p.name',
     'p.predicateAddress',
     'p.description',
-    'p.minSigners',
     'p.owner',
-    'p.provider',
-    'p.chainId',
     'p.configurable',
+    'p.root',
   ];
 
   filter(filter: IPredicateFilterParams) {
@@ -48,16 +51,56 @@ export class PredicateService implements IPredicateService {
     return this;
   }
 
-  ordination(ordination?: IOrdination<Predicate>) {
+  ordination(ordination?: IPredicateOrdination) {
     this._ordination = setOrdination(ordination);
     return this;
   }
 
-  async create(payload: IPredicatePayload): Promise<Predicate> {
+  async create(
+    payload: IPredicatePayload,
+    network: Network,
+    owner: User,
+    workspace: Workspace,
+  ): Promise<Predicate> {
     try {
-      const predicate = await Predicate.create(payload).save();
-      return predicate;
+      const members = [];
+      const userService = new UserService();
+      //const workspaceService = new WorkspaceService();
+      const versionService = new PredicateVersionService();
+
+      // create a pending users
+      const { SIGNERS } = JSON.parse(payload.configurable);
+      const validUsers = SIGNERS.filter(address => address !== ZeroBytes32);
+
+      for await (const member of validUsers) {
+        let user = await userService.findByAddress(member);
+
+        if (!user) {
+          user = await userService.create({
+            address: member,
+            avatar: IconUtils.user(),
+            type: TypeUser.FUEL,
+            name: member,
+            provider: network.url,
+          });
+        }
+
+        members.push(user);
+      }
+
+      // create a predicate
+      const predicate = await Predicate.create({
+        ...payload,
+        members,
+        owner,
+        version: payload.version ?? (await versionService.findCurrentVersion()),
+        workspace,
+      }).save();
+
+      return await this.findById(predicate.id);
+      // return predicate;
     } catch (e) {
+      console.log(e);
       throw new Internal({
         type: ErrorTypes.Internal,
         title: 'Error on predicate creation',
@@ -94,10 +137,10 @@ export class PredicateService implements IPredicateService {
           'addressBook.id',
           'addressBook.user_id',
           'adb_workspace.id',
-          'workspace.permissions',
         ])
         .getOne();
     } catch (e) {
+      console.log(e);
       if (e instanceof GeneralError) {
         throw e;
       }
@@ -127,7 +170,6 @@ export class PredicateService implements IPredicateService {
         'owner.avatar',
         'workspace.id',
         'workspace.name',
-        'workspace.permissions',
         'workspace.single',
         'workspace.avatar',
       ]);
@@ -143,12 +185,6 @@ export class PredicateService implements IPredicateService {
       if (this._filter.address) {
         queryBuilder.andWhere('p.predicateAddress = :predicateAddress', {
           predicateAddress: this._filter.address,
-        });
-      }
-
-      if (this._filter.provider) {
-        queryBuilder.andWhere('LOWER(p.provider) = LOWER(:provider)', {
-          provider: `${this._filter.provider}`,
         });
       }
 
@@ -209,9 +245,13 @@ export class PredicateService implements IPredicateService {
         );
       }
 
-      // Aplicar ordenação
+      if (this._ordination.orderByRoot === 'true') {
+        queryBuilder.addOrderBy('p.root', this._ordination.sort);
+      }
+
       if (hasOrdination) {
-        queryBuilder.orderBy(
+        // Aplicar ordenação
+        queryBuilder.addOrderBy(
           `p.${this._ordination.orderBy}`,
           this._ordination.sort,
         );
@@ -294,10 +334,9 @@ export class PredicateService implements IPredicateService {
     }
   }
 
-  async instancePredicate(configurable: string, version: string): Promise<Vault> {
-    return Vault.create({
-      configurable: JSON.parse(configurable),
-      version,
-    });
+  async instancePredicate(configurable: string, provider: string): Promise<Vault> {
+    const conf = JSON.parse(configurable);
+    const _provider = await Provider.create(provider);
+    return new Vault(_provider, conf);
   }
 }

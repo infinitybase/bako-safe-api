@@ -1,11 +1,13 @@
-import { Vault } from 'bakosafe';
+import { Vault, Workspace } from 'bakosafe';
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 
 import { AuthValidatedRequest } from '@src/middlewares/auth/types';
-import { IDefaultOrdination, IOrdination } from '@src/utils/ordination';
+import { IDefaultOrdination } from '@src/utils/ordination';
 import { IPagination, PaginationParams } from '@src/utils/pagination';
 
-import { Predicate, User } from '@models/index';
+import { Predicate, PredicateVersion, User } from '@models/index';
+import { IPredicateOrdination } from './ordination';
+import { Network } from 'fuels';
 
 export enum OrderBy {
   name = 'name',
@@ -20,15 +22,14 @@ export interface IPredicatePayload {
   name: string;
   description: string;
   predicateAddress: string;
-  minSigners: number;
-  addresses?: string[];
-  //owner_id: string;
+  // minSigners: number;
+  root?: boolean;
   configurable: string;
-  provider: string;
-  chainId?: number;
-  user: User;
-  //members?: User[];
+  version?: PredicateVersion;
   versionCode?: string;
+  owner?: User;
+  members?: User[];
+  workspace?: Workspace;
 }
 
 export interface IPredicateMemberPayload {
@@ -98,6 +99,7 @@ interface IListRequestSchema extends ValidatedRequestSchema {
     signer: string;
     provider: string;
     owner: string;
+    orderByRoot: string;
     orderBy: IDefaultOrdination | OrderBy;
     sort: Sort;
     page: string;
@@ -114,14 +116,19 @@ export type IListRequest = AuthValidatedRequest<IListRequestSchema>;
 export type IFindByNameRequest = AuthValidatedRequest<IFindByNameRequestSchema>;
 
 export interface IPredicateService {
-  ordination(ordination?: IOrdination<Predicate>): this;
+  ordination(ordination?: IPredicateOrdination): this;
   paginate(pagination?: PaginationParams): this;
   filter(filter: IPredicateFilterParams): this;
 
-  create: (payload: Partial<Predicate>) => Promise<Predicate>;
+  create: (
+    payload: IPredicatePayload,
+    network: Network,
+    user: User,
+    workspace: Workspace,
+  ) => Promise<Predicate>;
   update: (id: string, payload: IPredicatePayload) => Promise<Predicate>;
   delete: (id: string) => Promise<boolean>;
   findById: (id: string, signer?: string) => Promise<Predicate>;
   list: () => Promise<IPagination<Predicate> | Predicate[]>;
-  instancePredicate: (configurable: string, version: string) => Promise<Vault>;
+  instancePredicate: (configurable: string, provider: string) => Promise<Vault>;
 }

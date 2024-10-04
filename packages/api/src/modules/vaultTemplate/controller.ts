@@ -42,6 +42,7 @@ export class VaultTemplateController {
             provider: user.provider,
             avatar: IconUtils.user(),
             type: TypeUser.FUEL,
+            name: ''
           });
         }
 

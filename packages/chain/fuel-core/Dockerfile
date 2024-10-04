@@ -5,7 +5,7 @@
 # when upgrading fuel-core
 # We should be supporting always the same fuel-core version as the fuels (ts-sdk)
 # https://github.com/FuelLabs/fuels-ts/blob/master/internal/fuel-core/VERSION
-FROM ghcr.io/fuellabs/fuel-core:v0.34.0
+FROM ghcr.io/fuellabs/fuel-core:v0.36.0
 
 # dependencies
 ENV DEBIAN_FRONTEND=noninteractive
@@ -38,6 +38,9 @@ RUN jq '.coins = input' \
 RUN jq '.consensus_parameters = input' \
     state_config.json latest_consensus_parameters.json > tmp.json \
     && mv tmp.json state_config.json
+
+# Copy custom chain configuration file
+COPY ./chain_config.json .
 
 # expose fuel node port
 EXPOSE ${FUEL_CORE_PORT}

@@ -1,48 +1,24 @@
-// import { JwtUtils } from '@src/utils/jwt';
 import UserToken from '@models/UserToken';
-import { User } from '@models/index';
+import { Predicate, User } from '@models/index';
 
 import { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
 
-import {
-  IAuthService,
-  ICreateUserTokenPayload,
-  IFindTokenParams,
-  ISignInResponse,
-} from './types';
+import { IAuthService, ICreateUserTokenPayload, ISignInResponse } from './types';
 import { LessThanOrEqual } from 'typeorm';
 
 export class AuthService implements IAuthService {
   async signIn(payload: ICreateUserTokenPayload): Promise<ISignInResponse> {
-    return UserToken.create(payload)
-      .save()
-      .then(data => {
-        return {
-          accessToken: data.token,
-          avatar: data.user.avatar,
-          address: data.user.address,
-          user_id: data.user.id,
-          expired_at: data.expired_at,
-          workspace: {
-            id: data.workspace.id,
-            name: data.workspace.name,
-            avatar: data.workspace.avatar,
-            single: data.workspace.single,
-            permissions: data.workspace.permissions,
-          },
-          ...(data.user.type === 'WEB_AUTHN'
-            ? { webAuthn: data.user.webauthn }
-            : {}),
-        };
-      })
-      .catch(e => {
-        throw new Internal({
-          type: ErrorTypes.Internal,
-          title: 'Error on token creation',
-          detail: e,
-        });
+    try {
+      const data = await UserToken.create(payload).save();
+      return await AuthService.findToken(data.token);
+    } catch (e) {
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on token creation',
+        detail: e,
       });
+    }
   }
 
   async signOut(user: User): Promise<void> {
@@ -59,47 +35,77 @@ export class AuthService implements IAuthService {
     }
   }
 
-  async findToken(params: IFindTokenParams): Promise<UserToken | undefined> {
-    const queryBuilder = await UserToken.createQueryBuilder('ut')
+  static async findToken(signature: string): Promise<ISignInResponse | undefined> {
+    const QBtoken = UserToken.createQueryBuilder('ut')
       .leftJoin('ut.user', 'user')
       .leftJoin('ut.workspace', 'workspace')
       .addSelect([
         'user.id',
+        'user.name',
         'user.avatar',
         'user.address',
         'user.type',
         'user.webauthn',
+        'user.email',
+        'user.first_login',
         'workspace.id',
         'workspace.name',
         'workspace.avatar',
         'workspace.single',
         'workspace.permissions',
-      ]);
+        'workspace.description',
+      ])
+      .where('ut.token = :signature', { signature })
+      .andWhere('ut.expired_at > :now', { now: new Date() });
 
-    params.userId &&
-      queryBuilder.where('ut.user = :userId', { userId: params.userId });
+    const tokenResult = await QBtoken.getOne();
 
-    params.address &&
-      queryBuilder.where('user.address = :address', {
-        address: params.address,
-      });
+    if (!tokenResult) {
+      return undefined;
+    }
 
-    params.signature &&
-      queryBuilder.where('ut.token = :signature', { signature: params.signature });
+    const { user, workspace, ...token } = tokenResult;
 
-    params.notExpired &&
-      queryBuilder.andWhere('ut.expired_at > :now', { now: new Date() });
+    // console.log('[FIND_TOKEN_INFO]: ', { user, workspace, token });
+    const QBPredicate = Predicate.createQueryBuilder('p')
+      .innerJoin('p.owner', 'owner')
+      .select(['p.id', 'p.root', 'owner.id'])
+      .where('p.owner_id = :userId', { userId: user.id })
+      .andWhere('p.root = :root ', { root: true });
 
-    return await queryBuilder
-      .getOne()
-      .then(userToken => userToken)
-      .catch(e => {
-        throw new Internal({
-          type: ErrorTypes.Internal,
-          title: 'Error on user token find',
-          detail: e,
-        });
-      });
+    const predicate = await QBPredicate.getOne();
+
+    return {
+      //session
+      accessToken: token.token,
+      expired_at: token.expired_at,
+      // user
+      name: user.name,
+      type: user.type,
+      user_id: user.id,
+      avatar: user.avatar,
+      address: user.address,
+      rootWallet: predicate?.id ?? 'not found',
+      webauthn: user.webauthn,
+      email: user.email,
+      first_login: user.first_login,
+      // network
+      network: token.network,
+      // workspace
+      workspace: {
+        ...workspace,
+        permissions: workspace.permissions,
+      },
+    };
+  }
+
+  static async findTokenByUser(userId: string) {
+    return await UserToken.createQueryBuilder('userToken')
+      .leftJoinAndSelect('userToken.user', 'user')
+      .leftJoinAndSelect('userToken.workspace', 'workspace')
+      .where('userToken.user = :userId', { userId })
+      .andWhere('userToken.expired_at > :now', { now: new Date() })
+      .getOne();
   }
 
   static async clearExpiredTokens(): Promise<void> {
@@ -111,6 +117,4 @@ export class AuthService implements IAuthService {
       console.log('[CLEAR_EXPIRED_TOKEN_ERROR]', e);
     }
   }
-
-
 }

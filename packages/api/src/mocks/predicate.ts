@@ -1,51 +1,44 @@
-import { BakoSafe, IConfVault, Vault } from 'bakosafe';
 import crypto from 'crypto';
-import { Provider } from 'fuels';
 
 import { IPredicatePayload } from '@src/modules/predicate/types';
+import { Vault, VaultConfigurable } from 'bakosafe';
+import { Provider } from 'fuels';
+
+const { FUEL_PROVIDER } = process.env;
+
+type IPredicateMockPayload = Omit<IPredicatePayload, 'user' | 'version' | 'root'>;
 
 export class PredicateMock {
-  public BSAFEVaultconfigurable: IConfVault;
-  public predicatePayload: Omit<IPredicatePayload, 'user'>;
+  public configurable: VaultConfigurable;
+  public predicatePayload: IPredicateMockPayload;
   public vault: Vault;
 
   protected constructor(
-    BSAFEVaultConfigurable: IConfVault,
-    predicatePayload: Omit<IPredicatePayload, 'user'>,
+    configurable: VaultConfigurable,
+    predicatePayload: IPredicateMockPayload,
     vault: Vault,
   ) {
-    this.BSAFEVaultconfigurable = BSAFEVaultConfigurable;
+    this.configurable = configurable;
     this.predicatePayload = predicatePayload;
     this.vault = vault;
   }
 
-  public static async create(
-    min: number,
-    SIGNERS: string[],
-  ): Promise<PredicateMock> {
-    const provider = await Provider.create(BakoSafe.getProviders('CHAIN_URL'));
-    const _BSAFEVaultconfigurable = {
-      SIGNATURES_COUNT: min,
-      SIGNERS,
-      network: BakoSafe.getProviders('CHAIN_URL'),
-      chainId: provider.getChainId(),
+  public static async create(signaturesCount: number, signers: string[]) {
+    const _provider = await Provider.create(FUEL_PROVIDER);
+    const _configurable: VaultConfigurable = {
+      SIGNATURES_COUNT: signaturesCount,
+      SIGNERS: signers,
     };
 
-    const vault = await Vault.create({
-      configurable: _BSAFEVaultconfigurable,
-    });
+    const vault = new Vault(_provider, _configurable);
 
-    const predicatePayload = {
+    const predicatePayload: IPredicateMockPayload = {
       name: crypto.randomUUID(),
       description: crypto.randomUUID(),
-      provider: vault.provider.url,
-      chainId: vault.provider.getChainId(),
       predicateAddress: vault.address.toString(),
-      minSigners: min,
-      configurable: JSON.stringify({ ...vault.getConfigurable() }),
-      addresses: _BSAFEVaultconfigurable.SIGNERS.map(signer => signer),
+      configurable: JSON.stringify(_configurable),
     };
 
-    return new PredicateMock(_BSAFEVaultconfigurable, predicatePayload, vault);
+    return new PredicateMock(_configurable, predicatePayload, vault);
   }
 }

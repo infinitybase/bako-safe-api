@@ -25,11 +25,7 @@ export class DAppsService implements IDAppsService {
       .innerJoin('d.vaults', 'vaults')
       .addSelect(['vaults.predicateAddress', 'vaults.id'])
       .innerJoin('d.currentVault', 'currentVault')
-      .addSelect([
-        'currentVault.predicateAddress',
-        'currentVault.id',
-        'currentVault.provider',
-      ])
+      .addSelect(['currentVault.predicateAddress', 'currentVault.id'])
       .innerJoinAndSelect('d.user', 'user')
       .where('d.session_id = :sessionID', { sessionID })
       .andWhere('d.origin = :origin', { origin })
@@ -77,6 +73,23 @@ export class DAppsService implements IDAppsService {
       throw new Internal({
         type: ErrorTypes.Internal,
         title: 'Error on find last dapp',
+        detail: e,
+      });
+    }
+  }
+
+  async findDAppUserBySessionIdAndOrigin(sessionId: string, origin: string) {
+    try {
+      return await DApp.createQueryBuilder('d')
+        .innerJoin('d.user', 'user')
+        .addSelect(['user.id'])
+        .where('d.session_id = :sessionId', { sessionId })
+        .andWhere('d.origin = :origin', { origin })
+        .getOne();
+    } catch (e) {
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on find user by session id and origin',
         detail: e,
       });
     }

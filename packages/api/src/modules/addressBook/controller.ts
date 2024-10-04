@@ -18,10 +18,7 @@ import {
   IUpdateAddressBookRequest,
 } from './types';
 import { IconUtils } from '@utils/icons';
-
-const {
-  FUEL_PROVIDER
-} = process.env;
+import { Address } from 'fuels';
 
 export class AddressBookController {
   private addressBookService: IAddressBookService;
@@ -35,7 +32,7 @@ export class AddressBookController {
   async create(req: ICreateAddressBookRequest) {
     try {
       const { address, nickname } = req.body;
-      const { workspace, user } = req;
+      const { workspace, network } = req;
       const duplicatedNickname = await new AddressBookService()
         .filter({
           owner: [workspace.id],
@@ -68,10 +65,10 @@ export class AddressBookController {
       if (!savedUser) {
         savedUser = await this.userService.create({
           address,
-          provider: user.provider,
+          provider: network.url,
           avatar: IconUtils.user(),
           type: TypeUser.FUEL,
-          active: true,
+          name: Address.fromRandom().toB256(),
         });
       }
 
@@ -125,8 +122,7 @@ export class AddressBookController {
           provider: user.provider,
           avatar: IconUtils.user(),
           type: TypeUser.FUEL,
-
-          active: true,
+          name: Address.fromRandom().toB256(),
         });
       }
 

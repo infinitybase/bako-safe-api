@@ -19,16 +19,16 @@ router.use(authMiddleware);
 
 router.get('/by-user', handleResponse(workspaceController.listByUser));
 
-router.get(
-  '/balance',
-  authPermissionMiddleware([
-    PermissionRoles.OWNER,
-    PermissionRoles.ADMIN,
-    PermissionRoles.MANAGER,
-    PermissionRoles.VIEWER,
-  ]),
-  handleResponse(workspaceController.fetchPredicateData),
-);
+// router.get(
+//   '/balance',
+//   authPermissionMiddleware([
+//     PermissionRoles.OWNER,
+//     PermissionRoles.ADMIN,
+//     PermissionRoles.MANAGER,
+//     PermissionRoles.VIEWER,
+//   ]),
+//   handleResponse(workspaceController.fetchPredicateData),
+// );
 
 router.post(
   '/',

@@ -1,4 +1,4 @@
-import { BakoSafe, TransactionStatus } from 'bakosafe';
+import { TransactionStatus } from 'bakosafe';
 
 import { Predicate, TypeUser, User, PermissionAccess } from '@src/models';
 import { PermissionRoles, Workspace } from '@src/models/Workspace';
@@ -12,9 +12,9 @@ import { IconUtils } from '@src/utils/icons';
 import { ErrorTypes, error } from '@utils/error';
 import {
   Responses,
-  assetsMapBySymbol,
   calculateBalanceUSD,
   calculateReservedCoins,
+  getAssetsMaps,
   subCoins,
   successful,
 } from '@utils/index';
@@ -31,14 +31,14 @@ import {
   IUpdateRequest,
 } from './types';
 import { CoinQuantity, bn } from 'fuels';
+import { networks } from '@src/mocks/networks';
 
 export class WorkspaceController {
   async listByUser(req: IListByUserRequest) {
     try {
       const { user } = req;
 
-      const response = await new WorkspaceService()
-      .findByUser(user.id)
+      const response = await new WorkspaceService().findByUser(user.id);
 
       return successful(response, Responses.Ok);
     } catch (e) {
@@ -71,94 +71,97 @@ export class WorkspaceController {
     }
   }
 
-  async fetchPredicateData(req: IGetBalanceRequest) {
-    let reservedCoins: CoinQuantity[] = [];
-    let predicateCoins: CoinQuantity[] = [];
-    try {
-      const { workspace } = req;
-      const predicateService = new PredicateService();
+  // Commented out get workspace balance method and route
 
-      const predicates = await Predicate.createQueryBuilder('p')
-        .leftJoin('p.workspace', 'w')
-        .leftJoin('p.version', 'pv')
-        .leftJoin('p.transactions', 't', 't.status IN (:...status)', {
-          status: [
-            TransactionStatus.AWAIT_REQUIREMENTS,
-            TransactionStatus.PENDING_SENDER,
-          ],
-        })
-        .addSelect([
-          'p.id',
-          'p.configurable',
-          'pv.code',
-          'w.id',
-          't.status',
-          't.txData',
-        ])
-        .where('w.id = :id', { id: workspace.id })
-        .getMany();
+  // async fetchPredicateData(req: IGetBalanceRequest) {
+  //   let reservedCoins: CoinQuantity[] = [];
+  //   let predicateCoins: CoinQuantity[] = [];
+  //   try {
+  //     const { workspace, network } = req;
+  //     const predicateService = new PredicateService();
+  //     const providerUrl = network.url;
+  //     const predicates = await Predicate.createQueryBuilder('p')
+  //       .leftJoin('p.workspace', 'w')
+  //       .leftJoin('p.version', 'pv')
+  //       .leftJoin('p.transactions', 't', 't.status IN (:...status)', {
+  //         status: [
+  //           TransactionStatus.AWAIT_REQUIREMENTS,
+  //           TransactionStatus.PENDING_SENDER,
+  //         ],
+  //       })
+  //       .addSelect([
+  //         'p.id',
+  //         'p.configurable',
+  //         'pv.code',
+  //         'w.id',
+  //         't.status',
+  //         't.txData',
+  //       ])
+  //       .where('w.id = :id', { id: workspace.id })
+  //       .getMany();
 
-      // Fetches the balance of each predicate
-      const balancePromises = predicates.map(
-        async ({ configurable, version: { code: versionCode }, transactions }) => {
-          const vault = await predicateService.instancePredicate(
-            configurable,
-            versionCode,
-          );
-          const balances = (await vault.getBalances()).balances;
+  //     // Fetches the balance of each predicate
+  //     const balancePromises = predicates.map(
+  //       async ({ configurable, transactions }) => {
+  //         const vault = await predicateService.instancePredicate(
+  //           configurable,
+  //           providerUrl,
+  //         );
+  //         const balances = (await vault.getBalances()).balances;
 
-          predicateCoins = balances.reduce((accumulator, balance) => {
-            const assetId = balance.assetId;
-            const existingAsset = accumulator.find(
-              item => item.assetId === assetId,
-            );
+  //         predicateCoins = balances.reduce((accumulator, balance) => {
+  //           const assetId = balance.assetId;
+  //           const existingAsset = accumulator.find(
+  //             item => item.assetId === assetId,
+  //           );
 
-            if (existingAsset) {
-              existingAsset.amount = existingAsset.amount.add(balance.amount);
-            } else {
-              accumulator.push({
-                assetId,
-                amount: balance.amount,
-              });
-            }
+  //           if (existingAsset) {
+  //             existingAsset.amount = existingAsset.amount.add(balance.amount);
+  //           } else {
+  //             accumulator.push({
+  //               assetId,
+  //               amount: balance.amount,
+  //             });
+  //           }
 
-            return accumulator;
-          }, predicateCoins);
+  //           return accumulator;
+  //         }, predicateCoins);
 
-          reservedCoins = calculateReservedCoins(transactions);
+  //         reservedCoins = calculateReservedCoins(transactions);
 
-          return balances;
-        },
-      );
+  //         return balances;
+  //       },
+  //     );
 
-      await Promise.all(balancePromises);
+  //     await Promise.all(balancePromises);
 
-      // Subtracts the amount of coins reserved per asset from the balance per asset
-      const assets =
-        reservedCoins.length > 0
-          ? subCoins(predicateCoins, reservedCoins)
-          : predicateCoins;
+  //     // Subtracts the amount of coins reserved per asset from the balance per asset
+  //     const assets =
+  //       reservedCoins.length > 0
+  //         ? subCoins(predicateCoins, reservedCoins)
+  //         : predicateCoins;
 
-      return successful(
-        {//no necessary items here (on workspace)
-          // reservedCoinsUSD: calculateBalanceUSD(reservedCoins),
-          // totalBalanceUSD: calculateBalanceUSD(predicateCoins),
-          currentBalanceUSD: calculateBalanceUSD(assets),
-          currentBalance: assets,
-          // totalBalance: predicateCoins,
-          // reservedCoins,
-        },
-        Responses.Ok,
-      );
-    } catch (error) {
-      reservedCoins = [
-        {
-          assetId: assetsMapBySymbol['ETH'].id,
-          amount: bn.parseUnits('0'),
-        },
-      ] as CoinQuantity[];
-    }
-  }
+  //     return successful(
+  //       {
+  //         //no necessary items here (on workspace)
+  //         // reservedCoinsUSD: calculateBalanceUSD(reservedCoins),
+  //         // totalBalanceUSD: calculateBalanceUSD(predicateCoins),
+  //         currentBalanceUSD: calculateBalanceUSD(assets),
+  //         currentBalance: assets,
+  //         // totalBalance: predicateCoins,
+  //         // reservedCoins,
+  //       },
+  //       Responses.Ok,
+  //     );
+  //   } catch (error) {
+  //     reservedCoins = [
+  //       {
+  //         assetId: assetsMapBySymbol['ETH'].id,
+  //         amount: bn.parseUnits('0'),
+  //       },
+  //     ] as CoinQuantity[];
+  //   }
+  // }
 
   // todo: implement this by other coins, and use utils of bsafe-sdk
   // async getBalance(req: IGetBalanceRequest) {
@@ -368,7 +371,7 @@ export class WorkspaceController {
                   return await new UserService().create({
                     address: member,
                     name: member,
-                    provider: BakoSafe.getProviders('CHAIN_URL'),
+                    provider: networks['devnet'],
                     avatar: IconUtils.user(),
                     type: TypeUser.FUEL,
                   });
