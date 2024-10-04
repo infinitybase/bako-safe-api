@@ -162,7 +162,6 @@ export class PredicateController {
         network.url ?? FUEL_PROVIDER,
       );
       const balances = (await instance.getBalances()).balances;
-      console.log('banacclen', (await instance.getBalance()).format());
       const assets =
         reservedCoins.length > 0 ? subCoins(balances, reservedCoins) : balances;
 
