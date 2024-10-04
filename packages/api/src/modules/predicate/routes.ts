@@ -15,10 +15,7 @@ import { PredicateVersionService } from '../predicateVersion/services';
 
 const router = Router();
 const predicateService = new PredicateService();
-const predicateVersionService = new PredicateVersionService();
-const userService = new UserService();
-const transactionService = new TransactionService();
-const notificationService = new NotificationService();
+const notificationsService = new NotificationService();
 const {
   create,
   findById,
@@ -27,13 +24,7 @@ const {
   findByAddress,
   delete: deleteService,
   hasReservedCoins,
-} = new PredicateController(
-  userService,
-  predicateService,
-  predicateVersionService,
-  transactionService,
-  notificationService,
-);
+} = new PredicateController(predicateService, notificationsService);
 
 router.use(authMiddleware);
 

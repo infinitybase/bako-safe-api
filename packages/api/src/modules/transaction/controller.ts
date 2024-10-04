@@ -12,7 +12,7 @@ import { NotificationTitle, Predicate, Transaction } from '@models/index';
 
 import { IPredicateService } from '@modules/predicate/types';
 
-import { error, ErrorTypes, NotFound } from '@utils/error';
+import { error, ErrorTypes } from '@utils/error';
 import {
   bindMethods,
   generateWitnessesUpdatedAt,
@@ -42,6 +42,9 @@ import {
 } from './types';
 import { mergeTransactionLists } from './utils';
 
+// todo: use this provider by session, and move to transactions
+const { FUEL_PROVIDER } = process.env;
+
 export class TransactionController {
   private transactionService: ITransactionService;
   private notificationService: INotificationService;
@@ -65,7 +68,7 @@ export class TransactionController {
   // pending tx
   async pending(req: IListRequest) {
     try {
-      const { workspace, user } = req;
+      const { workspace, user, network } = req;
       const { predicateId } = req.query;
       const predicate =
         predicateId && predicateId.length > 0 ? predicateId[0] : undefined;
@@ -79,6 +82,9 @@ export class TransactionController {
           .addSelect(['t.status'])
           .where('t.status = :status', {
             status: TransactionStatus.AWAIT_REQUIREMENTS,
+          })
+          .andWhere(`t.network->>'url' = :network`, {
+            network: network.url,
           });
 
         const result = await qb.getCount();
@@ -96,7 +102,10 @@ export class TransactionController {
         .where('t.status = :status', {
           status: TransactionStatus.AWAIT_REQUIREMENTS,
         })
-        .andWhere('t.predicateId = :predicate', { predicate });
+        .andWhere('t.predicateId = :predicate', { predicate })
+        .andWhere(`t.network->>'url' = :network`, {
+          network: network.url,
+        });
 
       const result = await qb.getCount();
 
@@ -112,7 +121,12 @@ export class TransactionController {
     }
   }
 
-  async create({ body: transaction, user, workspace }: ICreateTransactionRequest) {
+  async create({
+    body: transaction,
+    user,
+    workspace,
+    network,
+  }: ICreateTransactionRequest) {
     const { predicateAddress, summary, hash } = transaction;
 
     try {
@@ -156,6 +170,8 @@ export class TransactionController {
         updatedAt: generateWitnessesUpdatedAt(),
       }));
 
+      const config = JSON.parse(predicate.configurable);
+
       const newTransaction = await this.transactionService.create({
         ...transaction,
         type: Transaction.getTypeFromTransactionRequest(transaction.txData),
@@ -164,7 +180,7 @@ export class TransactionController {
           hash: transaction.hash,
           status: TransactionStatus.AWAIT_REQUIREMENTS,
           witnesses,
-          requiredSigners: predicate.minSigners,
+          requiredSigners: config.SIGNATURES_COUNT ?? 1,
           totalSigners: predicate.members.length,
           predicate: {
             id: predicate.id,
@@ -175,6 +191,7 @@ export class TransactionController {
         predicate,
         createdBy: user,
         summary,
+        network,
       });
 
       newTransaction.resume.id = newTransaction.id;
@@ -209,6 +226,7 @@ export class TransactionController {
 
   async createHistory({
     params: { id, predicateId },
+    network,
   }: ICreateTransactionHistoryRequest) {
     try {
       const isUuid = isUUID(id);
@@ -221,6 +239,7 @@ export class TransactionController {
         result = await this.transactionService.fetchFuelTransactionById(
           id,
           predicate,
+          network.url ?? FUEL_PROVIDER,
         );
       }
 
@@ -329,10 +348,10 @@ export class TransactionController {
     }
   }
 
-  async findByHash({ params: { hash } }: IFindTransactionByHashRequest) {
+  async findByHash({ params: { hash }, network }: IFindTransactionByHashRequest) {
     try {
       const response = await this.transactionService
-        .filter({ hash: hash.slice(2) })
+        .filter({ hash: hash.slice(2), network: network.url })
         .paginate(undefined)
         .list()
         .then((result: ITransactionResponse[]) => {
@@ -392,6 +411,7 @@ export class TransactionController {
 
       return successful(true, Responses.Ok);
     } catch (e) {
+      console.log(e);
       return error(e.error, e.statusCode);
     }
   }
@@ -411,7 +431,7 @@ export class TransactionController {
         id,
         type,
       } = req.query;
-      const { workspace, user } = req;
+      const { workspace, user, network } = req;
 
       const singleWorkspace = await new WorkspaceService()
         .filter({
@@ -443,6 +463,7 @@ export class TransactionController {
           signer: hasSingle ? user.address : undefined,
           predicateId: predicateId ?? undefined,
           type,
+          network: network.url,
         })
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })
@@ -467,7 +488,7 @@ export class TransactionController {
         offsetFuel,
         id,
       } = req.query;
-      const { workspace, user } = req;
+      const { workspace, user, network } = req;
 
       if (id) {
         return successful(await this.transactionService.findById(id), Responses.Ok);
@@ -504,6 +525,7 @@ export class TransactionController {
           predicateId: predicateId ?? undefined,
           type,
           id,
+          network: network.url,
         })
         .ordination(ordination)
         .transactionPaginate({
@@ -536,7 +558,8 @@ export class TransactionController {
             offsetDb: offsetDb,
             offsetFuel: offsetFuel,
           })
-          .fetchFuelTransactions(predicates);
+          // todo: use this provider by session
+          .fetchFuelTransactions(predicates, network.url || FUEL_PROVIDER);
       }
 
       const mergedList = mergeTransactionLists(dbTxs, fuelTxs, {
@@ -580,6 +603,7 @@ export class TransactionController {
       await this.transactionService.sendToChain(hash.slice(2)); // not wait for this
       return successful(true, Responses.Ok);
     } catch (e) {
+      console.log(e);
       return error(e.error, e.statusCode);
     }
   }

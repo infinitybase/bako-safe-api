@@ -21,6 +21,12 @@ const userController = new UserController(userService);
 router.get('/nickname/:nickname', handleResponse(userController.validateName));
 router.post('/', PayloadCreateUserSchema, handleResponse(userController.create));
 
+router.post(
+  '/select-network',
+  authMiddleware,
+  handleResponse(userController.changeNetwork),
+);
+
 router.get('/by-hardware/:hardware', handleResponse(userController.getByHardware));
 router.get('/info', authMiddleware, handleResponse(userController.info));
 router.get('/nickaname/:nickname', handleResponse(userController.validateName));

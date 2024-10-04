@@ -75,6 +75,7 @@ export class AuthValidations {
       digest: this.code,
       encoder: TypeUser.FUEL,
       signature: tx,
+      userAddress: this.account.account,
     });
 
     this.axios.defaults.headers.common['Authorization'] = data.accessToken;

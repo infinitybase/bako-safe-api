@@ -1,11 +1,4 @@
-import {
-  IAsset,
-  QuotesMock,
-  assets,
-  assetsMapById,
-  assetsMapBySymbol,
-  isDevMode,
-} from '@src/utils';
+import { IAsset, IAssetMapById, getAssetsMaps, isDevMode } from '@src/utils';
 import axios from 'axios';
 
 const { COIN_MARKET_CAP_API_KEY } = process.env;
@@ -33,7 +26,7 @@ export class QuoteStorage {
     this.data.set(assetId, price);
   }
 
-  private addMockQuotes(): void {
+  private async addMockQuotes(QuotesMock: IQuote[]): Promise<void> {
     QuotesMock &&
       QuotesMock.forEach(quote => {
         this.setQuote(quote.assetId, quote.price);
@@ -41,23 +34,23 @@ export class QuoteStorage {
   }
 
   private async addQuotes(): Promise<void> {
+    const { assets, assetsMapById, QuotesMock } = await getAssetsMaps();
     if (isDevMode) {
-      this.addMockQuotes();
+      this.addMockQuotes(QuotesMock);
       return;
     }
 
-    const params = this.generateParams(assets);
+    const params = this.generateParams(assetsMapById, assets);
 
     if (params) {
-      const quotes = await this.fetchQuotes(params);
-      // console.log('[PARAMS]', quotes);
+      const quotes = await this.fetchQuotes(assets, params);
       quotes.forEach(quote => {
         this.setQuote(quote.assetId, quote.price);
       });
     }
   }
 
-  private generateParams(assets?: IAsset[]): string {
+  private generateParams(assetsMapById: IAssetMapById, assets?: IAsset[]): string {
     if (!assets) return '';
 
     const params = assets.reduce((acc, asset) => {
@@ -81,18 +74,9 @@ export class QuoteStorage {
     return whitelist[name] ?? name;
   }
 
-  //   {
-  //     "bitcoin": {
-  //         "usd": 65083
-  //     },
-  //     "ethereum": {
-  //         "usd": 2651.72
-  //     }
-  // }
-
-  private async fetchQuotes(params: string): Promise<IQuote[]> {
+  private async fetchQuotes(assets: IAsset[], params: string): Promise<IQuote[]> {
     try {
-      const { data, request } = await axios.get(
+      const { data } = await axios.get(
         `https://api.coingecko.com/api/v3/simple/price?vs_currencies=usd`,
         {
           params: {
@@ -108,16 +92,9 @@ export class QuoteStorage {
           price: data[value.symbol]?.usd ?? 0.0,
         };
       });
-      console.log('COINS_PRICE', aux);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      // const formattedData = Object.values(data.data).map((item: any) => ({
-      //   assetId: assetsMapBySymbol[item.symbol].id,
-      //   price: item.quote.USD.price,
-      // }));
 
       return aux;
     } catch (e) {
-      // console.log('[STORAGE_QUOTE] Get quots value: ', e.message);
       return [];
     }
   }

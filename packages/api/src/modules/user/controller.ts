@@ -12,7 +12,7 @@ import {
   error,
 } from '@utils/error';
 import { IconUtils } from '@utils/icons';
-import { Responses, successful } from '@utils/index';
+import { Responses, successful, TokenUtils } from '@utils/index';
 
 import { PredicateService } from '../predicate/services';
 import { RecoverCodeService } from '../recoverCode/services';
@@ -32,6 +32,8 @@ import {
 } from './types';
 import { Not } from 'typeorm';
 import app from '@src/server/app';
+import { Provider } from 'fuels';
+import { IChangenetworkRequest } from '../auth/types';
 
 export class UserController {
   private userService: IUserService;
@@ -75,7 +77,8 @@ export class UserController {
   async meTransactions(req: IMeRequest) {
     try {
       const { type } = req.query;
-      const { workspace, user } = req;
+      const { workspace, user, network } = req;
+
       const { hasSingle } = await new UserService().workspacesByUser(
         workspace,
         user,
@@ -85,6 +88,7 @@ export class UserController {
           type,
           workspaceId: [workspace.id],
           signer: hasSingle ? user.address : undefined,
+          network: network.url,
         })
         .paginate({ page: '0', perPage: '6' })
         .ordination({ orderBy: 'createdAt', sort: 'DESC' })
@@ -101,7 +105,7 @@ export class UserController {
   }
 
   async latestInfo(req: IMeInfoRequest) {
-    const { user, workspace } = req;
+    const { user, workspace, network } = req;
     return successful(
       {
         id: user.id,
@@ -111,6 +115,7 @@ export class UserController {
         address: user.address,
         webauthn: user.webauthn,
         first_login: user.first_login,
+        network,
         onSingleWorkspace:
           workspace.single && workspace.name.includes(`[${user.id}]`),
         workspace: {
@@ -192,6 +197,7 @@ export class UserController {
   async create(req: ICreateRequest) {
     try {
       const { address, name, provider } = req.body;
+      const { network } = req;
 
       //verify user exists
       let existingUser = await this.userService.findByAddress(address);
@@ -216,12 +222,21 @@ export class UserController {
         });
       }
 
+      const _provider = await Provider.create(
+        provider ?? process.env.FUEL_PROVIDER,
+      );
+
       const code = await new RecoverCodeService()
         .create({
           owner: existingUser,
           type: RecoverCodeType.AUTH,
           origin: req.headers.origin ?? process.env.UI_URL,
-          validAt: addMinutes(new Date(), 5), //todo: change this number to dynamic
+          // todo: validate this info about the time UTC -3horas
+          validAt: addMinutes(new Date(), 180 + 5), //todo: change this number to dynamic
+          network: {
+            url: _provider.url,
+            chainId: _provider.getChainId(),
+          },
         })
         .then((data: RecoverCode) => {
           const { owner, ...rest } = data;
@@ -315,5 +330,12 @@ export class UserController {
     } catch (e) {
       return error(e.error, e.statusCode);
     }
+  }
+
+  async changeNetwork({ user, body }: IChangenetworkRequest) {
+    const { network } = body;
+    const result = await TokenUtils.changeNetwork(user.id, network);
+
+    return successful(!!result, Responses.Ok);
   }
 }

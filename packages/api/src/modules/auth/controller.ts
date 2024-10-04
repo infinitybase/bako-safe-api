@@ -1,23 +1,18 @@
 import { addMinutes } from 'date-fns';
 
 import { RecoverCodeType, User } from '@src/models';
-import UserToken from '@src/models/UserToken';
-import { Workspace } from '@src/models/Workspace';
 import GeneralError, { ErrorTypes } from '@src/utils/error/GeneralError';
 
 import { NotFound, error } from '@utils/error';
 import { Responses, successful, bindMethods, TokenUtils } from '@utils/index';
 
 import { RecoverCodeService } from '../recoverCode/services';
-import { WorkspaceService } from '../workspace/services';
-import {
-  IAuthService,
-  IChangeWorkspaceRequest,
-  ICreateRecoverCodeRequest,
-  ISignInRequest,
-} from './types';
+
+import { IAuthService, ICreateRecoverCodeRequest, ISignInRequest } from './types';
 import app from '@src/server/app';
 import { Request } from 'express';
+import { Provider } from 'fuels';
+const { FUEL_PROVIDER } = process.env;
 
 export class AuthController {
   private authService: IAuthService;
@@ -29,12 +24,13 @@ export class AuthController {
 
   async signIn(req: ISignInRequest) {
     try {
-      const { digest, encoder, signature } = req.body;
+      const { digest, encoder, signature, userAddress } = req.body;
 
       const { userToken, signin } = await TokenUtils.createAuthToken(
         signature,
         digest,
         encoder,
+        userAddress,
       );
 
       await app._sessionCache.addSession(userToken.accessToken, userToken);
@@ -62,68 +58,36 @@ export class AuthController {
 
   async generateSignCode(req: ICreateRecoverCodeRequest) {
     try {
-      const { address } = req.body;
+      const { address, networkUrl } = req.body;
       const { origin } = req.headers ?? { origin: 'no-agent' };
       const owner = await User.findOne({ where: { address } });
+
+      if (!owner) {
+        throw new NotFound({
+          type: ErrorTypes.NotFound,
+          title: 'User not found',
+          detail: `User not found`,
+        });
+      }
+
+      const provider = await Provider.create(networkUrl ?? FUEL_PROVIDER);
 
       const response = await new RecoverCodeService().create({
         owner,
         type: RecoverCodeType.AUTH,
         origin: origin ?? process.env.UI_URL,
         validAt: addMinutes(new Date(), 5),
+        network: {
+          url: provider.url,
+          chainId: provider.getChainId(),
+        },
       });
+
+      console.log('response', response);
 
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }
   }
-
-  // change wk are desabled
-  // async updateWorkspace(req: IChangeWorkspaceRequest) {
-  //   try {
-  //     const { workspace: workspaceId, user } = req.body;
-  //     const workspace = await new WorkspaceService()
-  //       .filter({ id: workspaceId })
-  //       .list()
-  //       .then((response: Workspace[]) => response[0]);
-
-  //     if (!workspace)
-  //       throw new NotFound({
-  //         type: ErrorTypes.NotFound,
-  //         title: 'Workspace not found',
-  //         detail: `Workspace not found`,
-  //       });
-
-  //     const isUserMember = workspace.members.find(m => m.id === user);
-
-  //     const token = await TokenUtils.getTokenBySignature(req.headers.authorization);
-
-  //     if (isUserMember) {
-  //       token.workspace = workspace;
-  //     }
-
-  //     await app._sessionCache.addSession(token.token, token);
-
-  //     return successful(
-  //       await token.save().then(({ workspace, token, user }: UserToken) => {
-  //         return {
-  //           workspace: {
-  //             id: workspace.id,
-  //             name: workspace.name,
-  //             avatar: workspace.avatar,
-  //             permissions: workspace.permissions[user.id],
-  //             single: workspace.single,
-  //           },
-  //           token: token,
-  //           avatar: user.avatar,
-  //           address: user.address,
-  //         };
-  //       }),
-  //       Responses.Ok,
-  //     );
-  //   } catch (e) {
-  //     return error(e.error, e.statusCode);
-  //   }
-  // }
 }

@@ -1,4 +1,5 @@
-import { DApp, RecoverCode, RecoverCodeType, User } from '@src/models';
+import { RecoverCode, RecoverCodeType, User } from '@src/models';
+import { Network } from 'fuels';
 
 export interface ICreateRecoverCodePayload {
   owner: User;
@@ -6,6 +7,7 @@ export interface ICreateRecoverCodePayload {
   origin: string;
   validAt: Date;
   metadata?: { [key: string]: any };
+  network: Network;
 }
 
 export interface IRecoverCodeService {

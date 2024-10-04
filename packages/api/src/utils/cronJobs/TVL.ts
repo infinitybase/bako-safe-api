@@ -1,7 +1,7 @@
 import { Predicate, TotalValueLocked } from '@src/models';
 import { Asset, Vault } from 'bakosafe';
 import cron from 'node-cron';
-import { assetsMapById } from '../assets';
+import { getAssetsMaps } from '../assets';
 import app from '@src/server/app';
 import { Provider } from 'fuels';
 const { FUEL_PROVIDER } = process.env;
@@ -28,11 +28,8 @@ const TVLCronJob = cron.schedule('0 0 * * *', async () => {
     // Busca dados de todos os vaults
     const predicates = await Predicate.createQueryBuilder('p')
       .leftJoinAndSelect('p.version', 'version')
-      .select(['p.id', 'p.configurable', 'p.provider', 'version.code'])
-      .where('p.provider IN (:...providers)', {
-        providers: VALID_PROVIDERS,
-      })
-      .andWhere('version.name NOT LIKE :fakeName', {
+      .select(['p.id', 'p.configurable', 'version.code'])
+      .where('version.name NOT LIKE :fakeName', {
         fakeName: '%fake_name%',
       })
       .getMany();
@@ -44,8 +41,9 @@ const TVLCronJob = cron.schedule('0 0 * * *', async () => {
         // const configurable: IConfVault = {
         //   ...JSON.parse(predicate.configurable),
         // };
+        // todo: get by session or run a map to get for each valid networks
 
-        const provider = await Provider.create(predicate.provider);
+        const provider = await Provider.create(FUEL_PROVIDER);
         const conf = JSON.parse(predicate.configurable);
 
         // Instancia cada vault
@@ -62,14 +60,14 @@ const TVLCronJob = cron.schedule('0 0 * * *', async () => {
         continue;
       }
     }
-
+    const _asset = await getAssetsMaps();
     const assetsTVL = await Asset.assetsGroupById(
       vaultsBalance.map(item => ({ ...item, amount: item.amount.format() })),
     );
     const validAssetsTVL = Object.entries(assetsTVL)
       // Filtro para considerar apenas assets existentes no dicionário
       .filter(([assetId, amount]) => {
-        const asset = assetsMapById[assetId];
+        const asset = _asset.assetsMapById[assetId];
         return asset !== undefined;
       })
       .map(([assetId, amount]) => {

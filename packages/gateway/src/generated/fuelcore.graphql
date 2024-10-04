@@ -36,6 +36,11 @@ input BalanceFilterInput {
   owner: Address!
 }
 
+type Blob {
+  bytecode: HexString!
+  id: BlobId!
+}
+
 scalar BlobId
 
 type Block {
@@ -144,6 +149,7 @@ union Consensus = Genesis | PoAConsensus
 type ConsensusParameters {
   baseAssetId: AssetId!
   blockGasLimit: U64!
+  blockTransactionSizeLimit: U64!
   chainId: U64!
   contractParams: ContractParameters!
   feeParams: FeeParameters!
@@ -707,6 +713,10 @@ type Query {
     owner: Address!
   ): Balance!
   balances(after: String, before: String, filter: BalanceFilterInput!, first: Int, last: Int): BalanceConnection!
+  blob(
+    """ID of the Blob"""
+    id: BlobId!
+  ): Blob
   block(
     """Height of the block"""
     height: U32
@@ -746,6 +756,7 @@ type Query {
     """
     queryPerAsset: [SpendQueryElementInput!]!
   ): [[CoinType!]!]!
+  consensusParameters(version: Int!): ConsensusParameters!
   contract(
     """ID of the Contract"""
     id: ContractId!
@@ -784,6 +795,8 @@ type Query {
     """The id of the relayed tx"""
     id: RelayedTransactionId!
   ): RelayedTransactionStatus
+  stateTransitionBytecodeByRoot(root: HexString!): StateTransitionBytecode!
+  stateTransitionBytecodeByVersion(version: Int!): StateTransitionBytecode
   transaction(
     """The ID of the transaction"""
     id: TransactionId!
@@ -897,6 +910,11 @@ type SqueezedOutStatus {
   reason: String!
 }
 
+type StateTransitionBytecode {
+  bytecode: UploadedBytecode!
+  root: HexString!
+}
+
 type StateTransitionPurpose {
   root: Bytes32!
 }
@@ -928,6 +946,12 @@ type Subscription {
   Submits transaction to the `TxPool` and await either confirmation or failure.
   """
   submitAndAwait(tx: HexString!): TransactionStatus!
+  """
+  Submits the transaction to the `TxPool` and returns a stream of events.
+  Compared to the `submitAndAwait`, the stream also contains `
+  SubmittedStatus` as an intermediate state.
+  """
+  submitAndAwaitStatus(tx: HexString!): TransactionStatus!
 }
 
 type SuccessStatus {
@@ -1027,6 +1051,15 @@ scalar U32
 scalar U64
 
 union UpgradePurpose = ConsensusParametersPurpose | StateTransitionPurpose
+
+type UploadedBytecode {
+  """Combined bytecode of all uploaded subsections."""
+  bytecode: HexString!
+  """Indicates if the bytecode upload is complete."""
+  completed: Boolean!
+  """Number of uploaded subsections (if incomplete)."""
+  uploadedSubsectionsNumber: Int
+}
 
 scalar UtxoId
 

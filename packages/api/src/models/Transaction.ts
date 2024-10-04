@@ -4,7 +4,12 @@ import {
   TransactionStatus,
   TransactionType,
 } from 'bakosafe';
-import { TransactionRequest, TransactionType as FuelTransactionType } from 'fuels';
+import {
+  TransactionRequest,
+  TransactionType as FuelTransactionType,
+  hexlify,
+  Network,
+} from 'fuels';
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 import { User } from '@models/User';
@@ -13,6 +18,9 @@ import { Base } from './Base';
 import { Predicate } from './Predicate';
 import { ITransactionResponse } from '@src/modules/transaction/types';
 import { formatAssets } from '@src/utils/formatAssets';
+import { networks } from '@src/mocks/networks';
+
+const { FUEL_PROVIDER, FUEL_PROVIDER_CHAIN_ID } = process.env;
 
 export { TransactionStatus, TransactionType };
 
@@ -62,6 +70,16 @@ class Transaction extends Base {
   })
   resume: ITransactionResume;
 
+  @Column({
+    type: 'jsonb',
+    name: 'network',
+    default: {
+      url: FUEL_PROVIDER ?? networks['devnet'],
+      chainId: Number(FUEL_PROVIDER_CHAIN_ID) ?? 0,
+    },
+  })
+  network: Network;
+
   @JoinColumn({ name: 'created_by' })
   @ManyToOne(() => User)
   createdBy: User;
@@ -80,6 +98,7 @@ class Transaction extends Base {
       [FuelTransactionType.Script]: TransactionType.TRANSACTION_SCRIPT,
       [FuelTransactionType.Upgrade]: TransactionType.TRANSACTION_UPGRADE,
       [FuelTransactionType.Upload]: TransactionType.TRANSACTION_UPLOAD,
+      [FuelTransactionType.Blob]: TransactionType.TRANSACTION_BLOB,
       default: TransactionType.TRANSACTION_SCRIPT,
     };
 
@@ -93,6 +112,30 @@ class Transaction extends Base {
     });
 
     return result;
+  }
+
+  getWitnesses() {
+    const witnesses = this.resume.witnesses
+      .filter(w => !!w.signature)
+      .map(w => w.signature);
+
+    const { witnesses: txWitnesses } = this.txData;
+
+    if ('bytecodeWitnessIndex' in this.txData) {
+      const { bytecodeWitnessIndex } = this.txData;
+      const bytecode = txWitnesses[bytecodeWitnessIndex];
+
+      bytecode && witnesses.splice(bytecodeWitnessIndex, 0, hexlify(bytecode));
+    }
+
+    if ('witnessIndex' in this.txData) {
+      const { witnessIndex } = this.txData;
+      const bytecode = txWitnesses[witnessIndex];
+
+      bytecode && witnesses.splice(witnessIndex, 0, hexlify(bytecode));
+    }
+
+    return witnesses;
   }
 }
 
