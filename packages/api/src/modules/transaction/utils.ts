@@ -2,7 +2,7 @@ import { Predicate, Transaction, TransactionType } from '@src/models';
 import { IPagination } from '@src/utils/pagination';
 import { ITransactionResponse, ITransactionsListParams } from './types';
 import { TransactionStatus } from 'bakosafe';
-import { TransactionResult } from 'fuels';
+import { Provider, TransactionResult } from 'fuels';
 import { formatAssets } from '@src/utils/formatAssets';
 import {
   IDefaultOrdination,
@@ -30,6 +30,7 @@ export const formatTransactionsResponse = (
 export const formatFuelTransaction = async (
   tx: TransactionResult,
   predicate: Predicate,
+  provider: Provider,
 ): Promise<ITransactionResponse> => {
   const { fuelUnitAssets } = await getAssetsMaps();
   const {
@@ -95,6 +96,10 @@ export const formatFuelTransaction = async (
       },
     },
     assets: formatAssets(outputs, predicate.predicateAddress, fuelUnitAssets),
+    network: {
+      url: provider.url,
+      chainId: provider.getChainId(),
+    },
   };
 
   return (formattedTransaction as unknown) as ITransactionResponse;
