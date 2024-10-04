@@ -2,6 +2,7 @@ import * as pprof from 'pprof';
 
 import app from './app';
 import Bootstrap from './bootstrap';
+import Monitoring from './monitoring';
 
 const { 
   API_PORT,
@@ -37,6 +38,7 @@ const start = async () => {
     AWS_SMTP_PASS
   })
 
+  Monitoring.init();
 
   await Bootstrap.start();
 

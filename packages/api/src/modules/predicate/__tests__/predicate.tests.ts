@@ -1,292 +1,307 @@
-// import crypto from 'crypto';
+import crypto from 'crypto';
 
-// import { accounts } from '@src/mocks/accounts';
-// import { networks } from '@src/mocks/networks';
-// // import { PredicateMock } from '@src/mocks/predicate';
-// import { PermissionRoles } from '@src/models/Workspace';
-// import { AuthValidations } from '@src/utils/testUtils/Auth';
-// import { generateWorkspacePayload } from '@src/utils/testUtils/Workspace';
-// import { predicateVersionMock } from '@src/mocks/predicateVersion';
-// import { Address } from 'fuels';
+import { accounts } from '@src/mocks/accounts';
+import { networks } from '@src/mocks/networks';
+import { PredicateMock } from '@src/mocks/predicate';
+import { predicateVersionMock } from '@src/mocks/predicateVersion';
 
-// describe('[PREDICATE]', () => {
-//   let api: AuthValidations;
-//   beforeAll(async () => {
-//     api = new AuthValidations(networks['local'], accounts['USER_1']);
+import { AuthValidations } from '@src/utils/testUtils/Auth';
+import { generateUser } from '@src/utils/testUtils/Workspace';
 
-//     await api.create();
-//     await api.createSession();
-//   });
+import { Address } from 'fuels';
 
-//   test(
-//     'Create predicate without version code',
-//     async () => {
-//       const { data_user1, data_user2 } = await generateWorkspacePayload(api);
-//       const members = [data_user1.address, data_user2.address];
-//       // const { predicatePayload } = await PredicateMock.create(1, members);
-//       const { data } = await api.axios.post('/predicate', predicatePayload);
+describe('[PREDICATE]', () => {
+  let api: AuthValidations;
+  beforeAll(async () => {
+    api = new AuthValidations(networks['local'], accounts['USER_1']);
 
-//       const { data: workspace } = await api.axios.get(
-//         `/workspace/${api.workspace.id}`,
-//       );
+    await api.create();
+    await api.createSession();
+  });
 
-//       //predicate validation
-//       expect(data).toHaveProperty('id');
-//       expect(data).toHaveProperty(
-//         'predicateAddress',
-//         Address.fromString(predicatePayload.predicateAddress).toB256(),
-//       );
-//       expect(data).toHaveProperty('owner.address', accounts['USER_1'].account);
-//       expect(data).toHaveProperty('version.id');
-//       expect(data).toHaveProperty('version.abi');
-//       expect(data).toHaveProperty('version.bytes');
-//       expect(data).toHaveProperty('version.code');
+  test(
+    'Create predicate without version code',
+    async () => {
+      //const { data_user1, data_user2 } = await generateWorkspacePayload(api);
+      const data_user1 = await generateUser(api);
+      const data_user2 = await generateUser(api);
+      const members = [data_user1.address, data_user2.address];
+      const { predicatePayload } = await PredicateMock.create(1, members);
+      const { data } = await api.axios.post('/predicate', predicatePayload);
 
-//       //permissions validation
-//       expect(
-//         workspace.permissions[data_user1.id][PermissionRoles.SIGNER],
-//       ).toContain(data.id);
-//       expect(
-//         workspace.permissions[data_user2.id][PermissionRoles.SIGNER],
-//       ).toContain(data.id);
-//     },
-//     10 * 1000,
-//   );
+      // const { data: workspace } = await api.axios.get(
+      //   `/workspace/${api.workspace.id}`,
+      // );
 
-//   test(
-//     'Create predicate with version code',
-//     async () => {
-//       const { data_user1, data_user2 } = await generateWorkspacePayload(api);
-//       const members = [data_user1.address, data_user2.address];
-//       const { predicatePayload } = await PredicateMock.create(1, members);
-//       const { data } = await api.axios.post('/predicate', {
-//         ...predicatePayload,
-//         versionCode: predicateVersionMock.code,
-//       });
+      //predicate validation
+      expect(data).toHaveProperty('id');
+      expect(data).toHaveProperty(
+        'predicateAddress',
+        Address.fromString(predicatePayload.predicateAddress).toB256(),
+      );
+      expect(data).toHaveProperty('owner.address', accounts['USER_1'].account);
+      expect(data).toHaveProperty('version.id');
+      expect(data).toHaveProperty('version.abi');
+      expect(data).toHaveProperty('version.bytes');
+      expect(data).toHaveProperty('version.code');
 
-//       const { data: workspace } = await api.axios.get(
-//         `/workspace/${api.workspace.id}`,
-//       );
+      //permissions validation
+      // expect(
+      //   workspace.permissions[data_user1.id][PermissionRoles.SIGNER],
+      // ).toContain(data.id);
+      // expect(
+      //   workspace.permissions[data_user2.id][PermissionRoles.SIGNER],
+      // ).toContain(data.id);
+    },
+    10 * 1000,
+  );
 
-//       //predicate validation
-//       expect(data).toHaveProperty('id');
-//       expect(data).toHaveProperty(
-//         'predicateAddress',
-//         Address.fromString(predicatePayload.predicateAddress).toB256(),
-//       );
-//       expect(data).toHaveProperty('owner.address', accounts['USER_1'].account);
-//       expect(data).toHaveProperty('version.id');
-//       expect(data).toHaveProperty('version.abi');
-//       expect(data).toHaveProperty('version.bytes');
-//       expect(data).toHaveProperty('version.code');
+  test(
+    'Create predicate with version code',
+    async () => {
+      // const { data_user1, data_user2 } = await generateWorkspacePayload(api);
+      const data_user1 = await generateUser(api);
+      const data_user2 = await generateUser(api);
+      const members = [data_user1.address, data_user2.address];
+      const { predicatePayload } = await PredicateMock.create(1, members);
+      const { data } = await api.axios.post('/predicate', {
+        ...predicatePayload,
+        versionCode: predicateVersionMock.code,
+      });
 
-//       //permissions validation
-//       expect(
-//         workspace.permissions[data_user1.id][PermissionRoles.SIGNER],
-//       ).toContain(data.id);
-//       expect(
-//         workspace.permissions[data_user2.id][PermissionRoles.SIGNER],
-//       ).toContain(data.id);
-//     },
-//     10 * 1000,
-//   );
+      // const { data: workspace } = await api.axios.get(
+      //   `/workspace/${api.workspace.id}`,
+      // );
 
-//   test('Create predicate with invalid owner permission', async () => {
-//     const auth = new AuthValidations(networks['local'], accounts['USER_1']);
-//     await auth.create();
-//     await auth.createSession();
+      //predicate validation
+      expect(data).toHaveProperty('id');
+      expect(data).toHaveProperty(
+        'predicateAddress',
+        Address.fromString(predicatePayload.predicateAddress).toB256(),
+      );
+      expect(data).toHaveProperty('owner.address', accounts['USER_1'].account);
+      expect(data).toHaveProperty('version.id');
+      expect(data).toHaveProperty('version.abi');
+      expect(data).toHaveProperty('version.bytes');
+      expect(data).toHaveProperty('version.code');
 
-//     //create a new workspace
-//     const { data: data_workspace } = await generateWorkspacePayload(auth);
+      //permissions validation
+      // expect(
+      //   workspace.permissions[data_user1.id][PermissionRoles.SIGNER],
+      // ).toContain(data.id);
+      // expect(
+      //   workspace.permissions[data_user2.id][PermissionRoles.SIGNER],
+      // ).toContain(data.id);
+    },
+    10 * 1000,
+  );
 
-//     //auth with new account
-//     const auth_aux = new AuthValidations(networks['local'], accounts['USER_5']);
-//     await auth_aux.create();
-//     await auth_aux.createSession();
-//     await auth_aux.selectWorkspace(data_workspace.id);
+  // test('Create predicate with invalid owner permission', async () => {
+  //   const auth = new AuthValidations(networks['local'], accounts['USER_1']);
+  //   await auth.create();
+  //   await auth.createSession();
 
-//     const { predicatePayload } = await PredicateMock.create(1, [
-//       accounts['USER_1'].address,
-//       accounts['USER_2'].address,
-//       accounts['USER_3'].address,
-//     ]);
+  //   //create a new workspace
+  //   const { data: data_workspace } = await generateWorkspacePayload(auth);
 
-//     const { status, data: predicate_data } = await auth_aux.axios
-//       .post('/predicate', predicatePayload)
-//       .catch(e => {
-//         return e.response;
-//       });
+  //   //auth with new account
+  //   const auth_aux = new AuthValidations(networks['local'], accounts['USER_5']);
+  //   await auth_aux.create();
+  //   await auth_aux.createSession();
+  //   await auth_aux.selectWorkspace(data_workspace.id);
 
-//     expect(status).toBe(401);
-//     expect(predicate_data.errors.detail).toEqual(
-//       'You do not have permission to access this resource',
-//     );
-//   });
+  //   const { predicatePayload } = await PredicateMock.create(1, [
+  //     accounts['USER_1'].address,
+  //     accounts['USER_2'].address,
+  //     accounts['USER_3'].address,
+  //   ]);
 
-//   test('List predicates', async () => {
-//     const auth = new AuthValidations(networks['local'], accounts['USER_1']);
-//     await auth.create();
-//     await auth.createSession();
+  //   const { status, data: predicate_data } = await auth_aux.axios
+  //     .post('/predicate', predicatePayload)
+  //     .catch(e => {
+  //       return e.response;
+  //     });
 
-//     type predicateMember = {
-//       id: string;
-//       address: string;
-//       avatar: string;
-//     };
+  //   expect(status).toBe(401);
+  //   expect(predicate_data.errors.detail).toEqual(
+  //     'You do not have permission to access this resource',
+  //   );
+  // });
 
-//     //on single workspace -> find by this user has signer
-//     // if member or signer or included on workspace of vault
-//     const validateListSingle = (members: predicateMember[]) => {
-//       return members.find(m => {
-//         return (
-//           m.id == auth.user.id &&
-//           m.address == auth.user.address &&
-//           m.avatar == auth.user.avatar
-//         );
-//       });
-//     };
+  test(
+    'List predicates',
+    async () => {
+      const auth = new AuthValidations(networks['local'], accounts['USER_1']);
+      await auth.create();
+      await auth.createSession();
 
-//     await auth.axios.get('/predicate').then(({ data, status }) => {
-//       expect(status).toBe(200);
-//       data.forEach(element => {
-//         const idValid =
-//           !!validateListSingle([...element.members, element.owner]) ||
-//           !!element.workspace.permissions[auth.user.id];
-//         expect(element).toHaveProperty('id');
-//         expect(idValid).toBe(true);
-//       });
-//     });
+      type predicateMember = {
+        id: string;
+        address: string;
+        avatar: string;
+      };
 
-//     //with pagination
-//     const page = 1;
-//     const perPage = 8;
-//     await auth.axios
-//       .get(`/predicate?page=${page}&perPage=${perPage}`)
-//       .then(({ data, status }) => {
-//         expect(status).toBe(200);
-//         expect(data).toHaveProperty('data');
-//         expect(data.data.length).toBeLessThanOrEqual(perPage);
-//         expect(data).toHaveProperty('total');
-//         expect(data).toHaveProperty('currentPage', page);
-//         expect(data).toHaveProperty('perPage', perPage);
-//       });
+      //on single workspace -> find by this user has signer
+      // if member or signer or included on workspace of vault
+      const validateListSingle = (members: predicateMember[]) => {
+        return members.find(m => {
+          return (
+            m.id == auth.user.id &&
+            m.address == auth.user.address &&
+            m.avatar == auth.user.avatar
+          );
+        });
+      };
 
-//     //an another workspace
-//     const { data: data_workspace } = await generateWorkspacePayload(auth);
-//     await auth.selectWorkspace(data_workspace.id);
-//     await auth.axios.get('/predicate').then(({ data, status }) => {
-//       expect(status).toBe(200);
-//       expect(data).toHaveLength(0);
-//     });
-//   });
+      await auth.axios.get('/predicate').then(({ data, status }) => {
+        expect(status).toBe(200);
+        data.forEach(element => {
+          const idValid =
+            !!validateListSingle([...element.members, element.owner]) ||
+            !!element.workspace.permissions[auth.user.id];
+          expect(element).toHaveProperty('id');
+          expect(idValid).toBe(true);
+        });
+      });
 
-//   test('Find predicate by id', async () => {
-//     const auth = new AuthValidations(networks['local'], accounts['USER_3']);
-//     await auth.create();
-//     await auth.createSession();
+      //with pagination
+      const page = 1;
+      const perPage = 8;
+      await auth.axios
+        .get(`/predicate?page=${page}&perPage=${perPage}`)
+        .then(({ data, status }) => {
+          expect(status).toBe(200);
+          expect(data).toHaveProperty('data');
+          expect(data.data.length).toBeLessThanOrEqual(perPage);
+          expect(data).toHaveProperty('total');
+          expect(data).toHaveProperty('currentPage', page);
+          expect(data).toHaveProperty('perPage', perPage);
+        });
 
-//     //create a new workspace
-//     const {
-//       data: data_workspace,
-//       USER_5,
-//       data_user1,
-//       data_user2,
-//     } = await generateWorkspacePayload(auth);
-//     await auth.selectWorkspace(data_workspace.id);
+      //an another workspace
+      // const { data: data_workspace } = await generateWorkspacePayload(auth);
+      // await auth.selectWorkspace(data_workspace.id);
+      // await auth.axios.get('/predicate').then(({ data, status }) => {
+      //   expect(status).toBe(200);
+      //   expect(data).toHaveLength(0);
+      // });
+    },
+    10 * 1000,
+  );
 
-//     //create a new nicknames
-//     const { data: n_data5 } = await auth.axios.post('/address-book/', {
-//       address: USER_5.address,
-//       nickname: `[TESTE]${USER_5.address}${new Date().getTime()}`,
-//     });
-//     const { data: n_data1 } = await auth.axios.post('/address-book/', {
-//       address: data_user1.address,
-//       nickname: `[TESTE]${data_user1.address}${new Date().getTime()}`,
-//     });
-//     const { data: n_data2 } = await auth.axios.post('/address-book/', {
-//       address: data_user2.address,
-//       nickname: `[TESTE]${data_user2.address}${new Date().getTime()}`,
-//     });
+  test('Find predicate by id', async () => {
+    const auth = new AuthValidations(networks['local'], accounts['USER_3']);
+    await auth.create();
+    await auth.createSession();
 
-//     //create a vault
-//     const members = [USER_5.address, data_user1.address, data_user2.address];
+    //create a new workspace
+    // const {
+    //   data: data_workspace,
+    //   USER_5,
+    //   data_user1,
+    //   data_user2,
+    // } = await generateWorkspacePayload(auth);
+    //await auth.selectWorkspace(data_workspace.id);
 
-//     const { predicatePayload } = await PredicateMock.create(3, members);
-//     const { data: data_predicate } = await auth.axios.post(
-//       '/predicate',
-//       predicatePayload,
-//     );
+    //create a new nicknames
+    // const { data: n_data5 } = await auth.axios.post('/address-book/', {
+    //   address: USER_5.address,
+    //   nickname: `[TESTE]${USER_5.address}${new Date().getTime()}`,
+    // });
+    // const { data: n_data1 } = await auth.axios.post('/address-book/', {
+    //   address: data_user1.address,
+    //   nickname: `[TESTE]${data_user1.address}${new Date().getTime()}`,
+    // });
+    // const { data: n_data2 } = await auth.axios.post('/address-book/', {
+    //   address: data_user2.address,
+    //   nickname: `[TESTE]${data_user2.address}${new Date().getTime()}`,
+    // });
 
-//     await auth.axios
-//       .get(`/predicate/${data_predicate.id}`)
-//       .then(({ data, status }) => {
-//         const { workspace, members, id } = data;
-//         const n_members = [n_data2.nickname, n_data1.nickname, n_data5.nickname];
+    const data_user1 = await generateUser(auth);
+    const data_user2 = await generateUser(auth);
+    const USER_5 = await generateUser(auth, 'USER_5');
 
-//         expect(status).toBe(200);
-//         expect(data).toHaveProperty('version.id');
-//         expect(data).toHaveProperty('version.abi');
-//         expect(data).toHaveProperty('version.bytes');
-//         expect(data).toHaveProperty('version.code');
+    //create a vault
+    const members = [USER_5.address, data_user1.address, data_user2.address];
 
-//         //validate workspace members
-//         workspace.addressBook.forEach(element => {
-//           const aux = n_members.includes(element.nickname);
-//           expect(aux).toBe(true);
-//         });
+    const { predicatePayload } = await PredicateMock.create(3, members);
+    const { data: data_predicate } = await auth.axios.post(
+      '/predicate',
+      predicatePayload,
+    );
 
-//         //validate members
-//         members.forEach(element => {
-//           const aux = members.find(m => element.id === m.id);
-//           expect(!!aux).toBe(true);
-//         });
+    await auth.axios
+      .get(`/predicate/${data_predicate.id}`)
+      .then(({ data, status }) => {
+        const { workspace, members, id } = data;
+        //const n_members = [n_data2.nickname, n_data1.nickname, n_data5.nickname];
 
-//         //validate vault
-//         expect(id).toBe(data_predicate.id);
-//       });
-//   });
+        expect(status).toBe(200);
+        expect(data).toHaveProperty('version.id');
+        expect(data).toHaveProperty('version.abi');
+        expect(data).toHaveProperty('version.bytes');
+        expect(data).toHaveProperty('version.code');
 
-//   test('Find predicate by name and verify if exists in workspace', async () => {
-//     const auth = new AuthValidations(networks['local'], accounts['USER_1']);
-//     await auth.create();
-//     await auth.createSession();
+        //validate workspace members
+        // workspace.addressBook.forEach(element => {
+        //   const aux = n_members.includes(element.nickname);
+        //   expect(aux).toBe(true);
+        // });
 
-//     const {
-//       data_user1,
-//       data_user2,
-//       data: workspace,
-//     } = await generateWorkspacePayload(auth);
-//     const members = [data_user1.address, data_user2.address];
-//     const { predicatePayload } = await PredicateMock.create(1, members);
+        //validate members
+        members.forEach(element => {
+          const aux = members.find(m => element.id === m.id);
+          expect(!!aux).toBe(true);
+        });
 
-//     const { data: predicate } = await auth.axios.post(
-//       '/predicate',
-//       predicatePayload,
-//     );
+        //validate vault
+        expect(id).toBe(data_predicate.id);
+      });
+  });
 
-//     //find a used name
-//     await auth
-//       .axios(`/predicate/by-name/${predicate.name}`)
-//       .then(({ data, status }) => {
-//         expect(status).toBe(200);
-//         expect(data).toBe(true);
-//       });
+  test('Find predicate by name and verify if exists in workspace', async () => {
+    const auth = new AuthValidations(networks['local'], accounts['USER_1']);
+    await auth.create();
+    await auth.createSession();
 
-//     //find a unused name
-//     await auth
-//       .axios(`/predicate/by-name/${crypto.randomUUID()}`)
-//       .then(({ data, status }) => {
-//         expect(status).toBe(200);
-//         expect(data).toBe(false);
-//       });
+    // const {
+    //   data_user1,
+    //   data_user2,
+    //   data: workspace,
+    // } = await generateWorkspacePayload(auth);
+    const data_user1 = await generateUser(auth);
+    const data_user2 = await generateUser(auth);
+    const members = [data_user1.address, data_user2.address];
+    const { predicatePayload } = await PredicateMock.create(1, members);
 
-//     //find a used name in annother workspace
-//     await auth.selectWorkspace(workspace.id);
-//     await auth
-//       .axios(`/predicate/by-name/${predicate.name}`)
-//       .then(({ data, status }) => {
-//         expect(status).toBe(200);
-//         expect(data).toBe(false);
-//       });
-//   });
-// });
+    const { data: predicate } = await auth.axios.post(
+      '/predicate',
+      predicatePayload,
+    );
+
+    //find a used name
+    await auth
+      .axios(`/predicate/by-name/${predicate.name}`)
+      .then(({ data, status }) => {
+        expect(status).toBe(200);
+        expect(data).toBe(true);
+      });
+
+    //find a unused name
+    await auth
+      .axios(`/predicate/by-name/${crypto.randomUUID()}`)
+      .then(({ data, status }) => {
+        expect(status).toBe(200);
+        expect(data).toBe(false);
+      });
+
+    //find a used name in annother workspace
+    // await auth.selectWorkspace(workspace.id);
+    // await auth
+    //   .axios(`/predicate/by-name/${predicate.name}`)
+    //   .then(({ data, status }) => {
+    //     expect(status).toBe(200);
+    //     expect(data).toBe(false);
+    //   });
+  });
+});

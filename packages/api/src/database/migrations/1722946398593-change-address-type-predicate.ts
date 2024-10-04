@@ -2,9 +2,7 @@ import { Address } from 'fuels';
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class ChangeAddressTypePredicate1722946398593 implements MigrationInterface {
-  
   public async up(queryRunner: QueryRunner): Promise<void> {
-    console.log('Migration ChangeAddressTypePredicate1722946398593');
     const predicates = await queryRunner.query(
       `SELECT * FROM predicates p WHERE p."predicateAddress" LIKE 'fuel%'`,
     );
@@ -21,7 +19,6 @@ export class ChangeAddressTypePredicate1722946398593 implements MigrationInterfa
       );
 
       if (existingPredicate.length === 0) {
-        
         await queryRunner.query(
           `UPDATE predicates SET "predicateAddress" = $1 WHERE id = $2`,
           [newAddress, predicate.id],

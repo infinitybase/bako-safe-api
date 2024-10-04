@@ -37,7 +37,7 @@ export enum EmailTemplateType {
 const transporter = nodemailer.createTransport({
   host: AWS_SMTP_HOST,
   port: 587,
-  ...(isDevMode ? {} : { secure: false }),
+  secure: false,
   auth: {
     user: AWS_SMTP_USER,
     pass: AWS_SMTP_PASS,

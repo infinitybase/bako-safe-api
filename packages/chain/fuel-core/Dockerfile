@@ -39,6 +39,9 @@ RUN jq '.consensus_parameters = input' \
     state_config.json latest_consensus_parameters.json > tmp.json \
     && mv tmp.json state_config.json
 
+# Copy custom chain configuration file
+COPY ./chain_config.json .
+
 # expose fuel node port
 EXPOSE ${FUEL_CORE_PORT}
 

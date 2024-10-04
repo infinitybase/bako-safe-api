@@ -66,6 +66,12 @@ export type BalanceFilterInput = {
   owner: Scalars['Address']['input'];
 };
 
+export type Blob = {
+  __typename?: 'Blob';
+  bytecode: Scalars['HexString']['output'];
+  id: Scalars['BlobId']['output'];
+};
+
 export type Block = {
   __typename?: 'Block';
   consensus: Consensus;
@@ -176,6 +182,7 @@ export type ConsensusParameters = {
   __typename?: 'ConsensusParameters';
   baseAssetId: Scalars['AssetId']['output'];
   blockGasLimit: Scalars['U64']['output'];
+  blockTransactionSizeLimit: Scalars['U64']['output'];
   chainId: Scalars['U64']['output'];
   contractParams: ContractParameters;
   feeParams: FeeParameters;
@@ -817,6 +824,7 @@ export type Query = {
   __typename?: 'Query';
   balance: Balance;
   balances: BalanceConnection;
+  blob?: Maybe<Blob>;
   block?: Maybe<Block>;
   blocks: BlockConnection;
   chain: ChainInfo;
@@ -837,6 +845,7 @@ export type Query = {
    * is the same.
    */
   coinsToSpend: Array<Array<CoinType>>;
+  consensusParameters: ConsensusParameters;
   contract?: Maybe<Contract>;
   contractBalance: ContractBalance;
   contractBalances: ContractBalanceConnection;
@@ -856,6 +865,8 @@ export type Query = {
   /** Read register value by index. */
   register: Scalars['U64']['output'];
   relayedTransactionStatus?: Maybe<RelayedTransactionStatus>;
+  stateTransitionBytecodeByRoot: StateTransitionBytecode;
+  stateTransitionBytecodeByVersion?: Maybe<StateTransitionBytecode>;
   transaction?: Maybe<Transaction>;
   transactions: TransactionConnection;
   transactionsByOwner: TransactionConnection;
@@ -874,6 +885,11 @@ export type QueryBalancesArgs = {
   filter: BalanceFilterInput;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryBlobArgs = {
+  id: Scalars['BlobId']['input'];
 };
 
 
@@ -909,6 +925,11 @@ export type QueryCoinsToSpendArgs = {
   excludedIds?: InputMaybe<ExcludeInput>;
   owner: Scalars['Address']['input'];
   queryPerAsset: Array<SpendQueryElementInput>;
+};
+
+
+export type QueryConsensusParametersArgs = {
+  version: Scalars['Int']['input'];
 };
 
 
@@ -984,6 +1005,16 @@ export type QueryRegisterArgs = {
 
 export type QueryRelayedTransactionStatusArgs = {
   id: Scalars['RelayedTransactionId']['input'];
+};
+
+
+export type QueryStateTransitionBytecodeByRootArgs = {
+  root: Scalars['HexString']['input'];
+};
+
+
+export type QueryStateTransitionBytecodeByVersionArgs = {
+  version: Scalars['Int']['input'];
 };
 
 
@@ -1110,6 +1141,12 @@ export type SqueezedOutStatus = {
   reason: Scalars['String']['output'];
 };
 
+export type StateTransitionBytecode = {
+  __typename?: 'StateTransitionBytecode';
+  bytecode: UploadedBytecode;
+  root: Scalars['HexString']['output'];
+};
+
 export type StateTransitionPurpose = {
   __typename?: 'StateTransitionPurpose';
   root: Scalars['Bytes32']['output'];
@@ -1139,6 +1176,12 @@ export type Subscription = {
   statusChange: TransactionStatus;
   /** Submits transaction to the `TxPool` and await either confirmation or failure. */
   submitAndAwait: TransactionStatus;
+  /**
+   * Submits the transaction to the `TxPool` and returns a stream of events.
+   * Compared to the `submitAndAwait`, the stream also contains `
+   * SubmittedStatus` as an intermediate state.
+   */
+  submitAndAwaitStatus: TransactionStatus;
 };
 
 
@@ -1148,6 +1191,11 @@ export type SubscriptionStatusChangeArgs = {
 
 
 export type SubscriptionSubmitAndAwaitArgs = {
+  tx: Scalars['HexString']['input'];
+};
+
+
+export type SubscriptionSubmitAndAwaitStatusArgs = {
   tx: Scalars['HexString']['input'];
 };
 
@@ -1242,6 +1290,16 @@ export enum TxParametersVersion {
 
 export type UpgradePurpose = ConsensusParametersPurpose | StateTransitionPurpose;
 
+export type UploadedBytecode = {
+  __typename?: 'UploadedBytecode';
+  /** Combined bytecode of all uploaded subsections. */
+  bytecode: Scalars['HexString']['output'];
+  /** Indicates if the bytecode upload is complete. */
+  completed: Scalars['Boolean']['output'];
+  /** Number of uploaded subsections (if incomplete). */
+  uploadedSubsectionsNumber?: Maybe<Scalars['Int']['output']>;
+};
+
 export type VariableOutput = {
   __typename?: 'VariableOutput';
   amount: Scalars['U64']['output'];
@@ -1326,7 +1384,7 @@ export type ResolversUnionTypes<_RefType extends Record<string, unknown>> = Reso
   Input: ( InputCoin ) | ( InputContract ) | ( InputMessage );
   Output: ( ChangeOutput ) | ( CoinOutput ) | ( ContractCreated ) | ( ContractOutput ) | ( VariableOutput );
   RelayedTransactionStatus: ( RelayedTransactionFailed );
-  TransactionStatus: ( FailureStatus ) | ( SqueezedOutStatus ) | ( SubmittedStatus ) | ( SuccessStatus );
+  TransactionStatus: ( Omit<FailureStatus, 'block' | 'transaction'> & { block: _RefType['Block'], transaction: _RefType['Transaction'] } ) | ( SqueezedOutStatus ) | ( SubmittedStatus ) | ( Omit<SuccessStatus, 'block' | 'transaction'> & { block: _RefType['Block'], transaction: _RefType['Transaction'] } );
   UpgradePurpose: ( ConsensusParametersPurpose ) | ( StateTransitionPurpose );
 }>;
 
@@ -1339,16 +1397,17 @@ export type ResolversTypes = ResolversObject<{
   BalanceConnection: ResolverTypeWrapper<BalanceConnection>;
   BalanceEdge: ResolverTypeWrapper<BalanceEdge>;
   BalanceFilterInput: BalanceFilterInput;
+  Blob: ResolverTypeWrapper<Blob>;
   BlobId: ResolverTypeWrapper<Scalars['BlobId']['output']>;
-  Block: ResolverTypeWrapper<Omit<Block, 'consensus'> & { consensus: ResolversTypes['Consensus'] }>;
-  BlockConnection: ResolverTypeWrapper<BlockConnection>;
-  BlockEdge: ResolverTypeWrapper<BlockEdge>;
+  Block: ResolverTypeWrapper<Omit<Block, 'consensus' | 'transactions'> & { consensus: ResolversTypes['Consensus'], transactions: Array<ResolversTypes['Transaction']> }>;
+  BlockConnection: ResolverTypeWrapper<Omit<BlockConnection, 'edges' | 'nodes'> & { edges: Array<ResolversTypes['BlockEdge']>, nodes: Array<ResolversTypes['Block']> }>;
+  BlockEdge: ResolverTypeWrapper<Omit<BlockEdge, 'node'> & { node: ResolversTypes['Block'] }>;
   BlockId: ResolverTypeWrapper<Scalars['BlockId']['output']>;
   BlockVersion: BlockVersion;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
   Breakpoint: Breakpoint;
   Bytes32: ResolverTypeWrapper<Scalars['Bytes32']['output']>;
-  ChainInfo: ResolverTypeWrapper<ChainInfo>;
+  ChainInfo: ResolverTypeWrapper<Omit<ChainInfo, 'consensusParameters' | 'gasCosts' | 'latestBlock'> & { consensusParameters: ResolversTypes['ConsensusParameters'], gasCosts: ResolversTypes['GasCosts'], latestBlock: ResolversTypes['Block'] }>;
   ChangeOutput: ResolverTypeWrapper<ChangeOutput>;
   Coin: ResolverTypeWrapper<Coin>;
   CoinConnection: ResolverTypeWrapper<CoinConnection>;
@@ -1357,7 +1416,7 @@ export type ResolversTypes = ResolversObject<{
   CoinOutput: ResolverTypeWrapper<CoinOutput>;
   CoinType: ResolverTypeWrapper<ResolversUnionTypes<ResolversTypes>['CoinType']>;
   Consensus: ResolverTypeWrapper<ResolversUnionTypes<ResolversTypes>['Consensus']>;
-  ConsensusParameters: ResolverTypeWrapper<ConsensusParameters>;
+  ConsensusParameters: ResolverTypeWrapper<Omit<ConsensusParameters, 'contractParams' | 'gasCosts'> & { contractParams: ResolversTypes['ContractParameters'], gasCosts: ResolversTypes['GasCosts'] }>;
   ConsensusParametersPurpose: ResolverTypeWrapper<ConsensusParametersPurpose>;
   ConsensusParametersVersion: ConsensusParametersVersion;
   Contract: ResolverTypeWrapper<Contract>;
@@ -1377,7 +1436,7 @@ export type ResolversTypes = ResolversObject<{
   DryRunTransactionStatus: ResolverTypeWrapper<ResolversUnionTypes<ResolversTypes>['DryRunTransactionStatus']>;
   EstimateGasPrice: ResolverTypeWrapper<EstimateGasPrice>;
   ExcludeInput: ExcludeInput;
-  FailureStatus: ResolverTypeWrapper<FailureStatus>;
+  FailureStatus: ResolverTypeWrapper<Omit<FailureStatus, 'block' | 'transaction'> & { block: ResolversTypes['Block'], transaction: ResolversTypes['Transaction'] }>;
   FeeParameters: ResolverTypeWrapper<FeeParameters>;
   FeeParametersVersion: FeeParametersVersion;
   Float: ResolverTypeWrapper<Scalars['Float']['output']>;
@@ -1431,15 +1490,16 @@ export type ResolversTypes = ResolversObject<{
   Signature: ResolverTypeWrapper<Scalars['Signature']['output']>;
   SpendQueryElementInput: SpendQueryElementInput;
   SqueezedOutStatus: ResolverTypeWrapper<SqueezedOutStatus>;
+  StateTransitionBytecode: ResolverTypeWrapper<StateTransitionBytecode>;
   StateTransitionPurpose: ResolverTypeWrapper<StateTransitionPurpose>;
   String: ResolverTypeWrapper<Scalars['String']['output']>;
   SubmittedStatus: ResolverTypeWrapper<SubmittedStatus>;
   Subscription: ResolverTypeWrapper<{}>;
-  SuccessStatus: ResolverTypeWrapper<SuccessStatus>;
+  SuccessStatus: ResolverTypeWrapper<Omit<SuccessStatus, 'block' | 'transaction'> & { block: ResolversTypes['Block'], transaction: ResolversTypes['Transaction'] }>;
   Tai64Timestamp: ResolverTypeWrapper<Scalars['Tai64Timestamp']['output']>;
-  Transaction: ResolverTypeWrapper<Omit<Transaction, 'inputs' | 'outputs' | 'status' | 'upgradePurpose'> & { inputs?: Maybe<Array<ResolversTypes['Input']>>, outputs: Array<ResolversTypes['Output']>, status?: Maybe<ResolversTypes['TransactionStatus']>, upgradePurpose?: Maybe<ResolversTypes['UpgradePurpose']> }>;
-  TransactionConnection: ResolverTypeWrapper<TransactionConnection>;
-  TransactionEdge: ResolverTypeWrapper<TransactionEdge>;
+  Transaction: ResolverTypeWrapper<Omit<Transaction, 'inputContract' | 'inputs' | 'outputs' | 'status' | 'upgradePurpose'> & { inputContract?: Maybe<ResolversTypes['InputContract']>, inputs?: Maybe<Array<ResolversTypes['Input']>>, outputs: Array<ResolversTypes['Output']>, status?: Maybe<ResolversTypes['TransactionStatus']>, upgradePurpose?: Maybe<ResolversTypes['UpgradePurpose']> }>;
+  TransactionConnection: ResolverTypeWrapper<Omit<TransactionConnection, 'edges' | 'nodes'> & { edges: Array<ResolversTypes['TransactionEdge']>, nodes: Array<ResolversTypes['Transaction']> }>;
+  TransactionEdge: ResolverTypeWrapper<Omit<TransactionEdge, 'node'> & { node: ResolversTypes['Transaction'] }>;
   TransactionId: ResolverTypeWrapper<Scalars['TransactionId']['output']>;
   TransactionStatus: ResolverTypeWrapper<ResolversUnionTypes<ResolversTypes>['TransactionStatus']>;
   TxParameters: ResolverTypeWrapper<TxParameters>;
@@ -1449,6 +1509,7 @@ export type ResolversTypes = ResolversObject<{
   U32: ResolverTypeWrapper<Scalars['U32']['output']>;
   U64: ResolverTypeWrapper<Scalars['U64']['output']>;
   UpgradePurpose: ResolverTypeWrapper<ResolversUnionTypes<ResolversTypes>['UpgradePurpose']>;
+  UploadedBytecode: ResolverTypeWrapper<UploadedBytecode>;
   UtxoId: ResolverTypeWrapper<Scalars['UtxoId']['output']>;
   VariableOutput: ResolverTypeWrapper<VariableOutput>;
 }>;
@@ -1461,15 +1522,16 @@ export type ResolversParentTypes = ResolversObject<{
   BalanceConnection: BalanceConnection;
   BalanceEdge: BalanceEdge;
   BalanceFilterInput: BalanceFilterInput;
+  Blob: Blob;
   BlobId: Scalars['BlobId']['output'];
-  Block: Omit<Block, 'consensus'> & { consensus: ResolversParentTypes['Consensus'] };
-  BlockConnection: BlockConnection;
-  BlockEdge: BlockEdge;
+  Block: Omit<Block, 'consensus' | 'transactions'> & { consensus: ResolversParentTypes['Consensus'], transactions: Array<ResolversParentTypes['Transaction']> };
+  BlockConnection: Omit<BlockConnection, 'edges' | 'nodes'> & { edges: Array<ResolversParentTypes['BlockEdge']>, nodes: Array<ResolversParentTypes['Block']> };
+  BlockEdge: Omit<BlockEdge, 'node'> & { node: ResolversParentTypes['Block'] };
   BlockId: Scalars['BlockId']['output'];
   Boolean: Scalars['Boolean']['output'];
   Breakpoint: Breakpoint;
   Bytes32: Scalars['Bytes32']['output'];
-  ChainInfo: ChainInfo;
+  ChainInfo: Omit<ChainInfo, 'consensusParameters' | 'gasCosts' | 'latestBlock'> & { consensusParameters: ResolversParentTypes['ConsensusParameters'], gasCosts: ResolversParentTypes['GasCosts'], latestBlock: ResolversParentTypes['Block'] };
   ChangeOutput: ChangeOutput;
   Coin: Coin;
   CoinConnection: CoinConnection;
@@ -1478,7 +1540,7 @@ export type ResolversParentTypes = ResolversObject<{
   CoinOutput: CoinOutput;
   CoinType: ResolversUnionTypes<ResolversParentTypes>['CoinType'];
   Consensus: ResolversUnionTypes<ResolversParentTypes>['Consensus'];
-  ConsensusParameters: ConsensusParameters;
+  ConsensusParameters: Omit<ConsensusParameters, 'contractParams' | 'gasCosts'> & { contractParams: ResolversParentTypes['ContractParameters'], gasCosts: ResolversParentTypes['GasCosts'] };
   ConsensusParametersPurpose: ConsensusParametersPurpose;
   Contract: Contract;
   ContractBalance: ContractBalance;
@@ -1496,7 +1558,7 @@ export type ResolversParentTypes = ResolversObject<{
   DryRunTransactionStatus: ResolversUnionTypes<ResolversParentTypes>['DryRunTransactionStatus'];
   EstimateGasPrice: EstimateGasPrice;
   ExcludeInput: ExcludeInput;
-  FailureStatus: FailureStatus;
+  FailureStatus: Omit<FailureStatus, 'block' | 'transaction'> & { block: ResolversParentTypes['Block'], transaction: ResolversParentTypes['Transaction'] };
   FeeParameters: FeeParameters;
   Float: Scalars['Float']['output'];
   GasCosts: Omit<GasCosts, 'alocDependentCost' | 'bldd' | 'bsiz' | 'call' | 'ccp' | 'cfe' | 'cfeiDependentCost' | 'contractRoot' | 'croo' | 'csiz' | 'ed19DependentCost' | 'k256' | 'ldc' | 'logd' | 'mcl' | 'mcli' | 'mcp' | 'mcpi' | 'meq' | 'retd' | 's256' | 'scwq' | 'smo' | 'srwq' | 'stateRoot' | 'swwq' | 'vmInitialization'> & { alocDependentCost: ResolversParentTypes['DependentCost'], bldd?: Maybe<ResolversParentTypes['DependentCost']>, bsiz?: Maybe<ResolversParentTypes['DependentCost']>, call: ResolversParentTypes['DependentCost'], ccp: ResolversParentTypes['DependentCost'], cfe: ResolversParentTypes['DependentCost'], cfeiDependentCost: ResolversParentTypes['DependentCost'], contractRoot: ResolversParentTypes['DependentCost'], croo: ResolversParentTypes['DependentCost'], csiz: ResolversParentTypes['DependentCost'], ed19DependentCost: ResolversParentTypes['DependentCost'], k256: ResolversParentTypes['DependentCost'], ldc: ResolversParentTypes['DependentCost'], logd: ResolversParentTypes['DependentCost'], mcl: ResolversParentTypes['DependentCost'], mcli: ResolversParentTypes['DependentCost'], mcp: ResolversParentTypes['DependentCost'], mcpi: ResolversParentTypes['DependentCost'], meq: ResolversParentTypes['DependentCost'], retd: ResolversParentTypes['DependentCost'], s256: ResolversParentTypes['DependentCost'], scwq: ResolversParentTypes['DependentCost'], smo: ResolversParentTypes['DependentCost'], srwq: ResolversParentTypes['DependentCost'], stateRoot: ResolversParentTypes['DependentCost'], swwq: ResolversParentTypes['DependentCost'], vmInitialization: ResolversParentTypes['DependentCost'] };
@@ -1541,15 +1603,16 @@ export type ResolversParentTypes = ResolversObject<{
   Signature: Scalars['Signature']['output'];
   SpendQueryElementInput: SpendQueryElementInput;
   SqueezedOutStatus: SqueezedOutStatus;
+  StateTransitionBytecode: StateTransitionBytecode;
   StateTransitionPurpose: StateTransitionPurpose;
   String: Scalars['String']['output'];
   SubmittedStatus: SubmittedStatus;
   Subscription: {};
-  SuccessStatus: SuccessStatus;
+  SuccessStatus: Omit<SuccessStatus, 'block' | 'transaction'> & { block: ResolversParentTypes['Block'], transaction: ResolversParentTypes['Transaction'] };
   Tai64Timestamp: Scalars['Tai64Timestamp']['output'];
-  Transaction: Omit<Transaction, 'inputs' | 'outputs' | 'status' | 'upgradePurpose'> & { inputs?: Maybe<Array<ResolversParentTypes['Input']>>, outputs: Array<ResolversParentTypes['Output']>, status?: Maybe<ResolversParentTypes['TransactionStatus']>, upgradePurpose?: Maybe<ResolversParentTypes['UpgradePurpose']> };
-  TransactionConnection: TransactionConnection;
-  TransactionEdge: TransactionEdge;
+  Transaction: Omit<Transaction, 'inputContract' | 'inputs' | 'outputs' | 'status' | 'upgradePurpose'> & { inputContract?: Maybe<ResolversParentTypes['InputContract']>, inputs?: Maybe<Array<ResolversParentTypes['Input']>>, outputs: Array<ResolversParentTypes['Output']>, status?: Maybe<ResolversParentTypes['TransactionStatus']>, upgradePurpose?: Maybe<ResolversParentTypes['UpgradePurpose']> };
+  TransactionConnection: Omit<TransactionConnection, 'edges' | 'nodes'> & { edges: Array<ResolversParentTypes['TransactionEdge']>, nodes: Array<ResolversParentTypes['Transaction']> };
+  TransactionEdge: Omit<TransactionEdge, 'node'> & { node: ResolversParentTypes['Transaction'] };
   TransactionId: Scalars['TransactionId']['output'];
   TransactionStatus: ResolversUnionTypes<ResolversParentTypes>['TransactionStatus'];
   TxParameters: TxParameters;
@@ -1558,6 +1621,7 @@ export type ResolversParentTypes = ResolversObject<{
   U32: Scalars['U32']['output'];
   U64: Scalars['U64']['output'];
   UpgradePurpose: ResolversUnionTypes<ResolversParentTypes>['UpgradePurpose'];
+  UploadedBytecode: UploadedBytecode;
   UtxoId: Scalars['UtxoId']['output'];
   VariableOutput: VariableOutput;
 }>;
@@ -1587,6 +1651,12 @@ export type BalanceConnectionResolvers<ContextType = any, ParentType extends Res
 export type BalanceEdgeResolvers<ContextType = any, ParentType extends ResolversParentTypes['BalanceEdge'] = ResolversParentTypes['BalanceEdge']> = ResolversObject<{
   cursor?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   node?: Resolver<ResolversTypes['Balance'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+}>;
+
+export type BlobResolvers<ContextType = any, ParentType extends ResolversParentTypes['Blob'] = ResolversParentTypes['Blob']> = ResolversObject<{
+  bytecode?: Resolver<ResolversTypes['HexString'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['BlobId'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 
@@ -1683,6 +1753,7 @@ export type ConsensusResolvers<ContextType = any, ParentType extends ResolversPa
 export type ConsensusParametersResolvers<ContextType = any, ParentType extends ResolversParentTypes['ConsensusParameters'] = ResolversParentTypes['ConsensusParameters']> = ResolversObject<{
   baseAssetId?: Resolver<ResolversTypes['AssetId'], ParentType, ContextType>;
   blockGasLimit?: Resolver<ResolversTypes['U64'], ParentType, ContextType>;
+  blockTransactionSizeLimit?: Resolver<ResolversTypes['U64'], ParentType, ContextType>;
   chainId?: Resolver<ResolversTypes['U64'], ParentType, ContextType>;
   contractParams?: Resolver<ResolversTypes['ContractParameters'], ParentType, ContextType>;
   feeParams?: Resolver<ResolversTypes['FeeParameters'], ParentType, ContextType>;
@@ -2163,12 +2234,14 @@ export type ProgramStateResolvers<ContextType = any, ParentType extends Resolver
 export type QueryResolvers<ContextType = any, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = ResolversObject<{
   balance?: Resolver<ResolversTypes['Balance'], ParentType, ContextType, RequireFields<QueryBalanceArgs, 'assetId' | 'owner'>>;
   balances?: Resolver<ResolversTypes['BalanceConnection'], ParentType, ContextType, RequireFields<QueryBalancesArgs, 'filter'>>;
+  blob?: Resolver<Maybe<ResolversTypes['Blob']>, ParentType, ContextType, RequireFields<QueryBlobArgs, 'id'>>;
   block?: Resolver<Maybe<ResolversTypes['Block']>, ParentType, ContextType, Partial<QueryBlockArgs>>;
   blocks?: Resolver<ResolversTypes['BlockConnection'], ParentType, ContextType, Partial<QueryBlocksArgs>>;
   chain?: Resolver<ResolversTypes['ChainInfo'], ParentType, ContextType>;
   coin?: Resolver<Maybe<ResolversTypes['Coin']>, ParentType, ContextType, RequireFields<QueryCoinArgs, 'utxoId'>>;
   coins?: Resolver<ResolversTypes['CoinConnection'], ParentType, ContextType, RequireFields<QueryCoinsArgs, 'filter'>>;
   coinsToSpend?: Resolver<Array<Array<ResolversTypes['CoinType']>>, ParentType, ContextType, RequireFields<QueryCoinsToSpendArgs, 'owner' | 'queryPerAsset'>>;
+  consensusParameters?: Resolver<ResolversTypes['ConsensusParameters'], ParentType, ContextType, RequireFields<QueryConsensusParametersArgs, 'version'>>;
   contract?: Resolver<Maybe<ResolversTypes['Contract']>, ParentType, ContextType, RequireFields<QueryContractArgs, 'id'>>;
   contractBalance?: Resolver<ResolversTypes['ContractBalance'], ParentType, ContextType, RequireFields<QueryContractBalanceArgs, 'asset' | 'contract'>>;
   contractBalances?: Resolver<ResolversTypes['ContractBalanceConnection'], ParentType, ContextType, RequireFields<QueryContractBalancesArgs, 'filter'>>;
@@ -2184,6 +2257,8 @@ export type QueryResolvers<ContextType = any, ParentType extends ResolversParent
   nodeInfo?: Resolver<ResolversTypes['NodeInfo'], ParentType, ContextType>;
   register?: Resolver<ResolversTypes['U64'], ParentType, ContextType, RequireFields<QueryRegisterArgs, 'id' | 'register'>>;
   relayedTransactionStatus?: Resolver<Maybe<ResolversTypes['RelayedTransactionStatus']>, ParentType, ContextType, RequireFields<QueryRelayedTransactionStatusArgs, 'id'>>;
+  stateTransitionBytecodeByRoot?: Resolver<ResolversTypes['StateTransitionBytecode'], ParentType, ContextType, RequireFields<QueryStateTransitionBytecodeByRootArgs, 'root'>>;
+  stateTransitionBytecodeByVersion?: Resolver<Maybe<ResolversTypes['StateTransitionBytecode']>, ParentType, ContextType, RequireFields<QueryStateTransitionBytecodeByVersionArgs, 'version'>>;
   transaction?: Resolver<Maybe<ResolversTypes['Transaction']>, ParentType, ContextType, RequireFields<QueryTransactionArgs, 'id'>>;
   transactions?: Resolver<ResolversTypes['TransactionConnection'], ParentType, ContextType, Partial<QueryTransactionsArgs>>;
   transactionsByOwner?: Resolver<ResolversTypes['TransactionConnection'], ParentType, ContextType, RequireFields<QueryTransactionsByOwnerArgs, 'owner'>>;
@@ -2262,6 +2337,12 @@ export type SqueezedOutStatusResolvers<ContextType = any, ParentType extends Res
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 
+export type StateTransitionBytecodeResolvers<ContextType = any, ParentType extends ResolversParentTypes['StateTransitionBytecode'] = ResolversParentTypes['StateTransitionBytecode']> = ResolversObject<{
+  bytecode?: Resolver<ResolversTypes['UploadedBytecode'], ParentType, ContextType>;
+  root?: Resolver<ResolversTypes['HexString'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+}>;
+
 export type StateTransitionPurposeResolvers<ContextType = any, ParentType extends ResolversParentTypes['StateTransitionPurpose'] = ResolversParentTypes['StateTransitionPurpose']> = ResolversObject<{
   root?: Resolver<ResolversTypes['Bytes32'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -2275,6 +2356,7 @@ export type SubmittedStatusResolvers<ContextType = any, ParentType extends Resol
 export type SubscriptionResolvers<ContextType = any, ParentType extends ResolversParentTypes['Subscription'] = ResolversParentTypes['Subscription']> = ResolversObject<{
   statusChange?: SubscriptionResolver<ResolversTypes['TransactionStatus'], "statusChange", ParentType, ContextType, RequireFields<SubscriptionStatusChangeArgs, 'id'>>;
   submitAndAwait?: SubscriptionResolver<ResolversTypes['TransactionStatus'], "submitAndAwait", ParentType, ContextType, RequireFields<SubscriptionSubmitAndAwaitArgs, 'tx'>>;
+  submitAndAwaitStatus?: SubscriptionResolver<ResolversTypes['TransactionStatus'], "submitAndAwaitStatus", ParentType, ContextType, RequireFields<SubscriptionSubmitAndAwaitStatusArgs, 'tx'>>;
 }>;
 
 export type SuccessStatusResolvers<ContextType = any, ParentType extends ResolversParentTypes['SuccessStatus'] = ResolversParentTypes['SuccessStatus']> = ResolversObject<{
@@ -2385,6 +2467,13 @@ export type UpgradePurposeResolvers<ContextType = any, ParentType extends Resolv
   __resolveType: TypeResolveFn<'ConsensusParametersPurpose' | 'StateTransitionPurpose', ParentType, ContextType>;
 }>;
 
+export type UploadedBytecodeResolvers<ContextType = any, ParentType extends ResolversParentTypes['UploadedBytecode'] = ResolversParentTypes['UploadedBytecode']> = ResolversObject<{
+  bytecode?: Resolver<ResolversTypes['HexString'], ParentType, ContextType>;
+  completed?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  uploadedSubsectionsNumber?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+}>;
+
 export interface UtxoIdScalarConfig extends GraphQLScalarTypeConfig<ResolversTypes['UtxoId'], any> {
   name: 'UtxoId';
 }
@@ -2402,6 +2491,7 @@ export type Resolvers<ContextType = any> = ResolversObject<{
   Balance?: BalanceResolvers<ContextType>;
   BalanceConnection?: BalanceConnectionResolvers<ContextType>;
   BalanceEdge?: BalanceEdgeResolvers<ContextType>;
+  Blob?: BlobResolvers<ContextType>;
   BlobId?: GraphQLScalarType;
   Block?: BlockResolvers<ContextType>;
   BlockConnection?: BlockConnectionResolvers<ContextType>;
@@ -2473,6 +2563,7 @@ export type Resolvers<ContextType = any> = ResolversObject<{
   ScriptParameters?: ScriptParametersResolvers<ContextType>;
   Signature?: GraphQLScalarType;
   SqueezedOutStatus?: SqueezedOutStatusResolvers<ContextType>;
+  StateTransitionBytecode?: StateTransitionBytecodeResolvers<ContextType>;
   StateTransitionPurpose?: StateTransitionPurposeResolvers<ContextType>;
   SubmittedStatus?: SubmittedStatusResolvers<ContextType>;
   Subscription?: SubscriptionResolvers<ContextType>;
@@ -2489,6 +2580,7 @@ export type Resolvers<ContextType = any> = ResolversObject<{
   U32?: GraphQLScalarType;
   U64?: GraphQLScalarType;
   UpgradePurpose?: UpgradePurposeResolvers<ContextType>;
+  UploadedBytecode?: UploadedBytecodeResolvers<ContextType>;
   UtxoId?: GraphQLScalarType;
   VariableOutput?: VariableOutputResolvers<ContextType>;
 }>;

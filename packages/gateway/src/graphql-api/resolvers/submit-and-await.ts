@@ -1,4 +1,4 @@
-import { TransactionCreate, TransactionType, ZeroBytes32, TransactionUpgrade } from "fuels";
+import { ZeroBytes32 } from "fuels";
 import { TAI64 } from "tai64";
 
 import { SuccessStatus } from "@/generated";
@@ -7,44 +7,20 @@ import { AuthService, TransactionService } from "@/service";
 
 export const submitAndAwait = {
   subscribe: async function* (_, args, context) {
-    const { apiToken, userId, database } = context;
-
+    const { schema, apiToken, userId, database } = context;
     const transaction = toTransaction(args.tx);
 
     try {
       const authService = new AuthService(database);
       const transactionService = new TransactionService(authService);
 
-      let vault;
-      let transactionId;
-
-      if (transaction.type === TransactionType.Create) {
-        const submitResponse = await transactionService.submitDeploy({
-          userId,
-          apiToken,
-          transaction: <TransactionCreate>transaction
-        });
-        vault = submitResponse.vault;
-        transactionId = submitResponse.deployTransfer.getHashTxId();
-      }
-
-      if (transaction.type === TransactionType.Upgrade) {
-        const submitResponse = await transactionService.submitUpgrade({
-          userId,
-          apiToken,
-          transaction: <TransactionUpgrade>transaction
-        });
-        vault = submitResponse.vault;
-        transactionId = submitResponse.upgradeTransfer.getHashTxId();
-      }
-
-      console.log("[SUBSCRIPTION] Transaction sent to Bako", {
-        vault: vault.BakoSafeVaultId,
-        address: vault.address.toAddress(),
-        transactionId
+      const { hash } = await transactionService.submit({
+        userId,
+        apiToken,
+        transaction,
       });
 
-      yield transactionId;
+      yield hash;
     } catch (error) {
       console.error(error);
       throw error;
@@ -73,13 +49,13 @@ export const submitAndAwait = {
           stateTransitionBytecodeVersion: "0",
           time: TAI64.now().toUnix().toString(),
           transactionsCount: "2",
-          transactionsRoot: ZeroBytes32
-        }
+          transactionsRoot: ZeroBytes32,
+        },
       },
       time: TAI64.now().toUnix().toString(),
       receipts: [],
       totalGas: "1063605",
-      totalFee: "11561"
+      totalFee: "11561",
     } as SuccessStatus;
-  }
+  },
 };

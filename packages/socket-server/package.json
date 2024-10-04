@@ -12,10 +12,11 @@
 	},
 	"keywords": [],
 	"dependencies": {
-		"bakosafe": "0.0.80-beta",
+		"axios": "1.5.1",
+		"bakosafe": "0.0.87-beta",
 		"express": "4.17.1",
 		"express-joi-validation": "5.0.0",
-		"fuels": "0.94.6",
+		"fuels": "0.94.8",
 		"pg": "8.5.1",
 		"socket.io": "4.7.2",
 		"ts-node": "^10.9.2",

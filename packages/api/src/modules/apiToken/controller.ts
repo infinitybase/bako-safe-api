@@ -13,7 +13,7 @@ export class APITokenController {
   }
 
   async create(req: ICreateAPITokenRequest) {
-    const { user, body, params } = req;
+    const { user, body, params, network } = req;
 
     const { name, config } = body;
     const { predicateId } = params;
@@ -33,6 +33,7 @@ export class APITokenController {
         name,
         config,
         predicate,
+        network,
       });
       const cliToken = this.apiTokenService.generateCLIToken(
         apiToken.token,
@@ -45,6 +46,7 @@ export class APITokenController {
           name: apiToken.name,
           token: cliToken,
           config: apiToken.config,
+          network: apiToken.network,
         },
         Responses.Ok,
       );

@@ -1,10 +1,4 @@
-import {
-  IWitnesses,
-  // TransactionProcessStatus,
-  TransactionStatus,
-  Vault,
-  WitnessStatus,
-} from 'bakosafe';
+import { IWitnesses, TransactionStatus, Vault, WitnessStatus } from 'bakosafe';
 import {
   Address,
   getTransactionsSummaries,
@@ -17,9 +11,7 @@ import {
 } from 'fuels';
 import { Brackets } from 'typeorm';
 
-import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
-
-import { NotificationTitle, Predicate, Transaction } from '@models/index';
+import { Predicate, Transaction } from '@models/index';
 
 import { NotFound } from '@utils/error';
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
@@ -184,6 +176,7 @@ export class TransactionService implements ITransactionService {
         't.summary',
         't.updatedAt',
         't.type',
+        't.network',
       ])
       .leftJoin('t.predicate', 'predicate')
       .leftJoin('predicate.members', 'members')
@@ -191,7 +184,6 @@ export class TransactionService implements ITransactionService {
       .addSelect([
         'predicate.name',
         'predicate.id',
-        'predicate.minSigners',
         'predicate.predicateAddress',
         'members.id',
         'members.avatar',
@@ -199,7 +191,10 @@ export class TransactionService implements ITransactionService {
         'workspace.id',
         'workspace.name',
         'workspace.single',
-      ]);
+      ])
+      .andWhere(`t.network->>'url' = :network`, {
+        network: this._filter.network,
+      });
 
     this._filter.predicateAddress &&
       queryBuilder.andWhere('predicate.predicateAddress = :address', {
@@ -336,6 +331,7 @@ export class TransactionService implements ITransactionService {
         't.summary',
         't.updatedAt',
         't.type',
+        't.network',
       ])
       .leftJoin('t.predicate', 'predicate')
       .leftJoin('predicate.members', 'members')
@@ -343,7 +339,6 @@ export class TransactionService implements ITransactionService {
       .addSelect([
         'predicate.name',
         'predicate.id',
-        'predicate.minSigners',
         'predicate.predicateAddress',
         'members.id',
         'members.avatar',
@@ -351,7 +346,10 @@ export class TransactionService implements ITransactionService {
         'workspace.id',
         'workspace.name',
         'workspace.single',
-      ]);
+      ])
+      .andWhere(`t.network->>'url' = :network`, {
+        network: this._filter.network,
+      });
 
     // =============== specific for workspace ===============
     if (this._filter.workspaceId || this._filter.signer) {
@@ -475,7 +473,6 @@ export class TransactionService implements ITransactionService {
   }
 
   checkInvalidConditions(status: TransactionStatus) {
-    console.log('status', status);
     const invalidConditions =
       !status ||
       status === TransactionStatus.AWAIT_REQUIREMENTS ||
@@ -494,23 +491,19 @@ export class TransactionService implements ITransactionService {
   //instance tx
   //add witnesses
   async sendToChain(hash: string) {
-    const { id, predicate, txData, status, resume } = await this.findByHash(hash);
+    const transaction = await this.findByHash(hash);
+    const { id, predicate, txData, status, resume } = transaction;
 
     if (status != TransactionStatus.PENDING_SENDER) {
       return await this.findById(id);
     }
 
-    const provider = await Provider.create(predicate.provider);
+    const provider = await Provider.create(transaction.network.url);
     const vault = new Vault(provider, JSON.parse(predicate.configurable));
 
     const tx = transactionRequestify({
       ...txData,
-      witnesses: [
-        ...(txData.type === FuelTransactionType.Create // is required add on 1st position
-          ? [hexlify(txData.witnesses[txData.bytecodeWitnessIndex])]
-          : []),
-        ...resume.witnesses.filter(w => !!w.signature).map(w => w.signature),
-      ],
+      witnesses: transaction.getWitnesses(),
     });
 
     try {
@@ -548,20 +541,21 @@ export class TransactionService implements ITransactionService {
 
   async fetchFuelTransactions(
     predicates: Predicate[],
+    providerUrl: string,
   ): Promise<ITransactionResponse[]> {
     try {
       let _transactions: ITransactionResponse[] = [];
 
       for await (const predicate of predicates) {
         const address = Address.fromString(predicate.predicateAddress).toB256();
-        const provider = await Provider.create(predicate.provider);
+        const provider = await Provider.create(providerUrl);
 
         // TODO: change this to use pagination and order DESC
         const { transactions } = await getTransactionsSummaries({
           provider,
           filters: {
             owner: address,
-            first: 1000,
+            first: 100,
           },
         });
 
@@ -570,8 +564,9 @@ export class TransactionService implements ITransactionService {
           .filter(tx => tx.isStatusSuccess)
           .filter(tx => tx.operations.some(op => op.to?.address === address));
 
-        const formattedTransactions = filteredTransactions.map(tx =>
-          formatFuelTransaction(tx, predicate),
+        // formatFueLTransactio needs to be async because of the request to get fuels tokens up to date and use them to get the network units
+        const formattedTransactions = await Promise.all(
+          filteredTransactions.map(tx => formatFuelTransaction(tx, predicate)),
         );
 
         _transactions = [..._transactions, ...formattedTransactions];
@@ -590,9 +585,10 @@ export class TransactionService implements ITransactionService {
   async fetchFuelTransactionById(
     id: string,
     predicate: Predicate,
+    providerUrl: string,
   ): Promise<ITransactionResponse> {
     try {
-      const provider = await Provider.create(predicate.provider);
+      const provider = await Provider.create(providerUrl);
 
       const tx = await getTransactionSummary({
         id,
