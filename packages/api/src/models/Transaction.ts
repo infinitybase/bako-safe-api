@@ -19,6 +19,8 @@ import { Predicate } from './Predicate';
 import { ITransactionResponse } from '@src/modules/transaction/types';
 import { formatAssets } from '@src/utils/formatAssets';
 import { networks } from '@src/mocks/networks';
+import { cachedAssets } from '@src/server/storage/fuelAssetsFetcher';
+import { handleFuelUnitAssets } from '@src/utils/assets';
 
 const { FUEL_PROVIDER, FUEL_PROVIDER_CHAIN_ID } = process.env;
 
@@ -106,7 +108,14 @@ class Transaction extends Base {
   }
 
   static formatTransactionResponse(transaction: Transaction): ITransactionResponse {
-    const assets = formatAssets(transaction.txData.outputs);
+    const fuelUnitAssets = (chainId: number, assetId: string): number =>
+      handleFuelUnitAssets(cachedAssets, chainId, assetId);
+
+    const assets = formatAssets(
+      transaction.txData.outputs,
+      undefined,
+      fuelUnitAssets,
+    );
     const result = Object.assign(transaction, {
       assets,
     });
