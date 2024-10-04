@@ -226,13 +226,15 @@ export class UserController {
         provider ?? process.env.FUEL_PROVIDER,
       );
 
+      const localAddTime = process.env.API_ENVIRONMENT === 'development' ? 180 : 0;
+
       const code = await new RecoverCodeService()
         .create({
           owner: existingUser,
           type: RecoverCodeType.AUTH,
           origin: req.headers.origin ?? process.env.UI_URL,
           // todo: validate this info about the time UTC -3horas
-          validAt: addMinutes(new Date(), 180 + 5), //todo: change this number to dynamic
+          validAt: addMinutes(new Date(), localAddTime + 5), //todo: change this number to dynamic
           network: {
             url: _provider.url,
             chainId: _provider.getChainId(),
