@@ -566,7 +566,9 @@ export class TransactionService implements ITransactionService {
 
         // formatFueLTransactio needs to be async because of the request to get fuels tokens up to date and use them to get the network units
         const formattedTransactions = await Promise.all(
-          filteredTransactions.map(tx => formatFuelTransaction(tx, predicate)),
+          filteredTransactions.map(tx =>
+            formatFuelTransaction(tx, predicate, provider),
+          ),
         );
 
         _transactions = [..._transactions, ...formattedTransactions];
@@ -595,7 +597,7 @@ export class TransactionService implements ITransactionService {
         provider,
       });
 
-      return formatFuelTransaction(tx, predicate);
+      return formatFuelTransaction(tx, predicate, provider);
     } catch (e) {
       throw new Internal({
         type: ErrorTypes.Internal,
