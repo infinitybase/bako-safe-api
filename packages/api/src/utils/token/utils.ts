@@ -182,6 +182,7 @@ export class TokenUtils {
           validAt: MoreThan(new Date()),
         },
         relations: ['owner'],
+        order: { createdAt: 'DESC' },
       });
 
       if (!code) {
