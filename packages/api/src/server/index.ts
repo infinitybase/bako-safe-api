@@ -1,3 +1,5 @@
+import * as pprof from 'pprof';
+
 import app from './app';
 import Bootstrap from './bootstrap';
 import Monitoring from './monitoring';
@@ -15,6 +17,8 @@ const {
   AWS_SMTP_USER,
   AWS_SMTP_PASS
 } = process.env;
+
+pprof.heap.start(512 * 1024, 64);
 
 const start = async () => {
   const port = API_PORT || PORT || 3333;
