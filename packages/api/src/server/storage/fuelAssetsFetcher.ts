@@ -1,4 +1,4 @@
-import { Assets } from 'fuels';
+import { assets, Assets } from 'fuels';
 
 const ASSETS_URL = 'https://verified-assets.fuel.network/assets.json';
 
@@ -13,7 +13,7 @@ export const fetchFuelAssets = async (): Promise<Assets> => {
     const response = await fetch(ASSETS_URL);
 
     if (!response.ok) {
-      throw new Error('Failed to fetch data');
+      return assets;
     }
 
     const data: Assets = await response.json();
@@ -25,3 +25,5 @@ export const fetchFuelAssets = async (): Promise<Assets> => {
     return [] as Assets;
   }
 };
+
+export { cachedAssets };

@@ -37,8 +37,6 @@ const calculateBalanceUSD = async (
   let balanceUSD = 0;
   const { fuelUnitAssets } = await getAssetsMaps();
 
-  console.log('chainId:', chainId);
-
   balances?.forEach(balance => {
     const units = fuelUnitAssets(chainId, balance.assetId);
     const formattedAmount = balance.amount.format({

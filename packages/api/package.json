@@ -45,6 +45,7 @@
     "nodemailer": "6.9.8",
     "patch-package": "8.0.0",
     "pg": "8.5.1",
+    "pprof": "4.0.0",
     "qs": "6.12.1",
     "reflect-metadata": "0.1.13",
     "socket.io": "4.7.2",

@@ -64,30 +64,37 @@ export const fuelAssetsByChainId = (
   }, []);
 };
 
+export const handleFuelUnitAssets = (
+  fuelAssetsList: Assets,
+  chainId: number,
+  assetId: string,
+): number => {
+  const result =
+    fuelAssetsList
+      .map(asset => {
+        const network = asset.networks.find(
+          network => network && network.chainId === chainId,
+        ) as NetworkFuel;
+
+        if (network && network.assetId === assetId) return network.decimals;
+      })
+      .find(units => units !== undefined) ?? 8;
+
+  return result;
+};
+
 export const getAssetsMaps = async () => {
   const fuelAssetsList = await fetchFuelAssets();
 
-  const fuelUnitAssets = (chainId: number, assetId: string): number => {
-    const result =
-      fuelAssetsList
-        .map(asset => {
-          const network = asset.networks.find(
-            network => network && network.chainId === chainId,
-          ) as NetworkFuel;
-
-          if (network && network.assetId === assetId) return network.decimals;
-        })
-        .find(units => units !== undefined) ?? 8;
-
-    return result;
-  };
+  const fuelUnitAssets = (chainId: number, assetId: string): number =>
+    handleFuelUnitAssets(fuelAssetsList, chainId, assetId);
 
   const fuelAssets = (): Asset[] =>
     fuelAssetsList.reduce<Asset[]>((acc, asset) => {
       if (whitelist.includes(asset.name.toLocaleLowerCase())) return acc;
 
       const network = asset.networks.find(
-        network => network && network.chainId === 0,
+        network => network && network.type === 'fuel',
       ) as NetworkFuel;
 
       if (network && network.type === 'fuel') {
@@ -97,7 +104,6 @@ export const getAssetsMaps = async () => {
           assetId: network.assetId,
           icon: asset.icon,
           units: network.decimals,
-          // units: 9,
         });
       }
       return acc;

@@ -85,6 +85,7 @@ export type IUserSignin = {
   webauthn?: WebAuthn;
   email?: string;
   network: Network;
+  notify: boolean;
 };
 
 export interface ISignInResponse extends IUserSignin {
