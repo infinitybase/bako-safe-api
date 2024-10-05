@@ -114,6 +114,7 @@ class Transaction extends Base {
     const assets = formatAssets(
       transaction.txData.outputs,
       undefined,
+      transaction.network.chainId,
       fuelUnitAssets,
     );
     const result = Object.assign(transaction, {
