@@ -25,3 +25,5 @@ export const fetchFuelAssets = async (): Promise<Assets> => {
     return [] as Assets;
   }
 };
+
+export { cachedAssets };

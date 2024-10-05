@@ -45,6 +45,7 @@ export const formatFuelTransaction = async (
   } = tx.transaction;
 
   const config = JSON.parse(predicate.configurable);
+  const chainId = provider.getChainId();
 
   const formattedTransaction = {
     id: tx.id,
@@ -95,10 +96,15 @@ export const formatFuelTransaction = async (
         single: predicate.workspace.single,
       },
     },
-    assets: formatAssets(outputs, predicate.predicateAddress, fuelUnitAssets),
+    assets: formatAssets(
+      outputs,
+      predicate.predicateAddress,
+      chainId,
+      fuelUnitAssets,
+    ),
     network: {
       url: provider.url,
-      chainId: provider.getChainId(),
+      chainId,
     },
   };
 
