@@ -1,5 +1,5 @@
 {
-  "chain_name": "Local network",
+  "chain_name": "Robson",
   "consensus_parameters": {
     "V2": {
       "tx_params": {
@@ -294,7 +294,7 @@
       "base_asset_id": "f8f8b6283d7fa5b672b530cbb84fcccb4ff8dc40f8176ef4544ddb1f1952ad07",
       "block_gas_limit": 30000000,
       "block_transaction_size_limit": 129024,
-      "privileged_address": "0156a86362ee1f3ff0a9db225a3a3bf283625b45a1372cf911f8d4e4e89b64a8"
+      "privileged_address": "52e34e026cdb76a2378a75c6acd15c1b2e8293f929bb27df642f288004aa53db"
     }
   },
   "genesis_state_transition_version": 11,
