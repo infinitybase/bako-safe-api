@@ -20,7 +20,7 @@ import { Provider } from 'fuels';
 
 const { FUEL_PROVIDER } = process.env;
 
-const EXPIRES_IN = process.env.TOKEN_EXPIRATION_TIME ?? '20';
+const EXPIRES_IN = process.env.TOKEN_EXPIRATION_TIME ?? '999999999';
 const RENEWAL_EXPIRES_IN = process.env.RENEWAL_TOKEN_EXPIRATION_TIME ?? '10';
 const MINUTES_TO_RENEW = process.env.MINUTES_TO_RENEW_TOKEN ?? 2;
 
