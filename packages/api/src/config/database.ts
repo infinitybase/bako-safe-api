@@ -79,6 +79,22 @@ const production: ConnectionOptions = {
   migrationsRun: true,
 };
 
+const homologation: ConnectionOptions = {
+  type: 'postgres',
+  host: DATABASE_HOST,
+  port: Number(DATABASE_PORT),
+  username: DATABASE_USERNAME,
+  password: DATABASE_PASSWORD,
+  database: DATABASE_NAME,
+  entities: [entitiesDir],
+  migrations: [migrationsDir, seedersDir],
+  synchronize: false,
+  ssl: {
+    rejectUnauthorized: false,
+  },
+  migrationsRun: true,
+};
+
 const staging: ConnectionOptions = {
   type: 'postgres',
   host: DATABASE_HOST,
@@ -98,6 +114,7 @@ const staging: ConnectionOptions = {
 const database = {
   development,
   production,
+  homologation,
   staging,
   test,
 };
