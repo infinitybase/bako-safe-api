@@ -1,10 +1,12 @@
 import { bn, OutputCoin, TransactionRequestOutput } from 'fuels';
 import { isOutputCoin } from './outputTypeValidate';
-import { isDevMode } from '@src/utils';
+
+const { FUEL_PROVIDER_CHAIN_ID } = process.env;
 
 const formatAssets = (
   outputs: TransactionRequestOutput[],
   to?: string,
+  chaindId?: number,
   fuelUnitAssets?: (chainId: number, assetId: string) => number,
 ) => {
   const assets = outputs
@@ -14,7 +16,7 @@ const formatAssets = (
       const { assetId, amount, to } = output;
 
       const units = fuelUnitAssets
-        ? fuelUnitAssets(isDevMode ? 0 : 9889, assetId)
+        ? fuelUnitAssets(chaindId ?? Number(FUEL_PROVIDER_CHAIN_ID), assetId)
         : undefined;
       return {
         assetId,

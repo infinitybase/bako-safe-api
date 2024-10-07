@@ -64,23 +64,30 @@ export const fuelAssetsByChainId = (
   }, []);
 };
 
+export const handleFuelUnitAssets = (
+  fuelAssetsList: Assets,
+  chainId: number,
+  assetId: string,
+): number => {
+  const result =
+    fuelAssetsList
+      .map(asset => {
+        const network = asset.networks.find(
+          network => network && network.chainId === chainId,
+        ) as NetworkFuel;
+
+        if (network && network.assetId === assetId) return network.decimals;
+      })
+      .find(units => units !== undefined) ?? 8;
+
+  return result;
+};
+
 export const getAssetsMaps = async () => {
   const fuelAssetsList = await fetchFuelAssets();
 
-  const fuelUnitAssets = (chainId: number, assetId: string): number => {
-    const result =
-      fuelAssetsList
-        .map(asset => {
-          const network = asset.networks.find(
-            network => network && network.chainId === chainId,
-          ) as NetworkFuel;
-
-          if (network && network.assetId === assetId) return network.decimals;
-        })
-        .find(units => units !== undefined) ?? 8;
-
-    return result;
-  };
+  const fuelUnitAssets = (chainId: number, assetId: string): number =>
+    handleFuelUnitAssets(fuelAssetsList, chainId, assetId);
 
   const fuelAssets = (): Asset[] =>
     fuelAssetsList.reduce<Asset[]>((acc, asset) => {

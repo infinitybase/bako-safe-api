@@ -555,7 +555,7 @@ export class TransactionService implements ITransactionService {
           provider,
           filters: {
             owner: address,
-            first: 100,
+            first: 57,
           },
         });
 
