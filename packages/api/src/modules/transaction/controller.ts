@@ -371,7 +371,7 @@ export class TransactionController {
   async signByID({
     body: { signature, approve },
     params: { hash: txHash },
-    user: { address: account, id: userId },
+    user: { address: account },
   }: ISignByIdRequest) {
     try {
       const transaction = await Transaction.findOne({
@@ -391,6 +391,7 @@ export class TransactionController {
         signature: isValidSignature ? signature : null,
         status:
           approve && isValidSignature ? WitnessStatus.DONE : WitnessStatus.REJECTED,
+        updatedAt: generateWitnessesUpdatedAt(),
       };
 
       transaction.resume.witnesses = transaction.resume.witnesses.map(w =>
