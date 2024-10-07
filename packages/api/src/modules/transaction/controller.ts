@@ -41,6 +41,7 @@ import {
   TransactionHistory,
 } from './types';
 import { mergeTransactionLists } from './utils';
+import { Not } from 'typeorm';
 
 // todo: use this provider by session, and move to transactions
 const { FUEL_PROVIDER } = process.env;
@@ -131,7 +132,7 @@ export class TransactionController {
 
     try {
       const existsTx = await Transaction.findOne({
-        where: { hash },
+        where: { hash, status: Not(TransactionStatus.DECLINED) },
       });
 
       if (existsTx) {
