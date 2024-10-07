@@ -1,4 +1,4 @@
-import { User } from '@src/models';
+import { TypeUser, User } from '@src/models';
 import UserToken from '@src/models/UserToken';
 import { Workspace } from '@src/models/Workspace';
 import { AuthService } from '@src/modules/auth/services';
@@ -24,7 +24,7 @@ const SESSION_MOCK = {
     '0x0a66fd714ba3a00d53ae20dff94b34504912cf6b80ec5352d404de7704d0648157277e973a5df119e29d81b2a3d977f97af5576d7556d8a2ef4be5f1f5cef63d',
   expired_at: new Date('3926-02-03T22:31:34.518Z'),
   name: '0xc2f56808ab402cfd2036a0309b5caf317287e39a636c2bb1235aaf7a804d98b9',
-  type: 'FUEL',
+  type: TypeUser.FUEL,
   user_id: '8491167a-e748-451a-bd4a-74689c0f5a1e',
   avatar: 'https://besafe-asset.s3.amazonaws.com/icon/users/885.jpg',
   address: '0xc2f56808ab402cfd2036a0309b5caf317287e39a636c2bb1235aaf7a804d98b9',
