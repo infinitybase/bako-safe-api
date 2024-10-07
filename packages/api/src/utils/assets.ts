@@ -93,19 +93,20 @@ export const getAssetsMaps = async () => {
     fuelAssetsList.reduce<Asset[]>((acc, asset) => {
       if (whitelist.includes(asset.name.toLocaleLowerCase())) return acc;
 
-      const network = asset.networks.find(
-        network => network && network.type === 'fuel',
-      ) as NetworkFuel;
+      asset.networks
+        .filter(
+          network => network && 'assetId' in network && network.type === 'fuel',
+        )
+        .forEach((network: NetworkFuel) =>
+          acc.push({
+            name: asset.name,
+            slug: replace(asset.name),
+            assetId: network.assetId,
+            icon: asset.icon,
+            units: network.decimals,
+          }),
+        );
 
-      if (network && network.type === 'fuel') {
-        acc.push({
-          name: asset.name,
-          slug: replace(asset.name),
-          assetId: network.assetId,
-          icon: asset.icon,
-          units: network.decimals,
-        });
-      }
       return acc;
     }, []);
 
