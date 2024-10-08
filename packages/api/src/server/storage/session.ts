@@ -35,11 +35,16 @@ export class SessionStorage {
 
   public async addSession(sessionId: string, session: ISignInResponse) {
     console.log('[CACHE_SESSIONS_ADD]', sessionId);
-    const result = await this.redisClient.set(sessionId, JSON.stringify(session));
-
-    console.log('[CACHE_SESSIONS_ADDED]', result);
-
-    return result;
+    const result = await this.redisClient
+      .set(sessionId, JSON.stringify(session))
+      .then(() => {
+        console.log('[CACHE_SESSIONS_ADDED]', result);
+        return session;
+      })
+      .catch(e => {
+        console.error(e);
+        return null;
+      });
   }
 
   public async getSession(sessionId: string) {
