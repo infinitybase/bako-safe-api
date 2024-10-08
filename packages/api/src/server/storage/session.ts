@@ -34,11 +34,13 @@ export class SessionStorage {
   }
 
   public async addSession(sessionId: string, session: ISignInResponse) {
+    console.log('[CACHE_SESSIONS_ADD]', sessionId);
     this.redisClient.set(sessionId, JSON.stringify(session));
   }
 
   public async getSession(sessionId: string) {
     let session: ISignInResponse;
+    console.log('[GET_SESSIONS_GET]', sessionId);
 
     const sessionCache = await this.redisClient.get(sessionId);
     if (sessionCache) {
@@ -52,6 +54,7 @@ export class SessionStorage {
   }
 
   public async updateSession(sessionId: string) {
+    console.log('[CACHE_SESSIONS_UPDATE]', sessionId);
     let session = await this.getSession(sessionId);
     if (session && isPast(new Date(session.expired_at))) {
       await this.removeSession(sessionId);
@@ -61,12 +64,14 @@ export class SessionStorage {
   }
 
   public async getTokenOnDatabase(sessionId: string) {
+    console.log('[GET_SESSIONS_DB]', sessionId);
     const token = await AuthService.findToken(sessionId);
     return token;
   }
 
   // remove uma sessão do store e do database
   public async removeSession(sessionId: string) {
+    console.log('[CACHE_SESSIONS_REMOVE]', sessionId);
     await UserToken.delete({
       token: sessionId,
     });
@@ -75,6 +80,7 @@ export class SessionStorage {
 
   // limpa as sessões expiradas
   public async clearExpiredSessions() {
+    console.log('[CACHE_SESSIONS_CLEARING]');
     const removedTokens = await AuthService.clearExpiredTokens();
     if (removedTokens.length > 0) {
       await this.redisClient.del(removedTokens);
