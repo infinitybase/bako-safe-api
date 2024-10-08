@@ -179,10 +179,24 @@ export class UserController {
       const { nickname } = req.params;
       const response = await User.findOne({
         where: { name: nickname },
+        select: {
+          address: true,
+          webauthn: {
+            id: true,
+            publicKey: true,
+          },
+        },
       })
         .then(response => {
-          const { first_login, notify, active, email, ...rest } = response;
-          return rest;
+          const { webauthn, ...rest } = response;
+
+          return {
+            ...rest,
+            webauthn: {
+              id: webauthn?.id,
+              publicKey: webauthn?.publicKey,
+            },
+          };
         })
         .catch(e => {
           return {};
