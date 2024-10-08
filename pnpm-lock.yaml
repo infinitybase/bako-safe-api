@@ -319,6 +319,12 @@ importers:
 
   packages/metabase: {}
 
+  packages/redis:
+    devDependencies:
+      husky:
+        specifier: 5.2.0
+        version: 5.2.0
+
   packages/socket-server:
     dependencies:
       axios:
