@@ -67,12 +67,12 @@ export class PredicateController {
       vaultName: predicate.name,
       workspaceId: predicate.workspace.id,
     };
-
     for await (const member of notifyDestination) {
       await this.notificationService.create({
         title: NotificationTitle.NEW_VAULT_CREATED,
         user_id: member.id,
         summary: notifyContent,
+        network,
       });
 
       if (member.notify) {

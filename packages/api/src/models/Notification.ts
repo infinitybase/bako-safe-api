@@ -2,6 +2,8 @@ import { Column, Entity, JoinColumn, OneToOne } from 'typeorm';
 
 import { Base } from './Base';
 import { User } from './User';
+import { networks } from '@src/mocks/networks';
+import { Network } from 'fuels';
 
 export enum NotificationTitle {
   TRANSACTION_CREATED = 'Transaction Created',
@@ -18,6 +20,8 @@ export interface NotificationSummary {
   transactionId?: string;
   transactionName?: string;
 }
+
+const { FUEL_PROVIDER, FUEL_PROVIDER_CHAIN_ID } = process.env;
 
 @Entity('notifications')
 class Notification extends Base {
@@ -38,6 +42,16 @@ class Notification extends Base {
 
   @Column()
   read: boolean;
+
+  @Column({
+    type: 'jsonb',
+    name: 'network',
+    default: {
+      url: FUEL_PROVIDER ?? networks['devnet'],
+      chainId: Number(FUEL_PROVIDER_CHAIN_ID) ?? 0,
+    },
+  })
+  network: Network;
 
   @JoinColumn({ name: 'user_id' })
   @OneToOne(() => User)
