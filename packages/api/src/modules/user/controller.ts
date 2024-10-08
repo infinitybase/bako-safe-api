@@ -289,7 +289,7 @@ export class UserController {
       const { hardware } = req.params;
 
       const result = await User.query(
-        `SELECT * FROM "users" WHERE webauthn->>'hardware' = $1`,
+        `SELECT name FROM "users" WHERE webauthn->>'hardware' = $1`,
         [hardware],
       );
 
