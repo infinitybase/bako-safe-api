@@ -22,9 +22,6 @@ export class SessionStorage {
   protected constructor() {
     this.redisClient = redis.createClient({
       url: REDIS_URL,
-      socket: {
-        tls: false,
-      },
     });
 
     this.redisClient
@@ -40,9 +37,9 @@ export class SessionStorage {
 
   public async addSession(sessionId: string, session: ISignInResponse) {
     console.log('[CACHE_SESSIONS_ADD]', sessionId);
-    const result = await this.redisClient
+    await this.redisClient
       .set(sessionId, JSON.stringify(session))
-      .then(() => {
+      .then(result => {
         console.log('[CACHE_SESSIONS_ADDED]', result);
         return session;
       })
