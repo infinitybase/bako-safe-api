@@ -372,7 +372,7 @@ export class TransactionController {
   async signByID({
     body: { signature, approve },
     params: { hash: txHash },
-    user: { address: account, id: userId },
+    user: { address: account },
     network,
   }: ISignByIdRequest) {
     try {
@@ -393,6 +393,7 @@ export class TransactionController {
         signature: isValidSignature ? signature : null,
         status:
           approve && isValidSignature ? WitnessStatus.DONE : WitnessStatus.REJECTED,
+        updatedAt: generateWitnessesUpdatedAt(),
       };
 
       transaction.resume.witnesses = transaction.resume.witnesses.map(w =>
