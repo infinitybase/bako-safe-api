@@ -27,10 +27,15 @@ export class SessionStorage {
       },
     });
 
-    this.redisClient.connect().catch(e => {
-      console.error(e);
-      process.exit(1);
-    });
+    this.redisClient
+      .connect()
+      .then(() => {
+        console.log('[CACHE_SESSIONS_CONNECTED]', new Date());
+      })
+      .catch(e => {
+        console.error(e);
+        process.exit(1);
+      });
   }
 
   public async addSession(sessionId: string, session: ISignInResponse) {
