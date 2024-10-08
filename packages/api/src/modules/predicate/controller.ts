@@ -67,12 +67,13 @@ export class PredicateController {
       vaultName: predicate.name,
       workspaceId: predicate.workspace.id,
     };
-
+    // TODO: Replace with Promise.all since they are independent
     for await (const member of notifyDestination) {
       await this.notificationService.create({
         title: NotificationTitle.NEW_VAULT_CREATED,
         user_id: member.id,
         summary: notifyContent,
+        network,
       });
 
       if (member.notify) {
