@@ -24,6 +24,7 @@ const {
   findByAddress,
   delete: deleteService,
   hasReservedCoins,
+  checkByAddress,
 } = new PredicateController(predicateService, notificationsService);
 
 router.use(authMiddleware);
@@ -43,5 +44,6 @@ router.get('/:predicateId', handleResponse(findById));
 router.get('/by-name/:name', handleResponse(findByName));
 router.get('/reserved-coins/:predicateId', handleResponse(hasReservedCoins));
 router.get('/by-address/:address', handleResponse(findByAddress));
+router.get('/check/by-address/:address', handleResponse(checkByAddress));
 
 export default router;
