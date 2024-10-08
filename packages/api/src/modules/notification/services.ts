@@ -97,8 +97,7 @@ export class NotificationService implements INotificationService {
     payload: IUpdateNotificationPayload,
   ): Promise<boolean> {
     return Notification.createQueryBuilder()
-      .update()
-      .set(payload)
+      .update(payload)
       .where('user_id = :userId', { userId })
       .andWhere(`network->>'url' = :networkUrl`, { networkUrl })
       .execute()
