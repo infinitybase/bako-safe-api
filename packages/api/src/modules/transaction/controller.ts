@@ -205,7 +205,6 @@ export class TransactionController {
         member => member.id !== user.id,
       );
 
-      // TODO: Replace with Promise.all since they are independent
       for await (const member of membersWithoutLoggedUser) {
         await this.notificationService.create({
           title: NotificationTitle.TRANSACTION_CREATED,
