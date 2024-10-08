@@ -13,10 +13,11 @@ import {
   INotificationService,
   IUpdateNotificationPayload,
 } from './types';
-import { DeepPartial } from 'typeorm';
+import { DeepPartial, QueryBuilder } from 'typeorm';
 import { VaultTemplate } from '@src/models/VaultTemplate';
 import { TransactionService } from '../transaction/services';
 import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
+import { Network } from 'fuels';
 
 export class NotificationService implements INotificationService {
   private _pagination: PaginationParams;
@@ -64,6 +65,11 @@ export class NotificationService implements INotificationService {
         userId: `${this._filter.userId}`,
       });
 
+    this._filter.networkUrl &&
+      queryBuilder.andWhere(`notification.network->>'url' = :network`, {
+        network: this._filter.networkUrl,
+      });
+
     this._filter.unread &&
       queryBuilder.andWhere('notification.read = :read', {
         read: false,
@@ -87,9 +93,14 @@ export class NotificationService implements INotificationService {
 
   async update(
     userId: string,
+    networkUrl: string,
     payload: IUpdateNotificationPayload,
   ): Promise<boolean> {
-    return Notification.update({ user_id: userId }, payload)
+    return Notification.createQueryBuilder()
+      .update(payload)
+      .where('user_id = :userId', { userId })
+      .andWhere(`network->>'url' = :networkUrl`, { networkUrl })
+      .execute()
       .then(() => true)
       .catch(e => {
         throw new Internal({
@@ -117,7 +128,7 @@ export class NotificationService implements INotificationService {
 
   // select all members of predicate
   // create a notification for each member
-  async transactionSuccess(txId: string) {
+  async transactionSuccess(txId: string, network: Network) {
     const tx = await new TransactionService().findById(txId);
 
     if (!tx) {
@@ -145,6 +156,7 @@ export class NotificationService implements INotificationService {
         title: NotificationTitle.TRANSACTION_COMPLETED,
         summary,
         user_id: member.id,
+        network,
       });
 
       if (member.notify) {
