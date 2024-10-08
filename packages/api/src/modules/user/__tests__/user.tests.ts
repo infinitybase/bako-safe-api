@@ -193,9 +193,6 @@
 //       //verify existing name
 //       await api.get(`/user/nickname/${user1.name}`).then(({ data, status }) => {
 //         expect(status).toBe(200);
-//         expect(data).toHaveProperty('address', user1.address);
-//         expect(data).toHaveProperty('name', user1.name);
-//         expect(data).toHaveProperty('provider', user1.provider);
 //         expect(data).toHaveProperty('type', user1.type);
 //       });
 

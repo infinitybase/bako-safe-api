@@ -215,6 +215,28 @@ export class UserService implements IUserService {
       });
   }
 
+  async validateName(name: string, userId?: string) {
+    try {
+      const queryBuilder = User.createQueryBuilder('u')
+        .select('u.type')
+        .where('u.name = :name', {
+          name,
+        });
+
+      if (userId) {
+        queryBuilder.andWhere('u.id != :userId', { userId });
+      }
+
+      return await queryBuilder.getOne();
+    } catch (e) {
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on validate name',
+        detail: e,
+      });
+    }
+  }
+
   async randomAvatar() {
     const url = UI_URL || 'https://safe.bako.global';
     const avatars_json = await axios

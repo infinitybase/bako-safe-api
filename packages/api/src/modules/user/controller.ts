@@ -23,6 +23,7 @@ import {
   ICheckNicknameRequest,
   ICreateRequest,
   IDeleteRequest,
+  IFindByNameRequest,
   IFindOneRequest,
   IListRequest,
   IMeInfoRequest,
@@ -173,7 +174,7 @@ export class UserController {
    *      - returns true if exists or false if not
    */
 
-  async validateName(req: ICheckNicknameRequest) {
+  async getByName(req: IFindByNameRequest) {
     try {
       const { nickname } = req.params;
       const response = await User.findOne({
@@ -186,6 +187,20 @@ export class UserController {
         .catch(e => {
           return {};
         });
+
+      return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async validateName(req: ICheckNicknameRequest) {
+    try {
+      const { nickname } = req.params;
+      const { userId } = req.query;
+
+      const user = await this.userService.validateName(nickname, userId);
+      const response = user ?? {};
 
       return successful(response, Responses.Ok);
     } catch (e) {

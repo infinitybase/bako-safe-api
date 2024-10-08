@@ -27,9 +27,9 @@ router.post(
   handleResponse(userController.changeNetwork),
 );
 
+router.get('/by-name/:nickname', handleResponse(userController.getByName));
 router.get('/by-hardware/:hardware', handleResponse(userController.getByHardware));
 router.get('/info', authMiddleware, handleResponse(userController.info));
-router.get('/nickaname/:nickname', handleResponse(userController.validateName));
 router.get(
   '/latest/tokens',
   authMiddleware,

@@ -54,9 +54,18 @@ interface IFindOneRequestSchema extends ValidatedRequestSchema {
   };
 }
 
+interface IFindByNameRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Params]: {
+    name: string;
+  };
+}
+
 interface ICheckNickname extends ValidatedRequestSchema {
   [ContainerTypes.Params]: {
     nickname: string;
+  };
+  [ContainerTypes.Query]: {
+    userId: string;
   };
 }
 
@@ -85,6 +94,8 @@ export type IDeleteRequest = AuthValidatedRequest<IFindOneRequestSchema>;
 
 export type IMeRequest = AuthValidatedRequest<IListRequestSchema>;
 
+export type IFindByNameRequest = UnloggedRequest<IFindByNameRequestSchema>;
+
 export type ICheckNicknameRequest = UnloggedRequest<ICheckNickname>;
 
 export type ICheckHardwareRequest = UnloggedRequest<ICheckHardware>;
@@ -103,4 +114,5 @@ export interface IUserService {
   update(id: string, payload: IUserPayload): Promise<User>;
   delete(id: string): Promise<boolean>;
   tokensUSDAmount(): Promise<[string, number][]>;
+  validateName(name: string, userId?: string): Promise<{ type: TypeUser }>;
 }
