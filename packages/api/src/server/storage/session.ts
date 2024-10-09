@@ -25,6 +25,7 @@ export class SessionStorage {
         host:
           'bako-safe-hmg-elasticache-i1bzt2.serverless.use1.cache.amazonaws.com',
         port: 6379,
+        tls: true,
       },
     });
 
