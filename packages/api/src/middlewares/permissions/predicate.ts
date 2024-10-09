@@ -23,10 +23,11 @@ export const predicatePermissionMiddleware = (
 
       const predicateFilter = options.predicateSelector(req);
 
-      const predicate = await Predicate.findOne({
-        where: predicateFilter,
-        relations: ['owner'],
-      });
+      const predicate = await Predicate.createQueryBuilder('p')
+        .leftJoin('p.owner', 'owner')
+        .select(['p.configurable', 'owner.id'])
+        .where(predicateFilter)
+        .getOne();
 
       const [key, value] = Object.entries(predicateFilter)[0];
 
