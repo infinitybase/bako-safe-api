@@ -35,7 +35,6 @@ export interface IFilterParams {
 
 export interface IFindByNameResponse {
   webAuthnId: string;
-  webAuthnPublicKey: string;
 }
 
 export interface IValidateNameResponse {

@@ -198,10 +198,7 @@ export class UserService implements IUserService {
   async findByName(name: string): Promise<Maybe<IFindByNameResponse>> {
     try {
       const queryBuilder = User.createQueryBuilder('u')
-        .select([
-          'u.webauthn -> \'id\' as "webAuthnId"',
-          'u.webauthn -> \'publicKey\' as "webAuthnPublicKey"',
-        ])
+        .select(['u.webauthn -> \'id\' as "webAuthnId"'])
         .where('u.name = :name', {
           name,
         });

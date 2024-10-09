@@ -171,13 +171,13 @@ export class TokenUtils {
     signature: string,
     digest: string,
     encoder: string,
-    userAddress: string,
+    userFilter: { address: string } | { name: string },
     // network: Network,
   ) {
     try {
       const code = await RecoverCode.findOne({
         where: {
-          owner: { address: userAddress },
+          owner: { ...userFilter },
           type: RecoverCodeType.AUTH,
           validAt: MoreThan(new Date()),
         },
