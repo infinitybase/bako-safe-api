@@ -21,12 +21,9 @@ export class SessionStorage {
 
   protected constructor() {
     this.redisClient = redis.createClient({
-      socket: {
-        host:
-          'bako-safe-hmg-elasticache-i1bzt2.serverless.use1.cache.amazonaws.com',
-        port: 6379,
-        tls: true,
-      },
+      host: 'bako-safe-hmg-elasticache-i1bzt2.serverless.use1.cache.amazonaws.com',
+      port: 6379,
+      tls: true,
     });
 
     this.redisClient
