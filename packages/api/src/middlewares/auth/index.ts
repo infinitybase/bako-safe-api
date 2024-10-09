@@ -16,6 +16,7 @@ async function authMiddleware(
 ) {
   try {
     const signature = req?.headers?.authorization;
+    const address = req?.headers?.signeraddress;
 
     if (!signature) {
       throw new Unauthorized({
@@ -27,6 +28,14 @@ async function authMiddleware(
 
     const authStrategy = AuthStrategyFactory.createStrategy(signature);
     const { user, workspace, network } = await authStrategy.authenticate(req);
+
+    if (address !== user.address) {
+      throw new Unauthorized({
+        type: ErrorTypes.Unauthorized,
+        title: UnauthorizedErrorTitles.INVALID_ADDRESS,
+        detail: `The provided signer address is invalid`,
+      });
+    }
 
     req.user = user;
     req.workspace = workspace;

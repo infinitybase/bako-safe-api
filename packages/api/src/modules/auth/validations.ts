@@ -3,7 +3,6 @@ import Joi from 'joi';
 import { Encoder } from '@src/models';
 
 import { AddressValidator, validator } from '@utils/index';
-import { Address } from 'fuels';
 
 const allowedEncoders = Object.values(Encoder);
 
@@ -14,10 +13,11 @@ export const validateSignInPayload = validator.body(
       .required(),
     signature: Joi.string().required(),
     digest: Joi.string().required(),
-    userAddress: Joi.string().required(),
+    userAddress: Joi.string().optional(),
+    name: Joi.string().optional(),
     //todo: apply this network on sdk
     // networkUrl: Joi.string().required(),
-  }),
+  }).or('userAddress', 'name'),
 );
 
 export const validateSignInDappPayload = validator.body(

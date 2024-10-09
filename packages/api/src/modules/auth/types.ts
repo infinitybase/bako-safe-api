@@ -22,7 +22,8 @@ export interface ISignInPayload {
   encoder: Encoder;
   signature: string;
   digest: string;
-  userAddress: string;
+  userAddress?: string;
+  name?: string;
 }
 
 interface IActiveSessionRequestSchema extends ValidatedRequestSchema {
