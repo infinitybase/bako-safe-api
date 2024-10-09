@@ -15,7 +15,13 @@ import { PredicateController } from './controller';
 import { PredicateService } from './services';
 import { validateAddPredicatePayload } from './validations';
 
-const permissionMiddleware = predicatePermissionMiddleware({
+const permissionMiddlewareById = predicatePermissionMiddleware({
+  predicateSelector: req => ({
+    id: req.params.predicateId,
+  }),
+});
+
+const permissionMiddlewareByAddress = predicatePermissionMiddleware({
   predicateSelector: req => ({
     predicateAddress: req.params.address,
   }),
@@ -47,12 +53,16 @@ router.post(
   handleResponse(create),
 );
 router.get('/', handleResponse(list));
-router.get('/:predicateId', handleResponse(findById));
+router.get('/:predicateId', permissionMiddlewareById, handleResponse(findById));
 router.get('/by-name/:name', handleResponse(findByName));
-router.get('/reserved-coins/:predicateId', handleResponse(hasReservedCoins));
+router.get(
+  '/reserved-coins/:predicateId',
+  permissionMiddlewareById,
+  handleResponse(hasReservedCoins),
+);
 router.get(
   '/by-address/:address',
-  permissionMiddleware,
+  permissionMiddlewareByAddress,
   handleResponse(findByAddress),
 );
 router.get('/check/by-address/:address', handleResponse(checkByAddress));
