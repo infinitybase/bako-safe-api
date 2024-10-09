@@ -17,10 +17,11 @@ services:
       - DATABASE_PASSWORD=${DATABASE_PASSWORD}
       - DATABASE_NAME=${DATABASE_NAME}
       # APP
-      - API_PORT=${API_PORT}
-      - APP_NAME=${API_NAME}
       - UI_URL=${UI_URL}
       - API_URL=${API_URL}
+      - API_PORT=${API_PORT}
+      - APP_NAME=${API_NAME}
+      - REDIS_URL={REDIS_URL}
       - SOCKET_URL={SOCKET_URL}
       - ASSETS_URL=${ASSETS_URL}
       - FUEL_PROVIDER=${FUEL_PROVIDER}
