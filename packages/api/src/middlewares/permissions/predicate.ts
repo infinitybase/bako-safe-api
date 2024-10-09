@@ -44,7 +44,7 @@ export const predicatePermissionMiddleware = (
         throw new Unauthorized({
           type: ErrorTypes.Unauthorized,
           title: UnauthorizedErrorTitles.INVALID_PERMISSION,
-          detail: `User with id ${user.id} is not allowed to get data from vault with ${key} ${value}`,
+          detail: `User with id ${user.id} is not allowed to execute action related to vault with ${key} ${value}`,
         });
       }
 
