@@ -111,14 +111,13 @@ export class PredicateController {
     }
   }
 
-  async findByAddress({ params: { address }, user, headers }: IFindByHashRequest) {
+  async findByAddress({ params: { address }, user }: IFindByHashRequest) {
     try {
       const predicate = await this.predicateService.findByAddress(address);
 
-      if (
-        predicate.owner.id !== user.id ||
-        headers.signeraddress !== predicate.owner.address
-      ) {
+      const signers = JSON.parse(predicate.configurable).SIGNERS;
+
+      if (predicate.owner.id !== user.id || !signers.includes(user.address)) {
         throw new Unauthorized({
           type: ErrorTypes.Unauthorized,
           title: UnauthorizedErrorTitles.INVALID_PERMISSION,
