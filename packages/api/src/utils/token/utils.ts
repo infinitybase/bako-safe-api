@@ -177,7 +177,7 @@ export class TokenUtils {
     try {
       const code = await RecoverCode.findOne({
         where: {
-          owner: { ...userFilter },
+          owner: userFilter,
           type: RecoverCodeType.AUTH,
           validAt: MoreThan(new Date()),
         },
