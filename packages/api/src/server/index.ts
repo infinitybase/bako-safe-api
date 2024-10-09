@@ -16,6 +16,7 @@ const {
   COIN_MARKET_CAP_API_KEY,
   AWS_SMTP_USER,
   AWS_SMTP_PASS,
+  REDIS_URL,
 } = process.env;
 
 pprof.heap.start(512 * 1024, 64);
@@ -35,6 +36,7 @@ const start = async () => {
     COIN_MARKET_CAP_API_KEY,
     AWS_SMTP_USER,
     AWS_SMTP_PASS,
+    REDIS_URL,
   });
 
   Monitoring.init();
