@@ -27,7 +27,7 @@ export class SessionStorage {
     this.redisClient
       .connect()
       .then(() => {
-        console.log('[CACHE_SESSIONS_CONNECTED]', new Date());
+        console.log('[CACHE_SESSIONS_CONNECTEDD]', new Date());
       })
       .catch(e => {
         console.error(e);
