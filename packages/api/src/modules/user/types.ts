@@ -4,6 +4,7 @@ import { AuthValidatedRequest, UnloggedRequest } from '@src/middlewares/auth/typ
 import { TransactionType, TypeUser, User } from '@src/models';
 import { IDefaultOrdination, IOrdination } from '@src/utils/ordination';
 import { IPagination, PaginationParams } from '@src/utils/pagination';
+import { Maybe } from '@src/utils/types/maybe';
 
 export interface IWebAuthnSignUp {
   id: string;
@@ -30,6 +31,15 @@ export interface IFilterParams {
   address?: string;
   workspace?: string;
   type?: TransactionType;
+}
+
+export interface IFindByNameResponse {
+  webAuthnId: string;
+  webAuthnPublicKey: string;
+}
+
+export interface IValidateNameResponse {
+  type: TypeUser;
 }
 
 interface ICreateRequestSchema extends ValidatedRequestSchema {
@@ -110,9 +120,13 @@ export interface IUserService {
   create(payload: IUserPayload): Promise<User>;
   findOne(id: string): Promise<User>;
   findByAddress(address: string): Promise<User | undefined>;
+  findByName(name: string): Promise<Maybe<IFindByNameResponse>>;
   randomAvatar(): Promise<string>;
   update(id: string, payload: IUserPayload): Promise<User>;
   delete(id: string): Promise<boolean>;
   tokensUSDAmount(): Promise<[string, number][]>;
-  validateName(name: string, userId?: string): Promise<{ type: TypeUser }>;
+  validateName(
+    name: string,
+    userId?: string,
+  ): Promise<Maybe<IValidateNameResponse>>;
 }

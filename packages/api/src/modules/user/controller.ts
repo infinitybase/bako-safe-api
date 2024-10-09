@@ -170,37 +170,12 @@ export class UserController {
     }
   }
 
-  /* - add new request veryfi name disponibility /user/name:name
-   *      - returns true if exists or false if not
-   */
-
   async getByName(req: IFindByNameRequest) {
     try {
       const { nickname } = req.params;
-      const response = await User.findOne({
-        where: { name: nickname },
-        select: {
-          address: true,
-          webauthn: {
-            id: true,
-            publicKey: true,
-          },
-        },
-      })
-        .then(response => {
-          const { webauthn, ...rest } = response;
 
-          return {
-            ...rest,
-            webauthn: {
-              id: webauthn?.id,
-              publicKey: webauthn?.publicKey,
-            },
-          };
-        })
-        .catch(e => {
-          return {};
-        });
+      const userWebAuthn = await this.userService.findByName(nickname);
+      const response = userWebAuthn ?? {};
 
       return successful(response, Responses.Ok);
     } catch (e) {
