@@ -111,19 +111,9 @@ export class PredicateController {
     }
   }
 
-  async findByAddress({ params: { address }, user }: IFindByHashRequest) {
+  async findByAddress({ params: { address } }: IFindByHashRequest) {
     try {
       const predicate = await this.predicateService.findByAddress(address);
-
-      const signers = JSON.parse(predicate.configurable).SIGNERS;
-
-      if (predicate.owner.id !== user.id || !signers.includes(user.address)) {
-        throw new Unauthorized({
-          type: ErrorTypes.Unauthorized,
-          title: UnauthorizedErrorTitles.INVALID_PERMISSION,
-          detail: `User id ${user.id} is not allowed to get data from the vault ${address}`,
-        });
-      }
 
       return successful(predicate, Responses.Ok);
     } catch (e) {
