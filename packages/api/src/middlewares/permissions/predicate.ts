@@ -40,7 +40,7 @@ export const predicatePermissionMiddleware = (
 
       const signers = JSON.parse(predicate.configurable).SIGNERS;
 
-      if (predicate.owner.id !== user.id || !signers.includes(user.address)) {
+      if (predicate.owner.id !== user.id && !signers.includes(user.address)) {
         throw new Unauthorized({
           type: ErrorTypes.Unauthorized,
           title: UnauthorizedErrorTitles.INVALID_PERMISSION,
