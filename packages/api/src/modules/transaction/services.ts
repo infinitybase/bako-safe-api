@@ -8,6 +8,7 @@ import {
   transactionRequestify,
   TransactionType as FuelTransactionType,
   getTransactionSummary,
+  Network,
 } from 'fuels';
 import { Brackets } from 'typeorm';
 
@@ -490,7 +491,7 @@ export class TransactionService implements ITransactionService {
   //instance vault
   //instance tx
   //add witnesses
-  async sendToChain(hash: string) {
+  async sendToChain(hash: string, network: Network) {
     const transaction = await this.findByHash(hash);
     const { id, predicate, txData, status, resume } = transaction;
 
@@ -521,7 +522,7 @@ export class TransactionService implements ITransactionService {
         },
       };
 
-      await new NotificationService().transactionSuccess(id);
+      await new NotificationService().transactionSuccess(id, network);
 
       return await this.update(id, _api_transaction);
     } catch (e) {
