@@ -56,7 +56,11 @@ router.use(authMiddleware);
 
 router.post('/', validateAddTransactionPayload, handleResponse(create));
 router.get('/', predicatePermissionMiddleware, handleResponse(list));
-router.get('/with-incomings', handleResponse(listWithIncomings));
+router.get(
+  '/with-incomings',
+  predicatePermissionMiddleware,
+  handleResponse(listWithIncomings),
+);
 router.get('/pending', predicatePermissionMiddleware, handleResponse(pending));
 router.get('/:id', handleResponse(findById));
 router.get('/by-hash/:hash', handleResponse(findByHash));
