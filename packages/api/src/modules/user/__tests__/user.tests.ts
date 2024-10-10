@@ -203,7 +203,7 @@ describe('[USER]', () => {
           //verify existing name
           await api.get(`/user/nickname/${name}`).then(({ data, status }) => {
             expect(status).toBe(200);
-            expect(data).toHaveProperty('type', type);
+            expect(data).toStrictEqual({ type });
           });
 
           //verify not existing name
