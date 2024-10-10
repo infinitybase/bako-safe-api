@@ -5,7 +5,6 @@ import { networks } from '@src/mocks/networks';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
 import { generateWorkspacePayload } from '@src/utils/testUtils/Workspace';
 import { catchApplicationError, TestError } from '@utils/testUtils/Errors';
-import { UnauthorizedErrorTitles } from '@src/utils/error';
 
 describe('[ADDRESS_BOOK]', () => {
   let api: AuthValidations;
@@ -203,19 +202,14 @@ describe('[ADDRESS_BOOK]', () => {
     await auth_aux.create();
     await auth_aux.createSession();
 
-    const { status, data: adressBook_aux } = await auth_aux.axios
-      .put(`/address-book/${adressBook.id}`, {
+    const notHasPermissionError = await catchApplicationError(
+      auth_aux.axios.put(`/address-book/${adressBook.id}`, {
         id: adressBook.id,
         nickname: nickname_aux,
         address: address.toAddress(),
-      })
-      .catch(e => {
-        return e.response;
-      });
-    expect(status).toBe(401);
-    expect(adressBook_aux.errors.title).toEqual(
-      UnauthorizedErrorTitles.INVALID_PERMISSION,
+      }),
     );
+    TestError.expectUnauthorized(notHasPermissionError);
   });
 
   test('Delete address book', async () => {
@@ -231,15 +225,10 @@ describe('[ADDRESS_BOOK]', () => {
     await auth_aux.create();
     await auth_aux.createSession();
 
-    const { status, data: adressBook_aux } = await auth_aux.axios
-      .delete(`/address-book/${adressBook.id}`)
-      .catch(e => {
-        return e.response;
-      });
-    expect(status).toBe(401);
-    expect(adressBook_aux.errors.title).toEqual(
-      UnauthorizedErrorTitles.INVALID_PERMISSION,
+    const notHasPermissionError = await catchApplicationError(
+      auth_aux.axios.delete(`/address-book/${adressBook.id}`),
     );
+    TestError.expectUnauthorized(notHasPermissionError);
 
     await api.axios
       .delete(`/address-book/${adressBook.id}`)
