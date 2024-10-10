@@ -9,7 +9,8 @@ import { AuthValidations } from '@src/utils/testUtils/Auth';
 import { generateUser } from '@src/utils/testUtils/Workspace';
 
 import { Address } from 'fuels';
-import { UnauthorizedErrorTitles } from '@src/utils/error';
+
+import { catchApplicationError, TestError } from '@src/utils/testUtils/Errors';
 
 describe('[PREDICATE]', () => {
   let api: AuthValidations;
@@ -264,15 +265,10 @@ describe('[PREDICATE]', () => {
     await auth_aux.create();
     await auth_aux.createSession();
 
-    const { status, data: predicate_aux } = await auth_aux
-      .axios(`/predicate/${data_predicate.id}`)
-      .catch(e => {
-        return e.response;
-      });
-    expect(status).toBe(401);
-    expect(predicate_aux.errors.title).toEqual(
-      UnauthorizedErrorTitles.INVALID_PERMISSION,
+    const notHasPermissionError = await catchApplicationError(
+      auth_aux.axios(`/predicate/${data_predicate.id}`),
     );
+    TestError.expectUnauthorized(notHasPermissionError);
   });
 
   test('Find predicate by name and verify if exists in workspace', async () => {
@@ -352,15 +348,10 @@ describe('[PREDICATE]', () => {
     await auth_aux.create();
     await auth_aux.createSession();
 
-    const { status, data: predicate_aux } = await auth_aux
-      .axios(`/predicate/reserved-coins/${predicate.id}`)
-      .catch(e => {
-        return e.response;
-      });
-    expect(status).toBe(401);
-    expect(predicate_aux.errors.title).toEqual(
-      UnauthorizedErrorTitles.INVALID_PERMISSION,
+    const notHasPermissionError = await catchApplicationError(
+      auth_aux.axios(`/predicate/reserved-coins/${predicate.id}`),
     );
+    TestError.expectUnauthorized(notHasPermissionError);
   });
 
   test('Find predicate by address', async () => {
@@ -392,14 +383,9 @@ describe('[PREDICATE]', () => {
     await auth_aux.create();
     await auth_aux.createSession();
 
-    const { status, data: predicate_aux } = await auth_aux
-      .axios(`/predicate/by-address/${predicate.predicateAddress}`)
-      .catch(e => {
-        return e.response;
-      });
-    expect(status).toBe(401);
-    expect(predicate_aux.errors.title).toEqual(
-      UnauthorizedErrorTitles.INVALID_PERMISSION,
+    const notHasPermissionError = await catchApplicationError(
+      auth_aux.axios(`/predicate/by-address/${predicate.predicateAddress}`),
     );
+    TestError.expectUnauthorized(notHasPermissionError);
   });
 });
