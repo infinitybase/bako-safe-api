@@ -35,7 +35,12 @@ export class SessionStorage {
     await this.redisClient
       .set(`${PREFIX}-${sessionId}`, JSON.stringify(session))
       .catch(e => {
-        console.error('[CACHE_SESSIONS_ADD_ERROR]', e);
+        console.error(
+          '[CACHE_SESSIONS_ADD_ERROR]',
+          e,
+          `${PREFIX}-${sessionId}`,
+          JSON.stringify(session),
+        );
       });
   }
 
