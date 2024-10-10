@@ -17,7 +17,6 @@ const {
   AWS_SMTP_USER,
   AWS_SMTP_PASS,
   REDIS_URL,
-  REDIS_PASSWORD,
 } = process.env;
 
 pprof.heap.start(512 * 1024, 64);
@@ -38,7 +37,6 @@ const start = async () => {
     AWS_SMTP_USER,
     AWS_SMTP_PASS,
     REDIS_URL,
-    REDIS_PASSWORD,
   });
 
   Monitoring.init();

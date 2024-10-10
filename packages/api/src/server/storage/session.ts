@@ -15,7 +15,6 @@ export interface ISession {
 
 const REFRESH_TIME = 300 * 1000; // 5 minutes
 const REDIS_URL = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
-const REDIS_PASSWORD = process.env.REDIS_PASSWORD || null;
 const PREFIX = 'session';
 
 export class SessionStorage {
@@ -24,7 +23,6 @@ export class SessionStorage {
   protected constructor() {
     this.redisClient = redis.createClient({
       url: REDIS_URL,
-      password: REDIS_PASSWORD,
     });
 
     this.redisClient.connect().catch(e => {
