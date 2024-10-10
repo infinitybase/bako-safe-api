@@ -43,12 +43,8 @@ router.post(
 );
 router.put(
   '/:id',
-  authPermissionMiddleware([
-    PermissionRoles.OWNER,
-    PermissionRoles.ADMIN,
-    PermissionRoles.MANAGER,
-  ]),
   validateUpdateAddressBookPayload,
+  permissionMiddleware,
   handleResponse(update),
 );
 router.delete('/:id', permissionMiddleware, handleResponse(deleteContact));
