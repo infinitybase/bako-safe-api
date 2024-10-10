@@ -6,21 +6,34 @@ import {
   Unauthorized,
   UnauthorizedErrorTitles,
 } from '@src/utils/error';
-import { Predicate, User } from '@src/models';
+import { PermissionRoles, Predicate, User } from '@src/models';
 
 export interface IPredicatePermissionMiddlewareOptions {
   predicateSelector: (
     req: Request,
   ) => { predicateAddress: string } | { id: string };
+  permissions: PermissionRoles[];
 }
 
 export interface IPredicatesPermissionMiddlewareOptions {
   predicatesSelector: (req: Request) => string[] | undefined;
+  permissions: PermissionRoles[];
 }
 
-const hasPermission = (user: User, predicate: Predicate) => {
-  const signers = JSON.parse(predicate.configurable).SIGNERS;
-  return predicate.owner.id !== user.id && !signers.includes(user.address);
+const hasPermission = (
+  user: User,
+  predicate: Predicate,
+  permissions: PermissionRoles[],
+) => {
+  const isOwner = permissions.includes(PermissionRoles.OWNER)
+    ? predicate.owner.id === user.id
+    : false;
+
+  const isSigner = permissions.includes(PermissionRoles.SIGNER)
+    ? JSON.parse(predicate.configurable).SIGNERS.includes(user.address)
+    : false;
+
+  return isOwner || isSigner;
 };
 
 export const predicatePermissionMiddleware = (
@@ -48,7 +61,7 @@ export const predicatePermissionMiddleware = (
         });
       }
 
-      if (hasPermission(user, predicate)) {
+      if (!hasPermission(user, predicate, options.permissions)) {
         throw new Unauthorized({
           type: ErrorTypes.Unauthorized,
           title: UnauthorizedErrorTitles.INVALID_PERMISSION,
@@ -86,7 +99,7 @@ export const predicatesPermissionMiddleware = (
 
       if (predicates.length > 0) {
         predicates.forEach(predicate => {
-          if (hasPermission(user, predicate)) {
+          if (!hasPermission(user, predicate, options.permissions)) {
             throw new Unauthorized({
               type: ErrorTypes.Unauthorized,
               title: UnauthorizedErrorTitles.INVALID_PERMISSION,

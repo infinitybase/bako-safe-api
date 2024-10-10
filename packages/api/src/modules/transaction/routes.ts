@@ -19,9 +19,11 @@ import {
   validateCloseTransactionPayload,
   validateSignerByIdPayload,
 } from './validations';
+import { PermissionRoles } from '@src/models';
 
 const predicatePermissionMiddleware = predicatesPermissionMiddleware({
   predicatesSelector: req => req.query.predicateId as string[],
+  permissions: [PermissionRoles.OWNER, PermissionRoles.SIGNER],
 });
 
 const txPermissionMiddleware = transactionPermissionMiddleware({

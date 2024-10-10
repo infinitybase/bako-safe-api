@@ -19,12 +19,14 @@ const permissionMiddlewareById = predicatePermissionMiddleware({
   predicateSelector: req => ({
     id: req.params.predicateId,
   }),
+  permissions: [PermissionRoles.OWNER, PermissionRoles.SIGNER],
 });
 
 const permissionMiddlewareByAddress = predicatePermissionMiddleware({
   predicateSelector: req => ({
     predicateAddress: req.params.address,
   }),
+  permissions: [PermissionRoles.OWNER, PermissionRoles.SIGNER],
 });
 
 const router = Router();
