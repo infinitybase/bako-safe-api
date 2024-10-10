@@ -3,8 +3,6 @@ name: '[Gateway STG] Deploy to Amazon ECS'
 on:
   push:
     branches: [ staging ]
-    paths:
-      - 'packages/gateway/**'
 
 jobs:
   deploy:

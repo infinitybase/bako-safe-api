@@ -3,8 +3,6 @@ name: '[API-STG] Deploy to Amazon ECS'
 on:
   push:
     branches: [ staging ]
-    paths:
-      - 'packages/api/**'
 
 jobs:
   deploy:
