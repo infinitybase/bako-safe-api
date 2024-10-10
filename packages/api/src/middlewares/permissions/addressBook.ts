@@ -47,7 +47,7 @@ export const addressBookPermissionMiddleware = (
         throw new Unauthorized({
           type: ErrorTypes.Unauthorized,
           title: UnauthorizedErrorTitles.INVALID_PERMISSION,
-          detail: `User with id ${user.id} is not allowed to execute action related to address book with id ${addressBookId}`,
+          detail: 'You do not have permission to access this resource',
         });
       }
 

@@ -42,7 +42,7 @@ export const transactionPermissionMiddleware = (
         throw new Unauthorized({
           type: ErrorTypes.Unauthorized,
           title: UnauthorizedErrorTitles.INVALID_PERMISSION,
-          detail: `User with id ${user.id} is not allowed to execute action related to transaction with hash ${transactionHash}`,
+          detail: 'You do not have permission to access this resource',
         });
       }
 

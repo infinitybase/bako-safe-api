@@ -65,7 +65,7 @@ export const predicatePermissionMiddleware = (
         throw new Unauthorized({
           type: ErrorTypes.Unauthorized,
           title: UnauthorizedErrorTitles.INVALID_PERMISSION,
-          detail: `User with id ${user.id} is not allowed to execute action related to vault with ${key} ${value}`,
+          detail: 'You do not have permission to access this resource',
         });
       }
 
@@ -103,7 +103,7 @@ export const predicatesPermissionMiddleware = (
             throw new Unauthorized({
               type: ErrorTypes.Unauthorized,
               title: UnauthorizedErrorTitles.INVALID_PERMISSION,
-              detail: `User with id ${user.id} is not allowed to execute action related to vault with id ${predicate.id}`,
+              detail: 'You do not have permission to access this resource',
             });
           }
         });
