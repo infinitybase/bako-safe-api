@@ -17,6 +17,14 @@ export interface ICLIToken {
   userId: string;
 }
 
+export interface ICLIAuthPayload {
+  token: string;
+  network: {
+    chainId: number;
+    url: string;
+  };
+}
+
 export type IDeleteAPITokenPayload = IDefaultAPITokenParams;
 export type IListAPITokenPayload = Pick<IDefaultAPITokenParams, 'predicateId'>;
 
@@ -25,7 +33,12 @@ interface ICreateAPITokenRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Body]: ICreateAPITokenPayload;
 }
 
+interface ICLIAuthRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Body]: ICLIAuthPayload;
+}
+
 export type ICreateAPITokenRequest = AuthValidatedRequest<ICreateAPITokenRequestSchema>;
+export type ICLIAuthRequest = AuthValidatedRequest<ICLIAuthRequestSchema>;
 
 export interface ITokenCoder<D> {
   encode(...data: string[]): string;

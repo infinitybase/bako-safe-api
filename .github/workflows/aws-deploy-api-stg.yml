@@ -3,6 +3,8 @@ name: '[API-STG] Deploy to Amazon ECS'
 on:
   push:
     branches: [ staging ]
+    paths:
+      - 'packages/api/**'
 
 jobs:
   deploy:
@@ -16,7 +18,7 @@ jobs:
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v2
 
-    - name: Set up Docker Buildx  
+    - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
 
     - name: Configure AWS credentials
