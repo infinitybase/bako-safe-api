@@ -1,6 +1,6 @@
 import { Router } from 'express';
 
-import { authMiddleware } from '@src/middlewares';
+import { authMiddleware, transactionPermissionMiddleware } from '@src/middlewares';
 
 import { PredicateService } from '@modules/predicate/services';
 
@@ -15,6 +15,10 @@ import {
   validateCloseTransactionPayload,
   validateSignerByIdPayload,
 } from './validations';
+
+const permissionMiddleware = transactionPermissionMiddleware({
+  transactionSelector: req => req.params.hash,
+});
 
 const router = Router();
 const transactionService = new TransactionService();
@@ -50,7 +54,12 @@ router.get('/:id', handleResponse(findById));
 router.get('/by-hash/:hash', handleResponse(findByHash));
 router.put('/close/:id', validateCloseTransactionPayload, handleResponse(close));
 router.post('/send/:hash', handleResponse(send));
-router.put('/sign/:hash', validateSignerByIdPayload, handleResponse(signByID));
+router.put(
+  '/sign/:hash',
+  validateSignerByIdPayload,
+  permissionMiddleware,
+  handleResponse(signByID),
+);
 router.get('/history/:id/:predicateId', handleResponse(createHistory));
 
 export default router;
