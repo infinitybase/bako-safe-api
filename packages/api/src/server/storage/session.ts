@@ -13,8 +13,10 @@ export interface ISession {
   user: User;
 }
 
-const REFRESH_TIME = 300 * 1000; // 5 minutos
+const REFRESH_TIME = 300 * 1000; // 5 minutes
 const REDIS_URL = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
+const REDIS_PASSWORD = process.env.REDIS_PASSWORD || null;
+const PREFIX = 'session';
 
 export class SessionStorage {
   private redisClient?: redis.RedisClientType;
@@ -22,38 +24,27 @@ export class SessionStorage {
   protected constructor() {
     this.redisClient = redis.createClient({
       url: REDIS_URL,
+      password: REDIS_PASSWORD,
     });
 
-    this.redisClient
-      .connect()
-      .then(() => {
-        console.log('[CACHE_SESSIONS_CONNECTEDD]', new Date());
-      })
-      .catch(e => {
-        console.error(e);
-        process.exit(1);
-      });
+    this.redisClient.connect().catch(e => {
+      console.error('[REDIS CONNECT ERROR]', e);
+      process.exit(1);
+    });
   }
 
   public async addSession(sessionId: string, session: ISignInResponse) {
-    console.log('[CACHE_SESSIONS_ADD]', sessionId);
     await this.redisClient
-      .set(sessionId, JSON.stringify(session))
-      .then(result => {
-        console.log('[CACHE_SESSIONS_ADDED]', result);
-        return session;
-      })
+      .set(`${PREFIX}-${sessionId}`, JSON.stringify(session))
       .catch(e => {
-        console.error(e);
-        return null;
+        console.error('[CACHE_SESSIONS_ADD_ERROR]', e);
       });
   }
 
   public async getSession(sessionId: string) {
     let session: ISignInResponse;
-    console.log('[GET_SESSIONS_GET]', sessionId);
+    const sessionCache = await this.redisClient.get(`${PREFIX}-${sessionId}`);
 
-    const sessionCache = await this.redisClient.get(sessionId);
     if (sessionCache) {
       session = JSON.parse(sessionCache) as ISignInResponse;
     } else {
@@ -65,7 +56,6 @@ export class SessionStorage {
   }
 
   public async updateSession(sessionId: string) {
-    console.log('[CACHE_SESSIONS_UPDATE]', sessionId);
     let session = await this.getSession(sessionId);
     if (session && isPast(new Date(session.expired_at))) {
       await this.removeSession(sessionId);
@@ -75,28 +65,24 @@ export class SessionStorage {
   }
 
   public async getTokenOnDatabase(sessionId: string) {
-    console.log('[GET_SESSIONS_DB]', sessionId);
     const token = await AuthService.findToken(sessionId);
     return token;
   }
 
-  // remove uma sessão do store e do database
+  // remove section from database
   public async removeSession(sessionId: string) {
-    console.log('[CACHE_SESSIONS_REMOVE]', sessionId);
     await UserToken.delete({
       token: sessionId,
     });
-    await this.redisClient.del([sessionId]);
+    await this.redisClient.del([`${PREFIX}-${sessionId}`]);
   }
 
-  // limpa as sessões expiradas
+  // clean experied sessions
   public async clearExpiredSessions() {
-    console.log('[CACHE_SESSIONS_CLEARING]');
     const removedTokens = await AuthService.clearExpiredTokens();
     if (removedTokens.length > 0) {
-      await this.redisClient.del(removedTokens);
+      await this.redisClient.del(removedTokens.map(t => `${PREFIX}-${t}`));
     }
-    console.log('[CACHE_SESSIONS_CLEARED]', removedTokens.length);
   }
 
   static start() {
