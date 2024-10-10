@@ -110,11 +110,16 @@ export class AuthService implements IAuthService {
       .getOne();
   }
 
-  static async clearExpiredTokens(): Promise<void> {
+  static async clearExpiredTokens(): Promise<string[]> {
     try {
+      const removedUsers = await UserToken.findBy({
+        expired_at: LessThanOrEqual(new Date()),
+      });
       await UserToken.delete({
         expired_at: LessThanOrEqual(new Date()),
       });
+
+      return removedUsers.map(user => user.token);
     } catch (e) {
       console.log('[CLEAR_EXPIRED_TOKEN_ERROR]', e);
     }

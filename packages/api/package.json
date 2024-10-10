@@ -47,6 +47,7 @@
     "pg": "8.5.1",
     "pprof": "4.0.0",
     "qs": "6.12.1",
+    "redis": "4.7.0",
     "reflect-metadata": "0.1.13",
     "socket.io": "4.7.2",
     "socket.io-client": "4.7.5",

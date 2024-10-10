@@ -35,7 +35,9 @@ class App {
     this.app.use(Express.json());
     this.app.use(cors());
 
-    if (isDevMode) {
+    // neg -> logs em prod
+    // pos -> logs em dev
+    if (!isDevMode) {
       this.app.use(morgan('dev'));
     }
   }
