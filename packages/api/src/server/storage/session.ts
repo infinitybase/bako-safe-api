@@ -14,25 +14,36 @@ export interface ISession {
 }
 
 const REFRESH_TIME = 300 * 1000; // 5 minutes
-const REDIS_URL = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
+const REDIS_URL_WRITE = process.env.REDIS_URL_WRITE || 'redis://127.0.0.1:6379';
+const REDIS_URL_READ = process.env.REDIS_URL_READ || 'redis://127.0.0.1:6379';
 const PREFIX = 'session';
 
 export class SessionStorage {
-  private redisClient?: redis.RedisClientType;
+  private redisClientWrite?: redis.RedisClientType;
+  private redisClientRead?: redis.RedisClientType;
 
   protected constructor() {
-    this.redisClient = redis.createClient({
-      url: REDIS_URL,
+    this.redisClientWrite = redis.createClient({
+      url: REDIS_URL_WRITE,
     });
 
-    this.redisClient.connect().catch(e => {
-      console.error('[REDIS CONNECT ERROR]', e);
+    this.redisClientRead = redis.createClient({
+      url: REDIS_URL_READ,
+    });
+
+    this.redisClientWrite.connect().catch(e => {
+      console.error('[REDIS WRITE CONNECT ERROR]', e);
+      process.exit(1);
+    });
+
+    this.redisClientRead.connect().catch(e => {
+      console.error('[REDIS READ CONNECT ERROR]', e);
       process.exit(1);
     });
   }
 
   public async addSession(sessionId: string, session: ISignInResponse) {
-    await this.redisClient
+    await this.redisClientWrite
       .set(`${PREFIX}-${sessionId}`, JSON.stringify(session))
       .catch(e => {
         console.error(
@@ -46,7 +57,7 @@ export class SessionStorage {
 
   public async getSession(sessionId: string) {
     let session: ISignInResponse;
-    const sessionCache = await this.redisClient.get(`${PREFIX}-${sessionId}`);
+    const sessionCache = await this.redisClientRead.get(`${PREFIX}-${sessionId}`);
 
     if (sessionCache) {
       session = JSON.parse(sessionCache) as ISignInResponse;
@@ -77,14 +88,14 @@ export class SessionStorage {
     await UserToken.delete({
       token: sessionId,
     });
-    await this.redisClient.del([`${PREFIX}-${sessionId}`]);
+    await this.redisClientWrite.del([`${PREFIX}-${sessionId}`]);
   }
 
   // clean experied sessions
   public async clearExpiredSessions() {
     const removedTokens = await AuthService.clearExpiredTokens();
     if (removedTokens.length > 0) {
-      await this.redisClient.del(removedTokens.map(t => `${PREFIX}-${t}`));
+      await this.redisClientWrite.del(removedTokens.map(t => `${PREFIX}-${t}`));
     }
   }
 
