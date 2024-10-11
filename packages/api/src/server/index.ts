@@ -3,6 +3,8 @@ import * as pprof from 'pprof';
 import app from './app';
 import Bootstrap from './bootstrap';
 import Monitoring from './monitoring';
+import RedisWriteClient from '@src/utils/redis/RedisWriteClient';
+import RedisReadClient from '@src/utils/redis/RedisReadClient';
 
 const {
   API_PORT,
@@ -17,6 +19,8 @@ const {
   AWS_SMTP_USER,
   AWS_SMTP_PASS,
   REDIS_URL,
+  REDIS_URL_WRITE,
+  REDIS_URL_READ,
 } = process.env;
 
 pprof.heap.start(512 * 1024, 64);
@@ -37,11 +41,15 @@ const start = async () => {
     AWS_SMTP_USER,
     AWS_SMTP_PASS,
     REDIS_URL,
+    REDIS_URL_WRITE,
+    REDIS_URL_READ,
   });
 
   Monitoring.init();
 
   await Bootstrap.start();
+  await RedisWriteClient.start();
+  await RedisReadClient.start();
 
   console.log('[APP] Storages started', {
     active_quotes: app._quoteCache.getActiveQuotes(),
