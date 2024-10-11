@@ -17,9 +17,11 @@ export const addressBookPermissionMiddleware = (
 ) => {
   return async (req: Request, _: Response, next: NextFunction) => {
     try {
-      const { user }: IAuthRequest = req;
-
       const addressBookId = options.addressBookSelector(req);
+
+      if (!addressBookId) return next();
+
+      const { user }: IAuthRequest = req;
 
       const addressBook = await AddressBook.findOne({
         where: { id: addressBookId },
