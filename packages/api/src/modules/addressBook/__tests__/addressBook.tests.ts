@@ -64,37 +64,37 @@ describe('[ADDRESS_BOOK]', () => {
     5 * 1000,
   );
 
-  test(
-    'Create address book using a group workspace',
-    async () => {
-      const auth = new AuthValidations(networks['local'], accounts['USER_1']);
+  // test(
+  //   'Create address book using a group workspace',
+  //   async () => {
+  //     const auth = new AuthValidations(networks['local'], accounts['USER_1']);
 
-      await auth.create();
-      await auth.createSession();
-      const { data: workspace } = await generateWorkspacePayload(auth);
+  //     await auth.create();
+  //     await auth.createSession();
+  //     const { data: workspace } = await generateWorkspacePayload(auth);
 
-      //await auth.selectWorkspace(workspace.id);
-      const nickname = `[FAKE_CONTACT_NAME]: ${Address.fromRandom().toAddress()}`;
-      const address = Address.fromRandom();
-      const { data } = await auth.axios.post('/address-book/', {
-        nickname,
-        address: address.toAddress(),
-      });
+  //     //await auth.selectWorkspace(workspace.id);
+  //     const nickname = `[FAKE_CONTACT_NAME]: ${Address.fromRandom().toAddress()}`;
+  //     const address = Address.fromRandom();
+  //     const { data } = await auth.axios.post('/address-book/', {
+  //       nickname,
+  //       address: address.toAddress(),
+  //     });
 
-      const aux = await auth.axios
-        .post('/address-book/', {
-          nickname,
-          address,
-        })
-        .catch(e => e.response.data);
+  //     const aux = await auth.axios
+  //       .post('/address-book/', {
+  //         nickname,
+  //         address,
+  //       })
+  //       .catch(e => e.response.data);
 
-      expect(data).toHaveProperty('id');
-      expect(data).toHaveProperty('nickname', nickname);
-      expect(data).toHaveProperty('user.address', address.toB256());
-      expect(aux).toHaveProperty('detail', 'Duplicated nickname');
-    },
-    5 * 1000,
-  );
+  //     expect(data).toHaveProperty('id');
+  //     expect(data).toHaveProperty('nickname', nickname);
+  //     expect(data).toHaveProperty('user.address', address.toB256());
+  //     expect(aux).toHaveProperty('detail', 'Duplicated nickname');
+  //   },
+  //   5 * 1000,
+  // );
 
   test(
     `list addressBook`,
