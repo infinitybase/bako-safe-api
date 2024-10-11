@@ -30,8 +30,8 @@ importers:
         specifier: 1.5.1
         version: 1.5.1
       bakosafe:
-        specifier: 0.0.89-beta
-        version: 0.0.89-beta(fuels@0.94.9)
+        specifier: 0.0.91-beta
+        version: 0.0.91-beta(fuels@0.94.9)
       bcrypt:
         specifier: 5.1.0
         version: 5.1.0
@@ -232,8 +232,8 @@ importers:
         specifier: ^10.0.5
         version: 10.0.5(graphql@16.9.0)
       bakosafe:
-        specifier: 0.0.89-beta
-        version: 0.0.89-beta(fuels@0.94.9)
+        specifier: 0.0.91-beta
+        version: 0.0.91-beta(fuels@0.94.9)
       copyfiles:
         specifier: 2.4.1
         version: 2.4.1
@@ -322,8 +322,8 @@ importers:
         specifier: 1.5.1
         version: 1.5.1
       bakosafe:
-        specifier: 0.0.89-beta
-        version: 0.0.89-beta(fuels@0.94.9)
+        specifier: 0.0.91-beta
+        version: 0.0.91-beta(fuels@0.94.9)
       express:
         specifier: 4.17.1
         version: 4.17.1
@@ -4761,11 +4761,10 @@ packages:
       babel-preset-current-node-syntax: 1.1.0(@babel/core@7.25.7)
     dev: true
 
-  /bakosafe@0.0.89-beta(fuels@0.94.9):
-    resolution: {integrity: sha512-nfjU6cEdDN4zPe6nGpxClSYNedEHiPrzFUQ+crcIt7iu+//XmzMlIIyDK8H3xUBAWbSL1wn0uSurt/hJiz2Ziw==}
-    requiresBuild: true
+  /bakosafe@0.0.91-beta(fuels@0.94.9):
+    resolution: {integrity: sha512-l9Vxd3vKKJRaMl415a7x2cL1BVG/FQj+IQ0GasySOy+5RvIZZlPI68F81UkrODSArNzhr2f4O+rlsJlqjAWZng==}
     peerDependencies:
-      fuels: 0.94.9
+      fuels: 0.95.0
     dependencies:
       '@noble/curves': 1.6.0
       axios: 1.5.1
