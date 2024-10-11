@@ -3,7 +3,6 @@ import { Address } from 'fuels';
 import { accounts } from '@src/mocks/accounts';
 import { networks } from '@src/mocks/networks';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
-import { generateWorkspacePayload } from '@src/utils/testUtils/Workspace';
 import { catchApplicationError, TestError } from '@utils/testUtils/Errors';
 
 describe('[ADDRESS_BOOK]', () => {
@@ -100,9 +99,10 @@ describe('[ADDRESS_BOOK]', () => {
     `list addressBook`,
     async () => {
       //list with workspace
-      const auth = new AuthValidations(networks['local'], accounts['USER_1']);
-      await auth.create();
-      await auth.createSession();
+      const auth = await AuthValidations.authenticateUser({
+        account: accounts['USER_1'],
+        provider: networks['local'],
+      });
 
       //list with single workspace [your address book]
       await auth.axios.get(`/address-book`).then(({ data, status }) => {
@@ -198,9 +198,10 @@ describe('[ADDRESS_BOOK]', () => {
       });
 
     // Update address book with invalid permission
-    const auth_aux = new AuthValidations(networks['local'], accounts['USER_2']);
-    await auth_aux.create();
-    await auth_aux.createSession();
+    const auth_aux = await AuthValidations.authenticateUser({
+      account: accounts['USER_2'],
+      provider: networks['local'],
+    });
 
     const notHasPermissionError = await catchApplicationError(
       auth_aux.axios.put(`/address-book/${adressBook.id}`, {
@@ -221,9 +222,10 @@ describe('[ADDRESS_BOOK]', () => {
     });
 
     // Delete address book with invalid permission
-    const auth_aux = new AuthValidations(networks['local'], accounts['USER_2']);
-    await auth_aux.create();
-    await auth_aux.createSession();
+    const auth_aux = await AuthValidations.authenticateUser({
+      account: accounts['USER_2'],
+      provider: networks['local'],
+    });
 
     const notHasPermissionError = await catchApplicationError(
       auth_aux.axios.delete(`/address-book/${adressBook.id}`),
