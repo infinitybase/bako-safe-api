@@ -9,6 +9,7 @@ import {
 
 import { IDefaultOrdination, IOrdination } from '@utils/ordination';
 import { IPagination, PaginationParams } from '@utils/pagination';
+import { Network } from 'fuels';
 
 export enum Sort {
   asc = 'ASC',
@@ -20,6 +21,7 @@ export interface ICreateNotificationPayload {
   title: NotificationTitle;
   read?: boolean;
   summary: NotificationSummary;
+  network: Network;
 }
 
 export type IUpdateNotificationPayload = Partial<ICreateNotificationPayload>;
@@ -27,6 +29,7 @@ export type IUpdateNotificationPayload = Partial<ICreateNotificationPayload>;
 export interface IFilterNotificationParams {
   userId?: string;
   unread?: boolean;
+  networkUrl?: string;
 }
 
 interface IListNotificationsRequestSchema extends ValidatedRequestSchema {
@@ -51,7 +54,8 @@ export interface INotificationService {
   list: () => Promise<IPagination<Notification> | Notification[]>;
   create: (payload: ICreateNotificationPayload) => Promise<Notification>;
   update: (
-    selector: unknown,
+    userId: string,
+    networkUrl: string,
     payload: IUpdateNotificationPayload,
   ) => Promise<boolean>;
 }

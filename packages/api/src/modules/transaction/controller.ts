@@ -216,6 +216,7 @@ export class TransactionController {
             workspaceId: predicate.workspace.id,
           },
           user_id: member.id,
+          network,
         });
       }
 
@@ -372,6 +373,7 @@ export class TransactionController {
     body: { signature, approve },
     params: { hash: txHash },
     user: { address: account },
+    network,
   }: ISignByIdRequest) {
     try {
       const transaction = await Transaction.findOne({
@@ -391,6 +393,7 @@ export class TransactionController {
         signature: isValidSignature ? signature : null,
         status:
           approve && isValidSignature ? WitnessStatus.DONE : WitnessStatus.REJECTED,
+        updatedAt: generateWitnessesUpdatedAt(),
       };
 
       transaction.resume.witnesses = transaction.resume.witnesses.map(w =>
@@ -407,7 +410,7 @@ export class TransactionController {
       await transaction.save();
 
       if (newStatus === TransactionStatus.PENDING_SENDER) {
-        await this.transactionService.sendToChain(transaction.hash);
+        await this.transactionService.sendToChain(transaction.hash, network);
       }
 
       return successful(true, Responses.Ok);
@@ -601,7 +604,7 @@ export class TransactionController {
       params: { hash },
     } = params;
     try {
-      await this.transactionService.sendToChain(hash.slice(2)); // not wait for this
+      await this.transactionService.sendToChain(hash.slice(2), params.network); // not wait for this
       return successful(true, Responses.Ok);
     } catch (e) {
       console.log(e);
