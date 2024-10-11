@@ -133,9 +133,10 @@ describe('[PREDICATE]', () => {
   test(
     'List predicates',
     async () => {
-      const auth = new AuthValidations(networks['local'], accounts['USER_1']);
-      await auth.create();
-      await auth.createSession();
+      const auth = await AuthValidations.authenticateUser({
+        account: accounts['USER_1'],
+        provider: networks['local'],
+      });
 
       type predicateMember = {
         id: string;
@@ -192,9 +193,10 @@ describe('[PREDICATE]', () => {
   );
 
   test('Find predicate by id', async () => {
-    const auth = new AuthValidations(networks['local'], accounts['USER_3']);
-    await auth.create();
-    await auth.createSession();
+    const auth = await AuthValidations.authenticateUser({
+      account: accounts['USER_3'],
+      provider: networks['local'],
+    });
 
     //create a new workspace
     // const {
@@ -261,9 +263,10 @@ describe('[PREDICATE]', () => {
       });
 
     // Find predicate by id with invalid permission
-    const auth_aux = new AuthValidations(networks['local'], accounts['USER_2']);
-    await auth_aux.create();
-    await auth_aux.createSession();
+    const auth_aux = await AuthValidations.authenticateUser({
+      account: accounts['USER_2'],
+      provider: networks['local'],
+    });
 
     const notHasPermissionError = await catchApplicationError(
       auth_aux.axios(`/predicate/${data_predicate.id}`),
@@ -272,9 +275,10 @@ describe('[PREDICATE]', () => {
   });
 
   test('Find predicate by name and verify if exists in workspace', async () => {
-    const auth = new AuthValidations(networks['local'], accounts['USER_1']);
-    await auth.create();
-    await auth.createSession();
+    const auth = await AuthValidations.authenticateUser({
+      account: accounts['USER_1'],
+      provider: networks['local'],
+    });
 
     // const {
     //   data_user1,
@@ -318,9 +322,10 @@ describe('[PREDICATE]', () => {
   });
 
   test('Get predicate balance', async () => {
-    const auth = new AuthValidations(networks['local'], accounts['USER_1']);
-    await auth.create();
-    await auth.createSession();
+    const auth = await AuthValidations.authenticateUser({
+      account: accounts['USER_1'],
+      provider: networks['local'],
+    });
 
     const data_user1 = await generateUser(auth);
     const members = [data_user1.address];
@@ -344,9 +349,10 @@ describe('[PREDICATE]', () => {
       });
 
     // Get predicate balance with invalid permission
-    const auth_aux = new AuthValidations(networks['local'], accounts['USER_2']);
-    await auth_aux.create();
-    await auth_aux.createSession();
+    const auth_aux = await AuthValidations.authenticateUser({
+      account: accounts['USER_2'],
+      provider: networks['local'],
+    });
 
     const notHasPermissionError = await catchApplicationError(
       auth_aux.axios(`/predicate/reserved-coins/${predicate.id}`),
@@ -355,9 +361,10 @@ describe('[PREDICATE]', () => {
   });
 
   test('Find predicate by address', async () => {
-    const auth = new AuthValidations(networks['local'], accounts['USER_1']);
-    await auth.create();
-    await auth.createSession();
+    const auth = await AuthValidations.authenticateUser({
+      account: accounts['USER_1'],
+      provider: networks['local'],
+    });
 
     const data_user1 = await generateUser(auth);
     const members = [data_user1.address];
@@ -379,9 +386,10 @@ describe('[PREDICATE]', () => {
       });
 
     // Find predicate by address with invalid permission
-    const auth_aux = new AuthValidations(networks['local'], accounts['USER_2']);
-    await auth_aux.create();
-    await auth_aux.createSession();
+    const auth_aux = await AuthValidations.authenticateUser({
+      account: accounts['USER_2'],
+      provider: networks['local'],
+    });
 
     const notHasPermissionError = await catchApplicationError(
       auth_aux.axios(`/predicate/by-address/${predicate.predicateAddress}`),
