@@ -1,10 +1,6 @@
 import { Router } from 'express';
 
-import {
-  authMiddleware,
-  authPermissionMiddleware,
-  predicatePermissionMiddleware,
-} from '@src/middlewares';
+import { authMiddleware, predicatePermissionMiddleware } from '@src/middlewares';
 import { PermissionRoles } from '@src/models/Workspace';
 
 import { handleResponse } from '@utils/index';
@@ -44,16 +40,7 @@ const {
 
 router.use(authMiddleware);
 
-router.post(
-  '/',
-  validateAddPredicatePayload,
-  authPermissionMiddleware([
-    PermissionRoles.OWNER,
-    PermissionRoles.ADMIN,
-    PermissionRoles.MANAGER,
-  ]),
-  handleResponse(create),
-);
+router.post('/', validateAddPredicatePayload, handleResponse(create));
 router.get('/', handleResponse(list));
 router.get('/:predicateId', permissionMiddlewareById, handleResponse(findById));
 router.get('/by-name/:name', handleResponse(findByName));
