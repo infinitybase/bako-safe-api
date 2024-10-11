@@ -73,9 +73,10 @@ describe('[USER]', () => {
   test(
     'Home endpoint',
     async () => {
-      const auth = new AuthValidations(networks['local'], accounts['USER_1']);
-      await auth.create();
-      await auth.createSession();
+      const auth = await AuthValidations.authenticateUser({
+        account: accounts['USER_1'],
+        provider: networks['local'],
+      });
 
       //get user info
       await auth.axios.get('user/latest/info').then(({ data, status }) => {
@@ -94,9 +95,10 @@ describe('[USER]', () => {
   );
 
   test('Home predicates endpoint', async () => {
-    const auth = new AuthValidations(networks['local'], accounts['USER_1']);
-    await auth.create();
-    await auth.createSession();
+    const auth = await AuthValidations.authenticateUser({
+      account: accounts['USER_1'],
+      provider: networks['local'],
+    });
 
     //list all predicates from user
     await auth.axios.get('user/predicates').then(({ data, status }) => {
@@ -107,9 +109,10 @@ describe('[USER]', () => {
   });
 
   test('Home Transactions endpoint', async () => {
-    const auth = new AuthValidations(networks['local'], accounts['USER_1']);
-    await auth.create();
-    await auth.createSession();
+    const auth = await AuthValidations.authenticateUser({
+      account: accounts['USER_1'],
+      provider: networks['local'],
+    });
 
     //list all transactions by month,
     await auth.axios.get('user/latest/transactions').then(({ data, status }) => {
@@ -120,9 +123,11 @@ describe('[USER]', () => {
   });
 
   test('Update user', async () => {
-    const auth = new AuthValidations(networks['local'], accounts['USER_1']);
-    await auth.create();
-    await auth.createSession();
+    const auth = await AuthValidations.authenticateUser({
+      account: accounts['USER_1'],
+      provider: networks['local'],
+    });
+
     const newName = `${new Date().getTime()} - Update user test`;
     //update user
     await auth.axios
@@ -139,13 +144,15 @@ describe('[USER]', () => {
   });
 
   test('Update user with existing name', async () => {
-    const auth = new AuthValidations(networks['local'], accounts['USER_1']);
-    await auth.create();
-    await auth.createSession();
+    const auth = await AuthValidations.authenticateUser({
+      account: accounts['USER_1'],
+      provider: networks['local'],
+    });
 
-    const _auth = new AuthValidations(networks['local'], accounts['USER_5']);
-    await _auth.create();
-    await _auth.createSession();
+    const _auth = await AuthValidations.authenticateUser({
+      account: accounts['USER_5'],
+      provider: networks['local'],
+    });
 
     //get name from existing user
     const { data } = await auth.axios.get(`user/${auth.user.id}`);
@@ -166,13 +173,16 @@ describe('[USER]', () => {
   });
 
   test('Inválid update user', async () => {
-    const auth = new AuthValidations(networks['local'], accounts['USER_1']);
-    await auth.create();
-    await auth.createSession();
+    const auth = await AuthValidations.authenticateUser({
+      account: accounts['USER_1'],
+      provider: networks['local'],
+    });
 
-    const _auth = new AuthValidations(networks['local'], accounts['USER_5']);
-    await _auth.create();
-    await _auth.createSession();
+    const _auth = await AuthValidations.authenticateUser({
+      account: accounts['USER_5'],
+      provider: networks['local'],
+    });
+
     //update user
     await _auth.axios
       .put(`user/${auth.user.id}`, {
@@ -219,9 +229,10 @@ describe('[USER]', () => {
   );
 
   test('Get token usd amount endpoint', async () => {
-    const auth = new AuthValidations(networks['local'], accounts['USER_1']);
-    await auth.create();
-    await auth.createSession();
+    const auth = await AuthValidations.authenticateUser({
+      account: accounts['USER_1'],
+      provider: networks['local'],
+    });
 
     //list all tokensIDS and usd quote,
     await auth.axios.get('user/latest/tokens').then(({ data, status }) => {
