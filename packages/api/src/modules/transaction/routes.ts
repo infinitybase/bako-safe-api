@@ -4,6 +4,7 @@ import {
   authMiddleware,
   predicatesPermissionMiddleware,
   transactionPermissionMiddleware,
+  workspacePermissionMiddleware,
 } from '@src/middlewares';
 
 import { PredicateService } from '@modules/predicate/services';
@@ -24,6 +25,10 @@ import { PermissionRoles } from '@src/models';
 const predicatePermissionMiddleware = predicatesPermissionMiddleware({
   predicatesSelector: req => req.query.predicateId as string[],
   permissions: [PermissionRoles.OWNER, PermissionRoles.SIGNER],
+});
+
+const wkPermissionMiddleware = workspacePermissionMiddleware({
+  workspaceSelector: req => req.query.workspaceId as string,
 });
 
 const txPermissionMiddleware = transactionPermissionMiddleware({
@@ -57,9 +62,15 @@ const {
 router.use(authMiddleware);
 
 router.post('/', validateAddTransactionPayload, handleResponse(create));
-router.get('/', predicatePermissionMiddleware, handleResponse(list));
+router.get(
+  '/',
+  wkPermissionMiddleware,
+  predicatePermissionMiddleware,
+  handleResponse(list),
+);
 router.get(
   '/with-incomings',
+  wkPermissionMiddleware,
   predicatePermissionMiddleware,
   handleResponse(listWithIncomings),
 );
