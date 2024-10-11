@@ -41,9 +41,11 @@ export const predicatePermissionMiddleware = (
 ) => {
   return async (req: Request, _: Response, next: NextFunction) => {
     try {
-      const { user }: IAuthRequest = req;
-
       const predicateFilter = options.predicateSelector(req);
+
+      if (!predicateFilter || !Object.values(predicateFilter)[0]) return next();
+
+      const { user }: IAuthRequest = req;
 
       const predicate = await Predicate.createQueryBuilder('p')
         .leftJoin('p.owner', 'owner')
@@ -81,13 +83,13 @@ export const predicatesPermissionMiddleware = (
 ) => {
   return async (req: Request, _: Response, next: NextFunction) => {
     try {
-      const { user }: IAuthRequest = req;
-
       const predicateIds = options.predicatesSelector(req);
 
       if (!predicateIds || predicateIds.length === 0) {
         return next();
       }
+
+      const { user }: IAuthRequest = req;
 
       const predicates = await Predicate.createQueryBuilder('p')
         .leftJoin('p.owner', 'owner')
