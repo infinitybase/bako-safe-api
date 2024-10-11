@@ -17,9 +17,11 @@ export const transactionPermissionMiddleware = (
 ) => {
   return async (req: Request, _: Response, next: NextFunction) => {
     try {
-      const { user }: IAuthRequest = req;
-
       const transactionHash = options.transactionSelector(req);
+
+      if (!transactionHash) return next();
+
+      const { user }: IAuthRequest = req;
 
       const transaction = await Transaction.createQueryBuilder('t')
         .select('t.resume')
