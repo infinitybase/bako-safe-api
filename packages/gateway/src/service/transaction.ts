@@ -139,7 +139,7 @@ export class TransactionService {
     });
 
     const { tx: transactionRequest } = await vault.BakoTransfer(request, {
-      name: tokenConfig.transactionTitle,
+      name: tokenConfig.transactionTitle || "Contract deployment",
     });
 
     return transactionRequest;
@@ -249,7 +249,7 @@ export class TransactionService {
     request.scriptData = arrayify(scriptData ?? ZeroBytes32);
 
     const { tx: transactionRequest } = await vault.BakoTransfer(request, {
-      name: tokenConfig.transactionTitle,
+      name: tokenConfig.transactionTitle || "Transaction Script",
     });
 
     return transactionRequest;

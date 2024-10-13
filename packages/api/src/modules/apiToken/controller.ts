@@ -1,8 +1,21 @@
 import { Request } from 'express';
-import { successful, Responses, bindMethods } from '@src/utils';
-import { IAPITokenService, ICreateAPITokenRequest } from '@modules/apiToken/types';
+import { bindMethods, Responses, successful } from '@src/utils';
+import {
+  IAPITokenService,
+  ICLIAuthRequest,
+  ICreateAPITokenRequest,
+} from '@modules/apiToken/types';
 import { IPredicateService } from '@modules/predicate/types';
-import { error, ErrorTypes, NotFound } from '@utils/error';
+import {
+  error,
+  ErrorTypes,
+  NotFound,
+  Unauthorized,
+  UnauthorizedErrorTitles,
+} from '@utils/error';
+import { APIToken, RecoverCode, RecoverCodeType, User } from '@src/models';
+import { getRandomB256 } from 'fuels';
+import { addMinutes } from 'date-fns';
 
 export class APITokenController {
   constructor(
@@ -76,6 +89,64 @@ export class APITokenController {
       return successful(null, Responses.Created);
     } catch (e) {
       return error(e.error, e.statusCode);
+    }
+  }
+
+  async auth(req: ICLIAuthRequest) {
+    const { body } = req;
+    const { token, network } = body;
+
+    try {
+      const cliToken = this.apiTokenService.decodeCLIToken(token);
+      const apiToken = await APIToken.findOne({
+        where: {
+          token: cliToken.apiToken,
+        },
+        relations: ['predicate'],
+      });
+
+      if (!apiToken) {
+        throw new Unauthorized({
+          type: ErrorTypes.Unauthorized,
+          title: UnauthorizedErrorTitles.INVALID_CREDENTIALS,
+          detail: 'Some required credentials are missing',
+        });
+      }
+
+      const recoverCode = await RecoverCode.create({
+        type: RecoverCodeType.AUTH_ONCE,
+        code: `cli${getRandomB256()}`,
+        owner: { id: cliToken.userId },
+        validAt: addMinutes(new Date(), 5),
+        origin: 'cli',
+        metadata: { uses: 0 },
+        network,
+      }).save();
+      const user = await User.findOne({
+        where: { id: cliToken.userId },
+        select: ['address'],
+      });
+      return successful(
+        {
+          code: recoverCode.code,
+          address: user.address,
+          configurable: JSON.parse(apiToken.predicate.configurable),
+          tokenConfig: apiToken.config,
+        },
+        Responses.Ok,
+      );
+    } catch (e) {
+      let err = e;
+
+      if (err instanceof Error) {
+        err = new Unauthorized({
+          type: ErrorTypes.Internal,
+          title: UnauthorizedErrorTitles.MISSING_CREDENTIALS,
+          detail: e.message,
+        });
+      }
+
+      return error(err, err.statusCode);
     }
   }
 }
