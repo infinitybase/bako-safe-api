@@ -50,8 +50,11 @@ class RecoverCode extends Base {
 
   @BeforeInsert()
   insertCreatedAtAndUpdatedAt() {
-    this.code = `code${Address.fromRandom().toHexString()}`;
     this.used = false;
+
+    if (!this.code) {
+      this.code = `code${Address.fromRandom().toHexString()}`;
+    }
   }
 }
 
