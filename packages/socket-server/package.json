@@ -16,7 +16,7 @@
 		"bakosafe": "0.0.91-beta",
 		"express": "4.17.1",
 		"express-joi-validation": "5.0.0",
-		"fuels": "0.95.0",
+		"fuels": "0.96.0",
 		"pg": "8.5.1",
 		"socket.io": "4.7.2",
 		"ts-node": "^10.9.2",
