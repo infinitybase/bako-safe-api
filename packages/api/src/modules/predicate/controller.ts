@@ -12,6 +12,7 @@ import {
   bindMethods,
   calculateBalanceUSD,
   calculateReservedCoins,
+  getAssetsMaps,
   subCoins,
   successful,
 } from '@utils/index';
@@ -139,6 +140,7 @@ export class PredicateController {
 
   async hasReservedCoins({ params: { predicateId }, network }: IFindByIdRequest) {
     try {
+      const { assetsMapById } = await getAssetsMaps();
       const {
         transactions: predicateTxs,
         configurable,
@@ -161,8 +163,14 @@ export class PredicateController {
         network.url ?? FUEL_PROVIDER,
       );
       const balances = (await instance.getBalances()).balances;
-      const assets =
+      const allAssets =
         reservedCoins.length > 0 ? subCoins(balances, reservedCoins) : balances;
+
+      const assets = allAssets.filter(({ amount, assetId }) => {
+        const hasFuelMapped = assetsMapById[assetId];
+        const isOneUnit = amount.eq(1);
+        return hasFuelMapped && !isOneUnit;
+      });
 
       return successful(
         {
