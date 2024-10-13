@@ -166,10 +166,15 @@ export class PredicateController {
       const allAssets =
         reservedCoins.length > 0 ? subCoins(balances, reservedCoins) : balances;
 
+      const nfts = [];
       const assets = allAssets.filter(({ amount, assetId }) => {
         const hasFuelMapped = assetsMapById[assetId];
         const isOneUnit = amount.eq(1);
-        return hasFuelMapped && !isOneUnit;
+        const is = hasFuelMapped && !isOneUnit;
+
+        if (is) nfts.push({ amount, assetId });
+
+        return is;
       });
 
       return successful(
@@ -183,6 +188,7 @@ export class PredicateController {
           currentBalance: assets,
           totalBalance: balances,
           reservedCoins: reservedCoins, // locked coins
+          nfts,
         },
         Responses.Ok,
       );
