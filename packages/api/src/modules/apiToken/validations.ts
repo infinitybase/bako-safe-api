@@ -29,3 +29,13 @@ export const validateListAPITokenParams = validator.params(
     predicateId: Joi.string().uuid(),
   }),
 );
+
+export const validateCLIAuthPayload = validator.body(
+  Joi.object({
+    token: Joi.string().required(),
+    network: Joi.object({
+      chainId: Joi.number().required(),
+      url: Joi.string().uri().required(),
+    }).required(),
+  }),
+);

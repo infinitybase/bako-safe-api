@@ -69,6 +69,17 @@ export class QuoteStorage {
   private parseName(name: string) {
     const whitelist = {
       usdc: 'usd-coin',
+      weeth: 'bridged-weeth-linea',
+      wbeth: 'wrapped-beacon-eth',
+      'manta mbtc': 'manta-mbtc',
+      'manta meth': 'manta-meth',
+      'manta musd': 'manta-musd',
+      solvbtc: 'solv-btc',
+      'solvbtc.bbn': 'solv-protocol-solvbtc-bbn',
+      susde: 'ethena-staked-usde',
+      wsteth: 'wrapped-steth',
+      pzeth: 'renzo-restaked-lst',
+      steaklrt: 'steakhouse-resteaking-vault',
     };
 
     return whitelist[name] ?? name;

@@ -1,4 +1,5 @@
 import { createGraphqlFetch } from "@/lib";
+
 import { executableSchema, defaultSchema } from "./schema";
 import { resolvers } from "./resolvers";
 
