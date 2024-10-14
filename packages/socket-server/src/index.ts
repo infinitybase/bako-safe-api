@@ -33,6 +33,7 @@ io.on(SocketEvents.CONNECT, async socket => {
 
 	const room = `${sessionId}:${username}:${requestId}`
 
+	socket.data.messageQueue = []
 	await socket.join(room)
 	console.log('Conexão estabelecida com o cliente:', room)
 	//console.log('[CONEXAO]: ', socket.handshake.auth, socket.id)
@@ -79,6 +80,7 @@ io.on(SocketEvents.CONNECT, async socket => {
 		socket.disconnect(true)
 		socket.rooms.forEach(room => socket.leave(room))
 		socket.removeAllListeners()
+		socket.data.messageQueue = []
 	})
 })
 
