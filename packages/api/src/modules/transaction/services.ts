@@ -10,7 +10,7 @@ import {
   getTransactionSummary,
   Network,
 } from 'fuels';
-import { Brackets } from 'typeorm';
+import { Brackets, Not } from 'typeorm';
 
 import { Predicate, Transaction } from '@models/index';
 
@@ -96,7 +96,7 @@ export class TransactionService implements ITransactionService {
 
   async findByHash(hash: string): Promise<ITransactionResponse> {
     return await Transaction.findOne({
-      where: { hash: hash },
+      where: { hash: hash, status: Not(TransactionStatus.DECLINED) },
       relations: [
         'predicate',
         'predicate.members',
@@ -193,9 +193,13 @@ export class TransactionService implements ITransactionService {
         'workspace.name',
         'workspace.single',
       ])
-      .andWhere(`t.network->>'url' = :network`, {
-        network: this._filter.network,
-      });
+      .andWhere(
+        // TODO: On release to mainnet we need to remove this condition
+        `regexp_replace(t.network->>'url', '^https?://[^@]+@', 'https://') = :network`,
+        {
+          network: this._filter.network.replace(/^https?:\/\/[^@]+@/, 'https://'),
+        },
+      );
 
     this._filter.predicateAddress &&
       queryBuilder.andWhere('predicate.predicateAddress = :address', {
@@ -348,9 +352,12 @@ export class TransactionService implements ITransactionService {
         'workspace.name',
         'workspace.single',
       ])
-      .andWhere(`t.network->>'url' = :network`, {
-        network: this._filter.network,
-      });
+      .andWhere(
+        `regexp_replace(t.network->>'url', '^https?://[^@]+@', 'https://') = :network`,
+        {
+          network: this._filter.network.replace(/^https?:\/\/[^@]+@/, 'https://'),
+        },
+      );
 
     // =============== specific for workspace ===============
     if (this._filter.workspaceId || this._filter.signer) {
@@ -492,7 +499,19 @@ export class TransactionService implements ITransactionService {
   //instance tx
   //add witnesses
   async sendToChain(hash: string, network: Network) {
-    const transaction = await this.findByHash(hash);
+    const transaction = await Transaction.findOne({
+      where: { hash, status: Not(TransactionStatus.DECLINED) },
+      relations: ['predicate', 'createdBy'],
+    });
+
+    if (!transaction) {
+      throw new NotFound({
+        type: ErrorTypes.NotFound,
+        title: 'Transaction not found',
+        detail: `No transaction were found that were ready to be sent to the provided hash: ${hash}.`,
+      });
+    }
+
     const { id, predicate, txData, status, resume } = transaction;
 
     if (status != TransactionStatus.PENDING_SENDER) {

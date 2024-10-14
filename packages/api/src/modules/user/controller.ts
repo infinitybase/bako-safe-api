@@ -32,7 +32,7 @@ import {
   IUserService,
 } from './types';
 import { Not } from 'typeorm';
-import app from '@src/server/app';
+import App from '@src/server/app';
 import { Provider } from 'fuels';
 import { IChangenetworkRequest } from '../auth/types';
 
@@ -319,7 +319,7 @@ export class UserController {
         ...req.body,
       });
 
-      await app._sessionCache.updateSession(sessionId);
+      await App.getInstance()._sessionCache.updateSession(sessionId);
 
       return successful(response, Responses.Ok);
     } catch (e) {

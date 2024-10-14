@@ -12,7 +12,7 @@ import { ErrorTypes } from '@utils/error';
 import { Unauthorized, UnauthorizedErrorTitles } from '@utils/error/Unauthorized';
 
 import { recoverFuelSignature, recoverWebAuthnSignature } from './web3';
-import app from '@src/server/app';
+import App from '@src/server/app';
 import { ISignInResponse } from '@src/modules/auth/types';
 
 import { MoreThan } from 'typeorm';
@@ -91,7 +91,7 @@ export class TokenUtils {
   }
 
   static async recoverToken(signature: string) {
-    const token = await app._sessionCache.getSession(signature);
+    const token = await App.getInstance()._sessionCache.getSession(signature);
 
     if (!token) {
       throw new Unauthorized({
@@ -162,7 +162,7 @@ export class TokenUtils {
     _token.network = _network;
 
     await _token.save();
-    await app._sessionCache.updateSession(_token.token);
+    await App.getInstance()._sessionCache.updateSession(_token.token);
 
     return true;
   }
@@ -174,73 +174,65 @@ export class TokenUtils {
     userFilter: { address: string } | { name: string },
     // network: Network,
   ) {
-    try {
-      const code = await RecoverCode.findOne({
-        where: {
-          owner: userFilter,
-          type: RecoverCodeType.AUTH,
-          validAt: MoreThan(new Date()),
-        },
-        relations: ['owner'],
-        order: { createdAt: 'DESC' },
+    const code = await RecoverCode.findOne({
+      where: {
+        owner: { address: userAddress },
+        type: RecoverCodeType.AUTH,
+        validAt: MoreThan(new Date()),
+      },
+      relations: ['owner'],
+      order: { createdAt: 'DESC' },
+    });
+
+    if (!code) {
+      throw new Unauthorized({
+        type: ErrorTypes.Unauthorized,
+        title: UnauthorizedErrorTitles.INVALID_RECOVER_CODE,
+        detail: 'The provided recover code is invalid',
       });
-
-      if (!code) {
-        throw new Unauthorized({
-          type: ErrorTypes.Unauthorized,
-          title: UnauthorizedErrorTitles.INVALID_RECOVER_CODE,
-          detail: 'The provided recover code is invalid',
-        });
-      }
-
-      const address = await TokenUtils.verifySignature({
-        signature,
-        digest,
-        encoder,
-      });
-
-      if (!address)
-        throw new Unauthorized({
-          type: ErrorTypes.Unauthorized,
-          title: UnauthorizedErrorTitles.INVALID_SIGNATURE,
-          detail: `User not found`,
-        });
-
-      const user = await TokenUtils.checkUserExists(address);
-
-      await TokenUtils.invalidateRecoverCode(user, RecoverCodeType.AUTH);
-
-      const workspace = await TokenUtils.findSingleWorkspace(user.id);
-      await TokenUtils.revokeToken(user); // todo: verify if it's necessary
-      // const;
-
-      const sig = await new AuthService().signIn({
-        token: signature,
-        encoder: Encoder[encoder],
-        network: code.network,
-        expired_at: addMinutes(new Date(), Number(EXPIRES_IN)),
-        payload: digest,
-        user: user,
-        workspace,
-      });
-
-      return {
-        userToken: await this.getTokenBySignature(sig.accessToken),
-        signin: sig,
-      };
-    } catch (e) {
-      throw e;
     }
+
+    const address = await TokenUtils.verifySignature({
+      signature,
+      digest,
+      encoder,
+    });
+
+    if (!address)
+      throw new Unauthorized({
+        type: ErrorTypes.Unauthorized,
+        title: UnauthorizedErrorTitles.INVALID_SIGNATURE,
+        detail: `User not found`,
+      });
+
+    const user = await TokenUtils.checkUserExists(address);
+
+    await TokenUtils.invalidateRecoverCode(user, RecoverCodeType.AUTH);
+
+    const workspace = await TokenUtils.findSingleWorkspace(user.id);
+    await TokenUtils.revokeToken(user); // todo: verify if it's necessary
+    // const;
+
+    const sig = await new AuthService().signIn({
+      token: signature,
+      encoder: Encoder[encoder],
+      network: code.network,
+      expired_at: addMinutes(new Date(), Number(EXPIRES_IN)),
+      payload: digest,
+      user: user,
+      workspace,
+    });
+
+    return {
+      userToken: await this.getTokenBySignature(sig.accessToken),
+      signin: sig,
+    };
   }
 
-  static async getTokenBySignature(signature: string) {
-    try {
-      const userToken = AuthService.findToken(signature);
-
-      return userToken;
-    } catch (e) {
-      throw e;
-    }
+  static async getTokenBySignature(
+    signature: string,
+  ): Promise<ISignInResponse | undefined> {
+    return AuthService.findToken(signature);
   }
 
   static async getTokenByUser(userId: string) {
@@ -265,7 +257,10 @@ export class TokenUtils {
         await _token.save();
 
         const renewedToken = await this.getTokenBySignature(token.accessToken);
-        await app._sessionCache.addSession(token.accessToken, renewedToken);
+        await App.getInstance()._sessionCache.addSession(
+          token.accessToken,
+          renewedToken,
+        );
 
         return renewedToken;
       }

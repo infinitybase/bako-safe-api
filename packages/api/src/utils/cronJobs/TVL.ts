@@ -2,7 +2,7 @@ import { Predicate, TotalValueLocked } from '@src/models';
 import { Asset, Vault } from 'bakosafe';
 import cron from 'node-cron';
 import { getAssetsMaps } from '../assets';
-import app from '@src/server/app';
+import App from '@src/server/app';
 import { Provider } from 'fuels';
 const { FUEL_PROVIDER } = process.env;
 
@@ -77,9 +77,9 @@ const TVLCronJob = cron.schedule('0 0 * * *', async () => {
         };
       });
 
-    const formattedAssetsTVL = validAssetsTVL.map(asset => {
+    const formattedAssetsTVL = validAssetsTVL.map(async asset => {
       const formattedAmount = asset.amount.format();
-      const priceUSD = app._quoteCache.getQuote(asset.assetId);
+      const priceUSD = await App.getInstance()._quoteCache.getQuote(asset.assetId);
 
       return {
         assetId: asset.assetId,

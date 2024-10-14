@@ -1,42 +1,42 @@
 import { IAsset, IAssetMapById, getAssetsMaps, isDevMode } from '@src/utils';
+import RedisReadClient from '@src/utils/redis/RedisReadClient';
+import RedisWriteClient from '@src/utils/redis/RedisWriteClient';
 import axios from 'axios';
 
 const { COIN_MARKET_CAP_API_KEY } = process.env;
+
+const PREFIX = 'quotes';
 
 export interface IQuote {
   assetId: string;
   price: number;
 }
 
-const REFRESH_TIME = 1000 * 60 * 25; // 25 minutes
+const REFRESH_TIME = 60000 * 25; // 25 minutes
 
 export class QuoteStorage {
-  private data = new Map<string, number>();
+  protected constructor() {}
 
-  protected constructor() {
-    this.data = new Map<string, number>();
+  public async getQuote(assetId: string): Promise<number> {
+    const quote = await RedisReadClient.get(`${PREFIX}-${assetId}`);
+    return Number(quote) ?? 0;
   }
 
-  public getQuote(assetId: string): number {
-    const quote = this.data.get(assetId);
-    return quote ?? 0;
-  }
-
-  private setQuote(assetId: string, price: number): void {
-    this.data.set(assetId, price);
+  private async setQuote(assetId: string, price: number) {
+    await RedisWriteClient.set(`${PREFIX}-${assetId}`, price);
   }
 
   private async addMockQuotes(QuotesMock: IQuote[]): Promise<void> {
     QuotesMock &&
-      QuotesMock.forEach(quote => {
-        this.setQuote(quote.assetId, quote.price);
+      QuotesMock.forEach(async quote => {
+        await this.setQuote(quote.assetId, quote.price);
       });
   }
 
   private async addQuotes(): Promise<void> {
     const { assets, assetsMapById, QuotesMock } = await getAssetsMaps();
     if (isDevMode) {
-      this.addMockQuotes(QuotesMock);
+      await this.addMockQuotes(QuotesMock);
       return;
     }
 
@@ -44,9 +44,9 @@ export class QuoteStorage {
 
     if (params) {
       const quotes = await this.fetchQuotes(assets, params);
-      quotes.forEach(quote => {
-        this.setQuote(quote.assetId, quote.price);
-      });
+      await Promise.all(
+        quotes.map(quote => this.setQuote(quote.assetId, quote.price)),
+      );
     }
   }
 
@@ -69,6 +69,17 @@ export class QuoteStorage {
   private parseName(name: string) {
     const whitelist = {
       usdc: 'usd-coin',
+      weeth: 'bridged-weeth-linea',
+      wbeth: 'wrapped-beacon-eth',
+      'manta mbtc': 'manta-mbtc',
+      'manta meth': 'manta-meth',
+      'manta musd': 'manta-musd',
+      solvbtc: 'solv-btc',
+      'solvbtc.bbn': 'solv-protocol-solvbtc-bbn',
+      susde: 'ethena-staked-usde',
+      wsteth: 'wrapped-steth',
+      pzeth: 'renzo-restaked-lst',
+      steaklrt: 'steakhouse-resteaking-vault',
     };
 
     return whitelist[name] ?? name;
@@ -99,12 +110,26 @@ export class QuoteStorage {
     }
   }
 
-  public getActiveQuotes() {
-    return Array.from(this.data).length;
+  public async getActiveQuotesValues(): Promise<[string, number][]> {
+    const result = await RedisReadClient.scan(`${PREFIX}-*`);
+    const quotes = new Map<string, number>();
+
+    result.forEach((value, key) => {
+      quotes.set(key.replace(`${PREFIX}-`, ''), Number(value));
+    });
+
+    return Array.from(quotes);
   }
 
-  public getActiveQuotesValues() {
-    return Array.from(this.data);
+  public async getActiveQuotes(): Promise<Record<string, number>> {
+    const result = await RedisReadClient.scan(`${PREFIX}-*`);
+    const quotes = {};
+
+    result.forEach((value, key) => {
+      quotes[key.replace(`${PREFIX}-`, '')] = Number(value);
+    });
+
+    return quotes;
   }
 
   static start() {
@@ -114,6 +139,8 @@ export class QuoteStorage {
     setInterval(() => {
       _this.addQuotes();
     }, REFRESH_TIME);
+
+    console.log('[REDIS] QUOTE STARTED');
 
     return _this;
   }

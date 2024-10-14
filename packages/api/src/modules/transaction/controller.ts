@@ -84,9 +84,13 @@ export class TransactionController {
           .where('t.status = :status', {
             status: TransactionStatus.AWAIT_REQUIREMENTS,
           })
-          .andWhere(`t.network->>'url' = :network`, {
-            network: network.url,
-          });
+          .andWhere(
+            // TODO: On release to mainnet we need to remove this condition
+            `regexp_replace(t.network->>'url', '^https?://[^@]+@', 'https://') = :network`,
+            {
+              network: network.url.replace(/^https?:\/\/[^@]+@/, 'https://'),
+            },
+          );
 
         const result = await qb.getCount();
 
@@ -104,9 +108,13 @@ export class TransactionController {
           status: TransactionStatus.AWAIT_REQUIREMENTS,
         })
         .andWhere('t.predicateId = :predicate', { predicate })
-        .andWhere(`t.network->>'url' = :network`, {
-          network: network.url,
-        });
+        .andWhere(
+          // TODO: On release to mainnet we need to remove this condition
+          `regexp_replace(t.network->>'url', '^https?://[^@]+@', 'https://') = :network`,
+          {
+            network: network.url.replace(/^https?:\/\/[^@]+@/, 'https://'),
+          },
+        );
 
       const result = await qb.getCount();
 
@@ -350,10 +358,18 @@ export class TransactionController {
     }
   }
 
-  async findByHash({ params: { hash }, network }: IFindTransactionByHashRequest) {
+  async findByHash({
+    params: { hash },
+    query: { status },
+    network,
+  }: IFindTransactionByHashRequest) {
     try {
       const response = await this.transactionService
-        .filter({ hash: hash.slice(2), network: network.url })
+        .filter({
+          hash: hash.slice(2),
+          network: network.url,
+          status: status ?? undefined,
+        })
         .paginate(undefined)
         .list()
         .then((result: ITransactionResponse[]) => {
@@ -377,16 +393,17 @@ export class TransactionController {
   }: ISignByIdRequest) {
     try {
       const transaction = await Transaction.findOne({
-        where: { hash: txHash },
+        where: { hash: txHash, status: Not(TransactionStatus.DECLINED) },
       });
-      const isValidSignature = this.transactionService.validateSignature(
-        transaction,
-        account,
-      );
 
       if (!transaction) {
         return successful(false, Responses.Ok);
       }
+
+      const isValidSignature = this.transactionService.validateSignature(
+        transaction,
+        account,
+      );
 
       const witness = {
         ...transaction.resume.witnesses.find(w => w.account === account),

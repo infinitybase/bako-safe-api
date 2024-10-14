@@ -266,6 +266,11 @@ export enum ContractParametersVersion {
   V1 = 'V1'
 }
 
+export type DaCompressedBlock = {
+  __typename?: 'DaCompressedBlock';
+  bytes: Scalars['HexString']['output'];
+};
+
 export type DependentCost = HeavyOperation | LightOperation;
 
 export type DryRunFailureStatus = {
@@ -849,6 +854,7 @@ export type Query = {
   contract?: Maybe<Contract>;
   contractBalance: ContractBalance;
   contractBalances: ContractBalanceConnection;
+  daCompressedBlock?: Maybe<DaCompressedBlock>;
   estimateGasPrice: EstimateGasPrice;
   /** Estimate the predicate gas for the provided transaction */
   estimatePredicates: Transaction;
@@ -950,6 +956,11 @@ export type QueryContractBalancesArgs = {
   filter: ContractBalanceFilterInput;
   first?: InputMaybe<Scalars['Int']['input']>;
   last?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryDaCompressedBlockArgs = {
+  height: Scalars['U32']['input'];
 };
 
 
@@ -1429,6 +1440,7 @@ export type ResolversTypes = ResolversObject<{
   ContractOutput: ResolverTypeWrapper<ContractOutput>;
   ContractParameters: ResolverTypeWrapper<ContractParameters>;
   ContractParametersVersion: ContractParametersVersion;
+  DaCompressedBlock: ResolverTypeWrapper<DaCompressedBlock>;
   DependentCost: ResolverTypeWrapper<ResolversUnionTypes<ResolversTypes>['DependentCost']>;
   DryRunFailureStatus: ResolverTypeWrapper<DryRunFailureStatus>;
   DryRunSuccessStatus: ResolverTypeWrapper<DryRunSuccessStatus>;
@@ -1551,6 +1563,7 @@ export type ResolversParentTypes = ResolversObject<{
   ContractId: Scalars['ContractId']['output'];
   ContractOutput: ContractOutput;
   ContractParameters: ContractParameters;
+  DaCompressedBlock: DaCompressedBlock;
   DependentCost: ResolversUnionTypes<ResolversParentTypes>['DependentCost'];
   DryRunFailureStatus: DryRunFailureStatus;
   DryRunSuccessStatus: DryRunSuccessStatus;
@@ -1820,6 +1833,11 @@ export type ContractParametersResolvers<ContextType = any, ParentType extends Re
   contractMaxSize?: Resolver<ResolversTypes['U64'], ParentType, ContextType>;
   maxStorageSlots?: Resolver<ResolversTypes['U64'], ParentType, ContextType>;
   version?: Resolver<ResolversTypes['ContractParametersVersion'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+}>;
+
+export type DaCompressedBlockResolvers<ContextType = any, ParentType extends ResolversParentTypes['DaCompressedBlock'] = ResolversParentTypes['DaCompressedBlock']> = ResolversObject<{
+  bytes?: Resolver<ResolversTypes['HexString'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 }>;
 
@@ -2245,6 +2263,7 @@ export type QueryResolvers<ContextType = any, ParentType extends ResolversParent
   contract?: Resolver<Maybe<ResolversTypes['Contract']>, ParentType, ContextType, RequireFields<QueryContractArgs, 'id'>>;
   contractBalance?: Resolver<ResolversTypes['ContractBalance'], ParentType, ContextType, RequireFields<QueryContractBalanceArgs, 'asset' | 'contract'>>;
   contractBalances?: Resolver<ResolversTypes['ContractBalanceConnection'], ParentType, ContextType, RequireFields<QueryContractBalancesArgs, 'filter'>>;
+  daCompressedBlock?: Resolver<Maybe<ResolversTypes['DaCompressedBlock']>, ParentType, ContextType, RequireFields<QueryDaCompressedBlockArgs, 'height'>>;
   estimateGasPrice?: Resolver<ResolversTypes['EstimateGasPrice'], ParentType, ContextType, Partial<QueryEstimateGasPriceArgs>>;
   estimatePredicates?: Resolver<ResolversTypes['Transaction'], ParentType, ContextType, RequireFields<QueryEstimatePredicatesArgs, 'tx'>>;
   health?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -2516,6 +2535,7 @@ export type Resolvers<ContextType = any> = ResolversObject<{
   ContractId?: GraphQLScalarType;
   ContractOutput?: ContractOutputResolvers<ContextType>;
   ContractParameters?: ContractParametersResolvers<ContextType>;
+  DaCompressedBlock?: DaCompressedBlockResolvers<ContextType>;
   DependentCost?: DependentCostResolvers<ContextType>;
   DryRunFailureStatus?: DryRunFailureStatusResolvers<ContextType>;
   DryRunSuccessStatus?: DryRunSuccessStatusResolvers<ContextType>;

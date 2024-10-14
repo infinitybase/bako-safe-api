@@ -3,9 +3,10 @@ import UserToken from '@src/models/UserToken';
 import { Workspace } from '@src/models/Workspace';
 import { AuthService } from '@src/modules/auth/services';
 import { ISignInResponse } from '@src/modules/auth/types';
-import { SocketClient } from '@src/socket/client';
-import { AuthNotifyType, SocketEvents, SocketUsernames } from '@src/socket/types';
+import RedisReadClient from '@src/utils/redis/RedisReadClient';
+import RedisWriteClient from '@src/utils/redis/RedisWriteClient';
 import { isPast } from 'date-fns';
+import * as redis from 'redis';
 
 export interface ISession {
   nome: string;
@@ -14,117 +15,61 @@ export interface ISession {
   user: User;
 }
 
-const REFRESH_TIME = 30 * 1000 * 10; // 23 minutos
-const { API_URL } = process.env;
-// move to env const
-const { API_SOCKET_SESSION_ID } = process.env; // is a const because all clients (apis) join on the same room
+const REFRESH_TIME = 60 * 1000; // 5 minutes
+const PREFIX = 'session';
 
 export class SessionStorage {
-  private data = new Map<string, ISignInResponse>();
-  private client = new SocketClient(API_SOCKET_SESSION_ID, API_URL);
+  private redisClientWrite?: redis.RedisClientType;
+  private redisClientRead?: redis.RedisClientType;
 
-  protected constructor() {
-    this.data = new Map<string, ISignInResponse>();
-    this.client.socket.onAny((event, ...args) => {
-      if (event === SocketEvents.DEFAULT) {
-        this.reciveNotify(args[0]);
-      }
-    });
-  }
-
-  private sendNotify(data, type) {
-    return this.client.sendMessage({
-      type,
-      data,
-      sessionId: API_SOCKET_SESSION_ID,
-      to: SocketUsernames.API,
-      request_id: undefined,
-    });
-  }
-
-  private reciveNotify({ type, data }) {
-    if (!data || !data.token) {
-      return;
-    }
-
-    switch (type) {
-      case AuthNotifyType.UPDATE:
-        this.data.set(data.token, data);
-        break;
-      case AuthNotifyType.REMOVE:
-        this.data.delete(data.token);
-        break;
-      default:
-        break;
-    }
-  }
+  private constructor() {}
 
   public async addSession(sessionId: string, session: ISignInResponse) {
-    this.data.set(sessionId, session);
-    this.sendNotify(
-      {
-        ...session,
-        token: sessionId,
-      },
-      AuthNotifyType.UPDATE,
-    );
+    await RedisWriteClient.set(`${PREFIX}-${sessionId}`, JSON.stringify(session));
   }
 
   public async getSession(sessionId: string) {
-    let session = this.data.get(sessionId);
+    let session: ISignInResponse;
+    const sessionCache = await RedisReadClient.get(`${PREFIX}-${sessionId}`);
 
-    if (!session) {
+    if (sessionCache) {
+      session = JSON.parse(sessionCache) as ISignInResponse;
+    } else {
       session = await this.getTokenOnDatabase(sessionId);
       this.addSession(sessionId, session);
-    }
-
-    if (session && isPast(new Date(session.expired_at))) {
-      await this.removeSession(sessionId);
-      return null;
     }
 
     return session ?? null;
   }
 
   public async updateSession(sessionId: string) {
-    let session = this.data.get(sessionId);
-
+    let session = await this.getSession(sessionId);
     if (session && isPast(new Date(session.expired_at))) {
       await this.removeSession(sessionId);
     }
-
     session = await this.getTokenOnDatabase(sessionId);
     this.addSession(sessionId, session);
   }
 
   public async getTokenOnDatabase(sessionId: string) {
     const token = await AuthService.findToken(sessionId);
-
     return token;
   }
 
-  // remove uma sessão do store e do database
+  // remove section from database
   public async removeSession(sessionId: string) {
     await UserToken.delete({
       token: sessionId,
     });
-    this.data.delete(sessionId);
-    this.sendNotify({ token: sessionId }, AuthNotifyType.REMOVE);
+    await RedisWriteClient.del([`${PREFIX}-${sessionId}`]);
   }
 
-  // limpa as sessões expiradas
+  // clean experied sessions
   public async clearExpiredSessions() {
-    await AuthService.clearExpiredTokens();
-    this.data.clear();
-    console.log('[CACHE_SESSIONS_CLEARED]', this.data.size);
-  }
-
-  public getActiveSessions() {
-    return this.data.size;
-  }
-
-  public clear() {
-    this.data.clear();
+    const removedTokens = await AuthService.clearExpiredTokens();
+    if (removedTokens.length > 0) {
+      await RedisWriteClient.del(removedTokens.map(t => `${PREFIX}-${t}`));
+    }
   }
 
   static start() {
@@ -133,6 +78,8 @@ export class SessionStorage {
     setInterval(() => {
       _this.clearExpiredSessions();
     }, REFRESH_TIME);
+
+    console.log('[REDIS] SESSION STARTED');
 
     return _this;
   }
