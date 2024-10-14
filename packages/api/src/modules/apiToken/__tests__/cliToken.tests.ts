@@ -27,4 +27,6 @@ describe('[CLI_TOKEN]', () => {
     const decode = () => tokenCoder.decode('invalid_token');
     expect(decode).toThrow('Invalid token');
   });
+
+  // TODO: add test to new route /cli/auth
 });

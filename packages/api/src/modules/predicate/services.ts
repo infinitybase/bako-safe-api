@@ -153,6 +153,27 @@ export class PredicateService implements IPredicateService {
     }
   }
 
+  async findByAddress(address: string): Promise<Predicate> {
+    try {
+      return await Predicate.findOne({
+        where: { predicateAddress: address },
+        relations: ['owner'],
+        select: {
+          owner: {
+            id: true,
+            address: true,
+          },
+        },
+      });
+    } catch (e) {
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on predicate findByAddress',
+        detail: e,
+      });
+    }
+  }
+
   async list(): Promise<IPagination<Predicate> | Predicate[]> {
     const hasPagination = this._pagination?.page && this._pagination?.perPage;
     const hasOrdination = this._ordination?.orderBy && this._ordination?.sort;

@@ -171,7 +171,7 @@ export class TokenUtils {
     signature: string,
     digest: string,
     encoder: string,
-    userAddress: string,
+    userFilter: { address: string } | { name: string },
     // network: Network,
   ) {
     const code = await RecoverCode.findOne({

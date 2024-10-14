@@ -24,13 +24,15 @@ export class AuthController {
 
   async signIn(req: ISignInRequest) {
     try {
-      const { digest, encoder, signature, userAddress } = req.body;
+      const { digest, encoder, signature, userAddress, name } = req.body;
+
+      const userFilter = userAddress ? { address: userAddress } : { name };
 
       const { userToken, signin } = await TokenUtils.createAuthToken(
         signature,
         digest,
         encoder,
-        userAddress,
+        userFilter,
       );
 
       await App.getInstance()._sessionCache.addSession(
@@ -61,9 +63,9 @@ export class AuthController {
 
   async generateSignCode(req: ICreateRecoverCodeRequest) {
     try {
-      const { address, networkUrl } = req.body;
+      const { name, networkUrl } = req.body;
       const { origin } = req.headers ?? { origin: 'no-agent' };
-      const owner = await User.findOne({ where: { address } });
+      const owner = await User.findOne({ where: { name } });
 
       if (!owner) {
         throw new NotFound({

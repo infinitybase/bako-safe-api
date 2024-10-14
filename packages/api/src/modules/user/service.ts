@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Brackets } from 'typeorm';
 
-import { PredicateVersion, User } from '@src/models';
+import { User } from '@src/models';
 import {
   PermissionRoles,
   Workspace,
@@ -16,12 +16,20 @@ import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination
 import { IconUtils } from '@utils/icons';
 
 import { WorkspaceService } from '../workspace/services';
-import { IFilterParams, IUserService, IUserPayload } from './types';
+import {
+  IFilterParams,
+  IUserService,
+  IUserPayload,
+  IValidateNameResponse,
+  IFindByNameResponse,
+} from './types';
+
 import App from '@src/server/app';
 import { Provider, Address, Network } from 'fuels';
 import { Vault } from 'bakosafe';
 import { PredicateService } from '../predicate/services';
 import { PredicateVersionService } from '../predicateVersion/services';
+import { Maybe } from '@src/utils/types/maybe';
 
 const { UI_URL } = process.env;
 
@@ -188,6 +196,24 @@ export class UserService implements IUserService {
       });
   }
 
+  async findByName(name: string): Promise<Maybe<IFindByNameResponse>> {
+    try {
+      const queryBuilder = User.createQueryBuilder('u')
+        .select(['u.webauthn -> \'id\' as "webAuthnId"'])
+        .where('u.name = :name', {
+          name,
+        });
+
+      return await queryBuilder.getRawOne();
+    } catch (e) {
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on find by name',
+        detail: e,
+      });
+    }
+  }
+
   async update(id: string, payload: IUserPayload) {
     return this.findOne(id)
       .then(async data => {
@@ -213,6 +239,31 @@ export class UserService implements IUserService {
           detail: `User with id ${id} not found`,
         });
       });
+  }
+
+  async validateName(
+    name: string,
+    userId?: string,
+  ): Promise<Maybe<IValidateNameResponse>> {
+    try {
+      const queryBuilder = User.createQueryBuilder('u')
+        .select('u.type')
+        .where('u.name = :name', {
+          name,
+        });
+
+      if (userId) {
+        queryBuilder.andWhere('u.id != :userId', { userId });
+      }
+
+      return await queryBuilder.getOne();
+    } catch (e) {
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on validate name',
+        detail: e,
+      });
+    }
   }
 
   async randomAvatar() {
