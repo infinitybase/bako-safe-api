@@ -35,7 +35,7 @@ export class QuoteStorage {
 
   private async addQuotes(): Promise<void> {
     const { assets, assetsMapById, QuotesMock } = await getAssetsMaps();
-    if (!isDevMode) {
+    if (isDevMode) {
       await this.addMockQuotes(QuotesMock);
       return;
     }
