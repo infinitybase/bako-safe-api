@@ -15,11 +15,7 @@ export interface IQuote {
 const REFRESH_TIME = 60000 * 25; // 25 minutes
 
 export class QuoteStorage {
-  private data = new Map<string, number>();
-
-  protected constructor() {
-    this.data = new Map<string, number>();
-  }
+  protected constructor() {}
 
   public async getQuote(assetId: string): Promise<number> {
     const quote = await RedisReadClient.get(`${PREFIX}-${assetId}`);
@@ -114,8 +110,15 @@ export class QuoteStorage {
     }
   }
 
-  public getActiveQuotesValues() {
-    return Array.from(this.data);
+  public async getActiveQuotesValues(): Promise<[string, number][]> {
+    const result = await RedisReadClient.scan(`${PREFIX}-*`);
+    const quotes = new Map<string, number>();
+
+    result.forEach((value, key) => {
+      quotes.set(key.replace(`${PREFIX}-`, ''), Number(value));
+    });
+
+    return Array.from(quotes);
   }
 
   static start() {
@@ -125,6 +128,8 @@ export class QuoteStorage {
     setInterval(() => {
       _this.addQuotes();
     }, REFRESH_TIME);
+
+    console.log('[REDIS] QUOTE STARTED');
 
     return _this;
   }

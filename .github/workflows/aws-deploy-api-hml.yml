@@ -2,7 +2,7 @@ name: '[API-HML] Deploy to Amazon ECS'
 
 on:
   push:
-    branches: [ homologacao ]
+    branches: [ quotes_redis ]
 
 jobs:
   deploy:

@@ -226,7 +226,7 @@ export class UserService implements IUserService {
   }
 
   async tokensUSDAmount() {
-    const tokensQuote = App.getInstance()._quoteCache.getActiveQuotesValues();
+    const tokensQuote = await App.getInstance()._quoteCache.getActiveQuotesValues();
     return tokensQuote;
   }
 

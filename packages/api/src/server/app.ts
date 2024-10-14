@@ -10,6 +10,9 @@ import { isDevMode, TVLCronJob } from '@src/utils';
 import { handleErrors } from '@middlewares/index';
 import { QuoteStorage, SessionStorage } from './storage';
 import Monitoring from './monitoring';
+import Bootstrap from './bootstrap';
+import RedisWriteClient from '@src/utils/redis/RedisWriteClient';
+import RedisReadClient from '@src/utils/redis/RedisReadClient';
 
 class App {
   private static instance?: App;
@@ -18,7 +21,7 @@ class App {
   private sessionCache: SessionStorage;
   private quoteCache: QuoteStorage;
 
-  constructor() {
+  protected constructor() {
     this.app = Express();
     this.initMiddlewares();
     this.initRoutes();
@@ -77,11 +80,26 @@ class App {
     return this.quoteCache;
   }
 
-  static getInstance(): App {
+  static async start() {
     if (!App.instance) {
+      Monitoring.init();
+
+      await Bootstrap.start();
+      await RedisWriteClient.start();
+      await RedisReadClient.start();
+
       App.instance = new App();
       Object.freeze(App.instance);
     }
+
+    return App.instance;
+  }
+
+  static getInstance(): App {
+    if (!App.instance) {
+      throw new Error('App is not started');
+    }
+
     return App.instance;
   }
 }
