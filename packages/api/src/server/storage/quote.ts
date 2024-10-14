@@ -35,7 +35,7 @@ export class QuoteStorage {
 
   private async addQuotes(): Promise<void> {
     const { assets, assetsMapById, QuotesMock } = await getAssetsMaps();
-    if (isDevMode) {
+    if (!isDevMode) {
       await this.addMockQuotes(QuotesMock);
       return;
     }
@@ -119,6 +119,17 @@ export class QuoteStorage {
     });
 
     return Array.from(quotes);
+  }
+
+  public async getActiveQuotes(): Promise<Record<string, number>> {
+    const result = await RedisReadClient.scan(`${PREFIX}-*`);
+    const quotes = {};
+
+    result.forEach((value, key) => {
+      quotes[key.replace(`${PREFIX}-`, '')] = Number(value);
+    });
+
+    return quotes;
   }
 
   static start() {

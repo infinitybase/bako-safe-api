@@ -37,13 +37,20 @@ const calculateBalanceUSD = async (
   let balanceUSD = 0;
   const { fuelUnitAssets } = await getAssetsMaps();
 
+  const quotes = await App.getInstance()._quoteCache.getActiveQuotes();
+
   balances?.forEach(async balance => {
+    let priceUSD = 0;
+
     const units = fuelUnitAssets(chainId, balance.assetId);
     const formattedAmount = balance.amount.format({
       units,
     });
 
-    const priceUSD = await App.getInstance()._quoteCache.getQuote(balance.assetId);
+    if (quotes[balance.assetId]) {
+      priceUSD = quotes[balance.assetId];
+    }
+
     balanceUSD += parseFloat(formattedAmount) * priceUSD;
   });
 
