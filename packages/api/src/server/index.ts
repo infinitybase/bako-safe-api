@@ -1,6 +1,6 @@
 import * as pprof from 'pprof';
 
-import app from './app';
+import App from './app';
 import Bootstrap from './bootstrap';
 import Monitoring from './monitoring';
 import RedisWriteClient from '@src/utils/redis/RedisWriteClient';
@@ -51,9 +51,9 @@ const start = async () => {
   await RedisWriteClient.start();
   await RedisReadClient.start();
 
-  console.log('[APP] Storages started', {
-    active_quotes: app._quoteCache.getActiveQuotes(),
-  });
+  console.log('[APP] Storages started');
+
+  const app = App.getInstance();
 
   app.serverApp.listen(port, () => {
     console.log(

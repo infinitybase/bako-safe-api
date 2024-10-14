@@ -10,6 +10,7 @@
     "start:prod": "turbo run start:prod",
     "start:stg": "turbo run start:stg",
     "dev": "turbo run dev",
+    "debug": "turbo run debug",
     "dev:db:start": "turbo run db:dev:start",
     "dev:chain:start": "turbo run chain:dev:start"
   },

@@ -9,7 +9,7 @@ import { Responses, successful, bindMethods, TokenUtils } from '@utils/index';
 import { RecoverCodeService } from '../recoverCode/services';
 
 import { IAuthService, ICreateRecoverCodeRequest, ISignInRequest } from './types';
-import app from '@src/server/app';
+import App from '@src/server/app';
 import { Request } from 'express';
 import { Provider } from 'fuels';
 const { FUEL_PROVIDER } = process.env;
@@ -33,7 +33,10 @@ export class AuthController {
         userAddress,
       );
 
-      await app._sessionCache.addSession(userToken.accessToken, userToken);
+      await App.getInstance()._sessionCache.addSession(
+        userToken.accessToken,
+        userToken,
+      );
       return successful(signin, Responses.Ok);
     } catch (e) {
       if (e instanceof GeneralError) throw e;
@@ -47,7 +50,7 @@ export class AuthController {
       const token = req?.headers?.authorization;
 
       if (token) {
-        await app._sessionCache.removeSession(token);
+        await App.getInstance()._sessionCache.removeSession(token);
       }
 
       return successful(true, Responses.Ok);

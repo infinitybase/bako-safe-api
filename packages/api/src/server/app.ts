@@ -12,6 +12,8 @@ import { QuoteStorage, SessionStorage } from './storage';
 import Monitoring from './monitoring';
 
 class App {
+  private static instance?: App;
+
   private readonly app: Express.Application;
   private sessionCache: SessionStorage;
   private quoteCache: QuoteStorage;
@@ -74,10 +76,14 @@ class App {
   get _quoteCache() {
     return this.quoteCache;
   }
+
+  static getInstance(): App {
+    if (!App.instance) {
+      App.instance = new App();
+      Object.freeze(App.instance);
+    }
+    return App.instance;
+  }
 }
 
-const app = new App();
-
-Object.freeze(app);
-
-export default app;
+export default App;
