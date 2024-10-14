@@ -499,7 +499,19 @@ export class TransactionService implements ITransactionService {
   //instance tx
   //add witnesses
   async sendToChain(hash: string, network: Network) {
-    const transaction = await this.findByHash(hash);
+    const transaction = await Transaction.findOne({
+      where: { hash, status: Not(TransactionStatus.DECLINED) },
+      relations: ['predicate', 'createdBy'],
+    });
+
+    if (!transaction) {
+      throw new NotFound({
+        type: ErrorTypes.NotFound,
+        title: 'Transaction not found',
+        detail: `No transaction were found that were ready to be sent to the provided hash: ${hash}.`,
+      });
+    }
+
     const { id, predicate, txData, status, resume } = transaction;
 
     if (status != TransactionStatus.PENDING_SENDER) {
