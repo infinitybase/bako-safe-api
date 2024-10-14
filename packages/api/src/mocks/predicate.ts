@@ -2,8 +2,7 @@ import crypto from 'crypto';
 
 import { IPredicatePayload } from '@src/modules/predicate/types';
 import { Vault, VaultConfigurable } from 'bakosafe';
-import { Provider } from 'fuels';
-import FuelProvider from '@src/utils/FuelProvider';
+import { FuelProvider } from '@src/utils';
 
 const { FUEL_PROVIDER } = process.env;
 

@@ -2,7 +2,7 @@ import { RedisClientType, createClient } from 'redis';
 
 const REDIS_URL_WRITE = process.env.REDIS_URL_WRITE || 'redis://127.0.0.1:6379';
 
-export default class RedisWriteClient {
+export class RedisWriteClient {
   private static client: RedisClientType;
 
   private constructor() {}

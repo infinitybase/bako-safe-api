@@ -5,10 +5,10 @@ import { SetupApi } from '@src/utils/testUtils/setup';
 import { Predicate, Encoder } from '@src/models';
 import { networks } from '@src/mocks/networks';
 import { IPredicatePayload } from '@src/modules/predicate/types';
-import FuelProvider from '@src/utils/FuelProvider';
+import { FuelProvider } from '@src/utils';
 import axios from 'axios';
 import { TypeUser, Vault } from 'bakosafe';
-import { Provider, Wallet, Address } from 'fuels';
+import { Wallet, Address } from 'fuels';
 import { accounts } from '@src/mocks/accounts';
 
 const { API_URL } = process.env;

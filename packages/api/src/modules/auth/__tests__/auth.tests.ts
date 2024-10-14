@@ -5,7 +5,7 @@ import { Encoder } from '@src/models';
 
 import { Address, Provider, Wallet } from 'fuels';
 import { TypeUser } from 'bakosafe';
-import FuelProvider from '@src/utils/FuelProvider';
+import { FuelProvider } from '@src/utils';
 
 const { API_URL } = process.env;
 

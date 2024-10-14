@@ -33,9 +33,8 @@ import {
 } from './types';
 import { Not } from 'typeorm';
 import App from '@src/server/app';
-import { Provider } from 'fuels';
 import { IChangenetworkRequest } from '../auth/types';
-import FuelProvider from '@src/utils/FuelProvider';
+import { FuelProvider } from '@src/utils/FuelProvider';
 
 export class UserController {
   private userService: IUserService;

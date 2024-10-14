@@ -30,7 +30,7 @@ import { Vault } from 'bakosafe';
 import { PredicateService } from '../predicate/services';
 import { PredicateVersionService } from '../predicateVersion/services';
 import { Maybe } from '@src/utils/types/maybe';
-import FuelProvider from '@src/utils/FuelProvider';
+import { FuelProvider } from '@src/utils';
 
 const { UI_URL } = process.env;
 

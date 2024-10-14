@@ -1,12 +1,11 @@
 import axios, { AxiosInstance } from 'axios';
 // import { IBakoSafeApi } from 'bakosafe';
-import { Provider, Wallet } from 'fuels';
+import { Wallet } from 'fuels';
 
 import { TypeUser } from '@src/models';
 
 import { IDefaultAccount } from '../../mocks/accounts';
-import GeneralError from '@utils/error/GeneralError';
-import FuelProvider from '../FuelProvider';
+import { FuelProvider } from '../FuelProvider';
 
 const { API_URL } = process.env;
 

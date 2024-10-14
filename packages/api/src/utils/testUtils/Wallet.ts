@@ -1,7 +1,7 @@
 import { networks } from '@src/mocks/networks';
 import { Vault } from 'bakosafe';
-import { BN, Wallet, Provider } from 'fuels';
-import FuelProvider from '../FuelProvider';
+import { BN, Wallet } from 'fuels';
+import { FuelProvider } from '../FuelProvider';
 
 export const txParams = {
   maxFee: 1000,
