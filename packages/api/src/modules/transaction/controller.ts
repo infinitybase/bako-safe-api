@@ -385,7 +385,7 @@ export class TransactionController {
   }: ISignByIdRequest) {
     try {
       const transaction = await Transaction.findOne({
-        where: { hash: txHash },
+        where: { hash: txHash, status: Not(TransactionStatus.DECLINED) },
       });
       const isValidSignature = this.transactionService.validateSignature(
         transaction,

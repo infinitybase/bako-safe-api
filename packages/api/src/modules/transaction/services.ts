@@ -10,7 +10,7 @@ import {
   getTransactionSummary,
   Network,
 } from 'fuels';
-import { Brackets } from 'typeorm';
+import { Brackets, Not } from 'typeorm';
 
 import { Predicate, Transaction } from '@models/index';
 
@@ -96,7 +96,7 @@ export class TransactionService implements ITransactionService {
 
   async findByHash(hash: string): Promise<ITransactionResponse> {
     return await Transaction.findOne({
-      where: { hash: hash },
+      where: { hash: hash, status: Not(TransactionStatus.DECLINED) },
       relations: [
         'predicate',
         'predicate.members',
