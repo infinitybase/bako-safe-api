@@ -8,6 +8,7 @@ import {
   transactionRequestify,
   TransactionType as FuelTransactionType,
   getTransactionSummary,
+  Network,
 } from 'fuels';
 import { Brackets } from 'typeorm';
 
@@ -192,9 +193,13 @@ export class TransactionService implements ITransactionService {
         'workspace.name',
         'workspace.single',
       ])
-      .andWhere(`t.network->>'url' = :network`, {
-        network: this._filter.network,
-      });
+      .andWhere(
+        // TODO: On release to mainnet we need to remove this condition
+        `regexp_replace(t.network->>'url', '^https?://[^@]+@', 'https://') = :network`,
+        {
+          network: this._filter.network.replace(/^https?:\/\/[^@]+@/, 'https://'),
+        },
+      );
 
     this._filter.predicateAddress &&
       queryBuilder.andWhere('predicate.predicateAddress = :address', {
@@ -347,9 +352,12 @@ export class TransactionService implements ITransactionService {
         'workspace.name',
         'workspace.single',
       ])
-      .andWhere(`t.network->>'url' = :network`, {
-        network: this._filter.network,
-      });
+      .andWhere(
+        `regexp_replace(t.network->>'url', '^https?://[^@]+@', 'https://') = :network`,
+        {
+          network: this._filter.network.replace(/^https?:\/\/[^@]+@/, 'https://'),
+        },
+      );
 
     // =============== specific for workspace ===============
     if (this._filter.workspaceId || this._filter.signer) {
@@ -490,7 +498,7 @@ export class TransactionService implements ITransactionService {
   //instance vault
   //instance tx
   //add witnesses
-  async sendToChain(hash: string) {
+  async sendToChain(hash: string, network: Network) {
     const transaction = await this.findByHash(hash);
     const { id, predicate, txData, status, resume } = transaction;
 
@@ -521,7 +529,7 @@ export class TransactionService implements ITransactionService {
         },
       };
 
-      await new NotificationService().transactionSuccess(id);
+      await new NotificationService().transactionSuccess(id, network);
 
       return await this.update(id, _api_transaction);
     } catch (e) {
@@ -555,7 +563,7 @@ export class TransactionService implements ITransactionService {
           provider,
           filters: {
             owner: address,
-            first: 100,
+            first: 57,
           },
         });
 
@@ -566,7 +574,9 @@ export class TransactionService implements ITransactionService {
 
         // formatFueLTransactio needs to be async because of the request to get fuels tokens up to date and use them to get the network units
         const formattedTransactions = await Promise.all(
-          filteredTransactions.map(tx => formatFuelTransaction(tx, predicate)),
+          filteredTransactions.map(tx =>
+            formatFuelTransaction(tx, predicate, provider),
+          ),
         );
 
         _transactions = [..._transactions, ...formattedTransactions];
@@ -595,7 +605,7 @@ export class TransactionService implements ITransactionService {
         provider,
       });
 
-      return formatFuelTransaction(tx, predicate);
+      return formatFuelTransaction(tx, predicate, provider);
     } catch (e) {
       throw new Internal({
         type: ErrorTypes.Internal,

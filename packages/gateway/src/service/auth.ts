@@ -14,7 +14,10 @@ type TokenData = {
   predicate: {
     id: string;
     address: string;
-    provider: string;
+    network: {
+      url: string;
+      chainId: number;
+    };
   };
 };
 
@@ -28,11 +31,14 @@ export class AuthService {
       apiToken,
       userId,
     });
-    const { code, codeId } = await this.createSession(userId);
+    const { code, codeId } = await this.createSession(
+      userId,
+      predicate.network
+    );
 
-    const bakoProvider = await BakoProvider.create(predicate.provider, {
-      address: userAddress,
+    const bakoProvider = await BakoProvider.create(predicate.network.url, {
       token: code,
+      address: userAddress,
       serverApi: process.env.API_URL!,
     });
 
@@ -88,7 +94,7 @@ export class AuthService {
       predicate: {
         id: result.predicate_id,
         address: result.predicate_address,
-        provider: result.network.url,
+        network: result.network,
       },
     };
 
@@ -97,17 +103,21 @@ export class AuthService {
     return tokenData;
   }
 
-  async createSession(user: string) {
+  async createSession(
+    user: string,
+    network: TokenData["predicate"]["network"]
+  ) {
     const code = `cli${Address.fromRandom().toB256()}`;
     const query = `
-      INSERT INTO recover_codes(origin, type, owner, code, used, valid_at, metadata)
-      VALUES ('CLI', 'AUTH_ONCE', $1, $2, false, NOW() + INTERVAL '2 minutes', $3)
+      INSERT INTO recover_codes(origin, type, owner, code, used, valid_at, metadata, network)
+      VALUES ('CLI', 'AUTH_ONCE', $1, $2, false, NOW() + INTERVAL '2 minutes', $3, $4)
       RETURNING id;
     `;
     const result = await this.db.query(query, [
       user,
       code,
       JSON.stringify({ uses: 0 }),
+      JSON.stringify(network),
     ]);
     return { code, codeId: result.id };
   }
