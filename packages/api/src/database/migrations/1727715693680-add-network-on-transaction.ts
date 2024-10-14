@@ -1,3 +1,4 @@
+import FuelProvider from '@src/utils/FuelProvider';
 import { Provider } from 'fuels';
 import { MigrationInterface, QueryRunner, TableColumn } from 'typeorm';
 
@@ -14,7 +15,7 @@ export class AddNetworkOnTransaction1727715693680 implements MigrationInterface 
       }),
     );
 
-    const provider = await Provider.create(FUEL_PROVIDER);
+    const provider = await FuelProvider.create(FUEL_PROVIDER);
     const network = {
       url: provider.url,
       chainId: provider.getChainId(),

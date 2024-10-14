@@ -5,6 +5,7 @@ import { Encoder } from '@src/models';
 
 import { Address, Provider, Wallet } from 'fuels';
 import { TypeUser } from 'bakosafe';
+import FuelProvider from '@src/utils/FuelProvider';
 
 const { API_URL } = process.env;
 
@@ -13,7 +14,7 @@ describe('[AUTH]', () => {
     const api = axios.create({
       baseURL: API_URL,
     });
-    const provider = await Provider.create(networks['local']);
+    const provider = await FuelProvider.create(networks['local']);
 
     // create a new user
     const wallet = Wallet.generate();
@@ -76,7 +77,7 @@ describe('[AUTH]', () => {
 
     const { data: updatedNetwork } = await api.get(`/user/latest/info`);
 
-    const newProvider = await Provider.create(newNetwork);
+    const newProvider = await FuelProvider.create(newNetwork);
 
     expect(updatedNetwork).toHaveProperty('network', {
       url: newProvider.url,
