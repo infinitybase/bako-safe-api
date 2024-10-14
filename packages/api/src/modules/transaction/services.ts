@@ -193,9 +193,13 @@ export class TransactionService implements ITransactionService {
         'workspace.name',
         'workspace.single',
       ])
-      .andWhere(`t.network->>'url' = :network`, {
-        network: this._filter.network,
-      });
+      .andWhere(
+        // TODO: On release to mainnet we need to remove this condition
+        `regexp_replace(t.network->>'url', '^https?://[^@]+@', 'https://') = :network`,
+        {
+          network: this._filter.network.replace(/^https?:\/\/[^@]+@/, 'https://'),
+        },
+      );
 
     this._filter.predicateAddress &&
       queryBuilder.andWhere('predicate.predicateAddress = :address', {
@@ -348,9 +352,12 @@ export class TransactionService implements ITransactionService {
         'workspace.name',
         'workspace.single',
       ])
-      .andWhere(`t.network->>'url' = :network`, {
-        network: this._filter.network,
-      });
+      .andWhere(
+        `regexp_replace(t.network->>'url', '^https?://[^@]+@', 'https://') = :network`,
+        {
+          network: this._filter.network.replace(/^https?:\/\/[^@]+@/, 'https://'),
+        },
+      );
 
     // =============== specific for workspace ===============
     if (this._filter.workspaceId || this._filter.signer) {
