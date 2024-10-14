@@ -20,11 +20,11 @@ export default class RedisWriteClient {
     }
   }
 
-  static async set(key: string, value: string) {
+  static async set(key: string, value: string | number) {
     try {
       await RedisWriteClient.client.set(key, value);
     } catch (e) {
-      console.error('[CACHE_SESSIONS_ADD_ERROR]', e, key, value);
+      console.error('[CACHE_SET_ERROR]', e, key, value);
     }
   }
 

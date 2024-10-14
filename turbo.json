@@ -35,6 +35,12 @@
       "outputMode": "new-only",
       "cache": false
     },
+    "debug": {
+      "dependsOn": ["redis:dev:start", "db:dev:start", "chain:dev:start", "socket:dev:start"],
+      "outputs": [],
+      "outputMode": "new-only",
+      "cache": false
+    },
     "run:metabase": {
       "dependsOn": ["^run:metabase"],
       "outputs": [],

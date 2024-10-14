@@ -17,7 +17,7 @@ import { IconUtils } from '@utils/icons';
 
 import { WorkspaceService } from '../workspace/services';
 import { IFilterParams, IUserService, IUserPayload } from './types';
-import app from '@src/server/app';
+import App from '@src/server/app';
 import { Provider, Address, Network } from 'fuels';
 import { Vault } from 'bakosafe';
 import { PredicateService } from '../predicate/services';
@@ -226,7 +226,7 @@ export class UserService implements IUserService {
   }
 
   async tokensUSDAmount() {
-    const tokensQuote = app._quoteCache.getActiveQuotesValues();
+    const tokensQuote = await App.getInstance()._quoteCache.getActiveQuotesValues();
     return tokensQuote;
   }
 

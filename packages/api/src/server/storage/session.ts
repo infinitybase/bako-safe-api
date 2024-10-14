@@ -79,6 +79,8 @@ export class SessionStorage {
       _this.clearExpiredSessions();
     }, REFRESH_TIME);
 
+    console.log('[REDIS] SESSION STARTED');
+
     return _this;
   }
 }
