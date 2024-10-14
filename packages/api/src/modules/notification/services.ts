@@ -66,9 +66,15 @@ export class NotificationService implements INotificationService {
       });
 
     this._filter.networkUrl &&
-      queryBuilder.andWhere(`notification.network->>'url' = :network`, {
-        network: this._filter.networkUrl,
-      });
+      queryBuilder.andWhere(
+        `regexp_replace(notification.network->>'url', '^https?://[^@]+@', 'https://') = :network`,
+        {
+          network: this._filter.networkUrl.replace(
+            /^https?:\/\/[^@]+@/,
+            'https://',
+          ),
+        },
+      );
 
     this._filter.unread &&
       queryBuilder.andWhere('notification.read = :read', {
@@ -99,7 +105,10 @@ export class NotificationService implements INotificationService {
     return Notification.createQueryBuilder()
       .update(payload)
       .where('user_id = :userId', { userId })
-      .andWhere(`network->>'url' = :networkUrl`, { networkUrl })
+      .andWhere(
+        `regexp_replace(network->>'url', '^https?://[^@]+@', 'https://') = :network`,
+        { network: networkUrl.replace(/^https?:\/\/[^@]+@/, 'https://') },
+      )
       .execute()
       .then(() => true)
       .catch(e => {

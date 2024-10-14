@@ -84,9 +84,13 @@ export class TransactionController {
           .where('t.status = :status', {
             status: TransactionStatus.AWAIT_REQUIREMENTS,
           })
-          .andWhere(`t.network->>'url' = :network`, {
-            network: network.url,
-          });
+          .andWhere(
+            // TODO: On release to mainnet we need to remove this condition
+            `regexp_replace(t.network->>'url', '^https?://[^@]+@', 'https://') = :network`,
+            {
+              network: network.url.replace(/^https?:\/\/[^@]+@/, 'https://'),
+            },
+          );
 
         const result = await qb.getCount();
 
@@ -104,9 +108,13 @@ export class TransactionController {
           status: TransactionStatus.AWAIT_REQUIREMENTS,
         })
         .andWhere('t.predicateId = :predicate', { predicate })
-        .andWhere(`t.network->>'url' = :network`, {
-          network: network.url,
-        });
+        .andWhere(
+          // TODO: On release to mainnet we need to remove this condition
+          `regexp_replace(t.network->>'url', '^https?://[^@]+@', 'https://') = :network`,
+          {
+            network: network.url.replace(/^https?:\/\/[^@]+@/, 'https://'),
+          },
+        );
 
       const result = await qb.getCount();
 
