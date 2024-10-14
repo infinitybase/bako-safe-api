@@ -30,7 +30,7 @@ import {
 } from './types';
 import { formatFuelTransaction, formatTransactionsResponse } from './utils';
 import { TransactionPagination, TransactionPaginationParams } from './pagination';
-import FuelProvider from '@src/utils/FuelProvider';
+import { FuelProvider } from '@src/utils';
 
 export class TransactionService implements ITransactionService {
   private _ordination: IOrdination<Transaction> = {

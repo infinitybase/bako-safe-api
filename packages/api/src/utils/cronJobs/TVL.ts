@@ -3,8 +3,7 @@ import { Asset, Vault } from 'bakosafe';
 import cron from 'node-cron';
 import { getAssetsMaps } from '../assets';
 import App from '@src/server/app';
-import { Provider } from 'fuels';
-import FuelProvider from '../FuelProvider';
+import { FuelProvider } from '../FuelProvider';
 const { FUEL_PROVIDER } = process.env;
 
 const VALID_PROVIDERS = [FUEL_PROVIDER];

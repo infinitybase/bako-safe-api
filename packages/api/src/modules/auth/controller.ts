@@ -11,8 +11,7 @@ import { RecoverCodeService } from '../recoverCode/services';
 import { IAuthService, ICreateRecoverCodeRequest, ISignInRequest } from './types';
 import App from '@src/server/app';
 import { Request } from 'express';
-import { Provider } from 'fuels';
-import FuelProvider from '@src/utils/FuelProvider';
+import { FuelProvider } from '@src/utils';
 const { FUEL_PROVIDER } = process.env;
 
 export class AuthController {

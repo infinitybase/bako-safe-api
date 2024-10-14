@@ -1,5 +1,4 @@
-import FuelProvider from '@src/utils/FuelProvider';
-import { Provider } from 'fuels';
+import { FuelProvider } from '@src/utils';
 import { MigrationInterface, QueryRunner, TableColumn } from 'typeorm';
 
 const { FUEL_PROVIDER } = process.env;

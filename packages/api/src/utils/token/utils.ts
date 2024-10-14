@@ -16,8 +16,7 @@ import App from '@src/server/app';
 import { ISignInResponse } from '@src/modules/auth/types';
 
 import { MoreThan } from 'typeorm';
-import { Provider } from 'fuels';
-import FuelProvider from '../FuelProvider';
+import { FuelProvider } from '../FuelProvider';
 
 const { FUEL_PROVIDER } = process.env;
 

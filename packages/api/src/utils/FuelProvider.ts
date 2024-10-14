@@ -1,6 +1,6 @@
 import { Provider, ProviderOptions } from 'fuels';
 
-export default class FuelProvider {
+export class FuelProvider {
   private static instance?: FuelProvider;
 
   private providers: Record<string, Provider>;
