@@ -9,6 +9,8 @@ import { Unauthorized, UnauthorizedErrorTitles } from '@utils/error/Unauthorized
 import { IAuthRequest } from './types';
 import { AuthStrategyFactory } from './methods';
 
+const { AUTH_POINTS } = process.env;
+
 async function authMiddleware(
   req: IAuthRequest,
   res: Response,
@@ -79,4 +81,30 @@ function authPermissionMiddleware(permission?: PermissionRoles[]) {
   };
 }
 
-export { authMiddleware, authPermissionMiddleware };
+function authPointsMiddleware(
+  req: IAuthRequest,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const authorization = req?.headers?.authorization;
+
+    console.debug('~ points middleware debug', authorization)
+    console.debug('~ points middleware debug, env auth', AUTH_POINTS)
+    console.debug('~ points middleware debug, comparison result', AUTH_POINTS === authorization)
+
+    if (!authorization || authorization !== AUTH_POINTS) {
+      throw new Unauthorized({
+        type: ErrorTypes.Unauthorized,
+        title: UnauthorizedErrorTitles.MISSING_CREDENTIALS,
+        detail: 'Some required credentials are missing',
+      });
+    }
+
+    return next();
+  } catch (e) {
+    return next(e);
+  }
+}
+
+export { authMiddleware, authPermissionMiddleware, authPointsMiddleware };
