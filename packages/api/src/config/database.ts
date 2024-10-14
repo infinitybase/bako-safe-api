@@ -95,11 +95,28 @@ const staging: ConnectionOptions = {
   migrationsRun: true,
 };
 
+const homologation: ConnectionOptions = {
+  type: 'postgres',
+  host: DATABASE_HOST,
+  port: Number(DATABASE_PORT),
+  username: DATABASE_USERNAME,
+  password: DATABASE_PASSWORD,
+  database: DATABASE_NAME,
+  entities: [entitiesDir],
+  migrations: [migrationsDir, seedersDir],
+  synchronize: false,
+  ssl: {
+    rejectUnauthorized: false,
+  },
+  migrationsRun: true,
+};
+
 const database = {
   development,
   production,
   staging,
   test,
+  homologation,
 };
 
 export default database[environment || 'development'];

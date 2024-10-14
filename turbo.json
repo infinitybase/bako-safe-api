@@ -1,6 +1,11 @@
 {
   "$schema": "https://turborepo.org/schema.json",
   "pipeline": {
+    "redis:dev:start": {
+      "outputs": [],
+      "outputMode": "new-only",
+      "cache": false
+    },
     "db:dev:start": {
       "outputs": [],
       "outputMode": "new-only",
@@ -19,7 +24,7 @@
       "cache": false
     },
     "api:dev:start": {
-      "dependsOn": ["db:dev:start", "chain:dev:start", "socket:dev:start"],
+      "dependsOn": ["redis:dev:start", "db:dev:start", "chain:dev:start", "socket:dev:start"],
       "outputs": ["dist/**"],
       "outputMode": "new-only",
       "cache": false
