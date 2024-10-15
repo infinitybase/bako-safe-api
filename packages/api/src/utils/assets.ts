@@ -30,7 +30,7 @@ export type Asset = {
   units: number;
 };
 
-const whitelist = ['rsteth', 'rsusde', 're7lrt', 'amphreth'];
+const blocklist = ['rsteth', 'rsusde', 're7lrt', 'amphreth'];
 
 export const fuelAssetsByChainId = (
   chainId: number,
@@ -81,7 +81,7 @@ export const getAssetsMaps = async () => {
 
   const fuelAssets = (): Asset[] =>
     fuelAssetsList.reduce<Asset[]>((acc, asset) => {
-      if (whitelist.includes(asset.name.toLocaleLowerCase())) return acc;
+      if (blocklist.includes(asset.name.toLocaleLowerCase())) return acc;
 
       asset.networks
         .filter(
