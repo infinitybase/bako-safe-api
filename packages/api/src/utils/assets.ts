@@ -30,7 +30,7 @@ export type Asset = {
   units: number;
 };
 
-const whitelist = ['rsteth', 'rsusde', 're7lrt'];
+const whitelist = ['rsteth', 'rsusde', 're7lrt', 'amphreth'];
 const replaceList = {
   usdc: 'usd-coin',
 };
