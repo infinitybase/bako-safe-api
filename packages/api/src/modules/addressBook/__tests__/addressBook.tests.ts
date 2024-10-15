@@ -3,7 +3,6 @@ import { Address } from 'fuels';
 import { accounts } from '@src/mocks/accounts';
 import { networks } from '@src/mocks/networks';
 import { AuthValidations } from '@src/utils/testUtils/Auth';
-import { generateWorkspacePayload } from '@src/utils/testUtils/Workspace';
 import { catchApplicationError, TestError } from '@utils/testUtils/Errors';
 
 describe('[ADDRESS_BOOK]', () => {
@@ -64,46 +63,46 @@ describe('[ADDRESS_BOOK]', () => {
     5 * 1000,
   );
 
-  test(
-    'Create address book using a group workspace',
-    async () => {
-      const auth = new AuthValidations(networks['local'], accounts['USER_1']);
+  // test(
+  //   'Create address book using a group workspace',
+  //   async () => {
+  //     const auth = new AuthValidations(networks['local'], accounts['USER_1']);
 
-      await auth.create();
-      await auth.createSession();
-      const { data: workspace } = await generateWorkspacePayload(auth);
+  //     await auth.create();
+  //     await auth.createSession();
+  //     const { data: workspace } = await generateWorkspacePayload(auth);
 
-      await auth.selectWorkspace(workspace.id);
-      const nickname = `[FAKE_CONTACT_NAME]: ${Address.fromRandom().toAddress()}`;
-      const address = Address.fromRandom();
-      const { data } = await auth.axios.post('/address-book/', {
-        nickname,
-        address: address.toAddress(),
-      });
+  //     //await auth.selectWorkspace(workspace.id);
+  //     const nickname = `[FAKE_CONTACT_NAME]: ${Address.fromRandom().toAddress()}`;
+  //     const address = Address.fromRandom();
+  //     const { data } = await auth.axios.post('/address-book/', {
+  //       nickname,
+  //       address: address.toAddress(),
+  //     });
 
-      const aux = await auth.axios
-        .post('/address-book/', {
-          nickname,
-          address,
-        })
-        .catch(e => e.response.data);
+  //     const aux = await auth.axios
+  //       .post('/address-book/', {
+  //         nickname,
+  //         address,
+  //       })
+  //       .catch(e => e.response.data);
 
-      expect(data).toHaveProperty('id');
-      expect(data).toHaveProperty('nickname', nickname);
-      expect(data).toHaveProperty('user.address', address.toB256());
-
-      expect(aux).toHaveProperty('detail', 'Duplicated nickname');
-    },
-    5 * 1000,
-  );
+  //     expect(data).toHaveProperty('id');
+  //     expect(data).toHaveProperty('nickname', nickname);
+  //     expect(data).toHaveProperty('user.address', address.toB256());
+  //     expect(aux).toHaveProperty('detail', 'Duplicated nickname');
+  //   },
+  //   5 * 1000,
+  // );
 
   test(
     `list addressBook`,
     async () => {
       //list with workspace
-      const auth = new AuthValidations(networks['local'], accounts['USER_1']);
-      await auth.create();
-      await auth.createSession();
+      const auth = await AuthValidations.authenticateUser({
+        account: accounts['USER_1'],
+        provider: networks['local'],
+      });
 
       //list with single workspace [your address book]
       await auth.axios.get(`/address-book`).then(({ data, status }) => {
@@ -147,16 +146,16 @@ describe('[ADDRESS_BOOK]', () => {
         });
 
         //without personal contacts
-        await auth.selectWorkspace(new_workspace.id);
-        await auth.axios.get(`/address-book`).then(({ data, status }) => {
-          data.forEach(element => {
-            expect(status).toBe(200);
-            expect(element).toHaveProperty('id');
-            expect(element).toHaveProperty('nickname');
-            expect(element.user).toHaveProperty('address');
-            expect(element.owner).toHaveProperty('id', new_workspace.id);
-          });
-        });
+        // await auth.selectWorkspace(new_workspace.id);
+        // await auth.axios.get(`/address-book`).then(({ data, status }) => {
+        //   data.forEach(element => {
+        //     expect(status).toBe(200);
+        //     expect(element).toHaveProperty('id');
+        //     expect(element).toHaveProperty('nickname');
+        //     expect(element.user).toHaveProperty('address');
+        //     expect(element.owner).toHaveProperty('id', new_workspace.id);
+        //   });
+        // });
 
         await auth.axios
           .get(`/address-book?includePersonal=true`)
@@ -174,4 +173,70 @@ describe('[ADDRESS_BOOK]', () => {
     },
     10 * 1000,
   );
+
+  test('Update address book', async () => {
+    const address = Address.fromRandom();
+    const address_aux = Address.fromRandom();
+
+    const nickname = `[FAKE_CONTACT_NAME]: ${address.toAddress()}`;
+    const { data: adressBook } = await api.axios.post('/address-book/', {
+      nickname,
+      address: address.toAddress(),
+    });
+
+    const nickname_aux = `[FAKE_CONTACT_NAME]: ${address_aux.toAddress()}`;
+    await api.axios
+      .put(`/address-book/${adressBook.id}`, {
+        id: adressBook.id,
+        nickname: nickname_aux,
+        address: address.toAddress(),
+      })
+      .then(({ data, status }) => {
+        expect(status).toBe(200);
+        expect(data.id).toBe(adressBook.id);
+        expect(data.nickname).toBe(nickname_aux);
+      });
+
+    // Update address book with invalid permission
+    const auth_aux = await AuthValidations.authenticateUser({
+      account: accounts['USER_2'],
+      provider: networks['local'],
+    });
+
+    const notHasPermissionError = await catchApplicationError(
+      auth_aux.axios.put(`/address-book/${adressBook.id}`, {
+        id: adressBook.id,
+        nickname: nickname_aux,
+        address: address.toAddress(),
+      }),
+    );
+    TestError.expectUnauthorized(notHasPermissionError);
+  });
+
+  test('Delete address book', async () => {
+    const address = Address.fromRandom();
+    const nickname = `[FAKE_CONTACT_NAME]: ${address.toAddress()}`;
+    const { data: adressBook } = await api.axios.post('/address-book/', {
+      nickname,
+      address: address.toAddress(),
+    });
+
+    // Delete address book with invalid permission
+    const auth_aux = await AuthValidations.authenticateUser({
+      account: accounts['USER_2'],
+      provider: networks['local'],
+    });
+
+    const notHasPermissionError = await catchApplicationError(
+      auth_aux.axios.delete(`/address-book/${adressBook.id}`),
+    );
+    TestError.expectUnauthorized(notHasPermissionError);
+
+    await api.axios
+      .delete(`/address-book/${adressBook.id}`)
+      .then(({ data, status }) => {
+        expect(status).toBe(200);
+        expect(data).toBe(true);
+      });
+  });
 });

@@ -27,4 +27,22 @@ export default class RedisReadClient {
       console.error('[CACHE_SESSIONS_GET_ERROR]', e, key);
     }
   }
+
+  static async scan(
+    MATCH: string,
+    COUNT: number = 100,
+  ): Promise<Map<string, string>> {
+    const result = new Map<string, string>();
+    const { keys } = await RedisReadClient.client.scan(0, {
+      MATCH,
+      COUNT,
+    });
+    const values = await RedisReadClient.client.mGet(keys);
+
+    for (let i = 0; i < keys.length; i++) {
+      result.set(keys[i], values[i]);
+    }
+
+    return result;
+  }
 }

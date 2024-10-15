@@ -27,7 +27,7 @@ export const notFoundUser = {
 
 @Entity('users')
 class User extends Base {
-  @Column()
+  @Column({ unique: true })
   name?: string;
 
   @Column({ default: true })

@@ -17,12 +17,10 @@ const router = Router();
 const cliAuthRoute = Router();
 
 const permissionMiddleware = predicatePermissionMiddleware({
-  permissions: [
-    PermissionRoles.OWNER,
-    PermissionRoles.ADMIN,
-    PermissionRoles.MANAGER,
-  ],
-  predicateSelector: req => req.params.predicateId,
+  predicateSelector: req => ({
+    id: req.params.predicateId,
+  }),
+  permissions: [PermissionRoles.OWNER],
 });
 
 const { auth, create, list, delete: deleteAPIToken } = new APITokenController(

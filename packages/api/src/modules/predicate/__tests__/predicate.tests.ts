@@ -10,6 +10,8 @@ import { generateUser } from '@src/utils/testUtils/Workspace';
 
 import { Address } from 'fuels';
 
+import { catchApplicationError, TestError } from '@src/utils/testUtils/Errors';
+
 describe('[PREDICATE]', () => {
   let api: AuthValidations;
   beforeAll(async () => {
@@ -131,9 +133,10 @@ describe('[PREDICATE]', () => {
   test(
     'List predicates',
     async () => {
-      const auth = new AuthValidations(networks['local'], accounts['USER_1']);
-      await auth.create();
-      await auth.createSession();
+      const auth = await AuthValidations.authenticateUser({
+        account: accounts['USER_1'],
+        provider: networks['local'],
+      });
 
       type predicateMember = {
         id: string;
@@ -190,9 +193,10 @@ describe('[PREDICATE]', () => {
   );
 
   test('Find predicate by id', async () => {
-    const auth = new AuthValidations(networks['local'], accounts['USER_3']);
-    await auth.create();
-    await auth.createSession();
+    const auth = await AuthValidations.authenticateUser({
+      account: accounts['USER_3'],
+      provider: networks['local'],
+    });
 
     //create a new workspace
     // const {
@@ -257,12 +261,24 @@ describe('[PREDICATE]', () => {
         //validate vault
         expect(id).toBe(data_predicate.id);
       });
+
+    // Find predicate by id with invalid permission
+    const auth_aux = await AuthValidations.authenticateUser({
+      account: accounts['USER_2'],
+      provider: networks['local'],
+    });
+
+    const notHasPermissionError = await catchApplicationError(
+      auth_aux.axios(`/predicate/${data_predicate.id}`),
+    );
+    TestError.expectUnauthorized(notHasPermissionError);
   });
 
   test('Find predicate by name and verify if exists in workspace', async () => {
-    const auth = new AuthValidations(networks['local'], accounts['USER_1']);
-    await auth.create();
-    await auth.createSession();
+    const auth = await AuthValidations.authenticateUser({
+      account: accounts['USER_1'],
+      provider: networks['local'],
+    });
 
     // const {
     //   data_user1,
@@ -303,5 +319,81 @@ describe('[PREDICATE]', () => {
     //     expect(status).toBe(200);
     //     expect(data).toBe(false);
     //   });
+  });
+
+  test('Get predicate balance', async () => {
+    const auth = await AuthValidations.authenticateUser({
+      account: accounts['USER_1'],
+      provider: networks['local'],
+    });
+
+    const data_user1 = await generateUser(auth);
+    const members = [data_user1.address];
+    const { predicatePayload } = await PredicateMock.create(1, members);
+
+    const { data: predicate } = await auth.axios.post(
+      '/predicate',
+      predicatePayload,
+    );
+
+    await auth
+      .axios(`/predicate/reserved-coins/${predicate.id}`)
+      .then(({ data, status }) => {
+        expect(status).toBe(200);
+        expect(data).toHaveProperty('reservedCoinsUSD');
+        expect(data).toHaveProperty('totalBalanceUSD');
+        expect(data).toHaveProperty('currentBalanceUSD');
+        expect(data).toHaveProperty('currentBalance');
+        expect(data).toHaveProperty('totalBalance');
+        expect(data).toHaveProperty('reservedCoins');
+      });
+
+    // Get predicate balance with invalid permission
+    const auth_aux = await AuthValidations.authenticateUser({
+      account: accounts['USER_2'],
+      provider: networks['local'],
+    });
+
+    const notHasPermissionError = await catchApplicationError(
+      auth_aux.axios(`/predicate/reserved-coins/${predicate.id}`),
+    );
+    TestError.expectUnauthorized(notHasPermissionError);
+  });
+
+  test('Find predicate by address', async () => {
+    const auth = await AuthValidations.authenticateUser({
+      account: accounts['USER_1'],
+      provider: networks['local'],
+    });
+
+    const data_user1 = await generateUser(auth);
+    const members = [data_user1.address];
+    const { predicatePayload } = await PredicateMock.create(1, members);
+
+    const { data: predicate } = await auth.axios.post(
+      '/predicate',
+      predicatePayload,
+    );
+
+    await auth
+      .axios(`/predicate/by-address/${predicate.predicateAddress}`)
+      .then(({ data, status }) => {
+        expect(status).toBe(200);
+        expect(data).toHaveProperty('id');
+        expect(data).toHaveProperty('configurable');
+        expect(data).toHaveProperty('name');
+        expect(data).toHaveProperty('description');
+      });
+
+    // Find predicate by address with invalid permission
+    const auth_aux = await AuthValidations.authenticateUser({
+      account: accounts['USER_2'],
+      provider: networks['local'],
+    });
+
+    const notHasPermissionError = await catchApplicationError(
+      auth_aux.axios(`/predicate/by-address/${predicate.predicateAddress}`),
+    );
+    TestError.expectUnauthorized(notHasPermissionError);
   });
 });
