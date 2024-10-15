@@ -75,7 +75,9 @@ export class QuoteStorage {
   }
 
   private parseName(name: string) {
-    const whitelist = {
+    const _name = name.toLowerCase();
+
+    const fromTo = {
       usdc: 'usd-coin',
       weeth: 'bridged-weeth-linea',
       wbeth: 'wrapped-beacon-eth',
@@ -96,7 +98,7 @@ export class QuoteStorage {
       rseth: 'kelp-dao-restaked-eth',
     };
 
-    return whitelist[name] ?? name;
+    return fromTo[_name] ?? _name;
   }
 
   private async fetchQuotes(assets: IAsset[], params: string): Promise<IQuote[]> {

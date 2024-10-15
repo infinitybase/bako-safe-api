@@ -31,16 +31,6 @@ export type Asset = {
 };
 
 const whitelist = ['rsteth', 'rsusde', 're7lrt', 'amphreth'];
-const replaceList = {
-  usdc: 'usd-coin',
-};
-
-const replace = (name: string) => {
-  // eslint-disable-next-line no-prototype-builtins
-  return replaceList.hasOwnProperty(name.toLocaleLowerCase())
-    ? replaceList[name.toLocaleLowerCase()]
-    : name.toLocaleLowerCase();
-};
 
 export const fuelAssetsByChainId = (
   chainId: number,
@@ -54,7 +44,7 @@ export const fuelAssetsByChainId = (
     if (network && network.type === 'fuel') {
       acc.push({
         name: asset.name,
-        slug: replace(asset.name),
+        slug: asset.name,
         assetId: network.assetId,
         icon: asset.icon,
         units: network.decimals,
@@ -100,7 +90,7 @@ export const getAssetsMaps = async () => {
         .forEach((network: NetworkFuel) =>
           acc.push({
             name: asset.name,
-            slug: replace(asset.name),
+            slug: asset.name,
             assetId: network.assetId,
             icon: asset.icon,
             units: network.decimals,
