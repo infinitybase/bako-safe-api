@@ -88,8 +88,6 @@ export class AuthController {
         },
       });
 
-      console.log('response', response);
-
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
