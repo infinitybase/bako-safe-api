@@ -8,7 +8,7 @@ import {
 } from '@src/utils/error/Unauthorized';
 import { validatePermissionGeneral } from '@src/utils/permissionValidate';
 
-import { NotificationTitle, Predicate, Transaction } from '@models/index';
+import { NotificationTitle, Predicate, Transaction, User } from '@models/index';
 
 import { IPredicateService } from '@modules/predicate/types';
 
@@ -257,83 +257,66 @@ export class TransactionController {
 
   static async formatTransactionsHistory(data: Transaction) {
     const userService = new UserService();
-    const results = [];
+
+    const createEvent = (
+      type: TransactionHistory,
+      date: Date | string,
+      user: Pick<User, 'id' | 'avatar' | 'address'>,
+    ) => ({
+      type,
+      date,
+      owner: {
+        id: user.id,
+        avatar: user.avatar,
+        address: user.address,
+      },
+    });
+
+    const events = [
+      createEvent(TransactionHistory.CREATED, data.createdAt, data.createdBy),
+    ];
+
     const _witnesses = data.resume.witnesses.filter(
       witness =>
         witness.status === WitnessStatus.DONE ||
         witness.status === WitnessStatus.REJECTED,
     );
 
-    const witnessRejected = data.resume.witnesses.filter(
-      witness => witness.status === WitnessStatus.REJECTED,
-    );
-
-    results.push({
-      type: TransactionHistory.CREATED,
-      date: data.createdAt,
-      owner: {
-        id: data.createdBy.id,
-        avatar: data.createdBy.avatar,
-        address: data.createdBy.address,
-      },
-    });
-
-    for await (const witness of _witnesses) {
-      const { avatar, id, address } = await userService.findByAddress(
-        witness.account,
-      );
-
-      results.push({
-        type:
+    const witnessEvents = await Promise.all(
+      _witnesses.map(async witness => {
+        const user = await userService.findByAddress(witness.account);
+        const eventType =
           witness.status === WitnessStatus.REJECTED
             ? TransactionHistory.DECLINE
-            : TransactionHistory.SIGN,
-        date: witness.updatedAt,
-        owner: {
-          id,
-          avatar,
-          address,
-        },
-      });
-    }
+            : TransactionHistory.SIGN;
+        return createEvent(eventType, witness.updatedAt, user);
+      }),
+    );
+
+    events.push(...witnessEvents);
 
     if (data.status === TransactionStatus.SUCCESS) {
-      results.push({
-        type: TransactionHistory.SEND,
-        date: data.sendTime,
-        owner: {
-          id: data.createdBy.id,
-          avatar: data.createdBy.avatar,
-          address: data.createdBy.address,
-        },
-      });
+      events.push(
+        createEvent(TransactionHistory.SEND, data.sendTime, data.createdBy),
+      );
     }
 
-    if (data.status === TransactionStatus.DECLINED && !witnessRejected) {
-      results.push({
-        type: TransactionHistory.DECLINE,
-        date: data.updatedAt,
-        owner: {
-          id: data.createdBy.id,
-          avatar: data.createdBy.avatar,
-          address: data.createdBy.address,
-        },
-      });
+    if (
+      data.status === TransactionStatus.DECLINED &&
+      !data.resume.witnesses.some(w => w.status === WitnessStatus.REJECTED)
+    ) {
+      events.push(
+        createEvent(TransactionHistory.DECLINE, data.updatedAt, data.createdBy),
+      );
+    } else if (data.status === TransactionStatus.FAILED) {
+      events.push(
+        createEvent(TransactionHistory.FAILED, data.updatedAt, data.createdBy),
+      );
     }
 
-    if (data.status === TransactionStatus.FAILED) {
-      results.push({
-        type: TransactionHistory.FAILED,
-        date: data.updatedAt,
-        owner: {
-          id: data.createdBy.id,
-          avatar: data.createdBy.avatar,
-          address: data.createdBy.address,
-        },
-      });
-    }
-
-    return results;
+    return events.sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    );
   }
 
   async findById({ params: { id } }: IFindTransactionByIdRequest) {
