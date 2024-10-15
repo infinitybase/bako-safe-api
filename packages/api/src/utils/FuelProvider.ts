@@ -1,6 +1,8 @@
 import { Provider, ProviderOptions } from 'fuels';
 
-const REFRESH_TIME = 60000 * 25; // 25 minutes
+const REFRESH_TIME = 60000 * 60; // 60 minutes
+const FUEL_PROVIDER =
+  process.env.FUEL_PROVIDER || 'https://testnet.fuel.network/v1/graphql';
 
 export class FuelProvider {
   private static instance?: FuelProvider;
@@ -25,12 +27,7 @@ export class FuelProvider {
   async reset(): Promise<void> {
     const providers: Record<string, Provider> = {};
 
-    const mainNetNetwork =
-      'https://bako:LR2RU3jQHPlbqog3tnDmZw@mainnet.fuel.network/v1/graphql';
-    providers[mainNetNetwork] = await Provider.create(mainNetNetwork);
-
-    const testNetNetwork = 'https://testnet.fuel.network/v1/graphql';
-    providers[testNetNetwork] = await Provider.create(testNetNetwork);
+    providers[FUEL_PROVIDER] = await Provider.create(FUEL_PROVIDER);
 
     FuelProvider.instance.providers = providers;
   }
