@@ -1,5 +1,7 @@
 import { Provider, ProviderOptions } from 'fuels';
 
+const REFRESH_TIME = 60000 * 25; // 25 minutes
+
 export class FuelProvider {
   private static instance?: FuelProvider;
 
@@ -30,9 +32,6 @@ export class FuelProvider {
     const testNetNetwork = 'https://testnet.fuel.network/v1/graphql';
     providers[testNetNetwork] = await Provider.create(testNetNetwork);
 
-    const faucetTestNetNetwork = 'https://faucet-testnet.fuel.network/';
-    providers[faucetTestNetNetwork] = await Provider.create(faucetTestNetNetwork);
-
     FuelProvider.instance.providers = providers;
   }
 
@@ -40,6 +39,11 @@ export class FuelProvider {
     if (!FuelProvider.instance) {
       FuelProvider.instance = new FuelProvider();
       FuelProvider.instance.reset();
+
+      setInterval(() => {
+        console.log('[PROVIDER] Refreshing providers');
+        FuelProvider.instance.reset();
+      }, REFRESH_TIME);
     }
   }
 }
