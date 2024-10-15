@@ -18,7 +18,7 @@ import {
   IDappRequest,
 } from './types';
 import { ITransactionResponse } from '../transaction/types';
-import app from '@src/server/app';
+import App from '@src/server/app';
 
 const { API_URL, FUEL_PROVIDER } = process.env;
 
@@ -107,7 +107,7 @@ export class DappController {
 
       const userToken = await TokenUtils.getTokenByUser(user.id);
       await new DAppsService().delete(sessionId, origin);
-      await app._sessionCache.removeSession(userToken?.token);
+      await App.getInstance()._sessionCache.removeSession(userToken?.token);
       return successful(null, Responses.NoContent);
     } catch (e) {
       return error(e.error, e.statusCode);

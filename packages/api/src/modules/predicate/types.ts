@@ -130,5 +130,6 @@ export interface IPredicateService {
   delete: (id: string) => Promise<boolean>;
   findById: (id: string, signer?: string) => Promise<Predicate>;
   list: () => Promise<IPagination<Predicate> | Predicate[]>;
+  findByAddress: (address: string) => Promise<Predicate>;
   instancePredicate: (configurable: string, provider: string) => Promise<Vault>;
 }

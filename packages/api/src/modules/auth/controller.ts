@@ -9,7 +9,7 @@ import { Responses, successful, bindMethods, TokenUtils } from '@utils/index';
 import { RecoverCodeService } from '../recoverCode/services';
 
 import { IAuthService, ICreateRecoverCodeRequest, ISignInRequest } from './types';
-import app from '@src/server/app';
+import App from '@src/server/app';
 import { Request } from 'express';
 import { Provider } from 'fuels';
 const { FUEL_PROVIDER } = process.env;
@@ -24,16 +24,21 @@ export class AuthController {
 
   async signIn(req: ISignInRequest) {
     try {
-      const { digest, encoder, signature, userAddress } = req.body;
+      const { digest, encoder, signature, userAddress, name } = req.body;
+
+      const userFilter = userAddress ? { address: userAddress } : { name };
 
       const { userToken, signin } = await TokenUtils.createAuthToken(
         signature,
         digest,
         encoder,
-        userAddress,
+        userFilter,
       );
 
-      await app._sessionCache.addSession(userToken.accessToken, userToken);
+      await App.getInstance()._sessionCache.addSession(
+        userToken.accessToken,
+        userToken,
+      );
       return successful(signin, Responses.Ok);
     } catch (e) {
       if (e instanceof GeneralError) throw e;
@@ -47,7 +52,7 @@ export class AuthController {
       const token = req?.headers?.authorization;
 
       if (token) {
-        await app._sessionCache.removeSession(token);
+        await App.getInstance()._sessionCache.removeSession(token);
       }
 
       return successful(true, Responses.Ok);
@@ -58,9 +63,9 @@ export class AuthController {
 
   async generateSignCode(req: ICreateRecoverCodeRequest) {
     try {
-      const { address, networkUrl } = req.body;
+      const { name, networkUrl } = req.body;
       const { origin } = req.headers ?? { origin: 'no-agent' };
-      const owner = await User.findOne({ where: { address } });
+      const owner = await User.findOne({ where: { name } });
 
       if (!owner) {
         throw new NotFound({
@@ -82,8 +87,6 @@ export class AuthController {
           chainId: provider.getChainId(),
         },
       });
-
-      console.log('response', response);
 
       return successful(response, Responses.Ok);
     } catch (e) {

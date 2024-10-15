@@ -358,10 +358,18 @@ export class TransactionController {
     }
   }
 
-  async findByHash({ params: { hash }, network }: IFindTransactionByHashRequest) {
+  async findByHash({
+    params: { hash },
+    query: { status },
+    network,
+  }: IFindTransactionByHashRequest) {
     try {
       const response = await this.transactionService
-        .filter({ hash: hash.slice(2), network: network.url })
+        .filter({
+          hash: hash.slice(2),
+          network: network.url,
+          status: status ?? undefined,
+        })
         .paginate(undefined)
         .list()
         .then((result: ITransactionResponse[]) => {
@@ -385,16 +393,17 @@ export class TransactionController {
   }: ISignByIdRequest) {
     try {
       const transaction = await Transaction.findOne({
-        where: { hash: txHash },
+        where: { hash: txHash, status: Not(TransactionStatus.DECLINED) },
       });
-      const isValidSignature = this.transactionService.validateSignature(
-        transaction,
-        account,
-      );
 
       if (!transaction) {
         return successful(false, Responses.Ok);
       }
+
+      const isValidSignature = this.transactionService.validateSignature(
+        transaction,
+        account,
+      );
 
       const witness = {
         ...transaction.resume.witnesses.find(w => w.account === account),

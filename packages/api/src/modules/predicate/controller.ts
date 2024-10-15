@@ -6,7 +6,12 @@ import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
 
 import { NotificationTitle } from '@models/index';
 
-import { error } from '@utils/error';
+import {
+  error,
+  ErrorTypes,
+  Unauthorized,
+  UnauthorizedErrorTitles,
+} from '@utils/error';
 import {
   Responses,
   bindMethods,
@@ -110,9 +115,7 @@ export class PredicateController {
 
   async findByAddress({ params: { address } }: IFindByHashRequest) {
     try {
-      const predicate = await Predicate.findOne({
-        where: { predicateAddress: address },
-      });
+      const predicate = await this.predicateService.findByAddress(address);
 
       return successful(predicate, Responses.Ok);
     } catch (e) {
@@ -247,6 +250,16 @@ export class PredicateController {
         .list();
 
       return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async checkByAddress({ params: { address } }: IFindByHashRequest) {
+    try {
+      const predicate = await this.predicateService.findByAddress(address);
+
+      return successful(!!predicate, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }

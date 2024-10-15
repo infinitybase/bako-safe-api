@@ -151,6 +151,7 @@ interface IFindTransactionByIdRequestSchema extends ValidatedRequestSchema {
 
 interface IFindTransactionByHashRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Params]: { hash: string };
+  [ContainerTypes.Query]: { status?: TransactionStatus[] };
 }
 
 interface IFindTransactionByPredicateIdRequestSchema
