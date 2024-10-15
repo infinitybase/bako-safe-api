@@ -227,6 +227,10 @@ enum ContractParametersVersion {
   V1
 }
 
+type DaCompressedBlock {
+  bytes: HexString!
+}
+
 union DependentCost = HeavyOperation | LightOperation
 
 type DryRunFailureStatus {
@@ -763,6 +767,10 @@ type Query {
   ): Contract
   contractBalance(asset: AssetId!, contract: ContractId!): ContractBalance!
   contractBalances(after: String, before: String, filter: ContractBalanceFilterInput!, first: Int, last: Int): ContractBalanceConnection!
+  daCompressedBlock(
+    """Height of the block"""
+    height: U32!
+  ): DaCompressedBlock
   estimateGasPrice(
     """Number of blocks into the future to estimate the gas price for"""
     blockHorizon: U32

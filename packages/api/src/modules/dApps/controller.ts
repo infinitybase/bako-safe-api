@@ -18,7 +18,7 @@ import {
   IDappRequest,
 } from './types';
 import { ITransactionResponse } from '../transaction/types';
-import app from '@src/server/app';
+import App from '@src/server/app';
 
 const { API_URL, FUEL_PROVIDER } = process.env;
 
@@ -94,13 +94,20 @@ export class DappController {
       const { sessionId } = params;
       const origin = headers.origin || headers.Origin;
 
-      const { user } = await new DAppsService().findDAppUserBySessionIdAndOrigin(
+      const dapp = await new DAppsService().findDAppUserBySessionIdAndOrigin(
         sessionId,
         origin,
       );
+
+      if (!dapp) {
+        return successful(null, Responses.NoContent);
+      }
+
+      const { user } = dapp;
+
       const userToken = await TokenUtils.getTokenByUser(user.id);
       await new DAppsService().delete(sessionId, origin);
-      await app._sessionCache.removeSession(userToken?.token);
+      await App.getInstance()._sessionCache.removeSession(userToken?.token);
       return successful(null, Responses.NoContent);
     } catch (e) {
       return error(e.error, e.statusCode);
@@ -177,12 +184,16 @@ export class DappController {
 
   async currentNetwork({ params, headers }: IDappRequest) {
     try {
-      const { network } = await this._dappService.findBySessionID(
+      const dapp = await this._dappService.findBySessionID(
         params.sessionId,
         headers.origin || headers.Origin,
       );
 
-      const result = network.url ?? FUEL_PROVIDER;
+      if (!dapp?.network) {
+        return successful(null, Responses.Ok);
+      }
+
+      const result = dapp.network?.url ?? null;
 
       return successful(result, Responses.Ok);
     } catch (e) {

@@ -1,24 +1,28 @@
-import app from './app';
-import Bootstrap from './bootstrap';
-import Monitoring from './monitoring';
+import * as pprof from 'pprof';
 
-const { 
+import App from './app';
+
+const {
   API_PORT,
-  PORT, 
-  API_ENVIRONMENT, 
-  UI_URL, 
-  API_URL, 
-  FUEL_PROVIDER, 
-  GAS_LIMIT, 
+  PORT,
+  API_ENVIRONMENT,
+  UI_URL,
+  API_URL,
+  FUEL_PROVIDER,
+  GAS_LIMIT,
   MAX_FEE,
   COIN_MARKET_CAP_API_KEY,
   AWS_SMTP_USER,
-  AWS_SMTP_PASS
+  AWS_SMTP_PASS,
+  REDIS_URL,
+  REDIS_URL_WRITE,
+  REDIS_URL_READ,
 } = process.env;
+
+pprof.heap.start(512 * 1024, 64);
 
 const start = async () => {
   const port = API_PORT || PORT || 3333;
-
 
   console.log('[ENVIRONMENTS]: ', {
     API_PORT,
@@ -31,20 +35,20 @@ const start = async () => {
     MAX_FEE,
     COIN_MARKET_CAP_API_KEY,
     AWS_SMTP_USER,
-    AWS_SMTP_PASS
-  })
-
-  Monitoring.init();
-
-  await Bootstrap.start();
-
-  console.log('[APP] Storages started', {
-    active_sessions: app._sessionCache.getActiveSessions(),
-    active_quotes: app._quoteCache.getActiveQuotes(),
+    AWS_SMTP_PASS,
+    REDIS_URL,
+    REDIS_URL_WRITE,
+    REDIS_URL_READ,
   });
 
+  const app = await App.start();
+
+  console.log('[APP] Storages started');
+
   app.serverApp.listen(port, () => {
-    console.log(`[APP] Application running in http://localhost:${port} mode ${API_ENVIRONMENT}`);
+    console.log(
+      `[APP] Application running in http://localhost:${port} mode ${API_ENVIRONMENT}`,
+    );
   });
 };
 

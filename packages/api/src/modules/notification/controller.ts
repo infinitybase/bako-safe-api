@@ -15,24 +15,30 @@ export class NotificationController {
     bindMethods(this);
   }
 
-  async readAll({ user }: IReadAllNotificationsRequest) {
+  async readAll({ user, network }: IReadAllNotificationsRequest) {
     try {
-      const markAsRead = await this.notificationService.update(user.id, {
-        read: true,
-      });
+      const markAsRead = await this.notificationService.update(
+        user.id,
+        network.url,
+        { read: true },
+      );
       return successful(markAsRead, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }
   }
 
-  async list({ query, user }: IListNotificationsRequest) {
+  async list({ query, user, network }: IListNotificationsRequest) {
     const { id } = user;
     const { orderBy, sort, page, perPage, unread } = query;
 
     try {
       const response = await this.notificationService
-        .filter({ userId: id, ...(unread ? { unread: true } : {}) })
+        .filter({
+          userId: id,
+          networkUrl: network.url,
+          ...(unread ? { unread: true } : {}),
+        })
         .ordination({ orderBy, sort })
         .paginate({ page, perPage })
         .list();

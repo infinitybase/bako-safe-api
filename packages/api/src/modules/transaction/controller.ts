@@ -41,6 +41,7 @@ import {
   TransactionHistory,
 } from './types';
 import { mergeTransactionLists } from './utils';
+import { Not } from 'typeorm';
 
 // todo: use this provider by session, and move to transactions
 const { FUEL_PROVIDER } = process.env;
@@ -83,9 +84,13 @@ export class TransactionController {
           .where('t.status = :status', {
             status: TransactionStatus.AWAIT_REQUIREMENTS,
           })
-          .andWhere(`t.network->>'url' = :network`, {
-            network: network.url,
-          });
+          .andWhere(
+            // TODO: On release to mainnet we need to remove this condition
+            `regexp_replace(t.network->>'url', '^https?://[^@]+@', 'https://') = :network`,
+            {
+              network: network.url.replace(/^https?:\/\/[^@]+@/, 'https://'),
+            },
+          );
 
         const result = await qb.getCount();
 
@@ -103,9 +108,13 @@ export class TransactionController {
           status: TransactionStatus.AWAIT_REQUIREMENTS,
         })
         .andWhere('t.predicateId = :predicate', { predicate })
-        .andWhere(`t.network->>'url' = :network`, {
-          network: network.url,
-        });
+        .andWhere(
+          // TODO: On release to mainnet we need to remove this condition
+          `regexp_replace(t.network->>'url', '^https?://[^@]+@', 'https://') = :network`,
+          {
+            network: network.url.replace(/^https?:\/\/[^@]+@/, 'https://'),
+          },
+        );
 
       const result = await qb.getCount();
 
@@ -131,7 +140,7 @@ export class TransactionController {
 
     try {
       const existsTx = await Transaction.findOne({
-        where: { hash },
+        where: { hash, status: Not(TransactionStatus.DECLINED) },
       });
 
       if (existsTx) {
@@ -215,6 +224,7 @@ export class TransactionController {
             workspaceId: predicate.workspace.id,
           },
           user_id: member.id,
+          network,
         });
       }
 
@@ -348,10 +358,18 @@ export class TransactionController {
     }
   }
 
-  async findByHash({ params: { hash }, network }: IFindTransactionByHashRequest) {
+  async findByHash({
+    params: { hash },
+    query: { status },
+    network,
+  }: IFindTransactionByHashRequest) {
     try {
       const response = await this.transactionService
-        .filter({ hash: hash.slice(2), network: network.url })
+        .filter({
+          hash: hash.slice(2),
+          network: network.url,
+          status: status ?? undefined,
+        })
         .paginate(undefined)
         .list()
         .then((result: ITransactionResponse[]) => {
@@ -370,26 +388,29 @@ export class TransactionController {
   async signByID({
     body: { signature, approve },
     params: { hash: txHash },
-    user: { address: account, id: userId },
+    user: { address: account },
+    network,
   }: ISignByIdRequest) {
     try {
       const transaction = await Transaction.findOne({
-        where: { hash: txHash },
+        where: { hash: txHash, status: Not(TransactionStatus.DECLINED) },
       });
-      const isValidSignature = this.transactionService.validateSignature(
-        transaction,
-        account,
-      );
 
       if (!transaction) {
         return successful(false, Responses.Ok);
       }
+
+      const isValidSignature = this.transactionService.validateSignature(
+        transaction,
+        account,
+      );
 
       const witness = {
         ...transaction.resume.witnesses.find(w => w.account === account),
         signature: isValidSignature ? signature : null,
         status:
           approve && isValidSignature ? WitnessStatus.DONE : WitnessStatus.REJECTED,
+        updatedAt: generateWitnessesUpdatedAt(),
       };
 
       transaction.resume.witnesses = transaction.resume.witnesses.map(w =>
@@ -406,7 +427,7 @@ export class TransactionController {
       await transaction.save();
 
       if (newStatus === TransactionStatus.PENDING_SENDER) {
-        await this.transactionService.sendToChain(transaction.hash);
+        await this.transactionService.sendToChain(transaction.hash, network);
       }
 
       return successful(true, Responses.Ok);
@@ -600,7 +621,7 @@ export class TransactionController {
       params: { hash },
     } = params;
     try {
-      await this.transactionService.sendToChain(hash.slice(2)); // not wait for this
+      await this.transactionService.sendToChain(hash.slice(2), params.network); // not wait for this
       return successful(true, Responses.Ok);
     } catch (e) {
       console.log(e);

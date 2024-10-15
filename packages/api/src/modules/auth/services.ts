@@ -48,6 +48,7 @@ export class AuthService implements IAuthService {
         'user.webauthn',
         'user.email',
         'user.first_login',
+        'user.notify',
         'workspace.id',
         'workspace.name',
         'workspace.avatar',
@@ -88,6 +89,7 @@ export class AuthService implements IAuthService {
       rootWallet: predicate?.id ?? 'not found',
       webauthn: user.webauthn,
       email: user.email,
+      notify: user.notify,
       first_login: user.first_login,
       // network
       network: token.network,
@@ -108,11 +110,16 @@ export class AuthService implements IAuthService {
       .getOne();
   }
 
-  static async clearExpiredTokens(): Promise<void> {
+  static async clearExpiredTokens(): Promise<string[]> {
     try {
+      const removedUsers = await UserToken.findBy({
+        expired_at: LessThanOrEqual(new Date()),
+      });
       await UserToken.delete({
         expired_at: LessThanOrEqual(new Date()),
       });
+
+      return removedUsers.map(user => user.token);
     } catch (e) {
       console.log('[CLEAR_EXPIRED_TOKEN_ERROR]', e);
     }

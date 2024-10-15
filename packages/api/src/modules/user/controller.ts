@@ -23,6 +23,7 @@ import {
   ICheckNicknameRequest,
   ICreateRequest,
   IDeleteRequest,
+  IFindByNameRequest,
   IFindOneRequest,
   IListRequest,
   IMeInfoRequest,
@@ -31,9 +32,9 @@ import {
   IUserService,
 } from './types';
 import { Not } from 'typeorm';
-import app from '@src/server/app';
-import { Provider } from 'fuels';
+import App from '@src/server/app';
 import { IChangenetworkRequest } from '../auth/types';
+import { FuelProvider } from '@src/utils/FuelProvider';
 
 export class UserController {
   private userService: IUserService;
@@ -169,23 +170,26 @@ export class UserController {
     }
   }
 
-  /* - add new request veryfi name disponibility /user/name:name
-   *      - returns true if exists or false if not
-   */
+  async getByName(req: IFindByNameRequest) {
+    try {
+      const { nickname } = req.params;
+
+      const userWebAuthn = await this.userService.findByName(nickname);
+      const response = userWebAuthn ?? {};
+
+      return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
 
   async validateName(req: ICheckNicknameRequest) {
     try {
       const { nickname } = req.params;
-      const response = await User.findOne({
-        where: { name: nickname },
-      })
-        .then(response => {
-          const { first_login, notify, active, email, ...rest } = response;
-          return rest;
-        })
-        .catch(e => {
-          return {};
-        });
+      const { userId } = req.query;
+
+      const user = await this.userService.validateName(nickname, userId);
+      const response = user ?? {};
 
       return successful(response, Responses.Ok);
     } catch (e) {
@@ -222,9 +226,11 @@ export class UserController {
         });
       }
 
-      const _provider = await Provider.create(
+      const _provider = await FuelProvider.create(
         provider ?? process.env.FUEL_PROVIDER,
       );
+
+      const localAddTime = process.env.API_ENVIRONMENT === 'development' ? 180 : 0;
 
       const code = await new RecoverCodeService()
         .create({
@@ -232,7 +238,7 @@ export class UserController {
           type: RecoverCodeType.AUTH,
           origin: req.headers.origin ?? process.env.UI_URL,
           // todo: validate this info about the time UTC -3horas
-          validAt: addMinutes(new Date(), 180 + 5), //todo: change this number to dynamic
+          validAt: addMinutes(new Date(), localAddTime + 5), //todo: change this number to dynamic
           network: {
             url: _provider.url,
             chainId: _provider.getChainId(),
@@ -258,7 +264,7 @@ export class UserController {
       const { hardware } = req.params;
 
       const result = await User.query(
-        `SELECT * FROM "users" WHERE webauthn->>'hardware' = $1`,
+        `SELECT name FROM "users" WHERE webauthn->>'hardware' = $1`,
         [hardware],
       );
 
@@ -313,7 +319,7 @@ export class UserController {
         ...req.body,
       });
 
-      await app._sessionCache.updateSession(sessionId);
+      await App.getInstance()._sessionCache.updateSession(sessionId);
 
       return successful(response, Responses.Ok);
     } catch (e) {

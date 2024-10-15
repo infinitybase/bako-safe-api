@@ -6,12 +6,18 @@ import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
 
 import { NotificationTitle } from '@models/index';
 
-import { error } from '@utils/error';
+import {
+  error,
+  ErrorTypes,
+  Unauthorized,
+  UnauthorizedErrorTitles,
+} from '@utils/error';
 import {
   Responses,
   bindMethods,
   calculateBalanceUSD,
   calculateReservedCoins,
+  getAssetsMaps,
   subCoins,
   successful,
 } from '@utils/index';
@@ -68,12 +74,12 @@ export class PredicateController {
       vaultName: predicate.name,
       workspaceId: predicate.workspace.id,
     };
-
     for await (const member of notifyDestination) {
       await this.notificationService.create({
         title: NotificationTitle.NEW_VAULT_CREATED,
         user_id: member.id,
         summary: notifyContent,
+        network,
       });
 
       if (member.notify) {
@@ -109,9 +115,7 @@ export class PredicateController {
 
   async findByAddress({ params: { address } }: IFindByHashRequest) {
     try {
-      const predicate = await Predicate.findOne({
-        where: { predicateAddress: address },
-      });
+      const predicate = await this.predicateService.findByAddress(address);
 
       return successful(predicate, Responses.Ok);
     } catch (e) {
@@ -140,6 +144,7 @@ export class PredicateController {
 
   async hasReservedCoins({ params: { predicateId }, network }: IFindByIdRequest) {
     try {
+      const { assetsMapById } = await getAssetsMaps();
       const {
         transactions: predicateTxs,
         configurable,
@@ -162,9 +167,19 @@ export class PredicateController {
         network.url ?? FUEL_PROVIDER,
       );
       const balances = (await instance.getBalances()).balances;
-      console.log('banacclen', (await instance.getBalance()).format());
-      const assets =
+      const allAssets =
         reservedCoins.length > 0 ? subCoins(balances, reservedCoins) : balances;
+
+      const nfts = [];
+      const assets = allAssets.filter(({ amount, assetId }) => {
+        const hasFuelMapped = assetsMapById[assetId];
+        const isOneUnit = amount.eq(1);
+        const is = hasFuelMapped && !isOneUnit;
+
+        if (is) nfts.push({ amount, assetId });
+
+        return is;
+      });
 
       return successful(
         {
@@ -177,6 +192,7 @@ export class PredicateController {
           currentBalance: assets,
           totalBalance: balances,
           reservedCoins: reservedCoins, // locked coins
+          nfts,
         },
         Responses.Ok,
       );
@@ -234,6 +250,16 @@ export class PredicateController {
         .list();
 
       return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async checkByAddress({ params: { address } }: IFindByHashRequest) {
+    try {
+      const predicate = await this.predicateService.findByAddress(address);
+
+      return successful(!!predicate, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }

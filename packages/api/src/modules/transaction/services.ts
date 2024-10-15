@@ -8,8 +8,9 @@ import {
   transactionRequestify,
   TransactionType as FuelTransactionType,
   getTransactionSummary,
+  Network,
 } from 'fuels';
-import { Brackets } from 'typeorm';
+import { Brackets, Not } from 'typeorm';
 
 import { Predicate, Transaction } from '@models/index';
 
@@ -29,6 +30,7 @@ import {
 } from './types';
 import { formatFuelTransaction, formatTransactionsResponse } from './utils';
 import { TransactionPagination, TransactionPaginationParams } from './pagination';
+import { FuelProvider } from '@src/utils';
 
 export class TransactionService implements ITransactionService {
   private _ordination: IOrdination<Transaction> = {
@@ -95,7 +97,7 @@ export class TransactionService implements ITransactionService {
 
   async findByHash(hash: string): Promise<ITransactionResponse> {
     return await Transaction.findOne({
-      where: { hash: hash },
+      where: { hash: hash, status: Not(TransactionStatus.DECLINED) },
       relations: [
         'predicate',
         'predicate.members',
@@ -192,9 +194,13 @@ export class TransactionService implements ITransactionService {
         'workspace.name',
         'workspace.single',
       ])
-      .andWhere(`t.network->>'url' = :network`, {
-        network: this._filter.network,
-      });
+      .andWhere(
+        // TODO: On release to mainnet we need to remove this condition
+        `regexp_replace(t.network->>'url', '^https?://[^@]+@', 'https://') = :network`,
+        {
+          network: this._filter.network.replace(/^https?:\/\/[^@]+@/, 'https://'),
+        },
+      );
 
     this._filter.predicateAddress &&
       queryBuilder.andWhere('predicate.predicateAddress = :address', {
@@ -347,9 +353,12 @@ export class TransactionService implements ITransactionService {
         'workspace.name',
         'workspace.single',
       ])
-      .andWhere(`t.network->>'url' = :network`, {
-        network: this._filter.network,
-      });
+      .andWhere(
+        `regexp_replace(t.network->>'url', '^https?://[^@]+@', 'https://') = :network`,
+        {
+          network: this._filter.network.replace(/^https?:\/\/[^@]+@/, 'https://'),
+        },
+      );
 
     // =============== specific for workspace ===============
     if (this._filter.workspaceId || this._filter.signer) {
@@ -490,15 +499,27 @@ export class TransactionService implements ITransactionService {
   //instance vault
   //instance tx
   //add witnesses
-  async sendToChain(hash: string) {
-    const transaction = await this.findByHash(hash);
+  async sendToChain(hash: string, network: Network) {
+    const transaction = await Transaction.findOne({
+      where: { hash, status: Not(TransactionStatus.DECLINED) },
+      relations: ['predicate', 'createdBy'],
+    });
+
+    if (!transaction) {
+      throw new NotFound({
+        type: ErrorTypes.NotFound,
+        title: 'Transaction not found',
+        detail: `No transaction were found that were ready to be sent to the provided hash: ${hash}.`,
+      });
+    }
+
     const { id, predicate, txData, status, resume } = transaction;
 
     if (status != TransactionStatus.PENDING_SENDER) {
       return await this.findById(id);
     }
 
-    const provider = await Provider.create(transaction.network.url);
+    const provider = await FuelProvider.create(transaction.network.url);
     const vault = new Vault(provider, JSON.parse(predicate.configurable));
 
     const tx = transactionRequestify({
@@ -521,7 +542,7 @@ export class TransactionService implements ITransactionService {
         },
       };
 
-      await new NotificationService().transactionSuccess(id);
+      await new NotificationService().transactionSuccess(id, network);
 
       return await this.update(id, _api_transaction);
     } catch (e) {
@@ -548,14 +569,14 @@ export class TransactionService implements ITransactionService {
 
       for await (const predicate of predicates) {
         const address = Address.fromString(predicate.predicateAddress).toB256();
-        const provider = await Provider.create(providerUrl);
+        const provider = await FuelProvider.create(providerUrl);
 
         // TODO: change this to use pagination and order DESC
         const { transactions } = await getTransactionsSummaries({
           provider,
           filters: {
             owner: address,
-            first: 100,
+            first: 57,
           },
         });
 
@@ -590,7 +611,7 @@ export class TransactionService implements ITransactionService {
     providerUrl: string,
   ): Promise<ITransactionResponse> {
     try {
-      const provider = await Provider.create(providerUrl);
+      const provider = await FuelProvider.create(providerUrl);
 
       const tx = await getTransactionSummary({
         id,

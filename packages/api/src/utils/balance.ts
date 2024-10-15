@@ -1,6 +1,6 @@
 import { BN, CoinQuantity, OutputCoin, TransactionRequestOutput, bn } from 'fuels';
 
-import app from '@src/server/app';
+import App from '@src/server/app';
 import { Transaction } from '@src/models';
 import { isOutputCoin } from './outputTypeValidate';
 import { getAssetsMaps } from './assets';
@@ -37,15 +37,20 @@ const calculateBalanceUSD = async (
   let balanceUSD = 0;
   const { fuelUnitAssets } = await getAssetsMaps();
 
-  console.log('chainId:', chainId);
+  const quotes = await App.getInstance()._quoteCache.getActiveQuotes();
 
-  balances?.forEach(balance => {
+  balances?.forEach(async balance => {
+    let priceUSD = 0;
+
     const units = fuelUnitAssets(chainId, balance.assetId);
     const formattedAmount = balance.amount.format({
       units,
     });
 
-    const priceUSD = app._quoteCache.getQuote(balance.assetId);
+    if (quotes[balance.assetId]) {
+      priceUSD = quotes[balance.assetId];
+    }
+
     balanceUSD += parseFloat(formattedAmount) * priceUSD;
   });
 

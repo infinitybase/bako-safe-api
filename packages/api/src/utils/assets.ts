@@ -64,42 +64,49 @@ export const fuelAssetsByChainId = (
   }, []);
 };
 
+export const handleFuelUnitAssets = (
+  fuelAssetsList: Assets,
+  chainId: number,
+  assetId: string,
+): number => {
+  const result =
+    fuelAssetsList
+      .map(asset => {
+        const network = asset.networks.find(
+          network => network && network.chainId === chainId,
+        ) as NetworkFuel;
+
+        if (network && network.assetId === assetId) return network.decimals;
+      })
+      .find(units => units !== undefined) ?? 8;
+
+  return result;
+};
+
 export const getAssetsMaps = async () => {
   const fuelAssetsList = await fetchFuelAssets();
 
-  const fuelUnitAssets = (chainId: number, assetId: string): number => {
-    const result =
-      fuelAssetsList
-        .map(asset => {
-          const network = asset.networks.find(
-            network => network && network.chainId === chainId,
-          ) as NetworkFuel;
-
-          if (network && network.assetId === assetId) return network.decimals;
-        })
-        .find(units => units !== undefined) ?? 8;
-
-    return result;
-  };
+  const fuelUnitAssets = (chainId: number, assetId: string): number =>
+    handleFuelUnitAssets(fuelAssetsList, chainId, assetId);
 
   const fuelAssets = (): Asset[] =>
     fuelAssetsList.reduce<Asset[]>((acc, asset) => {
       if (whitelist.includes(asset.name.toLocaleLowerCase())) return acc;
 
-      const network = asset.networks.find(
-        network => network && network.chainId === 0,
-      ) as NetworkFuel;
+      asset.networks
+        .filter(
+          network => network && 'assetId' in network && network.type === 'fuel',
+        )
+        .forEach((network: NetworkFuel) =>
+          acc.push({
+            name: asset.name,
+            slug: replace(asset.name),
+            assetId: network.assetId,
+            icon: asset.icon,
+            units: network.decimals,
+          }),
+        );
 
-      if (network && network.type === 'fuel') {
-        acc.push({
-          name: asset.name,
-          slug: replace(asset.name),
-          assetId: network.assetId,
-          icon: asset.icon,
-          units: network.decimals,
-          // units: 9,
-        });
-      }
       return acc;
     }, []);
 

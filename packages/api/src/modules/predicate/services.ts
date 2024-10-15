@@ -15,10 +15,11 @@ import {
   IPredicateService,
 } from './types';
 import { IPredicateOrdination, setOrdination } from './ordination';
-import { Network, Provider, ZeroBytes32 } from 'fuels';
+import { Network, ZeroBytes32 } from 'fuels';
 import { UserService } from '../user/service';
 import { IconUtils } from '@src/utils/icons';
 import { PredicateVersionService } from '../predicateVersion/services';
+import { FuelProvider } from '@src/utils';
 
 export class PredicateService implements IPredicateService {
   private _ordination: IPredicateOrdination = {
@@ -148,6 +149,27 @@ export class PredicateService implements IPredicateService {
       throw new Internal({
         type: ErrorTypes.Internal,
         title: 'Error on predicate findById',
+        detail: e,
+      });
+    }
+  }
+
+  async findByAddress(address: string): Promise<Predicate> {
+    try {
+      return await Predicate.findOne({
+        where: { predicateAddress: address },
+        relations: ['owner'],
+        select: {
+          owner: {
+            id: true,
+            address: true,
+          },
+        },
+      });
+    } catch (e) {
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on predicate findByAddress',
         detail: e,
       });
     }
@@ -336,7 +358,7 @@ export class PredicateService implements IPredicateService {
 
   async instancePredicate(configurable: string, provider: string): Promise<Vault> {
     const conf = JSON.parse(configurable);
-    const _provider = await Provider.create(provider);
+    const _provider = await FuelProvider.create(provider);
     return new Vault(_provider, conf);
   }
 }

@@ -1,4 +1,4 @@
-import { Provider } from 'fuels';
+import { FuelProvider } from '@src/utils';
 import { MigrationInterface, QueryRunner, TableColumn } from 'typeorm';
 
 const { FUEL_PROVIDER } = process.env;
@@ -14,7 +14,7 @@ export class AddNetworkOnApiTokens1727717621119 implements MigrationInterface {
       }),
     );
 
-    const provider = await Provider.create(FUEL_PROVIDER);
+    const provider = await FuelProvider.create(FUEL_PROVIDER);
     const network = {
       url: provider.url,
       chainId: provider.getChainId(),

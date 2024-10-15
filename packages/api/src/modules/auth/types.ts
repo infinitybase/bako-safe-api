@@ -22,7 +22,8 @@ export interface ISignInPayload {
   encoder: Encoder;
   signature: string;
   digest: string;
-  userAddress: string;
+  userAddress?: string;
+  name?: string;
 }
 
 interface IActiveSessionRequestSchema extends ValidatedRequestSchema {
@@ -85,6 +86,7 @@ export type IUserSignin = {
   webauthn?: WebAuthn;
   email?: string;
   network: Network;
+  notify: boolean;
 };
 
 export interface ISignInResponse extends IUserSignin {

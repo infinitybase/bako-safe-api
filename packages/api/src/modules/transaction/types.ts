@@ -6,7 +6,7 @@ import {
   TransactionStatus,
 } from 'bakosafe';
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
-import { TransactionRequest } from 'fuels';
+import { Network, TransactionRequest } from 'fuels';
 
 import { Predicate, Transaction, TransactionType } from '@models/index';
 
@@ -151,6 +151,7 @@ interface IFindTransactionByIdRequestSchema extends ValidatedRequestSchema {
 
 interface IFindTransactionByHashRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Params]: { hash: string };
+  [ContainerTypes.Query]: { status?: TransactionStatus[] };
 }
 
 interface IFindTransactionByPredicateIdRequestSchema
@@ -218,7 +219,10 @@ export interface ITransactionService {
   filter(filter: ITransactionFilterParams): this;
 
   // bakosafe
-  sendToChain: (transactionId: string) => Promise<ITransactionResponse>;
+  sendToChain: (
+    transactionId: string,
+    network: Network,
+  ) => Promise<ITransactionResponse>;
 
   // crud
   create: (payload: ITCreateService) => Promise<ITransactionResponse>;

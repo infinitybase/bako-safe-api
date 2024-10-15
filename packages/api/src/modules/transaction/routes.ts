@@ -1,6 +1,11 @@
 import { Router } from 'express';
 
-import { authMiddleware } from '@src/middlewares';
+import {
+  authMiddleware,
+  predicatesPermissionMiddleware,
+  transactionPermissionMiddleware,
+  workspacePermissionMiddleware,
+} from '@src/middlewares';
 
 import { PredicateService } from '@modules/predicate/services';
 
@@ -15,6 +20,20 @@ import {
   validateCloseTransactionPayload,
   validateSignerByIdPayload,
 } from './validations';
+import { PermissionRoles } from '@src/models';
+
+const predicatePermissionMiddleware = predicatesPermissionMiddleware({
+  predicatesSelector: req => req.query.predicateId as string[],
+  permissions: [PermissionRoles.OWNER, PermissionRoles.SIGNER],
+});
+
+const wkPermissionMiddleware = workspacePermissionMiddleware({
+  workspaceSelector: req => req.query.workspaceId as string,
+});
+
+const txPermissionMiddleware = transactionPermissionMiddleware({
+  transactionSelector: req => req.params.hash,
+});
 
 const router = Router();
 const transactionService = new TransactionService();
@@ -43,14 +62,29 @@ const {
 router.use(authMiddleware);
 
 router.post('/', validateAddTransactionPayload, handleResponse(create));
-router.get('/', handleResponse(list));
-router.get('/with-incomings', handleResponse(listWithIncomings));
-router.get('/pending', handleResponse(pending));
+router.get(
+  '/',
+  wkPermissionMiddleware,
+  predicatePermissionMiddleware,
+  handleResponse(list),
+);
+router.get(
+  '/with-incomings',
+  wkPermissionMiddleware,
+  predicatePermissionMiddleware,
+  handleResponse(listWithIncomings),
+);
+router.get('/pending', predicatePermissionMiddleware, handleResponse(pending));
 router.get('/:id', handleResponse(findById));
 router.get('/by-hash/:hash', handleResponse(findByHash));
 router.put('/close/:id', validateCloseTransactionPayload, handleResponse(close));
 router.post('/send/:hash', handleResponse(send));
-router.put('/sign/:hash', validateSignerByIdPayload, handleResponse(signByID));
+router.put(
+  '/sign/:hash',
+  validateSignerByIdPayload,
+  txPermissionMiddleware,
+  handleResponse(signByID),
+);
 router.get('/history/:id/:predicateId', handleResponse(createHistory));
 
 export default router;
