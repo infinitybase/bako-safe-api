@@ -172,11 +172,10 @@ export class TokenUtils {
     digest: string,
     encoder: string,
     userFilter: { address: string } | { name: string },
-    // network: Network,
   ) {
     const code = await RecoverCode.findOne({
       where: {
-        owner: { address: userAddress },
+        owner: userFilter,
         type: RecoverCodeType.AUTH,
         validAt: MoreThan(new Date()),
       },
