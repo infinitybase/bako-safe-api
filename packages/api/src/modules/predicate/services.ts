@@ -114,12 +114,8 @@ export class PredicateService implements IPredicateService {
     try {
       return await Predicate.createQueryBuilder('p')
         .where({ id })
-        .leftJoinAndSelect('p.members', 'members')
-        .leftJoinAndSelect('p.owner', 'owner')
-        .leftJoin('p.version', 'version')
-        .leftJoin('p.workspace', 'workspace')
-        .leftJoin('workspace.addressBook', 'addressBook')
-        .leftJoin('addressBook.user', 'adb_workspace')
+        .leftJoin('p.members', 'members')
+        .leftJoin('p.owner', 'owner')
         .select([
           ...this.predicateFieldsSelection,
           'p.configurable',
@@ -128,16 +124,6 @@ export class PredicateService implements IPredicateService {
           'members.address',
           'owner.id',
           'owner.address',
-          'version.id',
-          'version.abi',
-          'version.bytes',
-          'version.code',
-          'workspace.id',
-          'workspace.name',
-          'addressBook.nickname',
-          'addressBook.id',
-          'addressBook.user_id',
-          'adb_workspace.id',
         ])
         .getOne();
     } catch (e) {
