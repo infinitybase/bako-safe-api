@@ -40,14 +40,22 @@ export class QuoteStorage {
       return;
     }
 
+    const _assets = this.generateAssets(assets);
     const params = this.generateParams(assetsMapById, assets);
 
     if (params) {
-      const quotes = await this.fetchQuotes(assets, params);
+      const quotes = await this.fetchQuotes(_assets, params);
       quotes.forEach(quote => {
         this.setQuote(quote.assetId, quote.price);
       });
     }
+  }
+
+  private generateAssets(assets: IAsset[]) {
+    return assets.map(asset => ({
+      id: asset.id,
+      symbol: this.parseName(asset.symbol),
+    }));
   }
 
   private generateParams(assetsMapById: IAssetMapById, assets?: IAsset[]): string {
@@ -80,6 +88,12 @@ export class QuoteStorage {
       wsteth: 'wrapped-steth',
       pzeth: 'renzo-restaked-lst',
       steaklrt: 'steakhouse-resteaking-vault',
+      'mantle meth': 'mantle-staked-ether',
+      ezeth: 'renzo-restaked-eth',
+      usdt: 'tether',
+      sdai: 'savings-dai',
+      fbtc: 'ignition-fbtc',
+      rseth: 'kelp-dao-restaked-eth',
     };
 
     return whitelist[name] ?? name;
