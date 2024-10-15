@@ -72,9 +72,10 @@ export class SessionStorage {
 
     setInterval(() => {
       _this.clearExpiredSessions();
+      console.log(`[STORE] SESSION REFRESHED - ${new Date()}`);
     }, REFRESH_TIME);
 
-    console.log(`[REDIS] SESSION STARTED ${new Date()}`);
+    console.log(`[REDIS] SESSION STARTED`);
 
     return _this;
   }

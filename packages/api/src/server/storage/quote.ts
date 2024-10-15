@@ -159,9 +159,10 @@ export class QuoteStorage {
 
     setInterval(() => {
       _this.addQuotes();
+      console.log(`[STORE] QUOTE REFRESHED - ${new Date()}`);
     }, REFRESH_TIME);
 
-    console.log(`[REDIS] QUOTE STARTED ${new Date()}`);
+    console.log(`[REDIS] QUOTE STARTED`);
 
     return _this;
   }

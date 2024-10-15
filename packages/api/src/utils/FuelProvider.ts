@@ -37,8 +37,10 @@ export class FuelProvider {
       FuelProvider.instance = new FuelProvider();
       FuelProvider.instance.reset();
 
+      console.log(`[PROVIDER] STARTED - ${new Date()}`);
+
       setInterval(() => {
-        console.log(`[PROVIDER] Refreshing providers ${new Date()}`);
+        console.log(`[STORE] PROVIDERS REFRESHED - ${new Date()}`);
         FuelProvider.instance.reset();
       }, REFRESH_TIME);
     }
