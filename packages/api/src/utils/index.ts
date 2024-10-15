@@ -13,3 +13,6 @@ export * from './assets';
 export * from './runMode';
 export * from './witnessesUpdatedAt';
 export * from './formatAssets';
+export * from './redis/RedisReadClient';
+export * from './redis/RedisWriteClient';
+export * from './FuelProvider';

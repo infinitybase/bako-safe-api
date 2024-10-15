@@ -2,7 +2,7 @@ import crypto from 'crypto';
 
 import { IPredicatePayload } from '@src/modules/predicate/types';
 import { Vault, VaultConfigurable } from 'bakosafe';
-import { Provider } from 'fuels';
+import { FuelProvider } from '@src/utils';
 
 const { FUEL_PROVIDER } = process.env;
 
@@ -24,7 +24,7 @@ export class PredicateMock {
   }
 
   public static async create(signaturesCount: number, signers: string[]) {
-    const _provider = await Provider.create(FUEL_PROVIDER);
+    const _provider = await FuelProvider.create(FUEL_PROVIDER);
     const _configurable: VaultConfigurable = {
       SIGNATURES_COUNT: signaturesCount,
       SIGNERS: signers,

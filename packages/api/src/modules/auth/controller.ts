@@ -11,7 +11,7 @@ import { RecoverCodeService } from '../recoverCode/services';
 import { IAuthService, ICreateRecoverCodeRequest, ISignInRequest } from './types';
 import App from '@src/server/app';
 import { Request } from 'express';
-import { Provider } from 'fuels';
+import { FuelProvider } from '@src/utils';
 const { FUEL_PROVIDER } = process.env;
 
 export class AuthController {
@@ -75,7 +75,7 @@ export class AuthController {
         });
       }
 
-      const provider = await Provider.create(networkUrl ?? FUEL_PROVIDER);
+      const provider = await FuelProvider.create(networkUrl ?? FUEL_PROVIDER);
 
       const response = await new RecoverCodeService().create({
         owner,
