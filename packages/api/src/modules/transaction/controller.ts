@@ -40,7 +40,7 @@ import {
   ITransactionService,
   TransactionHistory,
 } from './types';
-import { mergeTransactionLists } from './utils';
+import { createTxHistoryEvent, mergeTransactionLists } from './utils';
 import { Not } from 'typeorm';
 
 // todo: use this provider by session, and move to transactions
@@ -228,7 +228,6 @@ export class TransactionController {
 
   async createHistory({
     params: { id, predicateId },
-    network,
   }: ICreateTransactionHistoryRequest) {
     try {
       const isUuid = isUUID(id);
@@ -238,11 +237,7 @@ export class TransactionController {
         result = await this.transactionService.findById(id);
       } else {
         const predicate = await this.predicateService.findById(predicateId);
-        result = await this.transactionService.fetchFuelTransactionById(
-          id,
-          predicate,
-          network.url ?? FUEL_PROVIDER,
-        );
+        result = await this.transactionService.findById(id);
       }
 
       const response = await TransactionController.formatTransactionsHistory(
@@ -258,22 +253,12 @@ export class TransactionController {
   static async formatTransactionsHistory(data: Transaction) {
     const userService = new UserService();
 
-    const createEvent = (
-      type: TransactionHistory,
-      date: Date | string,
-      user: Pick<User, 'id' | 'avatar' | 'address'>,
-    ) => ({
-      type,
-      date,
-      owner: {
-        id: user.id,
-        avatar: user.avatar,
-        address: user.address,
-      },
-    });
-
     const events = [
-      createEvent(TransactionHistory.CREATED, data.createdAt, data.createdBy),
+      createTxHistoryEvent(
+        TransactionHistory.CREATED,
+        data.createdAt,
+        data.createdBy,
+      ),
     ];
 
     const _witnesses = data.resume.witnesses.filter(
@@ -289,29 +274,35 @@ export class TransactionController {
           witness.status === WitnessStatus.REJECTED
             ? TransactionHistory.DECLINE
             : TransactionHistory.SIGN;
-        return createEvent(eventType, witness.updatedAt, user);
+        return createTxHistoryEvent(eventType, witness.updatedAt, user);
       }),
     );
 
     events.push(...witnessEvents);
 
-    if (data.status === TransactionStatus.SUCCESS) {
-      events.push(
-        createEvent(TransactionHistory.SEND, data.sendTime, data.createdBy),
-      );
-    }
+    switch (data.status) {
+      case TransactionStatus.SUCCESS:
+        events.push(
+          createTxHistoryEvent(
+            TransactionHistory.SEND,
+            data.sendTime,
+            data.createdBy,
+          ),
+        );
+        break;
 
-    if (
-      data.status === TransactionStatus.DECLINED &&
-      !data.resume.witnesses.some(w => w.status === WitnessStatus.REJECTED)
-    ) {
-      events.push(
-        createEvent(TransactionHistory.DECLINE, data.updatedAt, data.createdBy),
-      );
-    } else if (data.status === TransactionStatus.FAILED) {
-      events.push(
-        createEvent(TransactionHistory.FAILED, data.updatedAt, data.createdBy),
-      );
+      case TransactionStatus.FAILED:
+        events.push(
+          createTxHistoryEvent(
+            TransactionHistory.FAILED,
+            data.updatedAt,
+            data.createdBy,
+          ),
+        );
+        break;
+
+      default:
+        break;
     }
 
     return events.sort(
