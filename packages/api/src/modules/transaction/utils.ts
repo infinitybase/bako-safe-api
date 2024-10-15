@@ -1,6 +1,10 @@
-import { Predicate, Transaction, TransactionType } from '@src/models';
+import { Predicate, Transaction, TransactionType, User } from '@src/models';
 import { IPagination } from '@src/utils/pagination';
-import { ITransactionResponse, ITransactionsListParams } from './types';
+import {
+  ITransactionResponse,
+  ITransactionsListParams,
+  TransactionHistory,
+} from './types';
 import { TransactionStatus } from 'bakosafe';
 import { Provider, TransactionResult } from 'fuels';
 import { formatAssets } from '@src/utils/formatAssets';
@@ -222,3 +226,17 @@ const countTransactionsPerOrigin = (
     { DB: 0, FUEL: 0 },
   );
 };
+
+export const createTxHistoryEvent = (
+  type: TransactionHistory,
+  date: Date | string,
+  user: Pick<User, 'id' | 'avatar' | 'address'>,
+) => ({
+  type,
+  date,
+  owner: {
+    id: user.id,
+    avatar: user.avatar,
+    address: user.address,
+  },
+});
