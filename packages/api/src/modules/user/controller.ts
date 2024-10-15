@@ -23,6 +23,7 @@ import {
   ICheckNicknameRequest,
   ICreateRequest,
   IDeleteRequest,
+  IFindByNameRequest,
   IFindOneRequest,
   IListRequest,
   IMeInfoRequest,
@@ -31,7 +32,7 @@ import {
   IUserService,
 } from './types';
 import { Not } from 'typeorm';
-import app from '@src/server/app';
+import App from '@src/server/app';
 import { Provider } from 'fuels';
 import { IChangenetworkRequest } from '../auth/types';
 
@@ -169,23 +170,26 @@ export class UserController {
     }
   }
 
-  /* - add new request veryfi name disponibility /user/name:name
-   *      - returns true if exists or false if not
-   */
+  async getByName(req: IFindByNameRequest) {
+    try {
+      const { nickname } = req.params;
+
+      const userWebAuthn = await this.userService.findByName(nickname);
+      const response = userWebAuthn ?? {};
+
+      return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
 
   async validateName(req: ICheckNicknameRequest) {
     try {
       const { nickname } = req.params;
-      const response = await User.findOne({
-        where: { name: nickname },
-      })
-        .then(response => {
-          const { first_login, notify, active, email, ...rest } = response;
-          return rest;
-        })
-        .catch(e => {
-          return {};
-        });
+      const { userId } = req.query;
+
+      const user = await this.userService.validateName(nickname, userId);
+      const response = user ?? {};
 
       return successful(response, Responses.Ok);
     } catch (e) {
@@ -260,7 +264,7 @@ export class UserController {
       const { hardware } = req.params;
 
       const result = await User.query(
-        `SELECT * FROM "users" WHERE webauthn->>'hardware' = $1`,
+        `SELECT name FROM "users" WHERE webauthn->>'hardware' = $1`,
         [hardware],
       );
 
@@ -315,7 +319,7 @@ export class UserController {
         ...req.body,
       });
 
-      await app._sessionCache.updateSession(sessionId);
+      await App.getInstance()._sessionCache.updateSession(sessionId);
 
       return successful(response, Responses.Ok);
     } catch (e) {

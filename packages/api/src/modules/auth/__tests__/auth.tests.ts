@@ -17,8 +17,10 @@ describe('[AUTH]', () => {
 
     // create a new user
     const wallet = Wallet.generate();
+    const address = wallet.address.toB256();
+
     const newUser = {
-      address: wallet.address.toB256(),
+      address,
       provider: networks['local'],
       name: `test mock - ${Address.fromRandom().toB256()}`,
       type: TypeUser.FUEL,
@@ -38,6 +40,7 @@ describe('[AUTH]', () => {
       encoder: Encoder.FUEL,
       signature: token,
       digest: user.code,
+      userAddress: address,
     });
 
     expect(session).toHaveProperty('accessToken', token);
@@ -49,7 +52,7 @@ describe('[AUTH]', () => {
     });
 
     api.defaults.headers.common['Authorization'] = session.accessToken;
-    api.defaults.headers.common['Signeraddress'] = provider.url;
+    api.defaults.headers.common['Signeraddress'] = address;
 
     // get a route with required auth
     const { data: userInfo } = await api.get(`/user/latest/info`);
