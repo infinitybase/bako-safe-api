@@ -30,17 +30,7 @@ export type Asset = {
   units: number;
 };
 
-const whitelist = ['rsteth', 'mantle meth', 'rsusde', 're7lrt'];
-const replaceList = {
-  usdc: 'usd-coin',
-};
-
-const replace = (name: string) => {
-  // eslint-disable-next-line no-prototype-builtins
-  return replaceList.hasOwnProperty(name.toLocaleLowerCase())
-    ? replaceList[name.toLocaleLowerCase()]
-    : name.toLocaleLowerCase();
-};
+const blocklist = ['rsteth', 'rsusde', 're7lrt', 'amphreth'];
 
 export const fuelAssetsByChainId = (
   chainId: number,
@@ -54,7 +44,7 @@ export const fuelAssetsByChainId = (
     if (network && network.type === 'fuel') {
       acc.push({
         name: asset.name,
-        slug: replace(asset.name),
+        slug: asset.name,
         assetId: network.assetId,
         icon: asset.icon,
         units: network.decimals,
@@ -91,7 +81,7 @@ export const getAssetsMaps = async () => {
 
   const fuelAssets = (): Asset[] =>
     fuelAssetsList.reduce<Asset[]>((acc, asset) => {
-      if (whitelist.includes(asset.name.toLocaleLowerCase())) return acc;
+      if (blocklist.includes(asset.name.toLocaleLowerCase())) return acc;
 
       asset.networks
         .filter(
@@ -100,7 +90,7 @@ export const getAssetsMaps = async () => {
         .forEach((network: NetworkFuel) =>
           acc.push({
             name: asset.name,
-            slug: replace(asset.name),
+            slug: asset.name,
             assetId: network.assetId,
             icon: asset.icon,
             units: network.decimals,
