@@ -5,7 +5,6 @@ import { AuthService } from '@src/modules/auth/services';
 import { ISignInResponse } from '@src/modules/auth/types';
 import { RedisReadClient, RedisWriteClient } from '@src/utils';
 import { isPast } from 'date-fns';
-import * as redis from 'redis';
 
 export interface ISession {
   nome: string;
@@ -18,9 +17,6 @@ const REFRESH_TIME = 60 * 1000; // 5 minutes
 const PREFIX = 'session';
 
 export class SessionStorage {
-  private redisClientWrite?: redis.RedisClientType;
-  private redisClientRead?: redis.RedisClientType;
-
   private constructor() {}
 
   public async addSession(sessionId: string, session: ISignInResponse) {
@@ -78,7 +74,7 @@ export class SessionStorage {
       _this.clearExpiredSessions();
     }, REFRESH_TIME);
 
-    console.log('[REDIS] SESSION STARTED');
+    console.log(`[REDIS] SESSION STARTED ${new Date()}`);
 
     return _this;
   }

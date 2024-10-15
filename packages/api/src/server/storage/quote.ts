@@ -161,7 +161,7 @@ export class QuoteStorage {
       _this.addQuotes();
     }, REFRESH_TIME);
 
-    console.log('[REDIS] QUOTE STARTED');
+    console.log(`[REDIS] QUOTE STARTED ${new Date()}`);
 
     return _this;
   }
