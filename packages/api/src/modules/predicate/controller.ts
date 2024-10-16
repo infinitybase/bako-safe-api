@@ -145,21 +145,26 @@ export class PredicateController {
   async hasReservedCoins({ params: { predicateId }, network }: IFindByIdRequest) {
     try {
       const { assetsMapById } = await getAssetsMaps();
-      const {
-        transactions: predicateTxs,
-        configurable,
-      } = await Predicate.createQueryBuilder('p')
-        .leftJoin('p.transactions', 't', 't.status IN (:...status)', {
-          status: [
-            TransactionStatus.AWAIT_REQUIREMENTS,
-            TransactionStatus.PENDING_SENDER,
-          ],
-        })
+      const queryResult = await Predicate.createQueryBuilder('p')
+        .leftJoin(
+          'p.transactions',
+          't',
+          "t.status IN (:...status) AND regexp_replace(t.network->>'url', '^https?://[^@]+@', 'https://') = :network",
+          {
+            status: [
+              TransactionStatus.AWAIT_REQUIREMENTS,
+              TransactionStatus.PENDING_SENDER,
+            ],
+            network: network.url.replace(/^https?:\/\/[^@]+@/, 'https://'),
+          },
+        )
         .leftJoin('p.version', 'pv')
         .addSelect(['t', 'p.id', 'p.configurable', 'pv.code'])
         .where('p.id = :predicateId', { predicateId })
         .getOne();
 
+      const predicateTxs = queryResult?.transactions ?? [];
+      const configurable = queryResult?.configurable;
       const reservedCoins = calculateReservedCoins(predicateTxs);
 
       const instance = await this.predicateService.instancePredicate(

@@ -300,9 +300,10 @@ export const txRequest = async ({ data, socket, database }: IEvent<IEventTX_REQU
 				FROM transactions t
 				WHERE t.predicate_id = $1 
 				AND t.status = $2
-				AND t.deleted_at IS NULL;
+				AND t.deleted_at IS NULL
+				AND regexp_replace(t.network->>'url', '^https?://[^@]+@', 'https://') = $3;
 			`,
-			[vault.id, TransactionStatus.AWAIT_REQUIREMENTS],
+			[vault.id, TransactionStatus.AWAIT_REQUIREMENTS, dapp.network.url],
 		)
 
 		const provider = await Provider.create(dapp.network.url)
