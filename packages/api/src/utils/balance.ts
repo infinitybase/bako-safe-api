@@ -39,7 +39,7 @@ const calculateBalanceUSD = async (
 
   const quotes = await App.getInstance()._quoteCache.getActiveQuotes();
 
-  balances?.forEach(async balance => {
+  balances?.forEach(balance => {
     let priceUSD = 0;
 
     const units = fuelUnitAssets(chainId, balance.assetId);
