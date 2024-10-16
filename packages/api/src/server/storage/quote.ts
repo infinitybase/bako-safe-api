@@ -1,6 +1,11 @@
-import { IAsset, IAssetMapById, getAssetsMaps, isDevMode } from '@src/utils';
-import RedisReadClient from '@src/utils/redis/RedisReadClient';
-import RedisWriteClient from '@src/utils/redis/RedisWriteClient';
+import {
+  RedisReadClient,
+  RedisWriteClient,
+  IAsset,
+  IAssetMapById,
+  getAssetsMaps,
+  isDevMode,
+} from '@src/utils';
 import axios from 'axios';
 
 const { COIN_MARKET_CAP_API_KEY } = process.env;

@@ -112,11 +112,11 @@ const homologation: ConnectionOptions = {
 };
 
 const database = {
+  homologation,
   development,
   production,
   staging,
   test,
-  homologation,
 };
 
 export default database[environment || 'development'];

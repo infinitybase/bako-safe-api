@@ -51,6 +51,7 @@ export class PredicateController {
     bindMethods(this);
   }
 
+  // force deploy
   async create({
     body: payload,
     user,
@@ -71,7 +72,7 @@ export class PredicateController {
     const notifyContent = {
       vaultId: predicate.id,
       vaultName: predicate.name,
-      workspaceId: predicate.workspace.id,
+      workspaceId: workspace.id,
     };
     for await (const member of notifyDestination) {
       await this.notificationService.create({
