@@ -54,7 +54,10 @@ const calculateBalanceUSD = async (
     balanceUSD += parseFloat(formattedAmount) * priceUSD;
   });
 
-  return balanceUSD.toFixed(2);
+  return balanceUSD.toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 };
 
 const subCoins = (
