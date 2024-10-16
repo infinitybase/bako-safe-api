@@ -9,7 +9,10 @@ import { NotificationService } from '../notification/services';
 
 import { PredicateController } from './controller';
 import { PredicateService } from './services';
-import { validateAddPredicatePayload } from './validations';
+import {
+  validateAddPredicatePayload,
+  validatePredicateIdParams,
+} from './validations';
 
 const permissionMiddlewareById = predicatePermissionMiddleware({
   predicateSelector: req => ({
@@ -42,10 +45,16 @@ router.use(authMiddleware);
 
 router.post('/', validateAddPredicatePayload, handleResponse(create));
 router.get('/', handleResponse(list));
-router.get('/:predicateId', permissionMiddlewareById, handleResponse(findById));
+router.get(
+  '/:predicateId',
+  validatePredicateIdParams,
+  permissionMiddlewareById,
+  handleResponse(findById),
+);
 router.get('/by-name/:name', handleResponse(findByName));
 router.get(
   '/reserved-coins/:predicateId',
+  validatePredicateIdParams,
   permissionMiddlewareById,
   handleResponse(hasReservedCoins),
 );
