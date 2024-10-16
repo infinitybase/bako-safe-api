@@ -84,7 +84,7 @@ export class AddressBookController {
     }
   }
 
-  async update({ body, params, user }: IUpdateAddressBookRequest) {
+  async update({ body, params, user, network }: IUpdateAddressBookRequest) {
     try {
       const duplicatedNickname = await this.addressBookService
         .filter({
@@ -119,7 +119,7 @@ export class AddressBookController {
       if (!savedUser) {
         savedUser = await this.userService.create({
           address: body.address,
-          provider: user.provider,
+          provider: network.url,
           avatar: IconUtils.user(),
           type: TypeUser.FUEL,
           name: Address.fromRandom().toB256(),
