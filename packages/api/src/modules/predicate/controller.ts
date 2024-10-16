@@ -174,11 +174,11 @@ export class PredicateController {
       const assets = allAssets.filter(({ amount, assetId }) => {
         const hasFuelMapped = assetsMapById[assetId];
         const isOneUnit = amount.eq(1);
-        const is = hasFuelMapped && !isOneUnit;
+        const is = !hasFuelMapped && isOneUnit;
 
         if (is) nfts.push({ amount, assetId });
 
-        return is;
+        return !is;
       });
 
       return successful(
