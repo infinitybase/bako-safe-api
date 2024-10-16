@@ -131,7 +131,7 @@ export class PredicateController {
       const response = await Predicate.createQueryBuilder('p')
         .leftJoin('p.workspace', 'w')
         .addSelect(['w.id', 'w.name'])
-        .where('p.name = :name', { name })
+        .where('LOWER(p.name) = LOWER(:name)', { name: name })
         .andWhere('w.id = :workspace', { workspace: workspace.id })
         .getOne();
 
