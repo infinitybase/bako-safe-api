@@ -34,27 +34,27 @@ const calculateBalanceUSD = async (
   balances: CoinQuantity[],
   chainId: number = Number(FUEL_PROVIDER_CHAIN_ID),
 ): Promise<string> => {
-  let balanceUSD = bn(0);
+  let balanceUSD = 0;
   const { fuelUnitAssets } = await getAssetsMaps();
 
   const quotes = await App.getInstance()._quoteCache.getActiveQuotes();
 
-  for (const balance of balances) {
+  balances?.forEach(balance => {
     let priceUSD = 0;
+
+    const units = fuelUnitAssets(chainId, balance.assetId);
+    const formattedAmount = balance.amount.format({
+      units,
+    });
 
     if (quotes[balance.assetId]) {
       priceUSD = quotes[balance.assetId];
     }
 
-    const units = fuelUnitAssets(chainId, balance.assetId);
-    const decimals = bn(10).pow(units);
-    const amount = bn(balance.amount).div(decimals);
+    balanceUSD += parseFloat(formattedAmount) * priceUSD;
+  });
 
-    const valueInUSD = amount.mul(priceUSD);
-    balanceUSD = balanceUSD.add(valueInUSD);
-  }
-
-  return balanceUSD.toNumber().toLocaleString('en-US', {
+  return balanceUSD.toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
