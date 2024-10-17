@@ -31,6 +31,15 @@ export const formatTransactionsResponse = (
   }
 };
 
+export const generateDepositName = () => {
+  let depositName = 'Deposit #';
+  for (let i = 0; i < 5; i++) {
+    const randomInt = Math.floor(Math.random() * 10);
+    depositName += randomInt.toString();
+  }
+  return depositName;
+};
+
 export const formatFuelTransaction = async (
   tx: TransactionResult,
   predicate: Predicate,
@@ -53,7 +62,7 @@ export const formatFuelTransaction = async (
 
   const formattedTransaction = {
     id: tx.id,
-    name: `DEPOSIT_${tx.id}`, // TODO: change this
+    name: generateDepositName(),
     hash: tx.id.slice(2),
     sendTime: tx.date,
     createdAt: tx.date,
