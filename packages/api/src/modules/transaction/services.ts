@@ -546,6 +546,7 @@ export class TransactionService implements ITransactionService {
 
       return await this.update(id, _api_transaction);
     } catch (e) {
+      console.log('Error on sendToChain', e);
       const _api_transaction: IUpdateTransactionPayload = {
         status: TransactionStatus.FAILED,
         sendTime: new Date(),
