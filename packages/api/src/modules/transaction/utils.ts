@@ -62,7 +62,7 @@ export const formatFuelTransaction = async (
 
   const formattedTransaction = {
     id: tx.id,
-    name: generateDepositName(),
+    name: 'Deposit',
     hash: tx.id.slice(2),
     sendTime: tx.date,
     createdAt: tx.date,
