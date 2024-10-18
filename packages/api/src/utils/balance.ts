@@ -43,9 +43,11 @@ const calculateBalanceUSD = async (
     let priceUSD = 0;
 
     const units = fuelUnitAssets(chainId, balance.assetId);
-    const formattedAmount = balance.amount.format({
-      units,
-    });
+    const formattedAmount = balance.amount
+      .format({
+        units,
+      })
+      .replace(/,/g, '');
 
     if (quotes[balance.assetId]) {
       priceUSD = quotes[balance.assetId];

@@ -3,7 +3,7 @@ import { Asset, Vault } from 'bakosafe';
 import cron from 'node-cron';
 import { getAssetsMaps } from '../assets';
 import App from '@src/server/app';
-import { Provider } from 'fuels';
+import { FuelProvider } from '../FuelProvider';
 const { FUEL_PROVIDER } = process.env;
 
 const VALID_PROVIDERS = [FUEL_PROVIDER];
@@ -43,7 +43,7 @@ const TVLCronJob = cron.schedule('0 0 * * *', async () => {
         // };
         // todo: get by session or run a map to get for each valid networks
 
-        const provider = await Provider.create(FUEL_PROVIDER);
+        const provider = await FuelProvider.create(FUEL_PROVIDER);
         const conf = JSON.parse(predicate.configurable);
 
         // Instancia cada vault

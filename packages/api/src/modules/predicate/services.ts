@@ -15,10 +15,11 @@ import {
   IPredicateService,
 } from './types';
 import { IPredicateOrdination, setOrdination } from './ordination';
-import { Network, Provider, ZeroBytes32 } from 'fuels';
+import { Network, ZeroBytes32 } from 'fuels';
 import { UserService } from '../user/service';
 import { IconUtils } from '@src/utils/icons';
 import { PredicateVersionService } from '../predicateVersion/services';
+import { FuelProvider } from '@src/utils';
 
 export class PredicateService implements IPredicateService {
   private _ordination: IPredicateOrdination = {
@@ -113,12 +114,8 @@ export class PredicateService implements IPredicateService {
     try {
       return await Predicate.createQueryBuilder('p')
         .where({ id })
-        .leftJoinAndSelect('p.members', 'members')
-        .leftJoinAndSelect('p.owner', 'owner')
-        .leftJoin('p.version', 'version')
-        .leftJoin('p.workspace', 'workspace')
-        .leftJoin('workspace.addressBook', 'addressBook')
-        .leftJoin('addressBook.user', 'adb_workspace')
+        .leftJoin('p.members', 'members')
+        .leftJoin('p.owner', 'owner')
         .select([
           ...this.predicateFieldsSelection,
           'p.configurable',
@@ -127,16 +124,6 @@ export class PredicateService implements IPredicateService {
           'members.address',
           'owner.id',
           'owner.address',
-          'version.id',
-          'version.abi',
-          'version.bytes',
-          'version.code',
-          'workspace.id',
-          'workspace.name',
-          'addressBook.nickname',
-          'addressBook.id',
-          'addressBook.user_id',
-          'adb_workspace.id',
         ])
         .getOne();
     } catch (e) {
@@ -357,7 +344,7 @@ export class PredicateService implements IPredicateService {
 
   async instancePredicate(configurable: string, provider: string): Promise<Vault> {
     const conf = JSON.parse(configurable);
-    const _provider = await Provider.create(provider);
+    const _provider = await FuelProvider.create(provider);
     return new Vault(_provider, conf);
   }
 }

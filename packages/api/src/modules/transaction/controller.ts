@@ -244,7 +244,7 @@ export class TransactionController {
       if (isUuid) {
         result = await this.transactionService.findById(id);
       } else {
-        const predicate = await this.predicateService.findById(predicateId);
+        // const predicate = await this.predicateService.findById(predicateId);
         result = await this.transactionService.findById(id);
       }
 

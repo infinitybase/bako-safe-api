@@ -18,3 +18,9 @@ export const validateAddPredicatePayload = validator.body(
     versionCode: Joi.string().optional(),
   }),
 );
+
+export const validatePredicateIdParams = validator.params(
+  Joi.object({
+    predicateId: Joi.string().uuid().required(),
+  }),
+);

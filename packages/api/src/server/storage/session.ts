@@ -3,8 +3,7 @@ import UserToken from '@src/models/UserToken';
 import { Workspace } from '@src/models/Workspace';
 import { AuthService } from '@src/modules/auth/services';
 import { ISignInResponse } from '@src/modules/auth/types';
-import RedisReadClient from '@src/utils/redis/RedisReadClient';
-import RedisWriteClient from '@src/utils/redis/RedisWriteClient';
+import { RedisReadClient, RedisWriteClient } from '@src/utils';
 import { isPast } from 'date-fns';
 import * as redis from 'redis';
 

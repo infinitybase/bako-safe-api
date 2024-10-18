@@ -30,6 +30,7 @@ import {
 } from './types';
 import { formatFuelTransaction, formatTransactionsResponse } from './utils';
 import { TransactionPagination, TransactionPaginationParams } from './pagination';
+import { FuelProvider } from '@src/utils';
 
 export class TransactionService implements ITransactionService {
   private _ordination: IOrdination<Transaction> = {
@@ -518,7 +519,7 @@ export class TransactionService implements ITransactionService {
       return await this.findById(id);
     }
 
-    const provider = await Provider.create(transaction.network.url);
+    const provider = await FuelProvider.create(transaction.network.url);
     const vault = new Vault(provider, JSON.parse(predicate.configurable));
 
     const tx = transactionRequestify({
@@ -545,6 +546,7 @@ export class TransactionService implements ITransactionService {
 
       return await this.update(id, _api_transaction);
     } catch (e) {
+      const error = 'toObject' in e ? e.toObject() : e;
       const _api_transaction: IUpdateTransactionPayload = {
         status: TransactionStatus.FAILED,
         sendTime: new Date(),
@@ -553,6 +555,7 @@ export class TransactionService implements ITransactionService {
           ...resume,
           gasUsed: '0.0',
           status: TransactionStatus.FAILED,
+          error,
         },
       };
       return await this.update(id, _api_transaction);
@@ -568,7 +571,7 @@ export class TransactionService implements ITransactionService {
 
       for await (const predicate of predicates) {
         const address = Address.fromString(predicate.predicateAddress).toB256();
-        const provider = await Provider.create(providerUrl);
+        const provider = await FuelProvider.create(providerUrl);
 
         // TODO: change this to use pagination and order DESC
         const { transactions } = await getTransactionsSummaries({
@@ -610,7 +613,7 @@ export class TransactionService implements ITransactionService {
     providerUrl: string,
   ): Promise<ITransactionResponse> {
     try {
-      const provider = await Provider.create(providerUrl);
+      const provider = await FuelProvider.create(providerUrl);
 
       const tx = await getTransactionSummary({
         id,

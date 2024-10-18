@@ -33,8 +33,8 @@ import {
 } from './types';
 import { Not } from 'typeorm';
 import App from '@src/server/app';
-import { Provider } from 'fuels';
 import { IChangenetworkRequest } from '../auth/types';
+import { FuelProvider } from '@src/utils/FuelProvider';
 
 export class UserController {
   private userService: IUserService;
@@ -226,7 +226,7 @@ export class UserController {
         });
       }
 
-      const _provider = await Provider.create(
+      const _provider = await FuelProvider.create(
         provider ?? process.env.FUEL_PROVIDER,
       );
 
