@@ -79,7 +79,7 @@ const production: ConnectionOptions = {
   migrationsRun: true,
 };
 
-const staging: ConnectionOptions = {
+const homologation: ConnectionOptions = {
   type: 'postgres',
   host: DATABASE_HOST,
   port: Number(DATABASE_PORT),
@@ -95,7 +95,7 @@ const staging: ConnectionOptions = {
   migrationsRun: true,
 };
 
-const homologation: ConnectionOptions = {
+const staging: ConnectionOptions = {
   type: 'postgres',
   host: DATABASE_HOST,
   port: Number(DATABASE_PORT),
