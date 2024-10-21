@@ -83,7 +83,7 @@ export class AddressBookService implements IAddressBookService {
       });
 
     this._filter.nickname &&
-      queryBuilder.andWhere('ab.nickname = :nickname', {
+      queryBuilder.andWhere('LOWER(ab.nickname) = LOWER(:nickname)', {
         nickname: `${this._filter.nickname}`,
       });
 
@@ -157,9 +157,17 @@ export class AddressBookService implements IAddressBookService {
   }
 
   async findById(id: string): Promise<AddressBook> {
-    return AddressBook.findOne({
-      where: { id },
-    })
+    const queryBuilder = AddressBook.createQueryBuilder('ab')
+      .select(['ab.id', 'ab.nickname'])
+      .innerJoin('ab.user', 'user')
+      .innerJoin('ab.owner', 'owner')
+      .addSelect(['user.id', 'user.address'])
+      .where('ab.id = :id', {
+        id,
+      });
+
+    return queryBuilder
+      .getOne()
       .then(contact => {
         if (!contact) {
           throw new NotFound({

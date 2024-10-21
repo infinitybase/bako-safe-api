@@ -84,33 +84,56 @@ export class AddressBookController {
     }
   }
 
-  async update({ body, params, user, network }: IUpdateAddressBookRequest) {
+  async update({ body, params, network, workspace }: IUpdateAddressBookRequest) {
+    let hasDuplicateNickname = false;
+    let hasDuplicateAddress = false;
+
     try {
-      const duplicatedNickname = await this.addressBookService
-        .filter({
-          owner: [user.id],
-          nickname: body.nickname,
-        })
-        .list();
+      const originalContact = await this.addressBookService.findById(params.id);
 
-      const duplicatedAddress = await this.addressBookService
-        .filter({
-          owner: [user.id],
-          contactAddress: body.address,
-        })
-        .list();
+      const isNicknameChanged =
+        body.nickname && body.nickname !== originalContact.nickname;
 
-      const hasDuplicate =
-        ((duplicatedNickname as AddressBook[]).length &&
-          duplicatedNickname[0].id !== params.id) ||
-        ((duplicatedAddress as AddressBook[]).length &&
-          duplicatedAddress[0].id !== params.id);
+      const isAddressChanged =
+        body.address && body.address !== originalContact.user.address;
 
-      if (hasDuplicate) {
+      if (isNicknameChanged) {
+        const duplicatedNickname = await this.addressBookService
+          .filter({
+            owner: [workspace.id],
+            nickname: body.nickname,
+          })
+          .list();
+
+        const duplicatedNicknameFormat = Array.isArray(duplicatedNickname)
+          ? duplicatedNickname
+          : [duplicatedNickname];
+
+        hasDuplicateNickname =
+          duplicatedNicknameFormat.length && duplicatedNickname[0].id !== params.id;
+      }
+
+      if (isAddressChanged) {
+        const duplicatedAddress = await this.addressBookService
+          .filter({
+            owner: [workspace.id],
+            contactAddress: body.address,
+          })
+          .list();
+
+        const duplicatedAddressFormat = Array.isArray(duplicatedAddress)
+          ? duplicatedAddress
+          : [duplicatedAddress];
+
+        hasDuplicateAddress =
+          duplicatedAddressFormat.length && duplicatedAddress[0].id !== params.id;
+      }
+
+      if (hasDuplicateNickname || hasDuplicateAddress) {
         throw new Internal({
           type: ErrorTypes.Internal,
           title: 'Error on contact update',
-          detail: `Unavailable address or nickname`,
+          detail: `Duplicated ${hasDuplicateNickname ? 'nickname' : 'address'}`,
         });
       }
 

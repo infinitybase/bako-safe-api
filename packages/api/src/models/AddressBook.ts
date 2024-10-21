@@ -11,7 +11,7 @@ export enum AddressBookType {
 
 @Entity('address_book')
 class AddressBook extends Base {
-  @Column()
+  @Column({ unique: true })
   nickname: string;
 
   @JoinColumn({ name: 'owner_id' })
