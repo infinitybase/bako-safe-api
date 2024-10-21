@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import crypto from 'crypto';
 
 import { PermissionRoles } from '@src/models/Workspace';
 import { validatePermissionGeneral } from '@src/utils/permissionValidate';
@@ -8,6 +9,13 @@ import { Unauthorized, UnauthorizedErrorTitles } from '@utils/error/Unauthorized
 
 import { IAuthRequest } from './types';
 import { AuthStrategyFactory } from './methods';
+
+const {
+  AUTH_POINTS_HASH,
+  POINTS_UI_URL,
+  AUTH_ENCRYPT_KEY,
+  AUTH_ENCRYPT_IV,
+} = process.env;
 
 async function authMiddleware(
   req: IAuthRequest,
@@ -79,4 +87,63 @@ function authPermissionMiddleware(permission?: PermissionRoles[]) {
   };
 }
 
-export { authMiddleware, authPermissionMiddleware };
+function authPointsMiddleware(
+  req: IAuthRequest,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const { authorization, origin } = req.headers;
+
+    const blockedOrigin = origin !== POINTS_UI_URL;
+
+    console.debug('~ points auth middleware', {
+      authorization,
+      origin,
+      blockedOrigin,
+    });
+
+    if (!authorization || blockedOrigin) {
+      throw new Unauthorized({
+        type: ErrorTypes.Unauthorized,
+        title: UnauthorizedErrorTitles.MISSING_CREDENTIALS,
+        detail: 'Some required credentials are missing',
+      });
+    }
+
+    let decrypted: string;
+
+    try {
+      // Decrypt the authorization header
+      const decipher = crypto.createDecipheriv(
+        'aes-256-cbc',
+        Buffer.from(AUTH_ENCRYPT_KEY, 'hex'),
+        Buffer.from(AUTH_ENCRYPT_IV, 'hex'),
+      );
+
+      decrypted = decipher.update(authorization, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+    } catch (error) {
+      throw new Unauthorized({
+        type: ErrorTypes.Unauthorized,
+        title: UnauthorizedErrorTitles.INVALID_CREDENTIALS,
+        detail: 'Invalid credentials provided',
+      });
+    }
+
+    // Compare the decrypted authorization with the hashed AUTH_POINTS
+    if (decrypted !== AUTH_POINTS_HASH) {
+      throw new Unauthorized({
+        type: ErrorTypes.Unauthorized,
+        title: UnauthorizedErrorTitles.INVALID_CREDENTIALS,
+        detail: 'Invalid credentials provided',
+      });
+    }
+
+    return next();
+  } catch (e) {
+    return next(e);
+  }
+}
+
+export { authMiddleware, authPermissionMiddleware, authPointsMiddleware };
