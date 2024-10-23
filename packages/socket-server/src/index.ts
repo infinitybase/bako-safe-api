@@ -1,9 +1,9 @@
 import http from 'http'
 import express from 'express'
 import socketIo from 'socket.io'
-//import axios from 'axios' [CONNECTOR SIGNATURE]
+import axios from 'axios'
 
-import { txCreate, txRequest } from '@modules/transactions'
+import { txCreate, txRequest, txSign } from '@modules/transactions'
 import { DatabaseClass } from '@utils/database'
 import { SocketEvents } from './types'
 
@@ -18,10 +18,9 @@ export const io = new socketIo.Server(server, {
 		origin: '*',
 	},
 })
-//[CONNECTOR SIGNATURE]
-// export const api = axios.create({
-// 	baseURL: API_URL,
-// })
+export const api = axios.create({
+	baseURL: API_URL,
+})
 
 // Health Check
 app.get('/health', ({ res }) => res.status(200).send({ status: 'ok', message: `Health check ${SOCKET_NAME} passed` }))
@@ -45,13 +44,22 @@ io.on(SocketEvents.CONNECT, async socket => {
 			- usa a sdk da bako safe para instanciar o vault connectado ao dapp
 			- cria a tx com a sdk da bako safe, usando o code gerado
 			- atualiza o sumary da tx
-			- cria uma invalidacao para o code gerado
-			- emite uma mensagem para o [CONNECTOR] com o resultado da tx [TX_EVENT_CONFIRMED] ou [TX_EVENT_FAILED]
+			- invalida credencial temporária (code) utilizada para criar a tx caso usuário não queira assinar a tx
+			- emite uma mensagem para a [UI] com o resultado da tx
 			- todo: nao muito importante, mas é necessário tipar operations
 	*/
 	socket.on(SocketEvents.TX_CREATE, data => txCreate({ data, socket, database }))
 
-	//socket.on(SocketEvents.TX_SIGN, data => txSign({ data, socket, database })) // [CONNECTOR SIGNATURE]
+	/* 
+		[UI] emite esse evento quando o usuário assina a tx 
+			- verifica se o evento veio da origem correta -> BAKO-UI [http://localhost:5174, https://safe.bako.global]
+			- recupera as infos do dapp que está tentando criar a tx pelo sessionId
+			- usa uma credencial temporária (code) que é utilizada para criar e assinar a tx com o pacote bakosafe
+			- consome endpoint /transaction/sign/:hash para assinar a tx
+			- invalida credencial temporária (code) que foi utilizada para criar e assinar a tx
+			- emite uma mensagem para a [UI] com o resultado da assiantura da tx
+		*/
+	socket.on(SocketEvents.TX_SIGN, data => txSign({ data, socket, database }))
 
 	/*
 		[CONNECTOR] emite esse evento quando o usuário quer criar uma transação

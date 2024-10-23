@@ -4,7 +4,7 @@ import crypto from 'crypto'
 import { Provider, TransactionRequestLike } from 'fuels'
 import { Socket } from 'socket.io'
 import { DatabaseClass } from '@utils/database'
-import { io } from '..'
+import { io, api } from '..'
 
 export interface IEventTX_REQUEST {
 	_transaction: TransactionRequestLike
@@ -17,6 +17,16 @@ export interface IEventTX_CREATE {
 	sign?: boolean
 }
 
+export interface IEventTX_SIGN {
+	hash: string
+	signedMessage: string
+}
+
+enum IEventTX_STATUS {
+	SUCCESS = 'SUCCESS',
+	ERROR = 'ERROR',
+}
+
 interface IEvent<D> {
 	data: D
 	socket: Socket
@@ -25,94 +35,96 @@ interface IEvent<D> {
 
 const { UI_URL, API_URL } = process.env
 
-// [CONNECTOR SIGNATURE]
-// export const txSign = async ({ data, socket, database }: IEvent<IEventTX_SIGN>) => {
-// 	const { sessionId, username, request_id } = socket.handshake.auth
-// 	const { origin, host } = socket.handshake.headers
+export const txSign = async ({ data, socket, database }: IEvent<IEventTX_SIGN>) => {
+	const { sessionId, username, request_id } = socket.handshake.auth
+	const { origin, host } = socket.handshake.headers
 
-// 	const { id, hash, signedMessage } = data
-// 	const room = `${sessionId}:${SocketUsernames.CONNECTOR}:${request_id}`
+	const { hash, signedMessage } = data
+	const room = `${sessionId}:${SocketUsernames.UI}:${request_id}`
 
-// 	const { auth } = socket.handshake
+	const { auth } = socket.handshake
 
-// 	try {
-// 		if (origin != UI_URL) return
+	try {
+		if (origin != UI_URL) return
 
-// 		// ------------------------------ [DAPP] ------------------------------
-// 		const dapp = await database.query(
-// 			`
-// 				SELECT d.*, u.id AS user_id, u.address AS user_address, c.id AS current_vault_id, c.provider AS current_vault_provider
-// 				FROM dapp d
-// 				JOIN "users" u ON d.user = u.id
-// 				JOIN "predicates" c ON d.current = c.id
-// 				WHERE d.session_id = $1
-// 			`,
-// 			[auth.sessionId],
-// 		)
+		// ------------------------------ [DAPP] ------------------------------
+		const dapp = await database.query(
+			`
+				SELECT d.*, u.id AS user_id, u.address AS user_address
+				FROM dapp d
+				JOIN "users" u ON d.user = u.id
+				WHERE d.session_id = $1
+			`,
+			[auth.sessionId],
+		)
 
-// 		if (!dapp) return
+		if (!dapp) return
 
-// 		// ------------------------------ [CODE] ------------------------------
-// 		const code = await database.query(
-// 			`
-// 				SELECT *
-// 				FROM recover_codes
-// 				WHERE origin = $1
-// 				AND owner = $2
-// 				AND used = false
-// 				AND valid_at > NOW()
-// 				ORDER BY valid_at DESC
-// 				LIMIT 1;
-// 			`,
-// 			[host, dapp.user_id],
-// 		)
+		// ------------------------------ [CODE] ------------------------------
+		const code = await database.query(
+			`
+				SELECT code
+				FROM recover_codes
+				WHERE origin = $1
+				AND owner = $2
+				AND used = false
+				AND valid_at > NOW()
+				ORDER BY valid_at DESC
+				LIMIT 1;
+			`,
+			[host, dapp.user_id],
+		)
 
-// 		if (!code) return
+		if (!code.code) return
 
-// 		// ---------------------[VALIDATE SIGNATURE] -------------------------
-// 		await api.put(
-// 			`/transaction/signer/${id}`,
-// 			{
-// 				account: dapp.user_address,
-// 				signer: signedMessage,
-// 				confirm: true,
-// 			},
-// 			{
-// 				headers: {
-// 					authorization: code.code,
-// 					signerAddress: dapp.user_address,
-// 				},
-// 			},
-// 		)
+		// ---------------------[VALIDATE SIGNATURE] -------------------------
+		await api.put(
+			`/transaction/sign/${hash}`,
+			{
+				signature: signedMessage,
+				approve: true,
+			},
+			{
+				headers: {
+					authorization: code.code,
+					signeraddress: dapp.user_address,
+				},
+			},
+		)
 
-// 		// ---------------------[EXECUTE TRANSACTION] -------------------------
-// 		// const vault = await Vault.create({
-// 		// 	id: dapp.current_vault_id,
-// 		// 	token: code.code,
-// 		// 	address: dapp.user_address,
-// 		// })
+		// ------------------------------ [INVALIDATION] ------------------------------
+		await database.query(
+			`
+					DELETE FROM recover_codes
+					WHERE id = $1
+				`,
+			[code.id],
+		)
 
-// 		// const transfer = await vault.BakoSafeGetTransaction(id)
-
-// 		// await transfer.wait()
-
-// 		// ------------------------------ [EMIT] ------------------------------
-// 		socket.to(room).emit(SocketEvents.DEFAULT, {
-// 			username,
-// 			room: sessionId,
-// 			request_id,
-// 			to: SocketUsernames.CONNECTOR,
-// 			type: SocketEvents.TX_CONFIRM,
-// 			data: {
-// 				id: hash,
-// 				status: '[SUCCESS]',
-// 			},
-// 		})
-// 	} catch (e) {
-// 		// TODO: adicionar tratamento de error
-// 		console.log(e)
-// 	}
-// }
+		// ------------------------------ [EMIT] ------------------------------
+		io.to(room).emit(SocketEvents.DEFAULT, {
+			username,
+			room: sessionId,
+			request_id,
+			to: SocketUsernames.UI,
+			type: SocketEvents.TX_SIGN,
+			data: {
+				status: IEventTX_STATUS.SUCCESS,
+			},
+		})
+	} catch (e) {
+		io.to(room).emit(SocketEvents.DEFAULT, {
+			username,
+			room: sessionId,
+			request_id,
+			to: SocketUsernames.UI,
+			type: SocketEvents.TX_SIGN,
+			data: {
+				status: IEventTX_STATUS.ERROR,
+			},
+		})
+	}
+}
 
 // [MOSTRAR TX]
 export const txCreate = async ({ data, socket, database }: IEvent<IEventTX_CREATE>) => {
@@ -199,13 +211,15 @@ export const txCreate = async ({ data, socket, database }: IEvent<IEventTX_CREAT
 		// ------------------------------ [SUMMARY] ------------------------------
 
 		// ------------------------------ [INVALIDATION] ------------------------------
-		await database.query(
-			`
-				DELETE FROM recover_codes
-				WHERE id = $1
-			`,
-			[code.id],
-		)
+		if (!sign) {
+			await database.query(
+				`
+					DELETE FROM recover_codes
+					WHERE id = $1
+				`,
+				[code.id],
+			)
+		}
 		// ------------------------------ [INVALIDATION] ------------------------------
 
 		// ------------------------------ [EMIT] ------------------------------
@@ -217,7 +231,7 @@ export const txCreate = async ({ data, socket, database }: IEvent<IEventTX_CREAT
 			type: SocketEvents.TX_CREATE,
 			data: {
 				hash: _tx.hashTxId,
-				status: '[SUCCESS]',
+				status: IEventTX_STATUS.SUCCESS,
 				sign,
 			},
 		})
@@ -230,7 +244,7 @@ export const txCreate = async ({ data, socket, database }: IEvent<IEventTX_CREAT
 			to: SocketUsernames.UI,
 			type: SocketEvents.TX_CREATE,
 			data: {
-				status: '[ERROR]',
+				status: IEventTX_STATUS.ERROR,
 			},
 		})
 	}
