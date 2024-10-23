@@ -4,24 +4,18 @@ import crypto from 'crypto'
 import { Provider, TransactionRequestLike } from 'fuels'
 import { Socket } from 'socket.io'
 import { DatabaseClass } from '@utils/database'
+import { io } from '..'
 
 export interface IEventTX_REQUEST {
 	_transaction: TransactionRequestLike
 	_address: string
 }
 
-export interface IEventTX_CONFIRM {
+export interface IEventTX_CREATE {
 	tx: TransactionRequestLike
 	operations: any
-	//sign?: boolean [CONNECTOR SIGNATURE]
+	sign?: boolean
 }
-
-// [CONNECTOR SIGNATURE]
-// export interface IEventTX_SIGN {
-// 	id: string
-// 	hash: string
-// 	signedMessage: string
-// }
 
 interface IEvent<D> {
 	data: D
@@ -121,20 +115,20 @@ const { UI_URL, API_URL } = process.env
 // }
 
 // [MOSTRAR TX]
-export const txConfirm = async ({ data, socket, database }: IEvent<IEventTX_CONFIRM>) => {
+export const txCreate = async ({ data, socket, database }: IEvent<IEventTX_CREATE>) => {
 	const { sessionId, username, request_id } = socket.handshake.auth
 	const { origin, host } = socket.handshake.headers
 
-	const { tx, operations } = data
+	const { tx, operations, sign } = data
 
-	const room = `${sessionId}:${SocketUsernames.CONNECTOR}:${request_id}`
+	const room = `${sessionId}:${SocketUsernames.UI}:${request_id}`
 
 	const { auth } = socket.handshake
 
 	try {
 		// ------------------------------ [VALIDACOES] ------------------------------
 		// validar se o origin é diferente da url usada no front...adicionar um .env pra isso
-		console.log('[TX_CONFIRM]', {
+		console.log('[TX_CREATE]', {
 			origin,
 			UI_URL,
 			room,
@@ -215,32 +209,27 @@ export const txConfirm = async ({ data, socket, database }: IEvent<IEventTX_CONF
 		// ------------------------------ [INVALIDATION] ------------------------------
 
 		// ------------------------------ [EMIT] ------------------------------
-		socket.to(room).emit(SocketEvents.DEFAULT, {
+		io.to(room).emit(SocketEvents.DEFAULT, {
 			username,
 			room: sessionId,
 			request_id,
-			//to, [CONNECTOR SIGNATURE]
-			to: SocketUsernames.CONNECTOR,
-			type: SocketEvents.TX_CONFIRM,
+			to: SocketUsernames.UI,
+			type: SocketEvents.TX_CREATE,
 			data: {
-				//id: _tx.BakoSafeTransactionId, [CONNECTOR SIGNATURE]
-				//hash: _tx.hashTxId, [CONNECTOR SIGNATURE]
-				id: _tx.hashTxId,
+				hash: _tx.hashTxId,
 				status: '[SUCCESS]',
+				sign,
 			},
 		})
 		// ------------------------------ [EMIT] ------------------------------
 	} catch (e) {
-		console.log(e)
-		socket.to(room).emit(SocketEvents.DEFAULT, {
+		io.to(room).emit(SocketEvents.DEFAULT, {
 			username,
 			room: sessionId,
 			request_id,
-			//to, [CONNECTOR SIGNATURE]
-			to: SocketUsernames.CONNECTOR,
-			type: SocketEvents.TX_REQUEST,
+			to: SocketUsernames.UI,
+			type: SocketEvents.TX_CREATE,
 			data: {
-				id: undefined,
 				status: '[ERROR]',
 			},
 		})
