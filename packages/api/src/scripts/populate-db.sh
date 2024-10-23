@@ -13,25 +13,27 @@ fi
 
 echo -e "🔍 [INFO]: Initiating connection to the database...\n"
 export PGPASSWORD="$DATABASE_PASSWORD"
-psql -U "$DATABASE_USERNAME" -d "$DATABASE_NAME" -h "$DATABASE_HOST" -p "$DATABASE_PORT" -c "SET session_replication_role = 'replica';" >/dev/null 2>&1
+
 
 
 # Execute each .sql file in the directory
 for file in "$SQL_DIR"/*.sql; do
   if [ -f "$file" ]; then
     echo "$file..."
-    psql -U "$DATABASE_USERNAME" -d "$DATABASE_NAME" -h "$DATABASE_HOST" -p "$DATABASE_PORT" -f "$file" >/dev/null 2>&1
+    psql -U "$DATABASE_USERNAME" -d "$DATABASE_NAME" -h "$DATABASE_HOST" -p "$DATABASE_PORT" >/dev/null 2>&1<<EOF
+-- Set session replication role to 'replica'
+SET session_replication_role = 'replica';
+
+-- Execute the SQL file
+\i $file
+
+-- Reset session replication role to 'origin'
+SET session_replication_role = 'origin';
+EOF
   else
     echo "❌ [ERROR]: No .sql files found in $SQL_DIR"
     exit 1
   fi
 done
-
-psql -U "$DATABASE_USERNAME" -d "$DATABASE_NAME" -h "$DATABASE_HOST" -p "$DATABASE_PORT" -c "COMMIT;" >/dev/null 2>&1
-psql -U "$DATABASE_USERNAME" -d "$DATABASE_NAME" -h "$DATABASE_HOST" -p "$DATABASE_PORT" -c "SET session_replication_role = 'origin';" >/dev/null 2>&1
-
-
-
-psql -U "$DATABASE_USERNAME" -d "$DATABASE_NAME" -h "$DATABASE_HOST" -p "$DATABASE_PORT" -c "ANALYZE;" >/dev/null 2>&1
 
 echo -e "\n\n✅ [DONE]: SQL execution successfully."
