@@ -102,7 +102,6 @@ export class TransactionService implements ITransactionService {
         'predicate',
         'predicate.members',
         'predicate.workspace',
-        'predicate.version',
         'createdBy',
       ],
     })
@@ -133,7 +132,6 @@ export class TransactionService implements ITransactionService {
         'predicate',
         'predicate.members',
         'predicate.workspace',
-        'predicate.version',
         'createdBy',
       ],
     })
@@ -520,7 +518,12 @@ export class TransactionService implements ITransactionService {
     }
 
     const provider = await FuelProvider.create(transaction.network.url);
-    const vault = new Vault(provider, JSON.parse(predicate.configurable));
+
+    const vault = new Vault(
+      provider,
+      JSON.parse(predicate.configurable),
+      predicate.version,
+    );
 
     const tx = transactionRequestify({
       ...txData,

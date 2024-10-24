@@ -598,7 +598,7 @@ export class TransactionController {
       await this.transactionService.sendToChain(hash.slice(2), params.network); // not wait for this
       return successful(true, Responses.Ok);
     } catch (e) {
-      console.log(e);
+      console.log('[TX_ERROR]');
       return error(e.error, e.statusCode);
     }
   }

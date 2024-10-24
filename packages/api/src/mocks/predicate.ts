@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import { IPredicatePayload } from '@src/modules/predicate/types';
 import { Vault, VaultConfigurable } from 'bakosafe';
 import { FuelProvider } from '@src/utils';
+import { PredicateService } from '@src/modules/predicate/services';
 
 const { FUEL_PROVIDER } = process.env;
 
@@ -30,7 +31,10 @@ export class PredicateMock {
       SIGNERS: signers,
     };
 
-    const vault = new Vault(_provider, _configurable);
+    const vault = await new PredicateService().instancePredicate(
+      _provider.url,
+      JSON.stringify(_configurable),
+    );
 
     const predicatePayload: IPredicateMockPayload = {
       name: crypto.randomUUID(),

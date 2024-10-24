@@ -58,7 +58,7 @@ describe('[API TOKEN]', () => {
     api.defaults.headers.common['Authorization'] = session.accessToken;
     api.defaults.headers.common['Signeraddress'] = address;
 
-    // create a new predicate
+    // create a new predicate, we dont need send a version
     const predicate = new Vault(provider, {
       SIGNATURES_COUNT: 1,
       SIGNERS: [wallet.address.toB256()],

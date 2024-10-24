@@ -10,15 +10,20 @@ if ! command -v psql &> /dev/null; then
   exit 1
 fi
 
+# Check if the execution environment is set to development
 if [ "$API_ENVIRONMENT" != "development" ]; then
   echo "❌ [ERROR]: The execution environment is not set to development"
   exit 1
 fi
 
+# Check if the host is set to localhost
+if [ "$DATABASE_HOST" != "127.0.0.1" ]; then
+  echo "❌ [ERROR]: The database host is not set to localhost"
+  exit 1
+fi
+
 echo -e "🔍 [INFO]: Initiating connection to the database...\n"
 export PGPASSWORD="$DATABASE_PASSWORD"
-
-
 
 # Execute each .sql file in the directory
 for file in "$SQL_DIR"/*.sql; do

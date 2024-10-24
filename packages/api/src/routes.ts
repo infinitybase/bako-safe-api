@@ -7,7 +7,6 @@ import auth from '@modules/auth/routes';
 import dApp from '@modules/dApps/routes';
 import notifications from '@modules/notification/routes';
 import predicates from '@modules/predicate/routes';
-import predicateVersions from '@modules/predicateVersion/routes';
 import transactions from '@modules/transaction/routes';
 import workspace from '@modules/workspace/routes';
 import apiToken, { cliAuthRoute } from '@modules/apiToken/routes';
@@ -19,16 +18,15 @@ const router = Router();
 
 router.use('/auth', auth);
 router.use('/user', users);
-router.use('/predicate/version', predicateVersions);
-router.use('/predicate', predicates);
-router.use('/transaction', transactions);
-router.use('/address-book', addressBook);
-router.use('/connections', dApp);
-router.use('/notifications', notifications);
-router.use('/workspace', workspace);
-router.use('/api-token', apiToken);
-router.use('/debug-pprof', debugPprof);
 router.use('/cli', cliAuthRoute);
+router.use('/connections', dApp);
+router.use('/api-token', apiToken);
+router.use('/workspace', workspace);
+router.use('/predicate', predicates);
+router.use('/debug-pprof', debugPprof);
+router.use('/address-book', addressBook);
+router.use('/transaction', transactions);
+router.use('/notifications', notifications);
 
 // ping route
 router.get('/ping', ({ res }) =>

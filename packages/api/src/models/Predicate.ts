@@ -13,7 +13,7 @@ import { Base } from './Base';
 import { Transaction } from './Transaction';
 import { User } from './User';
 import { Workspace } from './Workspace';
-import { PredicateVersion } from './PredicateVersion';
+import { DEFAULT_PREDICATE_VERSION } from 'bakosafe';
 
 export interface PredicateMember {
   avatar: string;
@@ -38,6 +38,12 @@ class Predicate extends Base {
   @Column({ nullable: true, default: false })
   root: boolean;
 
+  @Column({
+    name: 'version',
+    default: DEFAULT_PREDICATE_VERSION,
+  })
+  version: string;
+
   @JoinColumn({ name: 'owner_id' })
   @OneToOne(() => User)
   owner: User;
@@ -56,10 +62,6 @@ class Predicate extends Base {
     inverseJoinColumn: { name: 'user_id', referencedColumnName: 'id' },
   })
   members: User[];
-
-  @JoinColumn({ name: 'version_id' })
-  @ManyToOne(() => PredicateVersion)
-  version: PredicateVersion;
 }
 
 export { Predicate };
