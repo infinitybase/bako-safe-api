@@ -13,12 +13,15 @@ import { Base } from './Base';
 import { Transaction } from './Transaction';
 import { User } from './User';
 import { Workspace } from './Workspace';
-import { PredicateVersion } from './PredicateVersion';
 
 export interface PredicateMember {
   avatar: string;
   address: string;
 }
+
+// todo: use default by bako-sdk
+export const DEFAULT_BAKO_PREDICATE_VERSION =
+  '0x0ec304f98efc18964de98c63be50d2360572a155b16bcb0f3718c685c70a00aa';
 
 @Entity('predicates')
 class Predicate extends Base {
@@ -38,6 +41,12 @@ class Predicate extends Base {
   @Column({ nullable: true, default: false })
   root: boolean;
 
+  @Column({
+    name: 'version',
+    default: DEFAULT_BAKO_PREDICATE_VERSION,
+  })
+  version: string;
+
   @JoinColumn({ name: 'owner_id' })
   @OneToOne(() => User)
   owner: User;
@@ -56,10 +65,6 @@ class Predicate extends Base {
     inverseJoinColumn: { name: 'user_id', referencedColumnName: 'id' },
   })
   members: User[];
-
-  @JoinColumn({ name: 'version_id' })
-  @ManyToOne(() => PredicateVersion)
-  version: PredicateVersion;
 }
 
 export { Predicate };

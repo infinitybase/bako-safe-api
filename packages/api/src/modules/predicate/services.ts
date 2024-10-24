@@ -4,7 +4,13 @@ import { Brackets } from 'typeorm';
 import { NotFound } from '@src/utils/error';
 import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination';
 
-import { Predicate, TypeUser, User, Workspace } from '@models/index';
+import {
+  DEFAULT_BAKO_PREDICATE_VERSION,
+  Predicate,
+  TypeUser,
+  User,
+  Workspace,
+} from '@models/index';
 
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
@@ -18,7 +24,6 @@ import { IPredicateOrdination, setOrdination } from './ordination';
 import { Network, ZeroBytes32 } from 'fuels';
 import { UserService } from '../user/service';
 import { IconUtils } from '@src/utils/icons';
-import { PredicateVersionService } from '../predicateVersion/services';
 import { FuelProvider } from '@src/utils';
 
 export class PredicateService implements IPredicateService {
@@ -67,7 +72,6 @@ export class PredicateService implements IPredicateService {
       const members = [];
       const userService = new UserService();
       //const workspaceService = new WorkspaceService();
-      const versionService = new PredicateVersionService();
 
       // create a pending users
       const { SIGNERS } = JSON.parse(payload.configurable);
@@ -94,7 +98,7 @@ export class PredicateService implements IPredicateService {
         ...payload,
         members,
         owner,
-        version: payload.version ?? (await versionService.findCurrentVersion()),
+        version: payload.version ?? DEFAULT_BAKO_PREDICATE_VERSION,
         workspace,
       }).save();
 

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Brackets } from 'typeorm';
 
-import { User } from '@src/models';
+import { DEFAULT_BAKO_PREDICATE_VERSION, User } from '@src/models';
 import {
   PermissionRoles,
   Workspace,
@@ -25,10 +25,10 @@ import {
 } from './types';
 
 import App from '@src/server/app';
-import { Provider, Address, Network } from 'fuels';
+import { Address, Network } from 'fuels';
 import { Vault } from 'bakosafe';
 import { PredicateService } from '../predicate/services';
-import { PredicateVersionService } from '../predicateVersion/services';
+
 import { Maybe } from '@src/utils/types/maybe';
 import { FuelProvider } from '@src/utils';
 
@@ -130,7 +130,7 @@ export class UserService implements IUserService {
         };
 
         const predicate = new Vault(provider, configurable);
-        const version = await new PredicateVersionService().findCurrentVersion();
+        const version = DEFAULT_BAKO_PREDICATE_VERSION;
         const network: Network = {
           url: provider.url,
           chainId: provider.getChainId(),
