@@ -1,18 +1,23 @@
 # Bako Safe API
 
 ### Development
+
 1. Install [Docker](https://docs.docker.com/engine/install/)
 2. Install [PNPM](https://pnpm.io/installation#using-npm): `npm install -g pnpm`
 3. Install dependencies: `pnpm install`
-4. Run the chain: `cd packages/chain && pnpm chain:dev:start`
-5. Run the database: `cd packages/database && pnpm db:dev:start`
-6. Run the api in the root folder: `pnpm dev`
+4. Run the api in the root folder: `pnpm dev`
 
 ### Tests
+
 1. Install [Docker](https://docs.docker.com/engine/install/)
 2. Install [PNPM](https://pnpm.io/installation#using-npm): `npm install -g pnpm`
 3. Install dependencies: `pnpm install`
-4. Run the chain: `cd packages/chain && pnpm chain:dev:start`
-5. Run the database: `cd packages/database && pnpm db:dev:start`
-6. Run the api in the root folder: `pnpm dev`
-7. In new terminal, run the tests: `cd packages/api && pnpm test`
+4. Run the api in the root folder: `pnpm dev`
+5. In new terminal, run the tests: `cd packages/api && pnpm test`
+
+### Database utilities:
+
+#### Populate DB
+
+1. Copy your scripts to insert infos to path `packages/api/database/inserts`
+2. Run script `cd packages/api && pnpm migration:populate`
