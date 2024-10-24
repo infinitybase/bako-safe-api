@@ -10,13 +10,14 @@
     "build": "tsc --project . && tscpaths -p tsconfig.json -s ./src -o ./build",
     "copyFiles": "copyfiles --error --up 1 src/**/*.html build",
     "postbuild": "yarn run copyFiles",
-    "migration:run": "ts-node -r tsconfig-paths/register -r dotenv/config ./node_modules/typeorm/cli.js migration:run",
-    "migration:create": "chmod +x ./src/scripts/create-migration.sh && ./src/scripts/create-migration.sh",
+    "migration:run": "ts-node -r tsconfig-paths/register -r dotenv/config ./node_modules/typeorm/cli.js migration:run --dataSource src/database",
+    "migration:create": "chmod +x ./src/scripts/migration-create.sh && ./src/scripts/migration-create.sh",
     "migration:revert": "ts-node -r tsconfig-paths/register -r dotenv/config ./node_modules/typeorm/cli.js migration:revert",
-    "migration:populate": "chmod +x ./src/scripts/populate-db.sh && ./src/scripts/populate-db.sh",
     "run:prod": "make -C ./ deploy-prod env_file=.env.prod",
     "run:stg": "make -C ./ deploy-stg env_file=.env.staging",
-    "run:test": "make -C ./ deploy-test env_file=.env.test"
+    "run:test": "make -C ./ deploy-test env_file=.env.test",
+    "database:populate": "chmod +x ./src/scripts/db-populate.sh && ./src/scripts/db-populate.sh",
+    "database:clear": "chmod +x ./src/scripts/db-clear.sh && ./src/scripts/db-clear.sh"
   },
   "dependencies": {
     "@noble/curves": "1.3.0",
