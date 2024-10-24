@@ -1,11 +1,11 @@
-import { DEFAULT_BAKO_PREDICATE_VERSION } from '@src/models';
+import { DEFAULT_PREDICATE_VERSION } from 'bakosafe';
 import { MigrationInterface, QueryRunner, TableColumn } from 'typeorm';
 
 const column = new TableColumn({
   name: 'version',
   type: 'varchar',
   isNullable: false,
-  default: `'${DEFAULT_BAKO_PREDICATE_VERSION}'`,
+  default: `'${DEFAULT_PREDICATE_VERSION}'`,
 });
 
 export class AddColumnVersionOnPredicates1729778299009
