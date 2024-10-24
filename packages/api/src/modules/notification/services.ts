@@ -13,8 +13,7 @@ import {
   INotificationService,
   IUpdateNotificationPayload,
 } from './types';
-import { DeepPartial, QueryBuilder } from 'typeorm';
-import { VaultTemplate } from '@src/models/VaultTemplate';
+import { DeepPartial } from 'typeorm';
 import { TransactionService } from '../transaction/services';
 import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
 import { Network } from 'fuels';

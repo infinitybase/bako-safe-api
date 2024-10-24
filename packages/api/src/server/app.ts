@@ -5,7 +5,7 @@ import Express from 'express';
 import morgan from 'morgan';
 
 import { router } from '@src/routes';
-import { isDevMode, TVLCronJob } from '@src/utils';
+import { isDevMode } from '@src/utils';
 
 import { handleErrors } from '@middlewares/index';
 import { QuoteStorage, SessionStorage } from './storage';
@@ -26,7 +26,6 @@ class App {
     this.initRoutes();
     this.setupMonitoring();
     this.initErrorHandler();
-    this.initJobs();
 
     this.sessionCache = SessionStorage.start();
     this.quoteCache = QuoteStorage.start();
@@ -39,8 +38,6 @@ class App {
     this.app.use(Express.json());
     this.app.use(cors());
 
-    // neg -> logs em prod
-    // pos -> logs em dev
     if (!isDevMode) {
       this.app.use(morgan('dev'));
     }
@@ -56,15 +53,6 @@ class App {
 
   private setupMonitoring() {
     Monitoring.setup(this.app);
-  }
-
-  private initJobs() {
-    const isValid = (!!isDevMode && !isDevMode) ?? false;
-
-    // run only production
-    if (isValid) {
-      TVLCronJob.start();
-    }
   }
 
   get serverApp() {
