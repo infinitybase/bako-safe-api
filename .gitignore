@@ -4,6 +4,7 @@ node_modules
 
 ##DB
 postgresql/
+**/database/inserts/**
 
 ## API
 # Build
@@ -23,3 +24,4 @@ bsafe/
 
 # Logs
 .log
+.local
