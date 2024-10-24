@@ -93,13 +93,15 @@ export const txSign = async ({ data, socket, database }: IEvent<IEventTX_SIGN>) 
 		)
 
 		// ------------------------------ [INVALIDATION] ------------------------------
-		await database.query(
-			`
+		await database
+			.query(
+				`
 					DELETE FROM recover_codes
 					WHERE id = $1
 				`,
-			[code.id],
-		)
+				[code.id],
+			)
+			.catch(error => console.error(error))
 
 		// ------------------------------ [EMIT] ------------------------------
 		io.to(room).emit(SocketEvents.DEFAULT, {
@@ -212,13 +214,15 @@ export const txCreate = async ({ data, socket, database }: IEvent<IEventTX_CREAT
 
 		// ------------------------------ [INVALIDATION] ------------------------------
 		if (!sign) {
-			await database.query(
-				`
+			await database
+				.query(
+					`
 					DELETE FROM recover_codes
 					WHERE id = $1
 				`,
-				[code.id],
-			)
+					[code.id],
+				)
+				.catch(error => console.error(error))
 		}
 		// ------------------------------ [INVALIDATION] ------------------------------
 
