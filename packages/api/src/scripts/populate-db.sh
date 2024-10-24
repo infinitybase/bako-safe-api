@@ -5,6 +5,10 @@ SQL_DIR="./src/database/inserts"
 # Load environment variables from .env file
 export $(grep -v '^#' .env | xargs)
 
+if ! command -v psql &> /dev/null; then
+  echo "❌ [ERROR]: psql is not installed. Please install PostgreSQL client before running the script."
+  exit 1
+fi
 
 if [ "$API_ENVIRONMENT" != "development" ]; then
   echo "❌ [ERROR]: The execution environment is not set to development"
