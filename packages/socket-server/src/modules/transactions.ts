@@ -45,7 +45,7 @@ export const txSign = async ({ data, socket, database }: IEvent<IEventTX_SIGN>) 
 	const { auth } = socket.handshake
 
 	try {
-		if (origin != UI_URL) return
+		if (origin != UI_URL) throw new Error('Invalid origin')
 
 		// ------------------------------ [DAPP] ------------------------------
 		const dapp = await database.query(
@@ -58,7 +58,7 @@ export const txSign = async ({ data, socket, database }: IEvent<IEventTX_SIGN>) 
 			[auth.sessionId],
 		)
 
-		if (!dapp) return
+		if (!dapp) throw new Error('Dapp not found')
 
 		// ------------------------------ [CODE] ------------------------------
 		const code = await database.query(
@@ -75,7 +75,7 @@ export const txSign = async ({ data, socket, database }: IEvent<IEventTX_SIGN>) 
 			[host, dapp.user_id],
 		)
 
-		if (!code.code) return
+		if (!code.code) throw new Error('Recover code not found')
 
 		// ---------------------[VALIDATE SIGNATURE] -------------------------
 		await api.put(
@@ -149,7 +149,7 @@ export const txCreate = async ({ data, socket, database }: IEvent<IEventTX_CREAT
 			_origin: origin != UI_URL,
 		})
 
-		if (origin != UI_URL) return
+		if (origin != UI_URL) throw new Error('Invalid origin')
 
 		// ------------------------------ [DAPP] ------------------------------
 		const dapp = await database.query(
@@ -163,7 +163,7 @@ export const txCreate = async ({ data, socket, database }: IEvent<IEventTX_CREAT
 			[auth.sessionId],
 		)
 
-		if (!dapp) return
+		if (!dapp) throw new Error('Dapp not found')
 
 		// ------------------------------ [CODE] ------------------------------
 		const code = await database.query(
@@ -180,7 +180,7 @@ export const txCreate = async ({ data, socket, database }: IEvent<IEventTX_CREAT
 			[host, dapp.user_id],
 		)
 
-		if (!code) return
+		if (!code) throw new Error('Recover code not found')
 
 		// ------------------------------ [CODE] ------------------------------
 
