@@ -4,24 +4,28 @@ import crypto from 'crypto'
 import { Provider, TransactionRequestLike } from 'fuels'
 import { Socket } from 'socket.io'
 import { DatabaseClass } from '@utils/database'
+import { io, api } from '..'
 
 export interface IEventTX_REQUEST {
 	_transaction: TransactionRequestLike
 	_address: string
 }
 
-export interface IEventTX_CONFIRM {
+export interface IEventTX_CREATE {
 	tx: TransactionRequestLike
 	operations: any
-	//sign?: boolean [CONNECTOR SIGNATURE]
+	sign?: boolean
 }
 
-// [CONNECTOR SIGNATURE]
-// export interface IEventTX_SIGN {
-// 	id: string
-// 	hash: string
-// 	signedMessage: string
-// }
+export interface IEventTX_SIGN {
+	hash: string
+	signedMessage: string
+}
+
+enum IEventTX_STATUS {
+	SUCCESS = 'SUCCESS',
+	ERROR = 'ERROR',
+}
 
 interface IEvent<D> {
 	data: D
@@ -31,117 +35,121 @@ interface IEvent<D> {
 
 const { UI_URL, API_URL } = process.env
 
-// [CONNECTOR SIGNATURE]
-// export const txSign = async ({ data, socket, database }: IEvent<IEventTX_SIGN>) => {
-// 	const { sessionId, username, request_id } = socket.handshake.auth
-// 	const { origin, host } = socket.handshake.headers
-
-// 	const { id, hash, signedMessage } = data
-// 	const room = `${sessionId}:${SocketUsernames.CONNECTOR}:${request_id}`
-
-// 	const { auth } = socket.handshake
-
-// 	try {
-// 		if (origin != UI_URL) return
-
-// 		// ------------------------------ [DAPP] ------------------------------
-// 		const dapp = await database.query(
-// 			`
-// 				SELECT d.*, u.id AS user_id, u.address AS user_address, c.id AS current_vault_id, c.provider AS current_vault_provider
-// 				FROM dapp d
-// 				JOIN "users" u ON d.user = u.id
-// 				JOIN "predicates" c ON d.current = c.id
-// 				WHERE d.session_id = $1
-// 			`,
-// 			[auth.sessionId],
-// 		)
-
-// 		if (!dapp) return
-
-// 		// ------------------------------ [CODE] ------------------------------
-// 		const code = await database.query(
-// 			`
-// 				SELECT *
-// 				FROM recover_codes
-// 				WHERE origin = $1
-// 				AND owner = $2
-// 				AND used = false
-// 				AND valid_at > NOW()
-// 				ORDER BY valid_at DESC
-// 				LIMIT 1;
-// 			`,
-// 			[host, dapp.user_id],
-// 		)
-
-// 		if (!code) return
-
-// 		// ---------------------[VALIDATE SIGNATURE] -------------------------
-// 		await api.put(
-// 			`/transaction/signer/${id}`,
-// 			{
-// 				account: dapp.user_address,
-// 				signer: signedMessage,
-// 				confirm: true,
-// 			},
-// 			{
-// 				headers: {
-// 					authorization: code.code,
-// 					signerAddress: dapp.user_address,
-// 				},
-// 			},
-// 		)
-
-// 		// ---------------------[EXECUTE TRANSACTION] -------------------------
-// 		// const vault = await Vault.create({
-// 		// 	id: dapp.current_vault_id,
-// 		// 	token: code.code,
-// 		// 	address: dapp.user_address,
-// 		// })
-
-// 		// const transfer = await vault.BakoSafeGetTransaction(id)
-
-// 		// await transfer.wait()
-
-// 		// ------------------------------ [EMIT] ------------------------------
-// 		socket.to(room).emit(SocketEvents.DEFAULT, {
-// 			username,
-// 			room: sessionId,
-// 			request_id,
-// 			to: SocketUsernames.CONNECTOR,
-// 			type: SocketEvents.TX_CONFIRM,
-// 			data: {
-// 				id: hash,
-// 				status: '[SUCCESS]',
-// 			},
-// 		})
-// 	} catch (e) {
-// 		// TODO: adicionar tratamento de error
-// 		console.log(e)
-// 	}
-// }
-
-// [MOSTRAR TX]
-export const txConfirm = async ({ data, socket, database }: IEvent<IEventTX_CONFIRM>) => {
+export const txSign = async ({ data, socket, database }: IEvent<IEventTX_SIGN>) => {
 	const { sessionId, username, request_id } = socket.handshake.auth
 	const { origin, host } = socket.handshake.headers
 
-	const { tx, operations } = data
+	const { hash, signedMessage } = data
+	const room = `${sessionId}:${SocketUsernames.UI}:${request_id}`
 
-	const room = `${sessionId}:${SocketUsernames.CONNECTOR}:${request_id}`
+	const { auth } = socket.handshake
+
+	try {
+		if (origin != UI_URL) throw new Error('Invalid origin')
+
+		// ------------------------------ [DAPP] ------------------------------
+		const dapp = await database.query(
+			`
+				SELECT d.*, u.id AS user_id, u.address AS user_address
+				FROM dapp d
+				JOIN "users" u ON d.user = u.id
+				WHERE d.session_id = $1
+			`,
+			[auth.sessionId],
+		)
+
+		if (!dapp) throw new Error('Dapp not found')
+
+		// ------------------------------ [CODE] ------------------------------
+		const code = await database.query(
+			`
+				SELECT code
+				FROM recover_codes
+				WHERE origin = $1
+				AND owner = $2
+				AND used = false
+				AND valid_at > NOW()
+				ORDER BY valid_at DESC
+				LIMIT 1;
+			`,
+			[host, dapp.user_id],
+		)
+
+		if (!code.code) throw new Error('Recover code not found')
+
+		// ---------------------[VALIDATE SIGNATURE] -------------------------
+		await api.put(
+			`/transaction/sign/${hash}`,
+			{
+				signature: signedMessage,
+				approve: true,
+			},
+			{
+				headers: {
+					authorization: code.code,
+					signeraddress: dapp.user_address,
+				},
+			},
+		)
+
+		// ------------------------------ [INVALIDATION] ------------------------------
+		await database
+			.query(
+				`
+					DELETE FROM recover_codes
+					WHERE id = $1
+				`,
+				[code.id],
+			)
+			.catch(error => console.error(error))
+
+		// ------------------------------ [EMIT] ------------------------------
+		io.to(room).emit(SocketEvents.DEFAULT, {
+			username,
+			room: sessionId,
+			request_id,
+			to: SocketUsernames.UI,
+			type: SocketEvents.TX_SIGN,
+			data: {
+				status: IEventTX_STATUS.SUCCESS,
+			},
+		})
+	} catch (e) {
+		io.to(room).emit(SocketEvents.DEFAULT, {
+			username,
+			room: sessionId,
+			request_id,
+			to: SocketUsernames.UI,
+			type: SocketEvents.TX_SIGN,
+			data: {
+				status: IEventTX_STATUS.ERROR,
+			},
+		})
+	}
+}
+
+// [MOSTRAR TX]
+export const txCreate = async ({ data, socket, database }: IEvent<IEventTX_CREATE>) => {
+	const { sessionId, username, request_id } = socket.handshake.auth
+	const { origin, host } = socket.handshake.headers
+
+	const { tx, operations, sign } = data
+
+	const room = `${sessionId}:${SocketUsernames.UI}:${request_id}`
 
 	const { auth } = socket.handshake
 
 	try {
 		// ------------------------------ [VALIDACOES] ------------------------------
 		// validar se o origin é diferente da url usada no front...adicionar um .env pra isso
-		console.log('[TX_CONFIRM]', {
+		console.log('[TX_CREATE]', {
 			origin,
 			UI_URL,
 			room,
 			_origin: origin != UI_URL,
 		})
 
-		if (origin != UI_URL) return
+		if (origin != UI_URL) throw new Error('Invalid origin')
 
 		// ------------------------------ [DAPP] ------------------------------
 		const dapp = await database.query(
@@ -155,7 +163,7 @@ export const txConfirm = async ({ data, socket, database }: IEvent<IEventTX_CONF
 			[auth.sessionId],
 		)
 
-		if (!dapp) return
+		if (!dapp) throw new Error('Dapp not found')
 
 		// ------------------------------ [CODE] ------------------------------
 		const code = await database.query(
@@ -172,7 +180,7 @@ export const txConfirm = async ({ data, socket, database }: IEvent<IEventTX_CONF
 			[host, dapp.user_id],
 		)
 
-		if (!code) return
+		if (!code) throw new Error('Recover code not found')
 
 		// ------------------------------ [CODE] ------------------------------
 
@@ -205,43 +213,42 @@ export const txConfirm = async ({ data, socket, database }: IEvent<IEventTX_CONF
 		// ------------------------------ [SUMMARY] ------------------------------
 
 		// ------------------------------ [INVALIDATION] ------------------------------
-		await database.query(
-			`
-				DELETE FROM recover_codes
-				WHERE id = $1
-			`,
-			[code.id],
-		)
+		if (!sign) {
+			await database
+				.query(
+					`
+					DELETE FROM recover_codes
+					WHERE id = $1
+				`,
+					[code.id],
+				)
+				.catch(error => console.error(error))
+		}
 		// ------------------------------ [INVALIDATION] ------------------------------
 
 		// ------------------------------ [EMIT] ------------------------------
-		socket.to(room).emit(SocketEvents.DEFAULT, {
+		io.to(room).emit(SocketEvents.DEFAULT, {
 			username,
 			room: sessionId,
 			request_id,
-			//to, [CONNECTOR SIGNATURE]
-			to: SocketUsernames.CONNECTOR,
-			type: SocketEvents.TX_CONFIRM,
+			to: SocketUsernames.UI,
+			type: SocketEvents.TX_CREATE,
 			data: {
-				//id: _tx.BakoSafeTransactionId, [CONNECTOR SIGNATURE]
-				//hash: _tx.hashTxId, [CONNECTOR SIGNATURE]
-				id: _tx.hashTxId,
-				status: '[SUCCESS]',
+				hash: _tx.hashTxId,
+				status: IEventTX_STATUS.SUCCESS,
+				sign,
 			},
 		})
 		// ------------------------------ [EMIT] ------------------------------
 	} catch (e) {
-		console.log(e)
-		socket.to(room).emit(SocketEvents.DEFAULT, {
+		io.to(room).emit(SocketEvents.DEFAULT, {
 			username,
 			room: sessionId,
 			request_id,
-			//to, [CONNECTOR SIGNATURE]
-			to: SocketUsernames.CONNECTOR,
-			type: SocketEvents.TX_REQUEST,
+			to: SocketUsernames.UI,
+			type: SocketEvents.TX_CREATE,
 			data: {
-				id: undefined,
-				status: '[ERROR]',
+				status: IEventTX_STATUS.ERROR,
 			},
 		})
 	}
