@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Brackets } from 'typeorm';
 
-import { DEFAULT_BAKO_PREDICATE_VERSION, User } from '@src/models';
+import { User } from '@src/models';
 import {
   PermissionRoles,
   Workspace,
@@ -129,8 +129,12 @@ export class UserService implements IUserService {
           chainId: provider.getChainId(),
         };
 
-        const predicate = new Vault(provider, configurable);
-        const version = DEFAULT_BAKO_PREDICATE_VERSION;
+        // on creation, we dont need send the predicate version
+        const predicate = await new PredicateService().instancePredicate(
+          JSON.stringify(configurable),
+          provider.url,
+        );
+
         const network: Network = {
           url: provider.url,
           chainId: provider.getChainId(),
@@ -146,7 +150,7 @@ export class UserService implements IUserService {
             ).toB256(),
             configurable: JSON.stringify(predicate.configurable),
             owner: user,
-            version,
+            version: predicate.version,
             members: [user],
             workspace,
             root: true,

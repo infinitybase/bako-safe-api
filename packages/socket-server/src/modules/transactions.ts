@@ -275,9 +275,8 @@ export const txRequest = async ({ data, socket, database }: IEvent<IEventTX_REQU
 
 		const vault = await database.query(
 			`
-				SELECT p.*, pv.code AS version_code
+				SELECT p.*
 				FROM predicates p
-				JOIN predicate_versions pv ON p.version_id = pv.id
 				WHERE p.id = $1
 			`,
 			[dapp.current_vault_id],
@@ -307,7 +306,7 @@ export const txRequest = async ({ data, socket, database }: IEvent<IEventTX_REQU
 		)
 
 		const provider = await Provider.create(dapp.network.url)
-		const vaultInstance = new Vault(provider, JSON.parse(vault.configurable))
+		const vaultInstance = new Vault(provider, JSON.parse(vault.configurable), vault.version)
 		const { tx } = await vaultInstance.BakoTransfer(_transaction)
 
 		const room = `${sessionId}:${SocketUsernames.UI}:${request_id}`
@@ -329,7 +328,7 @@ export const txRequest = async ({ data, socket, database }: IEvent<IEventTX_REQU
 					provider: dapp.network.url,
 					pending_tx: Number(tx_pending.count) > 0,
 					configurable: vault.configurable,
-					version: vault.version_code,
+					version: vault.version,
 				},
 				tx,
 				validAt: code.valid_at,

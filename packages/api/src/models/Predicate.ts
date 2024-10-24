@@ -13,15 +13,12 @@ import { Base } from './Base';
 import { Transaction } from './Transaction';
 import { User } from './User';
 import { Workspace } from './Workspace';
+import { DEFAULT_PREDICATE_VERSION } from 'bakosafe';
 
 export interface PredicateMember {
   avatar: string;
   address: string;
 }
-
-// todo: use default by bako-sdk
-export const DEFAULT_BAKO_PREDICATE_VERSION =
-  '0x0ec304f98efc18964de98c63be50d2360572a155b16bcb0f3718c685c70a00aa';
 
 @Entity('predicates')
 class Predicate extends Base {
@@ -43,7 +40,7 @@ class Predicate extends Base {
 
   @Column({
     name: 'version',
-    default: DEFAULT_BAKO_PREDICATE_VERSION,
+    default: DEFAULT_PREDICATE_VERSION,
   })
   version: string;
 

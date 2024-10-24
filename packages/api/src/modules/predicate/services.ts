@@ -3,14 +3,9 @@ import { Brackets } from 'typeorm';
 
 import { NotFound } from '@src/utils/error';
 import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination';
+import { DEFAULT_PREDICATE_VERSION } from 'bakosafe';
 
-import {
-  DEFAULT_BAKO_PREDICATE_VERSION,
-  Predicate,
-  TypeUser,
-  User,
-  Workspace,
-} from '@models/index';
+import { Predicate, TypeUser, User, Workspace } from '@models/index';
 
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
@@ -98,7 +93,7 @@ export class PredicateService implements IPredicateService {
         ...payload,
         members,
         owner,
-        version: payload.version ?? DEFAULT_BAKO_PREDICATE_VERSION,
+        version: payload.version ?? DEFAULT_PREDICATE_VERSION,
         workspace,
       }).save();
 
@@ -346,9 +341,13 @@ export class PredicateService implements IPredicateService {
     }
   }
 
-  async instancePredicate(configurable: string, provider: string): Promise<Vault> {
+  async instancePredicate(
+    configurable: string,
+    provider: string,
+    version?: string,
+  ): Promise<Vault> {
     const conf = JSON.parse(configurable);
     const _provider = await FuelProvider.create(provider);
-    return new Vault(_provider, conf);
+    return new Vault(_provider, conf, version);
   }
 }
