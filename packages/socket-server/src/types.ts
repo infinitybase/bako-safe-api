@@ -16,6 +16,7 @@ export enum SocketEvents {
 
 	TX_CREATE = '[TX_EVENT_CREATED]',
 	TX_SIGN = '[TX_EVENT_SIGNED]',
+	TX_CONFIRM = '[TX_EVENT_CONFIRMED]',
 	TX_REQUEST = '[TX_EVENT_REQUESTED]',
 }
 

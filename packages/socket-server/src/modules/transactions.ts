@@ -135,20 +135,14 @@ export const txCreate = async ({ data, socket, database }: IEvent<IEventTX_CREAT
 
 	const { tx, operations, sign } = data
 
-	const room = `${sessionId}:${SocketUsernames.UI}:${request_id}`
+	const uiRoom = `${sessionId}:${SocketUsernames.UI}:${request_id}`
+	const connectorRoom = `${sessionId}:${SocketUsernames.CONNECTOR}:${request_id}`
 
 	const { auth } = socket.handshake
 
 	try {
 		// ------------------------------ [VALIDACOES] ------------------------------
 		// validar se o origin é diferente da url usada no front...adicionar um .env pra isso
-		console.log('[TX_CREATE]', {
-			origin,
-			UI_URL,
-			room,
-			_origin: origin != UI_URL,
-		})
-
 		if (origin != UI_URL) throw new Error('Invalid origin')
 
 		// ------------------------------ [DAPP] ------------------------------
@@ -227,7 +221,8 @@ export const txCreate = async ({ data, socket, database }: IEvent<IEventTX_CREAT
 		// ------------------------------ [INVALIDATION] ------------------------------
 
 		// ------------------------------ [EMIT] ------------------------------
-		io.to(room).emit(SocketEvents.DEFAULT, {
+		// Confirm tx creation to UI
+		io.to(uiRoom).emit(SocketEvents.DEFAULT, {
 			username,
 			room: sessionId,
 			request_id,
@@ -239,9 +234,22 @@ export const txCreate = async ({ data, socket, database }: IEvent<IEventTX_CREAT
 				sign,
 			},
 		})
+
+		// Confirm tx creation to CONNECTOR
+		socket.to(connectorRoom).emit(SocketEvents.DEFAULT, {
+			username,
+			room: sessionId,
+			request_id,
+			to: SocketUsernames.CONNECTOR,
+			type: SocketEvents.TX_CONFIRM,
+			data: {
+				id: _tx.hashTxId,
+				status: IEventTX_STATUS.SUCCESS,
+			},
+		})
 		// ------------------------------ [EMIT] ------------------------------
 	} catch (e) {
-		io.to(room).emit(SocketEvents.DEFAULT, {
+		io.to(uiRoom).emit(SocketEvents.DEFAULT, {
 			username,
 			room: sessionId,
 			request_id,
