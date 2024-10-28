@@ -46,6 +46,7 @@ export interface IPredicateFilterParams {
   owner?: string;
   workspace?: string[];
   ids?: string[];
+  select?: string[];
 }
 
 export interface IGetTxEndCursorQueryProps {
@@ -132,4 +133,5 @@ export interface IPredicateService {
   list: () => Promise<IPagination<Predicate> | Predicate[]>;
   findByAddress: (address: string) => Promise<Predicate>;
   instancePredicate: (configurable: string, provider: string) => Promise<Vault>;
+  listDateMoreThan(d: Date): Promise<IPagination<Predicate>>;
 }
