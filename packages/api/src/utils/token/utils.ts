@@ -20,9 +20,9 @@ import { FuelProvider } from '../FuelProvider';
 
 const { FUEL_PROVIDER } = process.env;
 
-const EXPIRES_IN = process.env.TOKEN_EXPIRATION_TIME ?? '40';
-const RENEWAL_EXPIRES_IN = process.env.RENEWAL_TOKEN_EXPIRATION_TIME ?? '10';
-const MINUTES_TO_RENEW = process.env.MINUTES_TO_RENEW_TOKEN ?? 2;
+const EXPIRES_IN = process.env.TOKEN_EXPIRATION_TIME ?? '360';
+const RENEWAL_EXPIRES_IN = process.env.RENEWAL_TOKEN_EXPIRATION_TIME ?? '180';
+const MINUTES_TO_RENEW = process.env.MINUTES_TO_RENEW_TOKEN ?? 40;
 
 export class TokenUtils {
   static async verifySignature({ signature, digest, encoder }): Promise<string> {
