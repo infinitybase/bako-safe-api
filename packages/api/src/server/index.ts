@@ -17,6 +17,7 @@ const {
   REDIS_URL,
   REDIS_URL_WRITE,
   REDIS_URL_READ,
+  EXTERN_TOKEN_SECRET,
 } = process.env;
 
 pprof.heap.start(512 * 1024, 64);
@@ -39,6 +40,7 @@ const start = async () => {
     REDIS_URL,
     REDIS_URL_WRITE,
     REDIS_URL_READ,
+    EXTERN_TOKEN_SECRET,
   });
 
   const app = await App.start();
