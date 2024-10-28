@@ -63,7 +63,7 @@ export const txSign = async ({ data, socket, database }: IEvent<IEventTX_SIGN>) 
 		// ------------------------------ [CODE] ------------------------------
 		const code = await database.query(
 			`
-				SELECT code
+				SELECT id, code
 				FROM recover_codes
 				WHERE origin = $1
 				AND owner = $2
@@ -162,7 +162,7 @@ export const txCreate = async ({ data, socket, database }: IEvent<IEventTX_CREAT
 		// ------------------------------ [CODE] ------------------------------
 		const code = await database.query(
 			`
-				SELECT *
+				SELECT id, code
 				FROM recover_codes
 				WHERE origin = $1
 				AND owner = $2
@@ -174,7 +174,7 @@ export const txCreate = async ({ data, socket, database }: IEvent<IEventTX_CREAT
 			[host, dapp.user_id],
 		)
 
-		if (!code) throw new Error('Recover code not found')
+		if (!code.code) throw new Error('Recover code not found')
 
 		// ------------------------------ [CODE] ------------------------------
 
