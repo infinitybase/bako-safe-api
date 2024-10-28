@@ -9,14 +9,13 @@ export async function externAuthMiddleware(
   next: NextFunction,
 ) {
   try {
-    let key;
-    const authorization = req?.headers?.authorization;
+    let authorization = req?.headers?.authorization;
 
     if (authorization) {
-      key = authorization.split(' ')[1];
+      authorization = authorization.replace('Bearer ', '');
     }
 
-    jwt.verify(key, EXTERN_CRYPT_KEY);
+    jwt.verify(authorization, EXTERN_CRYPT_KEY);
 
     return next();
   } catch (e) {
