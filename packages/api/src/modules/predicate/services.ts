@@ -1,5 +1,5 @@
 import { Vault } from 'bakosafe';
-import { Brackets } from 'typeorm';
+import { Brackets, MoreThan } from 'typeorm';
 
 import { NotFound } from '@src/utils/error';
 import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination';
@@ -346,5 +346,21 @@ export class PredicateService implements IPredicateService {
     const conf = JSON.parse(configurable);
     const _provider = await FuelProvider.create(provider);
     return new Vault(_provider, conf);
+  }
+
+  async listDateMoreThan(d?: Date) {
+    const queryBuilder = Predicate.createQueryBuilder('p');
+
+    if (d) {
+      queryBuilder.where({
+        createdAt: MoreThan(d),
+      });
+    }
+
+    if (this._filter.select) {
+      queryBuilder.select(this._filter.select);
+    }
+
+    return await Pagination.create(queryBuilder).paginate(this._pagination);
   }
 }
