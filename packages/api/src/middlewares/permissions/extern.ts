@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
-const { EXTERN_CRYPT_KEY } = process.env;
+const { EXTERN_TOKEN_SECRET } = process.env;
 
 export async function externAuthMiddleware(
   req: Request,
@@ -15,7 +15,7 @@ export async function externAuthMiddleware(
       authorization = authorization.replace('Bearer ', '');
     }
 
-    jwt.verify(authorization, EXTERN_CRYPT_KEY);
+    jwt.verify(authorization, EXTERN_TOKEN_SECRET);
 
     return next();
   } catch (e) {
