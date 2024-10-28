@@ -274,7 +274,7 @@ export class PredicateController {
         .filter({
           select: ['p.id', 'p.predicateAddress', 'p.createdAt'],
         })
-        .listDateMoreThan(new Date(d));
+        .listDateMoreThan(d ? new Date(d) : undefined);
 
       return successful(response, Responses.Ok);
     } catch (e) {

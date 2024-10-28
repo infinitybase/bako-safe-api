@@ -348,10 +348,14 @@ export class PredicateService implements IPredicateService {
     return new Vault(_provider, conf);
   }
 
-  async listDateMoreThan(d: Date) {
-    const queryBuilder = Predicate.createQueryBuilder('p').where({
-      createdAt: MoreThan(d),
-    });
+  async listDateMoreThan(d?: Date) {
+    const queryBuilder = Predicate.createQueryBuilder('p');
+
+    if (d) {
+      queryBuilder.where({
+        createdAt: MoreThan(d),
+      });
+    }
 
     if (this._filter.select) {
       queryBuilder.select(this._filter.select);
