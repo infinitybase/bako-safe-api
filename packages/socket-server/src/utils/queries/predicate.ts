@@ -1,21 +1,6 @@
-import { DatabaseClass } from '../database'
 import { BaseQuery } from './base'
 
 export class PredicateQuery extends BaseQuery {
-	private static instance: PredicateQuery
-
-	private constructor(database: DatabaseClass) {
-		super(database)
-	}
-
-	static getInstance(database: DatabaseClass): PredicateQuery {
-		if (!PredicateQuery.instance) {
-			PredicateQuery.instance = new PredicateQuery(database)
-		}
-
-		return PredicateQuery.instance
-	}
-
 	async getById(id: string) {
 		return await this.database.query(
 			`

@@ -1,6 +1,5 @@
 import { TransactionStatus } from 'bakosafe'
 import { BaseQuery } from './base'
-import { DatabaseClass } from '../database'
 
 interface IUpdateSummaryParams {
 	hash: string
@@ -13,20 +12,6 @@ interface ICountPendingParams {
 }
 
 export class TransactionQuery extends BaseQuery {
-	private static instance: TransactionQuery
-
-	private constructor(database: DatabaseClass) {
-		super(database)
-	}
-
-	static getInstance(database: DatabaseClass): TransactionQuery {
-		if (!TransactionQuery.instance) {
-			TransactionQuery.instance = new TransactionQuery(database)
-		}
-
-		return TransactionQuery.instance
-	}
-
 	async updateSummary({ hash, summary }: IUpdateSummaryParams) {
 		return await this.database.query(
 			`

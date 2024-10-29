@@ -1,4 +1,3 @@
-import { DatabaseClass } from '../database'
 import { BaseQuery } from './base'
 
 interface IGetValidParams {
@@ -13,20 +12,6 @@ interface ICreateParams extends IGetValidParams {
 }
 
 export class RecoverCodeQuery extends BaseQuery {
-	private static instance: RecoverCodeQuery
-
-	private constructor(database: DatabaseClass) {
-		super(database)
-	}
-
-	static getInstance(database: DatabaseClass): RecoverCodeQuery {
-		if (!RecoverCodeQuery.instance) {
-			RecoverCodeQuery.instance = new RecoverCodeQuery(database)
-		}
-
-		return RecoverCodeQuery.instance
-	}
-
 	async create({ origin, userId, code, metadata, network }: ICreateParams) {
 		return await this.database.query(
 			`

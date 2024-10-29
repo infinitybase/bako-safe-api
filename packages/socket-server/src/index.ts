@@ -3,7 +3,7 @@ import express from 'express'
 import socketIo from 'socket.io'
 import axios from 'axios'
 
-import { txCreate, txRequest, txSign } from '@modules/transactions'
+import { TransactionEventHandler } from '@modules/transactions'
 import { DatabaseClass } from '@utils/database'
 import { SocketEvents } from './types'
 
@@ -36,6 +36,10 @@ io.on(SocketEvents.CONNECT, async socket => {
 	await socket.join(room)
 	console.log('Conexão estabelecida com o cliente:', room)
 	//console.log('[CONEXAO]: ', socket.handshake.auth, socket.id)
+
+	// Setup event handlers
+	const transactionEventHandler = TransactionEventHandler.instantiate(database)
+
 	/* 
 		[UI] emite esse evento quando o usuário confirma a tx 
 			- verifica se o evento veio da origem correta -> BAKO-UI [http://localhost:5174, https://safe.bako.global]
@@ -48,7 +52,7 @@ io.on(SocketEvents.CONNECT, async socket => {
 			- emite uma mensagem para a [UI] com o resultado da tx
 			- todo: nao muito importante, mas é necessário tipar operations
 	*/
-	socket.on(SocketEvents.TX_CREATE, data => txCreate({ data, socket, database }))
+	socket.on(SocketEvents.TX_CREATE, data => transactionEventHandler.create({ data, socket }))
 
 	/* 
 		[UI] emite esse evento quando o usuário assina a tx 
@@ -59,7 +63,7 @@ io.on(SocketEvents.CONNECT, async socket => {
 			- invalida credencial temporária (code) que foi utilizada para criar e assinar a tx
 			- emite uma mensagem para a [UI] com o resultado da assiantura da tx
 		*/
-	socket.on(SocketEvents.TX_SIGN, data => txSign({ data, socket, database }))
+	socket.on(SocketEvents.TX_SIGN, data => transactionEventHandler.sign({ data, socket }))
 
 	/*
 		[CONNECTOR] emite esse evento quando o usuário quer criar uma transação
@@ -69,7 +73,7 @@ io.on(SocketEvents.CONNECT, async socket => {
 			- cria um código temporário para ser usado na criação da tx (limite 2 mins)
 			- emite uma mensagem para a [UI] com as informações da tx [TX_EVENT_REQUESTED] + o dapp
 	 */
-	socket.on(SocketEvents.TX_REQUEST, data => txRequest({ data, socket, database }))
+	socket.on(SocketEvents.TX_REQUEST, data => transactionEventHandler.request({ data, socket }))
 
 	// Lidar com mensagens recebidas do cliente
 	socket.on(SocketEvents.DEFAULT, data => {

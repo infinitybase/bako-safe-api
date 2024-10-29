@@ -1,21 +1,6 @@
-import { DatabaseClass } from '../database'
 import { BaseQuery } from './base'
 
 export class DappQuery extends BaseQuery {
-	private static instance: DappQuery
-
-	private constructor(database: DatabaseClass) {
-		super(database)
-	}
-
-	static getInstance(database: DatabaseClass): DappQuery {
-		if (!DappQuery.instance) {
-			DappQuery.instance = new DappQuery(database)
-		}
-
-		return DappQuery.instance
-	}
-
 	async getBySessionId(sessionId: string) {
 		return await this.database.query(
 			`
