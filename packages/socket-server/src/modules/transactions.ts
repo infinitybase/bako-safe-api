@@ -1,10 +1,11 @@
 import { SocketEvents, SocketUsernames } from '@src/types'
-import { BakoProvider, ITransactionSummary, TransactionStatus, Vault } from 'bakosafe'
+import { BakoProvider, ITransactionSummary, Vault } from 'bakosafe'
 import crypto from 'crypto'
 import { Provider, TransactionRequestLike } from 'fuels'
 import { Socket } from 'socket.io'
 import { DatabaseClass } from '@utils/database'
 import { io, api } from '..'
+import { DappQuery, PredicateQuery, RecoverCodeQuery, TransactionQuery } from '@src/utils/queries'
 
 export interface IEventTX_REQUEST {
 	_transaction: TransactionRequestLike
@@ -48,32 +49,14 @@ export const txSign = async ({ data, socket, database }: IEvent<IEventTX_SIGN>) 
 		if (origin != UI_URL) throw new Error('Invalid origin')
 
 		// ------------------------------ [DAPP] ------------------------------
-		const dapp = await database.query(
-			`
-				SELECT d.*, u.id AS user_id, u.address AS user_address
-				FROM dapp d
-				JOIN "users" u ON d.user = u.id
-				WHERE d.session_id = $1
-			`,
-			[auth.sessionId],
-		)
+		const dappQuery = DappQuery.getInstance(database)
+		const dapp = await dappQuery.getBySessionId(auth.sessionId)
 
 		if (!dapp) throw new Error('Dapp not found')
 
 		// ------------------------------ [CODE] ------------------------------
-		const code = await database.query(
-			`
-				SELECT id, code
-				FROM recover_codes
-				WHERE origin = $1
-				AND owner = $2
-				AND used = false
-				AND valid_at > NOW()
-				ORDER BY valid_at DESC
-				LIMIT 1;
-			`,
-			[host, dapp.user_id],
-		)
+		const recoverCodeQuery = RecoverCodeQuery.getInstance(database)
+		const code = await recoverCodeQuery.getValid({ origin: host, userId: dapp.user_id })
 
 		if (!code.code) throw new Error('Recover code not found')
 
@@ -93,15 +76,7 @@ export const txSign = async ({ data, socket, database }: IEvent<IEventTX_SIGN>) 
 		)
 
 		// ------------------------------ [INVALIDATION] ------------------------------
-		await database
-			.query(
-				`
-					DELETE FROM recover_codes
-					WHERE id = $1
-				`,
-				[code.id],
-			)
-			.catch(error => console.error(error))
+		await recoverCodeQuery.delete(code.id).catch(error => console.error(error))
 
 		// ------------------------------ [EMIT] ------------------------------
 		io.to(room).emit(SocketEvents.DEFAULT, {
@@ -146,33 +121,15 @@ export const txCreate = async ({ data, socket, database }: IEvent<IEventTX_CREAT
 		if (origin != UI_URL) throw new Error('Invalid origin')
 
 		// ------------------------------ [DAPP] ------------------------------
-		const dapp = await database.query(
-			`
-				SELECT d.*, u.id AS user_id, u.address AS user_address, c.id AS current_vault_id, c.predicate_address AS current_vault_address
-				FROM dapp d
-				JOIN "users" u ON d.user = u.id
-				JOIN "predicates" c ON d.current = c.id
-				WHERE d.session_id = $1  
-			`,
-			[auth.sessionId],
-		)
+
+		const dappQuery = DappQuery.getInstance(database)
+		const dapp = await dappQuery.getBySessionIdWithPredicate(auth.sessionId)
 
 		if (!dapp) throw new Error('Dapp not found')
 
 		// ------------------------------ [CODE] ------------------------------
-		const code = await database.query(
-			`
-				SELECT id, code
-				FROM recover_codes
-				WHERE origin = $1
-				AND owner = $2
-				AND used = false
-				AND valid_at > NOW()
-				ORDER BY valid_at DESC
-				LIMIT 1;
-			`,
-			[host, dapp.user_id],
-		)
+		const recoverCodeQuery = RecoverCodeQuery.getInstance(database)
+		const code = await recoverCodeQuery.getValid({ origin: host, userId: dapp.user_id })
 
 		if (!code.code) throw new Error('Recover code not found')
 
@@ -196,27 +153,13 @@ export const txCreate = async ({ data, socket, database }: IEvent<IEventTX_CREAT
 			origin: dapp.origin,
 			operations: operations.operations,
 		}
-		await database.query(
-			`
-				UPDATE transactions
-				SET summary = $1
-				WHERE hash = '${_tx.hashTxId}'
-			`,
-			[JSON.stringify(transactionSummary)],
-		)
+		const transactionQuery = TransactionQuery.getInstance(database)
+		await transactionQuery.updateSummary({ hash: _tx.hashTxId, summary: JSON.stringify(transactionSummary) })
 		// ------------------------------ [SUMMARY] ------------------------------
 
 		// ------------------------------ [INVALIDATION] ------------------------------
 		if (!sign) {
-			await database
-				.query(
-					`
-					DELETE FROM recover_codes
-					WHERE id = $1
-				`,
-					[code.id],
-				)
-				.catch(error => console.error(error))
+			await recoverCodeQuery.delete(code.id).catch(error => console.error(error))
 		}
 		// ------------------------------ [INVALIDATION] ------------------------------
 
@@ -269,57 +212,30 @@ export const txRequest = async ({ data, socket, database }: IEvent<IEventTX_REQU
 		const { origin, host } = socket.handshake.headers
 		const { auth } = socket.handshake
 
-		const dapp = await database.query(
-			`
-				SELECT d.*, u.id AS user_id,
-				u.address AS user_address,
-				c.id AS current_vault_id, 
-				c.name AS current_vault_name, 
-				c.description AS current_vault_description
-				FROM dapp d
-				JOIN "users" u ON d.user = u.id
-				JOIN "predicates" c ON d.current = c.id
-				WHERE d.session_id = $1  
-			`,
-			[auth.sessionId],
-		)
+		const dappQuery = DappQuery.getInstance(database)
+		const dapp = await dappQuery.getBySessionIdWithPredicate(auth.sessionId)
+
 		const isValid = dapp && dapp.origin === origin
 
 		//todo: adicionar emissao de erro
 		if (!isValid) return
 
-		const vault = await database.query(
-			`
-				SELECT p.*, pv.code AS version_code
-				FROM predicates p
-				JOIN predicate_versions pv ON p.version_id = pv.id
-				WHERE p.id = $1
-			`,
-			[dapp.current_vault_id],
-		)
+		const predicateQuery = PredicateQuery.getInstance(database)
+		const vault = await predicateQuery.getById(dapp.current_vault_id)
 
 		if (!vault) return
 
-		const code = await database.query(
-			`
-				INSERT INTO recover_codes (origin, owner, type, code, valid_at, metadata, used, network)
-				VALUES ($1, $2, 'AUTH_ONCE', $3, NOW() + INTERVAL '2 minutes', $4, false, $5)
-				RETURNING *;
-			`,
-			[host, dapp.user_id, `code${crypto.randomUUID()}`, `${JSON.stringify({ uses: 0 })}`, JSON.stringify(dapp.network)],
-		)
+		const codeQuery = RecoverCodeQuery.getInstance(database)
+		const code = await codeQuery.create({
+			origin: host,
+			userId: dapp.user_id,
+			code: `code${crypto.randomUUID()}`,
+			metadata: `${JSON.stringify({ uses: 0 })}`,
+			network: JSON.stringify(dapp.network),
+		})
 
-		const tx_pending = await database.query(
-			`
-				SELECT COUNT(*)
-				FROM transactions t
-				WHERE t.predicate_id = $1 
-				AND t.status = $2
-				AND t.deleted_at IS NULL
-				AND regexp_replace(t.network->>'url', '^https?://[^@]+@', 'https://') = $3;
-			`,
-			[vault.id, TransactionStatus.AWAIT_REQUIREMENTS, dapp.network.url],
-		)
+		const transactionQuery = TransactionQuery.getInstance(database)
+		const tx_pending = await transactionQuery.countPending({ predicateId: vault.id, networkUrl: dapp.network.url })
 
 		const provider = await Provider.create(dapp.network.url)
 		const vaultInstance = new Vault(provider, JSON.parse(vault.configurable))
