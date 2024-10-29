@@ -349,7 +349,10 @@ export class PredicateService implements IPredicateService {
   }
 
   async listDateMoreThan(d?: Date) {
-    const queryBuilder = Predicate.createQueryBuilder('p');
+    const queryBuilder = Predicate.createQueryBuilder('p').innerJoin(
+      'p.owner',
+      'owner',
+    );
 
     if (d) {
       queryBuilder.where({
