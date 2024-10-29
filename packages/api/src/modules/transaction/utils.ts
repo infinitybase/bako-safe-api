@@ -31,15 +31,6 @@ export const formatTransactionsResponse = (
   }
 };
 
-export const generateDepositName = () => {
-  let depositName = 'Deposit #';
-  for (let i = 0; i < 5; i++) {
-    const randomInt = Math.floor(Math.random() * 10);
-    depositName += randomInt.toString();
-  }
-  return depositName;
-};
-
 export const formatFuelTransaction = async (
   tx: TransactionResult,
   predicate: Predicate,
