@@ -149,8 +149,6 @@ export class TransactionEventHandler {
 
 			if (!code.code) throw new Error('Recover code not found')
 
-			// ------------------------------ [CODE] ------------------------------
-
 			// ------------------------------ [TX] ------------------------------
 			const vaultProvider = await BakoProvider.create(dapp.network.url, {
 				token: code.code,
@@ -159,8 +157,6 @@ export class TransactionEventHandler {
 			})
 			const vault = await Vault.fromAddress(dapp.current_vault_address, vaultProvider)
 			const _tx = await vault.BakoTransfer(tx)
-
-			// ------------------------------ [TX] ------------------------------
 
 			// ------------------------------ [SUMMARY] ------------------------------
 			const transactionSummary: ITransactionSummary = {
@@ -173,13 +169,11 @@ export class TransactionEventHandler {
 				hash: _tx.hashTxId,
 				summary: JSON.stringify(transactionSummary),
 			})
-			// ------------------------------ [SUMMARY] ------------------------------
 
 			// ------------------------------ [INVALIDATION] ------------------------------
 			if (!sign) {
 				await this.recoverCodeService.delete(code.id).catch(error => console.error(error))
 			}
-			// ------------------------------ [INVALIDATION] ------------------------------
 
 			// ------------------------------ [EMIT] ------------------------------
 			// Confirm tx creation to UI
@@ -208,7 +202,6 @@ export class TransactionEventHandler {
 					status: IEventTX_STATUS.SUCCESS,
 				},
 			})
-			// ------------------------------ [EMIT] ------------------------------
 		} catch (e) {
 			io.to(uiRoom).emit(SocketEvents.DEFAULT, {
 				username,
