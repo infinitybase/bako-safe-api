@@ -1,6 +1,6 @@
-import { BaseQuery } from './base'
+import { BaseService } from './base'
 
-export class PredicateQuery extends BaseQuery {
+export class PredicateService extends BaseService {
 	async getById(id: string) {
 		return await this.database.query(
 			`

@@ -1,6 +1,6 @@
-import { BaseQuery } from './base'
+import { BaseService } from './base'
 
-export class DappQuery extends BaseQuery {
+export class DappService extends BaseService {
 	async getBySessionId(sessionId: string) {
 		return await this.database.query(
 			`

@@ -1,5 +1,5 @@
 import { TransactionStatus } from 'bakosafe'
-import { BaseQuery } from './base'
+import { BaseService } from './base'
 
 interface IUpdateSummaryParams {
 	hash: string
@@ -11,7 +11,7 @@ interface ICountPendingParams {
 	networkUrl: string
 }
 
-export class TransactionQuery extends BaseQuery {
+export class TransactionService extends BaseService {
 	async updateSummary({ hash, summary }: IUpdateSummaryParams) {
 		return await this.database.query(
 			`

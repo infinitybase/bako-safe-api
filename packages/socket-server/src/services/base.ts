@@ -1,6 +1,6 @@
-import { DatabaseClass } from '../database'
+import { DatabaseClass } from '../utils/database'
 
-export class BaseQuery {
+export class BaseService {
 	protected database: DatabaseClass
 
 	public constructor(database: DatabaseClass) {

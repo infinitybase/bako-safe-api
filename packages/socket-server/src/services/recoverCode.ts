@@ -1,4 +1,4 @@
-import { BaseQuery } from './base'
+import { BaseService } from './base'
 
 interface IGetValidParams {
 	origin: string
@@ -11,7 +11,7 @@ interface ICreateParams extends IGetValidParams {
 	network: string
 }
 
-export class RecoverCodeQuery extends BaseQuery {
+export class RecoverCodeService extends BaseService {
 	async create({ origin, userId, code, metadata, network }: ICreateParams) {
 		return await this.database.query(
 			`

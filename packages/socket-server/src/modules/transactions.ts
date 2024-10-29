@@ -5,7 +5,7 @@ import { Provider, TransactionRequestLike } from 'fuels'
 import { Socket } from 'socket.io'
 import { DatabaseClass } from '@utils/database'
 import { io, api } from '..'
-import { DappQuery, PredicateQuery, RecoverCodeQuery, TransactionQuery } from '@src/utils/queries'
+import { DappService, PredicateService, RecoverCodeService, TransactionService } from '@src/services'
 
 export interface IEventTX_REQUEST {
 	_transaction: TransactionRequestLike
@@ -38,16 +38,16 @@ const { UI_URL, API_URL } = process.env
 export class TransactionEventHandler {
 	private static instance: TransactionEventHandler
 
-	private dappQuery: DappQuery
-	private recoverCodeQuery: RecoverCodeQuery
-	private predicateQuery: PredicateQuery
-	private transactionQuery: TransactionQuery
+	private dappService: DappService
+	private recoverCodeService: RecoverCodeService
+	private predicateService: PredicateService
+	private transactionService: TransactionService
 
 	protected constructor(private database: DatabaseClass) {
-		this.dappQuery = new DappQuery(this.database)
-		this.recoverCodeQuery = new RecoverCodeQuery(this.database)
-		this.predicateQuery = new PredicateQuery(this.database)
-		this.transactionQuery = new TransactionQuery(this.database)
+		this.dappService = new DappService(this.database)
+		this.recoverCodeService = new RecoverCodeService(this.database)
+		this.predicateService = new PredicateService(this.database)
+		this.transactionService = new TransactionService(this.database)
 	}
 
 	static instantiate(database: DatabaseClass): TransactionEventHandler {
@@ -65,18 +65,18 @@ export class TransactionEventHandler {
 			const { origin, host } = socket.handshake.headers
 			const { auth } = socket.handshake
 
-			const dapp = await this.dappQuery.getBySessionIdWithPredicate(auth.sessionId)
+			const dapp = await this.dappService.getBySessionIdWithPredicate(auth.sessionId)
 
 			const isValid = dapp && dapp.origin === origin
 
 			//todo: adicionar emissao de erro
 			if (!isValid) return
 
-			const vault = await this.predicateQuery.getById(dapp.current_vault_id)
+			const vault = await this.predicateService.getById(dapp.current_vault_id)
 
 			if (!vault) return
 
-			const code = await this.recoverCodeQuery.create({
+			const code = await this.recoverCodeService.create({
 				origin: host,
 				userId: dapp.user_id,
 				code: `code${crypto.randomUUID()}`,
@@ -84,7 +84,7 @@ export class TransactionEventHandler {
 				network: JSON.stringify(dapp.network),
 			})
 
-			const tx_pending = await this.transactionQuery.countPending({
+			const tx_pending = await this.transactionService.countPending({
 				predicateId: vault.id,
 				networkUrl: dapp.network.url,
 			})
@@ -140,12 +140,12 @@ export class TransactionEventHandler {
 			if (origin != UI_URL) throw new Error('Invalid origin')
 
 			// ------------------------------ [DAPP] ------------------------------
-			const dapp = await this.dappQuery.getBySessionIdWithPredicate(auth.sessionId)
+			const dapp = await this.dappService.getBySessionIdWithPredicate(auth.sessionId)
 
 			if (!dapp) throw new Error('Dapp not found')
 
 			// ------------------------------ [CODE] ------------------------------
-			const code = await this.recoverCodeQuery.getValid({ origin: host, userId: dapp.user_id })
+			const code = await this.recoverCodeService.getValid({ origin: host, userId: dapp.user_id })
 
 			if (!code.code) throw new Error('Recover code not found')
 
@@ -169,7 +169,7 @@ export class TransactionEventHandler {
 				origin: dapp.origin,
 				operations: operations.operations,
 			}
-			await this.transactionQuery.updateSummary({
+			await this.transactionService.updateSummary({
 				hash: _tx.hashTxId,
 				summary: JSON.stringify(transactionSummary),
 			})
@@ -177,7 +177,7 @@ export class TransactionEventHandler {
 
 			// ------------------------------ [INVALIDATION] ------------------------------
 			if (!sign) {
-				await this.recoverCodeQuery.delete(code.id).catch(error => console.error(error))
+				await this.recoverCodeService.delete(code.id).catch(error => console.error(error))
 			}
 			// ------------------------------ [INVALIDATION] ------------------------------
 
@@ -237,12 +237,12 @@ export class TransactionEventHandler {
 
 			// ------------------------------ [DAPP] ------------------------------
 
-			const dapp = await this.dappQuery.getBySessionId(auth.sessionId)
+			const dapp = await this.dappService.getBySessionId(auth.sessionId)
 
 			if (!dapp) throw new Error('Dapp not found')
 
 			// ------------------------------ [CODE] ------------------------------
-			const code = await this.recoverCodeQuery.getValid({ origin: host, userId: dapp.user_id })
+			const code = await this.recoverCodeService.getValid({ origin: host, userId: dapp.user_id })
 
 			if (!code.code) throw new Error('Recover code not found')
 
@@ -262,7 +262,7 @@ export class TransactionEventHandler {
 			)
 
 			// ------------------------------ [INVALIDATION] ------------------------------
-			await this.recoverCodeQuery.delete(code.id).catch(error => console.error(error))
+			await this.recoverCodeService.delete(code.id).catch(error => console.error(error))
 
 			// ------------------------------ [EMIT] ------------------------------
 			io.to(room).emit(SocketEvents.DEFAULT, {
