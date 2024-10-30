@@ -10,7 +10,6 @@ import { SocketEvents } from './types'
 const { SOCKET_PORT, SOCKET_TIMEOUT_DICONNECT, SOCKET_NAME, API_URL } = process.env
 
 const app = express()
-let database: DatabaseClass
 const server = http.createServer(app)
 export const io = new socketIo.Server(server, {
 	connectTimeout: Number(SOCKET_TIMEOUT_DICONNECT), // 60 mins
@@ -21,6 +20,9 @@ export const io = new socketIo.Server(server, {
 export const api = axios.create({
 	baseURL: API_URL,
 })
+
+let database: DatabaseClass
+let transactionEventHandler: TransactionEventHandler
 
 // Health Check
 app.get('/health', ({ res }) => res.status(200).send({ status: 'ok', message: `Health check ${SOCKET_NAME} passed` }))
@@ -36,9 +38,6 @@ io.on(SocketEvents.CONNECT, async socket => {
 	await socket.join(room)
 	console.log('Conexão estabelecida com o cliente:', room)
 	//console.log('[CONEXAO]: ', socket.handshake.auth, socket.id)
-
-	// Setup event handlers
-	const transactionEventHandler = TransactionEventHandler.instantiate(database)
 
 	/* 
 		[UI] emite esse evento quando o usuário confirma a tx 
@@ -100,9 +99,14 @@ const databaseConnect = async () => {
 	database = await DatabaseClass.connect()
 }
 
+const setupEventHandlers = () => {
+	transactionEventHandler = TransactionEventHandler.instantiate(database)
+}
+
 // Iniciar o servidor
 const port = SOCKET_PORT || 3000
 server.listen(port, async () => {
 	await databaseConnect()
+	setupEventHandlers()
 	console.log(`Server runner on port ${port}`)
 })
