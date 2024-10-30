@@ -5,17 +5,23 @@ const PREFIX = 'quotes';
 
 export class QuoteService {
   async fetchAllFromRedis(): Promise<IQuote[]> {
-    const { assetsMapById } = await getAssetsMaps();
+    const { fuelAssetsList, assetsMapById } = await getAssetsMaps();
     const result = await RedisReadClient.scan(`${PREFIX}-*`);
     const quotes = [];
 
     result.forEach((value, key) => {
       const assetId = key.replace(`${PREFIX}-`, '');
+      const asset = fuelAssetsList.find(
+        a => a.name === assetsMapById[assetId]?.symbol,
+      );
+
       quotes.push({
         assetId: assetId,
         price: Number(value),
-        symbol: assetsMapById[assetId]?.symbol,
-        symbolSlug: assetsMapById[assetId]?.symbol.toLowerCase(),
+        symbol: asset?.symbol || assetsMapById[assetId]?.symbol,
+        symbolSlug:
+          asset?.symbol.toLowerCase() ||
+          assetsMapById[assetId]?.symbol.toLowerCase(),
       });
     });
 
