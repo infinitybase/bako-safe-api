@@ -643,4 +643,12 @@ export class TransactionService implements ITransactionService {
 
     return validStatus;
   }
+
+  listAll() {
+    const queryBuilder = Transaction.createQueryBuilder('t')
+      .select(['t.id', 't.hash', 't.predicateId', 't.network', 't.summary', 'u.id'])
+      .innerJoin('t.createdBy', 'u');
+
+    return Pagination.create(queryBuilder).paginate(this._pagination);
+  }
 }

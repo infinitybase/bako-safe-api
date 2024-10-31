@@ -143,5 +143,12 @@ export const getAssetsMaps = async () => {
     },
   );
 
-  return { QuotesMock, assets, assetsMapById, assetsMapBySymbol, fuelUnitAssets };
+  return {
+    fuelAssetsList,
+    QuotesMock,
+    assets,
+    assetsMapById,
+    assetsMapBySymbol,
+    fuelUnitAssets,
+  };
 };

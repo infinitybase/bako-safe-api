@@ -608,4 +608,16 @@ export class TransactionController {
       return error(e.error, e.statusCode);
     }
   }
+
+  async listAll(req: IListRequest) {
+    try {
+      const { page, perPage } = req.query;
+      const response = await this.transactionService
+        .paginate({ page: page || 0, perPage: perPage || 30 })
+        .listAll();
+      return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
 }

@@ -7,7 +7,6 @@ import { Network } from 'fuels';
 export class TokenAuthStrategy implements AuthStrategy {
   async authenticate(
     req: IAuthRequest,
-    // todo: check this types
   ): Promise<{ user: any; workspace: any; network: Network }> {
     const signature = req.headers.authorization;
     const token = await TokenUtils.recoverToken(signature);

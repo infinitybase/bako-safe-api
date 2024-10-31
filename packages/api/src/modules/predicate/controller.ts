@@ -6,12 +6,7 @@ import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
 
 import { NotificationTitle } from '@models/index';
 
-import {
-  error,
-  ErrorTypes,
-  Unauthorized,
-  UnauthorizedErrorTitles,
-} from '@utils/error';
+import { error } from '@utils/error';
 import {
   Responses,
   bindMethods,
@@ -265,6 +260,29 @@ export class PredicateController {
       const predicate = await this.predicateService.findByAddress(address);
 
       return successful(!!predicate, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async listAll(req: IListRequest) {
+    const { page, perPage, d } = req.query;
+
+    try {
+      const response = await this.predicateService
+        .paginate({ page, perPage })
+        .filter({
+          select: [
+            'p.id',
+            'p.predicateAddress',
+            'p.createdAt',
+            'p.root',
+            'owner.id',
+          ],
+        })
+        .listDateMoreThan(d ? new Date(d) : undefined);
+
+      return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }

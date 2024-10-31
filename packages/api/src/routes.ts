@@ -12,6 +12,7 @@ import transactions from '@modules/transaction/routes';
 import workspace from '@modules/workspace/routes';
 import apiToken, { cliAuthRoute } from '@modules/apiToken/routes';
 import debugPprof from '@modules/debugPprof/routes';
+import externalRoute from '@modules/external/routes';
 
 const { API_ENVIRONMENT, API_NAME } = process.env;
 
@@ -29,6 +30,7 @@ router.use('/workspace', workspace);
 router.use('/api-token', apiToken);
 router.use('/debug-pprof', debugPprof);
 router.use('/cli', cliAuthRoute);
+router.use('/external', externalRoute);
 
 // ping route
 router.get('/ping', ({ res }) =>
