@@ -8,23 +8,39 @@ import { NotificationService } from '../notification/services';
 import { PredicateController } from '../predicate/controller';
 import { QuoteController } from '../quote/controller';
 import { QuoteService } from '../quote/services';
+import { UserController } from '../user/controller';
+import { UserService } from '../user/service';
+import { TransactionService } from '../transaction/services';
+import { TransactionController } from '../transaction/controller';
+import { AddressBookService } from '../addressBook/services';
 
 const router = Router();
+
 const predicateService = new PredicateService();
 const notificationsService = new NotificationService();
 const quoteService = new QuoteService();
+const userService = new UserService();
+const txService = new TransactionService();
+const addressbookService = new AddressBookService();
 
 const predicateContoller = new PredicateController(
   predicateService,
   notificationsService,
 );
 const quoteController = new QuoteController(quoteService);
-
-router.get(
-  '/predicate',
-  externAuthMiddleware,
-  handleResponse(predicateContoller.listAll),
+const userController = new UserController(userService);
+const txController = new TransactionController(
+  txService,
+  predicateService,
+  addressbookService,
+  notificationsService,
 );
-router.get('/quote', externAuthMiddleware, handleResponse(quoteController.listAll));
+
+router.use(externAuthMiddleware);
+
+router.get('/predicate', handleResponse(predicateContoller.listAll));
+router.get('/user', handleResponse(userController.listAll));
+router.get('/quote', handleResponse(quoteController.listAll));
+router.get('/tx', handleResponse(txController.listAll));
 
 export default router;

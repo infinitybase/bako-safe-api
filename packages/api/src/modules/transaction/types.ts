@@ -254,4 +254,5 @@ export interface ITransactionService {
   ) => TransactionStatus;
   checkInvalidConditions: (api_transaction: TransactionStatus) => void;
   validateSignature: (transaction: Transaction, userAddress: string) => boolean;
+  listAll(): Promise<Partial<Transaction>[]>;
 }

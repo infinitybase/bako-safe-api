@@ -602,4 +602,13 @@ export class TransactionController {
       return error(e.error, e.statusCode);
     }
   }
+
+  async listAll() {
+    try {
+      const response = await this.transactionService.listAll();
+      return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
 }

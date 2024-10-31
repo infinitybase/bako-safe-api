@@ -640,4 +640,17 @@ export class TransactionService implements ITransactionService {
 
     return validStatus;
   }
+
+  listAll() {
+    return Transaction.createQueryBuilder('t')
+      .select([
+        't.id',
+        't.hash',
+        't.predicateId',
+        't.network',
+        't.createdBy',
+        't.summary',
+      ])
+      .getMany();
+  }
 }

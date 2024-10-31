@@ -344,4 +344,13 @@ export class UserController {
 
     return successful(!!result, Responses.Ok);
   }
+
+  async listAll() {
+    try {
+      const response = await this.userService.listAll();
+      return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
 }

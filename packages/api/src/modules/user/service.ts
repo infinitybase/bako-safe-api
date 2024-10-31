@@ -310,4 +310,10 @@ export class UserService implements IUserService {
       hasSingle,
     };
   }
+
+  listAll() {
+    return User.createQueryBuilder('u')
+      .select(['u.id', 'u.type', 'u.address'])
+      .getMany();
+  }
 }

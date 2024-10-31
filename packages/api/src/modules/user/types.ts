@@ -128,4 +128,5 @@ export interface IUserService {
     name: string,
     userId?: string,
   ): Promise<Maybe<IValidateNameResponse>>;
+  listAll(): Promise<Partial<User>[]>;
 }
