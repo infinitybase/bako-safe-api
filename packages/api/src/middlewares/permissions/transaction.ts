@@ -25,7 +25,9 @@ export const transactionPermissionMiddleware = (
 
       const transaction = await Transaction.createQueryBuilder('t')
         .select('t.resume')
-        .where('t.hash = :hash', { hash: transactionHash })
+        .where('t.hash IN (:...hashes)', {
+          hashes: [transactionHash, transactionHash.slice(2)],
+        })
         .getOne();
 
       if (!transaction) {

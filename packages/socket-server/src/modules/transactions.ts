@@ -90,7 +90,7 @@ export class TransactionEventHandler {
 			})
 
 			const provider = await Provider.create(dapp.network.url)
-			const vaultInstance = new Vault(provider, JSON.parse(vault.configurable))
+			const vaultInstance = new Vault(provider, JSON.parse(vault.configurable), vault.version)
 			const { tx } = await vaultInstance.BakoTransfer(_transaction)
 
 			const room = `${sessionId}:${SocketUsernames.UI}:${request_id}`
@@ -112,7 +112,7 @@ export class TransactionEventHandler {
 						provider: dapp.network.url,
 						pending_tx: Number(tx_pending.count) > 0,
 						configurable: vault.configurable,
-						version: vault.version_code,
+						version: vault.version,
 					},
 					tx,
 					validAt: code.valid_at,

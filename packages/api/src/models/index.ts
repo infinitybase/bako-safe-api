@@ -8,5 +8,4 @@ export * from './Notification';
 export * from './AddressBook';
 export * from './Workspace';
 export * from './RecoverCode';
-export * from './PredicateVersion';
 export * from './APIToken';

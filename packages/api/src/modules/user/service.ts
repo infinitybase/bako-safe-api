@@ -25,10 +25,10 @@ import {
 } from './types';
 
 import App from '@src/server/app';
-import { Provider, Address, Network } from 'fuels';
+import { Address, Network } from 'fuels';
 import { Vault } from 'bakosafe';
 import { PredicateService } from '../predicate/services';
-import { PredicateVersionService } from '../predicateVersion/services';
+
 import { Maybe } from '@src/utils/types/maybe';
 import { FuelProvider } from '@src/utils';
 
@@ -129,8 +129,12 @@ export class UserService implements IUserService {
           chainId: provider.getChainId(),
         };
 
-        const predicate = new Vault(provider, configurable);
-        const version = await new PredicateVersionService().findCurrentVersion();
+        // on creation, we dont need send the predicate version
+        const predicate = await new PredicateService().instancePredicate(
+          JSON.stringify(configurable),
+          provider.url,
+        );
+
         const network: Network = {
           url: provider.url,
           chainId: provider.getChainId(),
@@ -146,7 +150,7 @@ export class UserService implements IUserService {
             ).toB256(),
             configurable: JSON.stringify(predicate.configurable),
             owner: user,
-            version,
+            version: predicate.version,
             members: [user],
             workspace,
             root: true,

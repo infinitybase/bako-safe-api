@@ -3,6 +3,7 @@ import { Brackets, MoreThan } from 'typeorm';
 
 import { NotFound } from '@src/utils/error';
 import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination';
+import { DEFAULT_PREDICATE_VERSION } from 'bakosafe';
 
 import { Predicate, TypeUser, User, Workspace } from '@models/index';
 
@@ -18,7 +19,6 @@ import { IPredicateOrdination, setOrdination } from './ordination';
 import { Network, ZeroBytes32 } from 'fuels';
 import { UserService } from '../user/service';
 import { IconUtils } from '@src/utils/icons';
-import { PredicateVersionService } from '../predicateVersion/services';
 import { FuelProvider } from '@src/utils';
 
 export class PredicateService implements IPredicateService {
@@ -67,7 +67,6 @@ export class PredicateService implements IPredicateService {
       const members = [];
       const userService = new UserService();
       //const workspaceService = new WorkspaceService();
-      const versionService = new PredicateVersionService();
 
       // create a pending users
       const { SIGNERS } = JSON.parse(payload.configurable);
@@ -94,7 +93,7 @@ export class PredicateService implements IPredicateService {
         ...payload,
         members,
         owner,
-        version: payload.version ?? (await versionService.findCurrentVersion()),
+        version: payload.version ?? DEFAULT_PREDICATE_VERSION,
         workspace,
       }).save();
 
@@ -342,10 +341,14 @@ export class PredicateService implements IPredicateService {
     }
   }
 
-  async instancePredicate(configurable: string, provider: string): Promise<Vault> {
+  async instancePredicate(
+    configurable: string,
+    provider: string,
+    version?: string,
+  ): Promise<Vault> {
     const conf = JSON.parse(configurable);
     const _provider = await FuelProvider.create(provider);
-    return new Vault(_provider, conf);
+    return new Vault(_provider, conf, version);
   }
 
   async listDateMoreThan(d?: Date) {
