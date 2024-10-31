@@ -603,9 +603,12 @@ export class TransactionController {
     }
   }
 
-  async listAll() {
+  async listAll(req: IListRequest) {
     try {
-      const response = await this.transactionService.listAll();
+      const { page, perPage } = req.query;
+      const response = await this.transactionService
+        .paginate({ page: page || 0, perPage: perPage || 30 })
+        .listAll();
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);

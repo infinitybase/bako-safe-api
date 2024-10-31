@@ -312,8 +312,12 @@ export class UserService implements IUserService {
   }
 
   listAll() {
-    return User.createQueryBuilder('u')
-      .select(['u.id', 'u.type', 'u.address'])
-      .getMany();
+    const queryBuilder = User.createQueryBuilder('u').select([
+      'u.id',
+      'u.type',
+      'u.address',
+    ]);
+
+    return Pagination.create(queryBuilder).paginate(this._pagination);
   }
 }
