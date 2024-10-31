@@ -344,4 +344,16 @@ export class UserController {
 
     return successful(!!result, Responses.Ok);
   }
+
+  async listAll(req: IListRequest) {
+    try {
+      const { page, perPage } = req.query;
+      const response = await this.userService
+        .paginate({ page: page || 0, perPage: perPage || 30 })
+        .listAll();
+      return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
 }
