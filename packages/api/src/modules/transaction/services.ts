@@ -10,7 +10,7 @@ import {
   getTransactionSummary,
   Network,
 } from 'fuels';
-import { Brackets, Not } from 'typeorm';
+import { Brackets, In, Not } from 'typeorm';
 
 import { Predicate, Transaction } from '@models/index';
 
@@ -501,7 +501,10 @@ export class TransactionService implements ITransactionService {
   //add witnesses
   async sendToChain(hash: string, network: Network) {
     const transaction = await Transaction.findOne({
-      where: { hash, status: Not(TransactionStatus.DECLINED) },
+      where: {
+        hash,
+        status: Not(In([TransactionStatus.DECLINED, TransactionStatus.FAILED])),
+      },
       relations: ['predicate', 'createdBy'],
     });
 
