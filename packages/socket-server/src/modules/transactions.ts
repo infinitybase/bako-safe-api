@@ -50,7 +50,7 @@ export class TransactionEventHandler {
 		this.transactionService = new TransactionService(this.database)
 	}
 
-	static instantiate(database: DatabaseClass): TransactionEventHandler {
+	static getInstance(database: DatabaseClass): TransactionEventHandler {
 		if (!TransactionEventHandler.instance) {
 			TransactionEventHandler.instance = new TransactionEventHandler(database)
 		}

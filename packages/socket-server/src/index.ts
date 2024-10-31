@@ -100,7 +100,7 @@ const databaseConnect = async () => {
 }
 
 const setupEventHandlers = () => {
-	transactionEventHandler = TransactionEventHandler.instantiate(database)
+	transactionEventHandler = TransactionEventHandler.getInstance(database)
 }
 
 // Iniciar o servidor
