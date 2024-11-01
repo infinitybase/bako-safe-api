@@ -137,6 +137,5 @@ export interface IPredicateService {
     provider: string,
     version?: string,
   ) => Promise<Vault>;
-  instancePredicate: (configurable: string, provider: string) => Promise<Vault>;
   listDateMoreThan(d: Date): Promise<IPagination<Predicate>>;
 }
