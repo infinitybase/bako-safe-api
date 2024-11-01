@@ -272,7 +272,13 @@ export class PredicateController {
       const response = await this.predicateService
         .paginate({ page, perPage })
         .filter({
-          select: ['p.id', 'p.predicateAddress', 'p.createdAt'],
+          select: [
+            'p.id',
+            'p.predicateAddress',
+            'p.createdAt',
+            'p.root',
+            'owner.id',
+          ],
         })
         .listDateMoreThan(d ? new Date(d) : undefined);
 

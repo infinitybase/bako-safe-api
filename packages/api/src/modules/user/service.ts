@@ -310,4 +310,14 @@ export class UserService implements IUserService {
       hasSingle,
     };
   }
+
+  listAll() {
+    const queryBuilder = User.createQueryBuilder('u').select([
+      'u.id',
+      'u.type',
+      'u.address',
+    ]);
+
+    return Pagination.create(queryBuilder).paginate(this._pagination);
+  }
 }
