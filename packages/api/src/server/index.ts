@@ -37,7 +37,6 @@ const start = async () => {
     COIN_MARKET_CAP_API_KEY,
     AWS_SMTP_USER,
     AWS_SMTP_PASS,
-    REDIS_URL,
     REDIS_URL_WRITE,
     REDIS_URL_READ,
     EXTERN_TOKEN_SECRET,
