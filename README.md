@@ -21,3 +21,4 @@
 
 1. Copy your scripts to insert infos to path `packages/api/database/inserts`
 2. Run script `cd packages/api && pnpm migration:populate`
+
