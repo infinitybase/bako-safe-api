@@ -5,7 +5,7 @@ import { AuthValidatedRequest } from '@src/middlewares/auth/types';
 import { IDefaultOrdination } from '@src/utils/ordination';
 import { IPagination, PaginationParams } from '@src/utils/pagination';
 
-import { Predicate, PredicateVersion, User } from '@models/index';
+import { Predicate, User } from '@models/index';
 import { IPredicateOrdination } from './ordination';
 import { Network } from 'fuels';
 
@@ -25,7 +25,7 @@ export interface IPredicatePayload {
   // minSigners: number;
   root?: boolean;
   configurable: string;
-  version?: PredicateVersion;
+  version?: string;
   versionCode?: string;
   owner?: User;
   members?: User[];
@@ -132,6 +132,10 @@ export interface IPredicateService {
   findById: (id: string, signer?: string) => Promise<Predicate>;
   list: () => Promise<IPagination<Predicate> | Predicate[]>;
   findByAddress: (address: string) => Promise<Predicate>;
-  instancePredicate: (configurable: string, provider: string) => Promise<Vault>;
+  instancePredicate: (
+    configurable: string,
+    provider: string,
+    version?: string,
+  ) => Promise<Vault>;
   listDateMoreThan(d: Date): Promise<IPagination<Predicate>>;
 }

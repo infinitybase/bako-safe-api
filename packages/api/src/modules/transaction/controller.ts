@@ -41,7 +41,7 @@ import {
   TransactionHistory,
 } from './types';
 import { createTxHistoryEvent, mergeTransactionLists } from './utils';
-import { Not } from 'typeorm';
+import { In, Not } from 'typeorm';
 
 // todo: use this provider by session, and move to transactions
 const { FUEL_PROVIDER } = process.env;
@@ -140,7 +140,10 @@ export class TransactionController {
 
     try {
       const existsTx = await Transaction.findOne({
-        where: { hash, status: Not(TransactionStatus.DECLINED) },
+        where: {
+          hash,
+          status: Not(In([TransactionStatus.DECLINED, TransactionStatus.FAILED])),
+        },
       });
 
       if (existsTx) {
@@ -367,7 +370,10 @@ export class TransactionController {
   }: ISignByIdRequest) {
     try {
       const transaction = await Transaction.findOne({
-        where: { hash: txHash, status: Not(TransactionStatus.DECLINED) },
+        where: {
+          hash: txHash,
+          status: Not(In([TransactionStatus.DECLINED, TransactionStatus.FAILED])),
+        },
       });
 
       if (!transaction) {
@@ -598,7 +604,7 @@ export class TransactionController {
       await this.transactionService.sendToChain(hash.slice(2), params.network); // not wait for this
       return successful(true, Responses.Ok);
     } catch (e) {
-      console.log(e);
+      console.log('[TX_ERROR]');
       return error(e.error, e.statusCode);
     }
   }

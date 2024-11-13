@@ -153,8 +153,7 @@ export class PredicateController {
             network: network.url.replace(/^https?:\/\/[^@]+@/, 'https://'),
           },
         )
-        .leftJoin('p.version', 'pv')
-        .addSelect(['t', 'p.id', 'p.configurable', 'pv.code'])
+        .addSelect(['t', 'p.id', 'p.configurable'])
         .where('p.id = :predicateId', { predicateId })
         .getOne();
 
@@ -165,7 +164,9 @@ export class PredicateController {
       const instance = await this.predicateService.instancePredicate(
         configurable,
         network.url ?? FUEL_PROVIDER,
+        queryResult.version,
       );
+
       const balances = (await instance.getBalances()).balances;
       const allAssets =
         reservedCoins.length > 0 ? subCoins(balances, reservedCoins) : balances;
