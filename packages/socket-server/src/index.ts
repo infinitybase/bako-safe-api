@@ -32,7 +32,7 @@ io.on(SocketEvents.CONNECT, async socket => {
 	const { sessionId, username, request_id } = socket.handshake.auth
 	const requestId = request_id === undefined ? '' : request_id
 
-	const room = `${sessionId}:${username}:${requestId}`
+	const room = `${sessionId}:${username}${requestId && ':'+requestId}`
 
 	socket.data.messageQueue = []
 	await socket.join(room)
@@ -87,10 +87,9 @@ io.on(SocketEvents.CONNECT, async socket => {
 	})
 
 	socket.on(SocketEvents.NEW_NOTIFICATION, data => {
-		const { sessionId, to, request_id } = data
-		console.log('[SOCKET]: RECEIVED MESSAGE FROM', sessionId, to, request_id)
-		const requestId = request_id === undefined ? '' : request_id
-		const room = `${sessionId}:${to}:${requestId}`
+		const { sessionId, to } = data
+		console.log('[SOCKET]: RECEIVED MESSAGE FROM', sessionId, to)
+		const room = `${sessionId}:${to}`
 
 		console.log('[SOCKET]: SEND MESSAGE TO', room)
 
