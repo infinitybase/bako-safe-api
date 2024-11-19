@@ -11,6 +11,8 @@ export enum SocketEvents {
 
 	DEFAULT = 'message',
 
+	NOTIFICATION = 'notification',
+
 	CONNECTED = '[CONNECTED]',
 	DISCONNECTED = '[CLIENT_DISCONNECTED]',
 
@@ -18,6 +20,8 @@ export enum SocketEvents {
 	TX_SIGN = '[TX_EVENT_SIGNED]',
 	TX_CONFIRM = '[TX_EVENT_CONFIRMED]',
 	TX_REQUEST = '[TX_EVENT_REQUESTED]',
+	
+	NEW_NOTIFICATION= '[NEW_NOTIFICATION]',
 }
 
 export enum SocketUsernames {

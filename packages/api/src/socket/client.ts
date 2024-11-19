@@ -3,7 +3,7 @@ import { IMessage, SocketEvents, SocketUsernames } from './types';
 
 
 export class SocketClient {
-  socket: Socket = null;
+  _socket: Socket = null;
 
   constructor(sessionId: string, origin: string) {
     const auth = {
@@ -15,17 +15,21 @@ export class SocketClient {
 
     const isDev = process.env.NODE_ENV === 'development';
     const URL = isDev ? process.env.SOCKET_URL : process.env.API_URL;
-    
-    this.socket = io(URL, { autoConnect: true, auth });
+
+    this._socket = io(URL, { autoConnect: true, auth });
   }
 
   // Método para enviar uma mensagem para o servidor
   sendMessage(message: IMessage) {
-    this.socket.emit(SocketEvents.DEFAULT, message);
+    this._socket.emit(SocketEvents.DEFAULT, message);
   }
 
   // Método para desconectar do servidor Socket.IO
   disconnect() {
-    this.socket.disconnect();
+    this._socket.disconnect();
+  }
+
+  get socket() {
+    return this._socket
   }
 }
