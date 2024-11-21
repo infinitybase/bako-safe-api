@@ -22,7 +22,7 @@ export interface PredicateMember {
 
 @Entity('predicates')
 class Predicate extends Base {
-  @Column()
+  @Column({ unique: true })
   name: string;
 
   @Column({ name: 'predicate_address' })
