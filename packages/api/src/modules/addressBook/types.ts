@@ -81,4 +81,5 @@ export interface IAddressBookService {
   update: (id: string, payload: IUpdateAddressBookPayload) => Promise<AddressBook>;
   delete: (id: string) => Promise<boolean>;
   list: () => Promise<IPagination<AddressBook> | AddressBook[]>;
+  findById: (id: string) => Promise<AddressBook>;
 }
