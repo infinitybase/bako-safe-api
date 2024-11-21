@@ -1,7 +1,5 @@
-import { userInfo } from 'os';
-
 import { Notification, NotificationTitle } from '@src/models';
-
+import { SocketClient } from '@src/socket/client';
 import { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
 import { IOrdination, setOrdination } from '@utils/ordination';
@@ -17,6 +15,9 @@ import { DeepPartial } from 'typeorm';
 import { TransactionService } from '../transaction/services';
 import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
 import { Network } from 'fuels';
+import { SocketEvents, SocketUsernames } from '@src/socket/types';
+
+const { API_URL } = process.env;
 
 export class NotificationService implements INotificationService {
   private _pagination: PaginationParams;
@@ -43,7 +44,7 @@ export class NotificationService implements INotificationService {
 
   async create(payload: ICreateNotificationPayload): Promise<Notification> {
     const partialPayload: DeepPartial<Notification> = payload;
-    return await Notification.create(partialPayload)
+    const notification = await Notification.create(partialPayload)
       .save()
       .then(() => this.findLast())
       .catch(e => {
@@ -53,6 +54,17 @@ export class NotificationService implements INotificationService {
           detail: e,
         });
       });
+
+    const socketClient = new SocketClient(notification.user_id, API_URL);
+    socketClient.socket.emit(SocketEvents.NEW_NOTIFICATION, {
+      sessionId: notification.user_id,
+      to: SocketUsernames.UI,
+      request_id: undefined,
+      type: SocketEvents.NOTIFICATION,
+      data: {}
+    });
+
+    return notification
   }
 
   async list(): Promise<IPagination<Notification> | Notification[]> {
@@ -87,13 +99,13 @@ export class NotificationService implements INotificationService {
 
     return hasPagination
       ? Pagination.create(queryBuilder)
-          .paginate(this._pagination)
-          .then(result => result)
-          .catch(e => Internal.handler(e, 'Error on notification list'))
+        .paginate(this._pagination)
+        .then(result => result)
+        .catch(e => Internal.handler(e, 'Error on notification list'))
       : queryBuilder
-          .getMany()
-          .then(notifications => notifications)
-          .catch(e => Internal.handler(e, 'Error on notification list'));
+        .getMany()
+        .then(notifications => notifications)
+        .catch(e => Internal.handler(e, 'Error on notification list'));
   }
 
   async update(

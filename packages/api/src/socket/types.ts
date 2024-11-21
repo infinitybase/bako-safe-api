@@ -17,6 +17,8 @@ export interface IConnectedSocketUser {
 export enum SocketEvents {
     CONNECT = 'connection',
     DEFAULT = 'message',
+    NOTIFICATION = 'notification',
+    NEW_NOTIFICATION = '[NEW_NOTIFICATION]'
 }
 
 export enum SocketUsernames {
