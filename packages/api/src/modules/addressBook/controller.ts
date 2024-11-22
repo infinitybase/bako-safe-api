@@ -31,7 +31,7 @@ export class AddressBookController {
 
   async create(req: ICreateAddressBookRequest) {
     try {
-      const { address, nickname } = req.body;
+      const { address, nickname, resolver, handle } = req.body;
       const { workspace, network } = req;
       const duplicatedNickname = await new AddressBookService()
         .filter({
@@ -74,6 +74,10 @@ export class AddressBookController {
 
       const newContact = await this.addressBookService.create({
         ...req.body,
+        handle_info: {
+          handle,
+          resolver,
+        },
         user: savedUser,
         owner: workspace,
       });

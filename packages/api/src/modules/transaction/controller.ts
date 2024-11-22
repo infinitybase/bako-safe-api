@@ -1,5 +1,4 @@
 import { TransactionStatus, TransactionType, WitnessStatus } from 'bakosafe';
-import { Provider } from 'fuels';
 import { isUUID } from 'class-validator';
 import { PermissionRoles, Workspace } from '@src/models/Workspace';
 import {
@@ -136,7 +135,7 @@ export class TransactionController {
     workspace,
     network,
   }: ICreateTransactionRequest) {
-    const { predicateAddress, summary, hash } = transaction;
+    const { predicateAddress, summary, hash, handle, resolver } = transaction;
 
     try {
       const existsTx = await Transaction.findOne({
@@ -189,6 +188,8 @@ export class TransactionController {
         type: Transaction.getTypeFromTransactionRequest(transaction.txData),
         status: TransactionStatus.AWAIT_REQUIREMENTS,
         resume: {
+          handle,
+          resolver,
           hash: transaction.hash,
           status: TransactionStatus.AWAIT_REQUIREMENTS,
           witnesses,

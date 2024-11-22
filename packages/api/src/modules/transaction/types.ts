@@ -46,6 +46,8 @@ export interface ITransactionResponse extends Transaction {
 
 export interface ICreateTransactionPayload {
   name: string;
+  handle?: string;
+  resolver?: string;
   hash: string;
   predicateAddress: string;
   status: TransactionStatus;

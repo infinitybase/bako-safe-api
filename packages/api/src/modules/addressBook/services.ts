@@ -51,7 +51,7 @@ export class AddressBookService implements IAddressBookService {
     const hasPagination = this._pagination?.page && this._pagination?.perPage;
     const hasOrdination = this._ordination?.orderBy && this._ordination?.sort;
     const queryBuilder = AddressBook.createQueryBuilder('ab')
-      .select(['ab.id', 'ab.nickname'])
+      .select(['ab.id', 'ab.nickname', 'ab.handle_info'])
       .innerJoin('ab.user', 'user')
       .innerJoin('ab.owner', 'owner')
       .addSelect([
@@ -158,7 +158,7 @@ export class AddressBookService implements IAddressBookService {
 
   async findById(id: string): Promise<AddressBook> {
     const queryBuilder = AddressBook.createQueryBuilder('ab')
-      .select(['ab.id', 'ab.nickname'])
+      .select(['ab.id', 'ab.nickname', 'ab.handle_info'])
       .innerJoin('ab.user', 'user')
       .innerJoin('ab.owner', 'owner')
       .addSelect(['user.id', 'user.address'])

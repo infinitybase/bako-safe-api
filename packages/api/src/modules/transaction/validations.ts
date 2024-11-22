@@ -14,6 +14,8 @@ export const validateAddTransactionPayload = validator.body(
     status: Joi.string()
       .required()
       .valid(...allowedStatus),
+    handle: Joi.string().optional(),
+    resolver: Joi.string().optional(),
     sendTime: Joi.string().optional(),
     gasUsed: Joi.string().optional(),
     resume: Joi.string().optional(),

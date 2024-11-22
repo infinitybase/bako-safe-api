@@ -22,6 +22,12 @@ export enum Sort {
 export interface ICreateAddressBookPayload {
   nickname: string;
   address: string;
+  handle?: string;
+  resolver?: string;
+  handle_info?: {
+    handle?: string;
+    resolver?: string;
+  };
   user: User;
   owner: Workspace;
 }

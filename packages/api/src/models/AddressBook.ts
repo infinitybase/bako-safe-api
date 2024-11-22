@@ -9,6 +9,11 @@ export enum AddressBookType {
   WORKSPACE = 'WORKSPACE',
 }
 
+export type IHandleInfo = {
+  handle?: string;
+  resolver?: string;
+};
+
 @Entity('address_book')
 class AddressBook extends Base {
   @Column({ unique: true })
@@ -21,6 +26,13 @@ class AddressBook extends Base {
   @JoinColumn({ name: 'user_id' })
   @OneToOne(() => User)
   user: User;
+
+  @Column({
+    type: 'jsonb',
+    name: 'handle_info',
+    nullable: true,
+  })
+  handle_info: IHandleInfo;
 }
 
 export default AddressBook;
