@@ -31,6 +31,7 @@ import {
 } from './types';
 
 import { PredicateService } from './services';
+import { NotificationService } from '../notification/services';
 const { FUEL_PROVIDER } = process.env;
 
 export class PredicateController {
@@ -85,6 +86,8 @@ export class PredicateController {
       }
     }
 
+    await new NotificationService().vaultUpdate(predicate.id);
+    
     return successful(predicate, Responses.Ok);
   }
 

@@ -16,6 +16,7 @@ import { TransactionService } from '../transaction/services';
 import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
 import { Network } from 'fuels';
 import { SocketEvents, SocketUsernames } from '@src/socket/types';
+import { PredicateService } from '../predicate/services';
 
 const { API_URL } = process.env;
 
@@ -146,6 +147,28 @@ export class NotificationService implements INotificationService {
       });
   }
 
+
+  async vaultUpdate(vaultId: string) {
+    const vault = await new PredicateService().findById(vaultId);
+
+    if (!vault) {
+      return;
+    }
+
+    const members = vault.members;
+
+    for await (const member of members) {
+      const socketClient = new SocketClient(member.id, API_URL);
+      socketClient.socket.emit(SocketEvents.VAULT_UPDATE, {
+        sessionId: member.id,
+        to: SocketUsernames.UI,
+        request_id: undefined,
+        type: SocketEvents.VAULT_UPDATE,
+        data: {}
+      });
+    }
+  }
+
   async transactionUpdate(txId: string) {
     const tx = await new TransactionService().findById(txId);
 
@@ -153,7 +176,7 @@ export class NotificationService implements INotificationService {
       return;
     }
 
-    const members = await tx.predicate.members;
+    const members = tx.predicate.members;
 
     for await (const member of members) {
       const socketClient = new SocketClient(member.id, API_URL);

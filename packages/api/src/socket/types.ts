@@ -20,6 +20,7 @@ export enum SocketEvents {
     NOTIFICATION = 'notification',
     NEW_NOTIFICATION = '[NEW_NOTIFICATION]',
     TRANSACTION_UPDATE = '[TRANSACTION_UPDATE]',
+    VAULT_UPDATE = '[VAULT_UPDATE]',
 }
 
 export enum SocketUsernames {
