@@ -146,6 +146,27 @@ export class NotificationService implements INotificationService {
       });
   }
 
+  async transactionSigned(txId: string) {
+    const tx = await new TransactionService().findById(txId);
+
+    if (!tx) {
+      return;
+    }
+
+    const members = await tx.predicate.members;
+
+    for await (const member of members) {
+      const socketClient = new SocketClient(member.id, API_URL);
+      socketClient.socket.emit(SocketEvents.TRANSACTION_UPDATE, {
+        sessionId: member.id,
+        to: SocketUsernames.UI,
+        request_id: undefined,
+        type: SocketEvents.TRANSACTION_UPDATE,
+        data: {}
+      });
+    }
+  }
+
   // select all members of predicate
   // create a notification for each member
   async transactionSuccess(txId: string, network: Network) {
@@ -164,13 +185,6 @@ export class NotificationService implements INotificationService {
       workspaceId: tx.predicate.workspace.id,
     };
 
-    // members.forEach(async member => {
-    //   const payload = {
-    //     userId: member.id,
-    //     type: 'TRANSACTION_SUCCESS',
-    //     summary,
-    //   };
-
     for await (const member of members) {
       await this.create({
         title: NotificationTitle.TRANSACTION_COMPLETED,
@@ -185,7 +199,15 @@ export class NotificationService implements INotificationService {
           data: { summary: { ...summary, name: member?.name ?? '' } },
         });
       }
+
+      const socketClient = new SocketClient(member.id, API_URL);
+      socketClient.socket.emit(SocketEvents.TRANSACTION_UPDATE, {
+        sessionId: member.id,
+        to: SocketUsernames.UI,
+        request_id: undefined,
+        type: SocketEvents.TRANSACTION_UPDATE,
+        data: {}
+      });
     }
-    // })
   }
 }
