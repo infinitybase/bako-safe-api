@@ -42,6 +42,7 @@ import {
 } from './types';
 import { createTxHistoryEvent, mergeTransactionLists } from './utils';
 import { In, Not } from 'typeorm';
+import { NotificationService } from '../notification/services';
 
 // todo: use this provider by session, and move to transactions
 const { FUEL_PROVIDER } = process.env;
@@ -409,6 +410,8 @@ export class TransactionController {
       if (newStatus === TransactionStatus.PENDING_SENDER) {
         await this.transactionService.sendToChain(transaction.hash, network);
       }
+
+      await new NotificationService().transactionSigned(transaction.id);
 
       return successful(true, Responses.Ok);
     } catch (e) {
