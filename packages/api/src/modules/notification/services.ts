@@ -146,7 +146,7 @@ export class NotificationService implements INotificationService {
       });
   }
 
-  async transactionSigned(txId: string) {
+  async transactionUpdate(txId: string) {
     const tx = await new TransactionService().findById(txId);
 
     if (!tx) {

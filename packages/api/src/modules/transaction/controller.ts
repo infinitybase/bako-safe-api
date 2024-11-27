@@ -230,6 +230,8 @@ export class TransactionController {
           user_id: member.id,
           network,
         });
+
+        await new NotificationService().transactionUpdate(newTransaction.id);
       }
 
       return successful(newTransaction, Responses.Ok);
@@ -411,7 +413,7 @@ export class TransactionController {
         await this.transactionService.sendToChain(transaction.hash, network);
       }
 
-      await new NotificationService().transactionSigned(transaction.id);
+      await new NotificationService().transactionUpdate(transaction.id);
 
       return successful(true, Responses.Ok);
     } catch (e) {
