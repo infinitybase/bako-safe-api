@@ -18,9 +18,10 @@ export enum SocketEvents {
     CONNECT = 'connection',
     DEFAULT = 'message',
     NOTIFICATION = 'notification',
+
     NEW_NOTIFICATION = '[NEW_NOTIFICATION]',
-    TRANSACTION_UPDATE = '[TRANSACTION_UPDATE]',
-    VAULT_UPDATE = '[VAULT_UPDATE]',
+    TRANSACTION_UPDATE = '[TRANSACTION]',
+    VAULT_UPDATE = '[VAULT]',
 }
 
 export enum SocketUsernames {

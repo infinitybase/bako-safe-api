@@ -32,7 +32,7 @@ io.on(SocketEvents.CONNECT, async socket => {
 	const { sessionId, username, request_id } = socket.handshake.auth
 	const requestId = request_id === undefined ? '' : request_id
 
-	const room = `${sessionId}:${username}${requestId && ':'+requestId}`
+	const room = `${sessionId}:${username}${requestId && `:${requestId}`}`
 
 	socket.data.messageQueue = []
 	await socket.join(room)
@@ -86,12 +86,12 @@ io.on(SocketEvents.CONNECT, async socket => {
 		socket.to(room).emit(SocketEvents.DEFAULT, data)
 	})
 
-	socket.on(SocketEvents.NEW_NOTIFICATION, data => {
+	socket.on(SocketEvents.NOTIFICATION, data => {
 		const { sessionId, to } = data
-		console.log('[SOCKET]: RECEIVED MESSAGE FROM', sessionId, to)
 		const room = `${sessionId}:${to}`
-
-		console.log('[SOCKET]: SEND MESSAGE TO', room)
+		console.log('[SOCKET]: REAL TIME MESSAGE TO FRONT', {
+			room, data
+		})
 
 		socket.to(room).emit(SocketEvents.NOTIFICATION, data)
 	})
@@ -99,6 +99,7 @@ io.on(SocketEvents.CONNECT, async socket => {
 	socket.on('disconnect', () => {
 		console.log('Cliente desconectado:', socket.handshake.auth)
 		socket.disconnect(true)
+		// biome-ignore lint/complexity/noForEach: <explanation>
 		socket.rooms.forEach(room => socket.leave(room))
 		socket.removeAllListeners()
 		socket.data.messageQueue = []
