@@ -57,7 +57,7 @@ export class NotificationService implements INotificationService {
       });
 
     const socketClient = new SocketClient(notification.user_id, API_URL);
-    socketClient.socket.emit(SocketEvents.NEW_NOTIFICATION, {
+    socketClient.socket.emit(SocketEvents.DEFAULT, {
       sessionId: notification.user_id,
       to: SocketUsernames.UI,
       request_id: undefined,
@@ -159,7 +159,7 @@ export class NotificationService implements INotificationService {
 
     for await (const member of members) {
       const socketClient = new SocketClient(member.id, API_URL);
-      socketClient.socket.emit(SocketEvents.VAULT_UPDATE, {
+      socketClient.socket.emit(SocketEvents.DEFAULT, {
         sessionId: member.id,
         to: SocketUsernames.UI,
         request_id: undefined,
@@ -180,7 +180,7 @@ export class NotificationService implements INotificationService {
 
     for await (const member of members) {
       const socketClient = new SocketClient(member.id, API_URL);
-      socketClient.socket.emit(SocketEvents.TRANSACTION_UPDATE, {
+      socketClient.socket.emit(SocketEvents.DEFAULT, {
         sessionId: member.id,
         to: SocketUsernames.UI,
         request_id: undefined,
@@ -224,7 +224,7 @@ export class NotificationService implements INotificationService {
       }
 
       const socketClient = new SocketClient(member.id, API_URL);
-      socketClient.socket.emit(SocketEvents.TRANSACTION_UPDATE, {
+      socketClient.socket.emit(SocketEvents.DEFAULT, {
         sessionId: member.id,
         to: SocketUsernames.UI,
         request_id: undefined,
