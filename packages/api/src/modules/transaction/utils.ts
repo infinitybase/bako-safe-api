@@ -36,7 +36,6 @@ export const formatFuelTransaction = async (
   predicate: Predicate,
   provider: Provider,
 ): Promise<ITransactionResponse> => {
-  const { fuelUnitAssets } = await getAssetsMaps();
   const {
     gasPrice,
     scriptGasLimit,
@@ -103,8 +102,6 @@ export const formatFuelTransaction = async (
     assets: formatAssets(
       outputs,
       predicate.predicateAddress,
-      chainId,
-      fuelUnitAssets,
     ),
     network: {
       url: provider.url,

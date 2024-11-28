@@ -6,8 +6,6 @@ const { FUEL_PROVIDER_CHAIN_ID } = process.env;
 const formatAssets = (
   outputs: TransactionRequestOutput[],
   to?: string,
-  chaindId?: number,
-  fuelUnitAssets?: (chainId: number, assetId: string) => number,
 ) => {
   const assets = outputs
     .filter((output: TransactionRequestOutput) => isOutputCoin(output))
@@ -15,12 +13,9 @@ const formatAssets = (
     .map((output: OutputCoin) => {
       const { assetId, amount, to } = output;
 
-      const units = fuelUnitAssets
-        ? fuelUnitAssets(chaindId ?? Number(FUEL_PROVIDER_CHAIN_ID), assetId)
-        : undefined;
       return {
         assetId,
-        amount: bn(amount).format({ units }),
+        amount: amount.toString(),
         to,
       };
     });

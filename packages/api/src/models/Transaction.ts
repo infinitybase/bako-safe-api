@@ -108,14 +108,9 @@ class Transaction extends Base {
   }
 
   static formatTransactionResponse(transaction: Transaction): ITransactionResponse {
-    const fuelUnitAssets = (chainId: number, assetId: string): number =>
-      handleFuelUnitAssets(cachedAssets ?? [], chainId, assetId);
-
     const assets = formatAssets(
       transaction.txData.outputs,
       undefined,
-      transaction.network.chainId,
-      fuelUnitAssets,
     );
     const result = Object.assign(transaction, {
       assets,
