@@ -15,7 +15,7 @@ const formatAssets = (
 
       return {
         assetId,
-        amount: amount.toString(),
+        amount: String(amount),
         to,
       };
     });
