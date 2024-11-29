@@ -1,4 +1,5 @@
 import {
+  BakoProvider,
   ITransactionResume,
   ITransactionSummary,
   TransactionStatus,
@@ -9,6 +10,7 @@ import {
   TransactionType as FuelTransactionType,
   hexlify,
   Network,
+  getTransactionSummaryFromRequest,
 } from 'fuels';
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
@@ -21,6 +23,7 @@ import { formatAssets } from '@src/utils/formatAssets';
 import { networks } from '@src/mocks/networks';
 import { cachedAssets } from '@src/server/storage/fuelAssetsFetcher';
 import { handleFuelUnitAssets } from '@src/utils/assets';
+import { FuelProvider } from '@src/utils';
 
 const { FUEL_PROVIDER, FUEL_PROVIDER_CHAIN_ID } = process.env;
 
@@ -107,10 +110,14 @@ class Transaction extends Base {
     return transactionType[type] ?? transactionType.default;
   }
 
-  static formatTransactionResponse(transaction: Transaction): ITransactionResponse {
+  static async formatTransactionResponse(transaction: Transaction): Promise<ITransactionResponse> {
+    const { operations } = await getTransactionSummaryFromRequest({
+      transactionRequest: transaction.txData,
+      provider: await FuelProvider.create(transaction.network.url),
+    })
     const assets = formatAssets(
-      transaction.txData.outputs,
-      undefined,
+      operations,
+      transaction.predicate.predicateAddress,
     );
     const result = Object.assign(transaction, {
       assets,

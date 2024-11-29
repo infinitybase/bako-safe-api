@@ -1,26 +1,20 @@
-import { bn, OutputCoin, TransactionRequestOutput } from 'fuels';
-import { isOutputCoin } from './outputTypeValidate';
+import { Operation} from 'fuels';
 
 const { FUEL_PROVIDER_CHAIN_ID } = process.env;
 
 const formatAssets = (
-  outputs: TransactionRequestOutput[],
+  outputs: Operation[],
   to?: string,
 ) => {
-  const assets = outputs
-    .filter((output: TransactionRequestOutput) => isOutputCoin(output))
-    .filter((output: OutputCoin) => (to ? output.to === to : true))
-    .map((output: OutputCoin) => {
-      const { assetId, amount, to } = output;
-
+  return outputs
+    .find((o) => o.to.address === to)
+    .assetsSent.map((asset) => {
       return {
-        assetId,
-        amount: String(amount),
+        assetId: asset.assetId,
+        amount: asset.amount.toString(),
         to,
       };
     });
-
-  return assets;
 };
 
 export { formatAssets };

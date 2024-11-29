@@ -18,17 +18,18 @@ import { ITransactionCounter } from './types';
 import { ITransactionPagination } from './pagination';
 import { getAssetsMaps } from '@src/utils';
 
-export const formatTransactionsResponse = (
+export const formatTransactionsResponse = async (
   transactions: IPagination<Transaction> | Transaction[],
-): IPagination<ITransactionResponse> | ITransactionResponse[] => {
+): Promise<IPagination<ITransactionResponse> | ITransactionResponse[]> => {
   if (Array.isArray(transactions)) {
-    return transactions.map(Transaction.formatTransactionResponse);
-  } else {
+    return await transactions.map(Transaction.formatTransactionResponse);
+  
+  }
     return {
       ...transactions,
       data: transactions.data.map(Transaction.formatTransactionResponse),
     };
-  }
+  
 };
 
 export const formatFuelTransaction = async (
@@ -100,7 +101,7 @@ export const formatFuelTransaction = async (
       },
     },
     assets: formatAssets(
-      outputs,
+      tx.operations,
       predicate.predicateAddress,
     ),
     network: {
