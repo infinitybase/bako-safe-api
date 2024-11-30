@@ -71,7 +71,7 @@ export class TransactionEventHandler {
 				origin,
 				host,	
 			}))
-			const isValid = dapp //&& dapp.origin === origin
+			const isValid = dapp && dapp.origin === origin
 
 			//todo: adicionar emissao de erro
 			if (!isValid) return
@@ -93,9 +93,12 @@ export class TransactionEventHandler {
 				networkUrl: dapp.network.url,
 			})
 			console.log('TX_PENDING', dapp.network.url, tx_pending.count)
-			const provider = await Provider.create(dapp.network.url)
 
-			console.log('VAULT', provider.url)
+			const _provider = dapp.network.url.replace(/^https?:\/\/[^@]+@/, 'https://')
+
+			const provider = await Provider.create(_provider)
+
+			console.log('VAULT', _provider)
 
 
 			const vaultInstance = new Vault(provider, JSON.parse(vault.configurable), vault.version)
@@ -117,7 +120,7 @@ export class TransactionEventHandler {
 						name: dapp.current_vault_name,
 						description: dapp.current_vault_description,
 						address: vault.predicate_address,
-						provider: dapp.network.url,
+						provider: _provider,
 						pending_tx: Number(tx_pending.count) > 0,
 						configurable: vault.configurable,
 						version: vault.version,
