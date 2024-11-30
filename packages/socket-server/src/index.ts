@@ -36,7 +36,7 @@ io.on(SocketEvents.CONNECT, async socket => {
 
 	socket.data.messageQueue = []
 	await socket.join(room)
-	console.log('Conexão estabelecida com o cliente:', room)
+	// console.log('Conexão estabelecida com o cliente:', room)
 	//console.log('[CONEXAO]: ', socket.handshake.auth, socket.id)
 
 	/* 
@@ -77,11 +77,11 @@ io.on(SocketEvents.CONNECT, async socket => {
 	// Lidar com mensagens recebidas do cliente
 	socket.on(SocketEvents.DEFAULT, data => {
 		const { sessionId, to, request_id } = data
-		console.log('[SOCKET]: RECEIVED MESSAGE FROM', sessionId, to, request_id)
+		// console.log('[SOCKET]: RECEIVED MESSAGE FROM', sessionId, to, request_id)
 		const requestId = request_id === undefined ? '' : request_id
 		const room = `${sessionId}:${to}:${requestId}`
 
-		console.log('[SOCKET]: SEND MESSAGE TO', room)
+		// console.log('[SOCKET]: SEND MESSAGE TO', room)
 
 		socket.to(room).emit(SocketEvents.DEFAULT, data)
 	})
@@ -89,15 +89,15 @@ io.on(SocketEvents.CONNECT, async socket => {
 	socket.on(SocketEvents.NOTIFICATION, data => {
 		const { sessionId, to } = data
 		const room = `${sessionId}:${to}`
-		console.log('[SOCKET]: REAL TIME MESSAGE TO FRONT', {
-			room, data
-		})
+		// console.log('[SOCKET]: REAL TIME MESSAGE TO FRONT', {
+		// 	room, data
+		// })
 
 		socket.to(room).emit(SocketEvents.NOTIFICATION, data)
 	})
 
 	socket.on('disconnect', () => {
-		console.log('Cliente desconectado:', socket.handshake.auth)
+		// console.log('Cliente desconectado:', socket.handshake.auth)
 		socket.disconnect(true)
 		// biome-ignore lint/complexity/noForEach: <explanation>
 		socket.rooms.forEach(room => socket.leave(room))
