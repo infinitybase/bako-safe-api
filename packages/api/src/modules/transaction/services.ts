@@ -520,7 +520,7 @@ export class TransactionService implements ITransactionService {
       return await this.findById(id);
     }
 
-    const provider = await FuelProvider.create(transaction.network.url);
+    const provider = await FuelProvider.create(transaction.network.url.replace(/^https?:\/\/[^@]+@/, 'https://'));
 
     const vault = new Vault(
       provider,

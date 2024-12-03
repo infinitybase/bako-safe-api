@@ -66,7 +66,11 @@ export class TransactionEventHandler {
 			const { auth } = socket.handshake
 
 			const dapp = await this.dappService.getBySessionIdWithPredicate(auth.sessionId)
-
+			console.log('[DAPP]: ', JSON.stringify({
+				dapp,
+				origin,
+				host,	
+			}))
 			const isValid = dapp && dapp.origin === origin
 
 			//todo: adicionar emissao de erro
@@ -88,8 +92,15 @@ export class TransactionEventHandler {
 				predicateId: vault.id,
 				networkUrl: dapp.network.url,
 			})
+			console.log('TX_PENDING', dapp.network.url, tx_pending.count)
 
-			const provider = await Provider.create(dapp.network.url)
+			const _provider = dapp.network.url.replace(/^https?:\/\/[^@]+@/, 'https://')
+
+			const provider = await Provider.create(_provider)
+
+			console.log('VAULT', _provider)
+
+
 			const vaultInstance = new Vault(provider, JSON.parse(vault.configurable), vault.version)
 			const { tx } = await vaultInstance.BakoTransfer(_transaction)
 
@@ -109,7 +120,7 @@ export class TransactionEventHandler {
 						name: dapp.current_vault_name,
 						description: dapp.current_vault_description,
 						address: vault.predicate_address,
-						provider: dapp.network.url,
+						provider: _provider,
 						pending_tx: Number(tx_pending.count) > 0,
 						configurable: vault.configurable,
 						version: vault.version,
