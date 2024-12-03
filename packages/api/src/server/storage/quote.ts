@@ -84,6 +84,7 @@ export class QuoteStorage {
 
     const fromTo = {
       usdc: 'usd-coin',
+      usdf: 'usd-coin', // usdf -> token fuel fluid 
       weeth: 'bridged-weeth-linea',
       wbeth: 'wrapped-beacon-eth',
       'manta mbtc': 'manta-mbtc',
