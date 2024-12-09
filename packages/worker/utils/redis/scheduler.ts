@@ -1,7 +1,7 @@
 import { Database } from "../database";
 import myQueue from "./queue";
 
-
+const TIME_SLEEP = 1000000000
 
 const query = ({
     from_block,
@@ -36,19 +36,38 @@ const query = ({
     };
 };
 export const fn = async () => {
+    console.log('[DATABASE] connecting...')
     const db = await Database.connect();
-    console.log("[CONNECTED]");
+    console.log("[DATABASE] Connected!");
     const limit = "2000";
+    // const _predicates = await db.query(
+    //     // `SELECT predicate_address 
+    //     //  FROM predicates 
+    //     //  ORDER BY predicate_address DESC 
+    //     //  LIMIT $1`,
+    //     // [limit]
+    //     `
+    //         SELECT predicate_address
+    //         FROM predicates
+    //         WHERE predicate_address = ANY($1)
+    //     `,
+    //     [
+    //         "0x63403dac4c4b632547c601c40f3c41634afa8b6e34726791eaf2fc12e7e89b75", 
+    //         "0x7b7f3264a8ae5503ac51912a1a3f25455449bb39f3fc2ac133e7c6acebd15123",
+    //     ]
+    // );
+
+    const A = [
+    "0x63403dac4c4b632547c601c40f3c41634afa8b6e34726791eaf2fc12e7e89b75",
+    "0x7b7f3264a8ae5503ac51912a1a3f25455449bb39f3fc2ac133e7c6acebd15123",
+    ];
     const _predicates = await db.query(
-        `SELECT predicate_address 
-         FROM predicates 
-         ORDER BY predicate_address DESC 
-         LIMIT $1`,
-        [limit]
-        // `SELECT predicate_address 
-        //     FROM predicates 
-        //     WHERE predicate_address = $1`,
-        // ['0x63403dac4c4b632547c601c40f3c41634afa8b6e34726791eaf2fc12e7e89b75']
+        `
+            SELECT predicate_address
+            FROM predicates
+            WHERE predicate_address = ANY($1)
+        `,
+        [A]
     );
     const predicates = _predicates;
     for (const predicate of predicates) {
@@ -78,5 +97,5 @@ export const fn = async () => {
 
     setTimeout(async () => {
         await fn();
-    }, 100000);
+    }, TIME_SLEEP);
 };

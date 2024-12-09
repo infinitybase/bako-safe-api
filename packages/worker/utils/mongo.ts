@@ -32,14 +32,14 @@ export interface SchemaFuelAssets extends Document {
 
 
 export interface SchemaPredicateBalance extends Document {
-  _id: string; // `${assetId.slice(0, 10)}-${txId.slice(0, 10)-${amount}}`
   tx_id: string;
   amount: number;
   assetId: string;
-  usdValue: string;
+  usdValue: number;
   predicate: string;
   createdAt: Date;
   verifiedToken: boolean;
+  isDeposit: boolean;
 }
 
 

@@ -88,7 +88,6 @@ function groupByTransaction(data: PredicateBalance[]): PredicateBalanceGrouped {
 
 myQueue.on("completed", (job) => {
     console.log(`Job completed with result: ${job.id}`);
-    // console.log(`Job completed with result: ${JSON.stringify(job.returnvalue)}`);
 })
 
 myQueue.process(async (job) => {
@@ -107,17 +106,49 @@ myQueue.process(async (job) => {
     // biome-ignore lint/complexity/noForEach: <explanation>
     Object.entries(tx_grouped).forEach(([tx_id, {inputs, outputs}]) => {
         for (const o of outputs) {
-            if (o.output_type === OutputType.Coin) {
-                const _id = `${o.asset_id.slice(0, 10)}-${tx_id.slice(0, 10)}-${o.amount}`;
+            if (o.output_type === OutputType.Coin && o.to === predicate_address) {
                 deposits.push({
-                    _id,
                     tx_id,
                     amount: Number(o.amount),
                     assetId: o.asset_id,
                     predicate: predicate_address,
-                    usdValue: '0',
+                    usdValue: 0.0,
                     createdAt: new Date(),
                     verifiedToken: false,
+                    isDeposit: true,
+                });
+            }
+        }
+    })
+
+    // biome-ignore lint/complexity/noForEach: <explanation>
+    Object.entries(tx_grouped).forEach(([tx_id, {inputs, outputs}]) => {
+        // assetId <> amount
+        const inputs_grouped_by_assetId: {
+            [assetId: string]: number;
+        } = {}
+
+        for (const i of inputs) {
+            if (i.input_type === OutputType.Coin && i.owner === predicate_address) {
+                if (!inputs_grouped_by_assetId[i.asset_id]) {
+                    inputs_grouped_by_assetId[i.asset_id] = bn(0).toNumber();
+                }
+                inputs_grouped_by_assetId[i.asset_id] = bn(inputs_grouped_by_assetId[i.asset_id]).add(i.amount).toNumber();
+            }
+        }
+
+        for (const o of outputs) {
+            if (o.output_type === OutputType.Change && o.to === predicate_address) {        
+                const amount = bn(o.amount).sub(inputs_grouped_by_assetId[o.asset_id] ?? 0).toNumber();
+                deposits.push({
+                    tx_id,
+                    amount,
+                    assetId: o.asset_id,
+                    predicate: predicate_address,
+                    usdValue: 0.0,
+                    createdAt: new Date(),
+                    verifiedToken: false,
+                    isDeposit: false,
                 });
             }
         }
@@ -135,13 +166,13 @@ myQueue.process(async (job) => {
         for await (const missAsset of missingAssets) {
             const asset = await fetch(`https://mainnet-explorer.fuel.network/assets/${missAsset}`);
             const assetData = await asset.json();
-            const isNFT = assetData?.is_nft ?? false;
+            const isNFT = assetData?.isNFT ?? false;
             const newAsset: SchemaFuelAssets = {
                 _id: assetData?.asset_id ?? missAsset,
                 name: assetData.name ?? assetData?.metadata?.name ?? '',
                 icon: assetData.icon ?? assetData?.metadata?.URI ?? '',
                 symbol: assetData.symbol,
-                decimals: assetData.decimals ?? isNFT ? 1 : 9,
+                decimals: assetData?.decimals ?? (isNFT ? 1 : 9),
                 verified: assetData?.verified ?? false,
                 isNFT,
             };
@@ -156,7 +187,6 @@ myQueue.process(async (job) => {
         }
 
 
-
         // Deposits
         if (deposits.length > 0) {
             for await (const deposit of deposits) {
@@ -166,23 +196,13 @@ myQueue.process(async (job) => {
                 const depositPriceUsd = bn(deposit.amount).format({
                     units,
                 })
-                const value = `${Number(depositPriceUsd) * usdcPrice}`
-                console.log({
-                    deposit,
-                    usdcPrice,
-                    units,
-                    value,
-                    depositPriceUsd,
+                const value = Number(depositPriceUsd) * usdcPrice * (deposit.isDeposit ? 1 : -1);
+
+                await balance_collection.insertOne({
+                    ...deposit,
+                    usdValue: Number(value.toFixed(12)),
+                    verifiedToken: assets.find(a => a._id === deposit.assetId)?.verified ?? false,
                 })
-                await balance_collection.updateOne(
-                    { _id: deposit._id },
-                    { $setOnInsert: {
-                        ...deposit,
-                        usdValue: value,
-                        verifiedToken: assets.find(a => a._id === deposit.assetId)?.verified ?? false,
-                    } },
-                    { upsert: true }
-                )
             }
         }
     } catch (e) {
@@ -198,7 +218,7 @@ myQueue.process(async (job) => {
 
 // [VALORES ENVIADOS POR PREDICATES]
 // se o address do predicate for owner de um input do tipo 0
-// se o address do predicate for owner de um input do tipo 2
+// se o address do predicate for owner de um output do tipo 2
 
 // subtraia o valor do output pelo input e salve na tabela -> terá sinal negativo
 
