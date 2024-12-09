@@ -59,4 +59,9 @@ export class RedisReadClient {
     return quotes;
   }
 
+  static async getQuote(assetId: string): Promise<number> {
+    const quote = await RedisReadClient.get(`${PREFIX}-${assetId}`);
+    return Number(quote) ?? 1;
+  }
+
 }

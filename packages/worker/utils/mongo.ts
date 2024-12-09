@@ -18,7 +18,14 @@ interface MongoConnectionConfig {
 
 export enum CollectionName {
   PREDICATE_BALANCE = 'predicate_balance',
+  PREDICATE_BLOCKS = 'predicate_blocks',
   FUEL_ASSETS = 'fuel_assets',
+}
+
+export interface SchemaPredicateBlocks extends Document {
+  blockNumber: number;
+  timestamp: number;
+  transactions: number;
 }
 
 export interface SchemaFuelAssets extends Document {
@@ -29,7 +36,6 @@ export interface SchemaFuelAssets extends Document {
   verified: boolean;
   isNFT: boolean;
 }
-
 
 export interface SchemaPredicateBalance extends Document {
   tx_id: string;

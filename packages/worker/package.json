@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node build/index.js",
-    "dev": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register -r dotenv/config index.ts",
+    "worker:dev:start": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register -r dotenv/config index.ts",
     "build": "tsc --project . && tscpaths -p tsconfig.json -s ./src -o ./build"
   },
   "keywords": [],

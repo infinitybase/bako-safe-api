@@ -1,6 +1,6 @@
 import Queue from "bull";
 import { bn, OutputType } from "fuels";
-import { CollectionName, MongoDatabase, type SchemaFuelAssets, type SchemaPredicateBalance } from "../mongo";
+import { CollectionName, MongoDatabase, type SchemaPredicateBlocks, type SchemaFuelAssets, type SchemaPredicateBalance } from "../mongo";
 import { RedisReadClient } from "./RedisReadClient";
 
 type Input = {
@@ -93,13 +93,31 @@ myQueue.on("completed", (job) => {
 myQueue.process(async (job) => {
     await RedisReadClient.start();
     const db = await MongoDatabase.connect();
-    const usdPrices = await RedisReadClient.getActiveQuotes();
     
     const balance_collection = db.getCollection<SchemaPredicateBalance>(CollectionName.PREDICATE_BALANCE);
     const assets_collection = db.getCollection<SchemaFuelAssets>(CollectionName.FUEL_ASSETS);
+    const predicate_block = db.getCollection<SchemaPredicateBlocks>(CollectionName.PREDICATE_BLOCKS);
 
     const { query, predicate_address } = job.data;
     const tx_grouped = groupByTransaction(query.data ?? []);
+    const predicate_sync_block: SchemaPredicateBlocks = {
+        _id: predicate_address,
+        blockNumber: query.next_block,
+        timestamp: Date.now(),
+        transactions: query.data.length,
+    }
+
+    await predicate_block.updateOne(
+        { _id: predicate_sync_block._id },
+        {
+            $setOnInsert: {
+                blockNumber: predicate_sync_block.blockNumber,
+                timestamp: predicate_sync_block.timestamp,
+            },
+            $inc: { transactions: predicate_sync_block.transactions },
+        },
+        { upsert: true }
+    );
 
     const deposits: SchemaPredicateBalance[] = [];
 
@@ -190,7 +208,7 @@ myQueue.process(async (job) => {
         // Deposits
         if (deposits.length > 0) {
             for await (const deposit of deposits) {
-                const usdcPrice = usdPrices[deposit.assetId] ?? 1;
+                const usdcPrice = await RedisReadClient.getQuote(deposit.assetId); 
                 const units = assets.find(a => a._id === deposit.assetId)?.decimals ?? 9;
                 
                 const depositPriceUsd = bn(deposit.amount).format({
