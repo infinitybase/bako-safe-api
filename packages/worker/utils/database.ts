@@ -20,36 +20,36 @@ interface ConnectionConfig {
   };
 }
 
-const isLocal = DATABASE_HOST === '127.0.0.1'
+const isLocal = DATABASE_HOST && DATABASE_HOST === '127.0.0.1' 
 
 export const defaultConnection: ConnectionConfig = {
-  user: DATABASE_USERNAME,
-  password: DATABASE_PASSWORD,
-  database: DATABASE_NAME,
-  host: DATABASE_HOST,
-  port: Number(DATABASE_PORT),
-  ...!isLocal && {
-    ssl: {
+  user: DATABASE_USERNAME ?? 'postgress',
+  password: DATABASE_PASSWORD ?? 'postgress', 
+  database: DATABASE_NAME ?? 'postgress',
+  host: DATABASE_HOST ?? '127.0.0.1',
+  port: Number(DATABASE_PORT ?? '5432'),
+  // ...!isLocal && {
+  ssl: {
       rejectUnauthorized: false
-    }
-  },
+  }
+  // },
 }
 
-export class DatabaseClass {
+export class Database {
   private readonly client: Client
-  private static instance: DatabaseClass;
+  private static instance: Database;
   protected constructor (client: Client) {
     this.client = client
   }
 
-  static async connect (connection: ConnectionConfig = defaultConnection): Promise<DatabaseClass> {
-    if (!DatabaseClass.instance) {
+  static async connect (connection: ConnectionConfig = defaultConnection): Promise<Database> {
+    if (!Database.instance) {
       const cl = new Client(connection)
       await cl.connect();
-      DatabaseClass.instance = new DatabaseClass(cl);
+      Database.instance = new Database(cl);
     }
 
-    return DatabaseClass.instance;
+    return Database.instance;
   }
 
   // biome-ignore lint/suspicious/noExplicitAny: <explanation>

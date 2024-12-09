@@ -1,4 +1,4 @@
-version: '3'
+version: "3.8"
 services:
   db:
     container_name: ${DATABASE_ENVIRONMENT}
@@ -10,6 +10,31 @@ services:
     volumes:
       - ./postgresql${DATABASE_ENVIRONMENT}:/var/lib/postgresql/data
     ports:
-      - "${DATABASE_PORT}:${DATABASE_PORT}"
+      - "${DATABASE_PORT}:5432"
     labels:
       - environment=${DATABASE_ENVIRONMENT}
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USERNAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongodb:
+    container_name: mongodb-${MONGO_ENVIRONMENT}
+    image: mongo:6.0
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    volumes:
+      - ./mongodb${MONGO_ENVIRONMENT}:/data/db
+    ports:
+      - "${MONGO_PORT}:27017"
+    labels:
+      - environment=${MONGO_ENVIRONMENT}
+    restart: always
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
