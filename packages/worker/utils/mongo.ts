@@ -40,6 +40,7 @@ export interface SchemaFuelAssets extends Document {
 export interface SchemaPredicateBalance extends Document {
   tx_id: string;
   amount: number;
+  formatedAmount: number;
   assetId: string;
   usdValue: number;
   predicate: string;
