@@ -2,8 +2,6 @@ import Queue from "bull";
 import { bn, InputType, OutputType } from "fuels";
 import { CollectionName, MongoDatabase, type SchemaPredicateBlocks, type SchemaFuelAssets, type SchemaPredicateBalance } from "../mongo";
 import { RedisReadClient } from "./RedisReadClient";
-import fs from 'node:fs';
-
 
 // fee:
 
@@ -40,10 +38,23 @@ type Output = {
     output_type: number;
 };
 
+type Transaction = {
+    id: string;
+    block_height: number;
+    time: number;
+    status: number;
+};
+
+type Block = {
+    time: number;
+    height: number;
+}
+
 type PredicateBalance = {
     inputs: Input[];
     outputs: Output[];
-    transactions: any[];
+    transactions: Transaction[];
+    blocks: Block[];
 }
 
 type PredicateBalanceQuery = {
@@ -58,8 +69,10 @@ type QueueBalance = {
     query: PredicateBalanceQuery;
 }
 
+type PredicateBalanceTx = { inputs: Input[]; outputs: Output[], time: Date}
+
 type PredicateBalanceGrouped = {
-    [tx_id: string]: { inputs: Input[]; outputs: Output[], time: number};
+    [tx_id: string]: PredicateBalanceTx;
 }
 
 
@@ -84,12 +97,23 @@ const myQueue = new Queue<QueueBalance>("example-queue", {
 });
 
 function groupByTransaction(data: PredicateBalance[]): PredicateBalanceGrouped {
-    const groupedData: Record<string, { inputs: Input[]; outputs: Output[], time: number }> = {};
+    const groupedData: Record<string, PredicateBalanceTx> = {};
+    const groupedBlocks: Record<string, Date> = {};
+
+    
+
+    // console.log('[DATA]', data.length)
     for (const block of data) {
+        for (const _block of block.blocks){
+            if (!groupedBlocks[_block.height]) {
+                groupedBlocks[_block.height] = new Date(_block.time * 1000);
+            }
+        }
+
         // Processa os inputs
         for (const input of block.inputs) {
             if (!groupedData[input.tx_id]) {
-                groupedData[input.tx_id] = { inputs: [], outputs: [], time: new Date().getTime() };
+                groupedData[input.tx_id] = { inputs: [], outputs: [], time: new Date() };
             }
             groupedData[input.tx_id].inputs.push(input);
         }
@@ -97,7 +121,7 @@ function groupByTransaction(data: PredicateBalance[]): PredicateBalanceGrouped {
         // Processa os outputs
         for (const output of block.outputs) {
             if (!groupedData[output.tx_id]) {
-                groupedData[output.tx_id] = { inputs: [], outputs: [], time: new Date().getTime() };
+                groupedData[output.tx_id] = { inputs: [], outputs: [], time: new Date() };
             }
             groupedData[output.tx_id].outputs.push(output);
         }
@@ -108,7 +132,7 @@ function groupByTransaction(data: PredicateBalance[]): PredicateBalanceGrouped {
             if(tx.status === 3) {
                 delete groupedData[tx.id];
             }else{
-                groupedData[tx.id] = { ...groupedData[tx.id], time: tx.time };
+                groupedData[tx.id] = { ...groupedData[tx.id], time: groupedBlocks[tx.block_height] };
             }
         }
     }
@@ -234,7 +258,7 @@ myQueue.process(async (job) => {
                     assetId: ETH,
                     predicate: predicate_address,
                     usdValue: 0.0,
-                    createdAt: new Date(),
+                    createdAt: new Date(tx_grouped[tx_id].time),
                     verifiedToken: true,
                     isDeposit: true,
                     formatedAmount: 0.0
@@ -273,7 +297,7 @@ myQueue.process(async (job) => {
                 assetId,
                 predicate: predicate_address,
                 usdValue: 0.0,
-                createdAt: new Date(),
+                createdAt: new Date(tx_grouped[tx_id].time),
                 verifiedToken: true,
                 isDeposit: false,
                 formatedAmount: 0.0,
@@ -294,7 +318,7 @@ myQueue.process(async (job) => {
                     assetId: o.asset_id,
                     predicate: predicate_address,
                     usdValue: 0.0,
-                    createdAt: new Date(),
+                    createdAt: new Date(tx_grouped[tx_id].time),
                     verifiedToken: false,
                     isDeposit: true,
                     formatedAmount: 0.0,

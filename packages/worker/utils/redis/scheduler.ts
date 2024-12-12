@@ -36,6 +36,7 @@ const query = ({
                 output: ["tx_id", "to", "amount", "asset_id", "output_type"],
                 input: ["tx_id", "owner", "amount", "asset_id", "input_type", "recipient"],
                 transaction: ["id", "block_height", "time", "status"],
+                block: ["time", "height"],
             },
         }),
     };
