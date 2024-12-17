@@ -101,6 +101,10 @@ export class DappController {
         origin,
       );
 
+
+    
+
+
       if (!dapp) {
         return successful(null, Responses.NoContent);
       }
@@ -109,6 +113,7 @@ export class DappController {
 
       const userToken = await TokenUtils.getTokenByUser(user.id);
       await new DAppsService().delete(sessionId, origin);
+      await RedisWriteClient.del([`${PREFIX}-${sessionId}`]);
       await App.getInstance()._sessionCache.removeSession(userToken?.token);
       return successful(null, Responses.NoContent);
     } catch (e) {
@@ -215,7 +220,7 @@ export class DappController {
       return error(e.error, e.statusCode);
     }
   }
-
+  
   async state({ params, headers }: IDappRequest) {
     try {
       const onCache = await RedisReadClient.get(params.sessionId);
