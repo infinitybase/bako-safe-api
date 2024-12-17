@@ -225,7 +225,9 @@ export class DappController {
         .then((data: DApp) => {
           return !!data;
         });
-        await RedisWriteClient.set(`${PREFIX}-${params.sessionId}`, JSON.stringify(dapp));
+        if(dapp){
+          await RedisWriteClient.set(`${PREFIX}-${params.sessionId}`, JSON.stringify(dapp));
+        }
         return successful(dapp, Responses.Ok);
       }
       return successful(JSON.parse(onCache), Responses.Ok);
