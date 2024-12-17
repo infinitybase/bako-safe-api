@@ -221,7 +221,7 @@ export class DappController {
   async state({ params, headers }: IDappRequest) {
     try {
       const cacheName = `${PREFIX}-${params.sessionId}`;
-      const onCache = !!JSON.stringify(await RedisReadClient.get(cacheName));
+      const onCache = await RedisReadClient.get(cacheName) === '1';
       if(!onCache) {
         const dapp = await this._dappService
         .findBySessionID(params.sessionId, headers.origin || headers.Origin)
@@ -229,7 +229,7 @@ export class DappController {
           const has = !!data;
           if(!has){
             console.log('[ADD_DAPP_STATE]: ', cacheName);
-            await RedisWriteClient.set(cacheName, JSON.stringify(dapp));
+            await RedisWriteClient.set(cacheName, '1');
           }
           return has;
         });
