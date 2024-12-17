@@ -102,9 +102,6 @@ export class DappController {
       );
 
 
-    
-
-
       if (!dapp) {
         return successful(null, Responses.NoContent);
       }
@@ -223,19 +220,22 @@ export class DappController {
   
   async state({ params, headers }: IDappRequest) {
     try {
-      const onCache = await RedisReadClient.get(params.sessionId);
+      const cacheName = `${PREFIX}-${params.sessionId}`;
+      const onCache = !!JSON.stringify(await RedisReadClient.get(cacheName));
       if(!onCache) {
         const dapp = await this._dappService
         .findBySessionID(params.sessionId, headers.origin || headers.Origin)
-        .then((data: DApp) => {
-          return !!data;
+        .then(async (data: DApp) => {
+          const has = !!data;
+          if(!has){
+            console.log('[ADD_DAPP_STATE]: ', cacheName);
+            await RedisWriteClient.set(cacheName, JSON.stringify(dapp));
+          }
+          return has;
         });
-        if(dapp){
-          await RedisWriteClient.set(`${PREFIX}-${params.sessionId}`, JSON.stringify(dapp));
-        }
         return successful(dapp, Responses.Ok);
       }
-      return successful(JSON.parse(onCache), Responses.Ok);
+      return successful(onCache, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }
