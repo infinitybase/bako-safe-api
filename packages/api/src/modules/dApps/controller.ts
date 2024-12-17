@@ -5,7 +5,7 @@ import { DApp, Predicate, RecoverCodeType, User } from '@src/models';
 import { SocketClient } from '@src/socket/client';
 
 import { error } from '@utils/error';
-import { Responses, TokenUtils, bindMethods, successful } from '@utils/index';
+import { RedisReadClient, RedisWriteClient, Responses, TokenUtils, bindMethods, successful } from '@utils/index';
 
 import { PredicateService } from '../predicate/services';
 import { RecoverCodeService } from '../recoverCode/services';
@@ -21,6 +21,8 @@ import { ITransactionResponse } from '../transaction/types';
 import App from '@src/server/app';
 
 const { API_URL, FUEL_PROVIDER } = process.env;
+
+const PREFIX = 'session-connector';
 
 export class DappController {
   private _dappService: IDAppsService;
@@ -216,14 +218,17 @@ export class DappController {
 
   async state({ params, headers }: IDappRequest) {
     try {
-      return successful(
-        await this._dappService
-          .findBySessionID(params.sessionId, headers.origin || headers.Origin)
-          .then((data: DApp) => {
-            return !!data;
-          }),
-        Responses.Ok,
-      );
+      const onCache = await RedisReadClient.get(params.sessionId);
+      if(!onCache) {
+        const dapp = await this._dappService
+        .findBySessionID(params.sessionId, headers.origin || headers.Origin)
+        .then((data: DApp) => {
+          return !!data;
+        });
+        await RedisWriteClient.set(`${PREFIX}-${params.sessionId}`, JSON.stringify(dapp));
+        return successful(dapp, Responses.Ok);
+      }
+      return successful(onCache, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }
