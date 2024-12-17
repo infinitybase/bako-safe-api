@@ -5,7 +5,7 @@ import { DApp, Predicate, RecoverCodeType, User } from '@src/models';
 import { SocketClient } from '@src/socket/client';
 
 import { error } from '@utils/error';
-import { RedisReadClient, RedisWriteClient, Responses, TokenUtils, bindMethods, successful } from '@utils/index';
+import { Responses, TokenUtils, bindMethods, successful } from '@utils/index';
 
 import { PredicateService } from '../predicate/services';
 import { RecoverCodeService } from '../recoverCode/services';
@@ -21,8 +21,6 @@ import { ITransactionResponse } from '../transaction/types';
 import App from '@src/server/app';
 
 const { API_URL, FUEL_PROVIDER } = process.env;
-
-const PREFIX = 'session-connector';
 
 export class DappController {
   private _dappService: IDAppsService;
@@ -110,7 +108,6 @@ export class DappController {
 
       const userToken = await TokenUtils.getTokenByUser(user.id);
       await new DAppsService().delete(sessionId, origin);
-      await RedisWriteClient.del([`${PREFIX}-${sessionId}`]);
       await App.getInstance()._sessionCache.removeSession(userToken?.token);
       return successful(null, Responses.NoContent);
     } catch (e) {
@@ -220,22 +217,14 @@ export class DappController {
   
   async state({ params, headers }: IDappRequest) {
     try {
-      const cacheName = `${PREFIX}-${params.sessionId}`;
-      const onCache = await RedisReadClient.get(cacheName) === '1';
-      if(!onCache) {
-        const dapp = await this._dappService
-        .findBySessionID(params.sessionId, headers.origin || headers.Origin)
-        .then(async (data: DApp) => {
-          const has = !!data;
-          if(!has){
-            console.log('[ADD_DAPP_STATE]: ', cacheName);
-            await RedisWriteClient.set(cacheName, '1');
-          }
-          return has;
-        });
-        return successful(dapp, Responses.Ok);
-      }
-      return successful(onCache, Responses.Ok);
+      return successful(
+        await this._dappService
+          .findBySessionID(params.sessionId, headers.origin || headers.Origin)
+          .then((data: DApp) => {
+            return !!data;
+          }),
+        Responses.Ok,
+      );
     } catch (e) {
       return error(e.error, e.statusCode);
     }
