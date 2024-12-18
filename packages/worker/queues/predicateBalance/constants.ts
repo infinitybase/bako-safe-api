@@ -6,3 +6,4 @@ export const TRANSACTION_STATUS = {
     Failed: 3,
 }
 
+export const QUEUE_BALANCE = "queue_balance"

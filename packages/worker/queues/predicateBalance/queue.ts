@@ -1,17 +1,17 @@
 import Queue from "bull";
-import { CollectionName, MongoDatabase, type SchemaPredicateBlocks, type SchemaFuelAssets, type SchemaPredicateBalance } from "../mongo";
-import { RedisReadClient } from "./RedisReadClient";
-import { type QueueBalance, groupByTransaction, syncPredicateBlock, syncBalance, makeDeposits, syncAssets } from "../../queues/predicateBalance";
-import { predicateTransactions } from "../../queues/predicateBalance/utils/envioQuery";
+import { CollectionName, MongoDatabase, type SchemaPredicateBlocks, type SchemaFuelAssets, type SchemaPredicateBalance } from "../../utils/mongo";
+import { RedisReadClient } from "../../utils/redis/RedisReadClient";
+import { type QueueBalance, groupByTransaction, syncPredicateBlock, syncBalance, makeDeposits, syncAssets, QUEUE_BALANCE } from ".";
+import { predicateTransactions } from "./utils/envioQuery";
 
-const myQueue = new Queue<QueueBalance>("example-queue", {
+const balanceQueue = new Queue<QueueBalance>(QUEUE_BALANCE, {
   redis: {
     host: process.env.REDIS_HOST || "127.0.0.1",
     port: Number(process.env.REDIS_PORT) || 6379,
   },
 });
 
-myQueue.process(async (job) => {
+balanceQueue.process(async (job) => {
     await RedisReadClient.start();
     const db = await MongoDatabase.connect();
 
@@ -48,9 +48,9 @@ myQueue.process(async (job) => {
     }
 });
 
-// myQueue.on("completed", (job) => {
+// balanceQueue.on("completed", (job) => {
 //     console.log(job.returnvalue);
 // });
 
 
-export default myQueue;
+export default balanceQueue;

@@ -1,9 +1,9 @@
 import { ExpressAdapter } from "@bull-board/express";
 import { BullAdapter } from "@bull-board/api/bullAdapter";
 import { createBullBoard } from "@bull-board/api";
-import myQueue from "./utils/redis/queue";
+import myQueue from "./queues/predicateBalance/queue";
 import express from "express";
-import { fn } from "./utils/redis/scheduler";
+import { fn } from "./queues/predicateBalance/scheduler";
 
 const app = express();
 const serverAdapter = new ExpressAdapter();

@@ -72,16 +72,35 @@ export class MongoDatabase {
     connection: MongoConnectionConfig = defaultMongoConnection
   ): Promise<MongoDatabase> {
     if (!MongoDatabase.instance) {
+      // to atlas
+      // const uri = connection.username && connection.password
+      //   ? `mongodb+srv://${connection.username}:${connection.password}@${connection.host}/${connection.database}?retryWrites=true&w=majority`
+      //   : `mongodb+srv://${connection.host}/${connection.database}?retryWrites=true&w=majority`;
+  
+      // to local
       const uri = connection.username && connection.password
-        ? `mongodb://${connection.username}:${connection.password}@${connection.host}:${connection.port}`
-        : `mongodb://${connection.host}:${connection.port}`;
-      const client = new MongoClient(uri);
-      await client.connect();
-      const db = client.db(connection.database);
-      MongoDatabase.instance = new MongoDatabase(client, db);
+      ? `mongodb://${connection.username}:${connection.password}@${connection.host}:${connection.port}`
+      : `mongodb://${connection.host}:${connection.port}`;
+
+
+      const client = new MongoClient(uri, { 
+        serverApi: { version: '1', strict: true, deprecationErrors: true },
+        // tls: true // SSL/TLS obrigatório no MongoDB Atlas
+      });
+  
+      try {
+        await client.connect();
+        console.log('Connected to MongoDB successfully.');
+        const db = client.db(connection.database);
+        MongoDatabase.instance = new MongoDatabase(client, db);
+      } catch (error) {
+        console.error('Failed to connect to MongoDB:', error);
+        throw error;
+      }
     }
     return MongoDatabase.instance;
   }
+  
 
   getCollection<T extends Document>(collectionName: string): Collection<T> {
     return this.db.collection<T>(collectionName);
