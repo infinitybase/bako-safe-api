@@ -32,7 +32,7 @@ export class QuoteStorage {
   }
 
   private async addMockQuotes(QuotesMock: IQuote[]): Promise<void> {
-    QuotesMock &&
+          // biome-ignore lint/complexity/noForEach: <explanation>
       QuotesMock.forEach(async quote => {
         await this.setQuote(quote.assetId, quote.price);
       });

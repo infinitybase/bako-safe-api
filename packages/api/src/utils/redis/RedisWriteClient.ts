@@ -1,4 +1,4 @@
-import { RedisClientType, createClient } from 'redis';
+import { type RedisClientType, createClient } from 'redis';
 
 const REDIS_URL_WRITE = process.env.REDIS_URL_WRITE || 'redis://127.0.0.1:6379';
 
@@ -22,7 +22,9 @@ export class RedisWriteClient {
 
   static async set(key: string, value: string | number) {
     try {
-      await RedisWriteClient.client.set(key, value);
+      await RedisWriteClient.client.set(key, value, {
+        EX: 60 * 40, // 40 minutes
+      });
     } catch (e) {
       console.error('[CACHE_SET_ERROR]', e, key, value);
     }

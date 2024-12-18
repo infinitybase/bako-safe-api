@@ -1,27 +1,27 @@
 import { TransactionStatus } from 'bakosafe';
 import { addMinutes } from 'date-fns';
 
-import { DApp, Predicate, RecoverCodeType, User } from '@src/models';
+import { type DApp, Predicate, RecoverCodeType, User } from '@src/models';
 import { SocketClient } from '@src/socket/client';
 
 import { error } from '@utils/error';
-import { Responses, TokenUtils, bindMethods, successful } from '@utils/index';
+import { RedisReadClient, RedisWriteClient, Responses, TokenUtils, bindMethods, successful } from '@utils/index';
 
 import { PredicateService } from '../predicate/services';
 import { RecoverCodeService } from '../recoverCode/services';
 import { TransactionService } from '../transaction/services';
 import { DAppsService } from './service';
-import {
+import type {
   ICreateRecoverCodeRequest,
   ICreateRequest,
   IDAppsService,
   IDappRequest,
 } from './types';
-import { ITransactionResponse } from '../transaction/types';
+import type { ITransactionResponse } from '../transaction/types';
 import App from '@src/server/app';
 
 const { API_URL, FUEL_PROVIDER } = process.env;
-
+const PREFIX = 'dapp';
 export class DappController {
   private _dappService: IDAppsService;
 
@@ -40,7 +40,7 @@ export class DappController {
       if (!dapp) {
         dapp = await new DAppsService().create({
           sessionId,
-          name: name ?? ``,
+          name: name ?? '',
           origin,
           vaults: [predicate],
           currentVault: predicate,
@@ -69,6 +69,8 @@ export class DappController {
           connected: true,
         },
       });
+
+      await RedisWriteClient.set(`${PREFIX}${sessionId}`, JSON.stringify(dapp));
 
       return successful(true, Responses.Created);
     } catch (e) {
@@ -99,6 +101,7 @@ export class DappController {
         origin,
       );
 
+
       if (!dapp) {
         return successful(null, Responses.NoContent);
       }
@@ -108,6 +111,7 @@ export class DappController {
       const userToken = await TokenUtils.getTokenByUser(user.id);
       await new DAppsService().delete(sessionId, origin);
       await App.getInstance()._sessionCache.removeSession(userToken?.token);
+      await RedisWriteClient.del([`${PREFIX}${sessionId}`]);
       return successful(null, Responses.NoContent);
     } catch (e) {
       return error(e.error, e.statusCode);
@@ -175,6 +179,14 @@ export class DappController {
 
   async current({ params }: IDappRequest) {
     try {
+      const dappCache = await RedisReadClient.get(`${PREFIX}${params.sessionId}`);
+      const dapp = dappCache ? JSON.parse(dappCache) : null;
+      if(dapp) {
+        return successful(
+          dapp.currentVault.predicateAddress,
+          Responses.Ok,
+        );
+      }
       const currentVaultId = await this._dappService.findCurrent(params.sessionId);
       return successful(currentVaultId, Responses.Ok);
     } catch (e) {
@@ -184,6 +196,16 @@ export class DappController {
 
   async currentNetwork({ params, headers }: IDappRequest) {
     try {
+      const dappCache = await RedisReadClient.get(`${PREFIX}${params.sessionId}`);
+      const _dapp = dappCache ? JSON.parse(dappCache) : null;
+      if(_dapp) {
+        return successful(
+          _dapp.network.url,
+          Responses.Ok,
+        );
+      }
+
+
       const dapp = await this._dappService.findBySessionID(
         params.sessionId,
         headers.origin || headers.Origin,
@@ -203,6 +225,15 @@ export class DappController {
 
   async accounts({ params, headers }: IDappRequest) {
     try {
+      const dappCache = await RedisReadClient.get(`${PREFIX}${params.sessionId}`);
+      const dapp = dappCache ? JSON.parse(dappCache) : null;
+      if(dapp) {
+        return successful(
+          dapp.vaults.map(vault => vault.predicateAddress),
+          Responses.Ok,
+        );
+      }
+
       return successful(
         await this._dappService
           .findBySessionID(params.sessionId, headers.origin || headers.Origin)
@@ -213,15 +244,28 @@ export class DappController {
       return error(e.error, e.statusCode);
     }
   }
-
+  
   async state({ params, headers }: IDappRequest) {
     try {
-      return successful(
-        await this._dappService
+      const dappCache = await RedisReadClient.get(`${PREFIX}${params.sessionId}`);
+      const dapp = dappCache ? JSON.parse(dappCache) : null;
+
+      if(!dapp) {
+        const _dapp = await this._dappService
           .findBySessionID(params.sessionId, headers.origin || headers.Origin)
           .then((data: DApp) => {
             return !!data;
-          }),
+          });
+
+          if(!_dapp) {
+            return successful(false, Responses.Ok);
+          }
+          await RedisWriteClient.set(`${PREFIX}${params.sessionId}`, JSON.stringify(_dapp));
+          return successful(true, Responses.Ok);
+      }
+
+      return successful(
+        !!dapp,
         Responses.Ok,
       );
     } catch (e) {
@@ -245,6 +289,7 @@ export class DappController {
       // TODO: VERIFY HERE
       // set on bakosafesession
       await TokenUtils.changeNetwork(dapp.user.id, networkUrl);
+      await RedisWriteClient.set(`${PREFIX}${sessionId}`, JSON.stringify(dapp));
 
       return successful(true, Responses.Ok);
     } catch (e) {
