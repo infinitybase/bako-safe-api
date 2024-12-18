@@ -1,23 +1,18 @@
 import { Database } from "../../utils/database";
 import balanceQueue from "./queue";
 import cron from "node-cron";
-import { predicates } from '../../mocks/predicates';
-
-const EX_EXP = '0 8,20 * * *';
+import { EX_EXP } from "./constants";
 
 export const fn = async () => {
     try {
         console.log('[SCHEDULER] Starting...');
         const db = await Database.connect();
-        // const predicates = await db.query(
-        //     `SELECT predicate_address 
-        //      FROM predicates`
-        // );
-        const pr = predicates("PROD");
-
-        console.log('[predicates]: ', pr.length);
+        const predicates = await db.query(
+            `SELECT predicate_address 
+             FROM predicates`
+        );
         
-        for (const p of pr) {
+        for (const p of predicates) {
             await balanceQueue.add(
                 {
                     predicate_address: p.predicate_address,
@@ -38,10 +33,9 @@ export const fn = async () => {
 
 export const startScheduler = () => {
     console.log('[CRON] Starting scheduler...');
-    
-    // // Executa imediatamente a tarefa
-    // fn()
-    //     .catch(error => console.error('[CRON] Immediate execution error:', error));
+
+    // 1st execution
+    fn();
 
     // Agendamento do cron
     cron.schedule(EX_EXP, async () => {
@@ -49,5 +43,3 @@ export const startScheduler = () => {
         await fn();
     });
 };
-
-startScheduler();

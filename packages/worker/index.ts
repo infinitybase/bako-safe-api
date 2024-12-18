@@ -3,7 +3,7 @@ import { BullAdapter } from "@bull-board/api/bullAdapter";
 import { createBullBoard } from "@bull-board/api";
 import myQueue from "./queues/predicateBalance/queue";
 import express from "express";
-import { fn } from "./queues/predicateBalance/scheduler";
+import { startScheduler } from "./queues/predicateBalance/scheduler";
 
 const app = express();
 const serverAdapter = new ExpressAdapter();
@@ -18,5 +18,4 @@ app.use("/admin/queues", serverAdapter.getRouter());
 
 app.listen(3000, () => console.log("Server running on http://localhost:3000"));
 
-fn();
-
+startScheduler();

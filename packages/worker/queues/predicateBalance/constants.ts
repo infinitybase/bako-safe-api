@@ -7,3 +7,4 @@ export const TRANSACTION_STATUS = {
 }
 
 export const QUEUE_BALANCE = "queue_balance"
+export const EX_EXP = '0 8,20 * * *';
