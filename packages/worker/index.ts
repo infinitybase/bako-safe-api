@@ -1,15 +1,15 @@
 import { ExpressAdapter } from "@bull-board/express";
 import { BullAdapter } from "@bull-board/api/bullAdapter";
 import { createBullBoard } from "@bull-board/api";
-import myQueue from "./queues/predicateBalance/queue";
+import balanceQueue from "./queues/predicateBalance/queue";
 import express from "express";
-import { startScheduler } from "./queues/predicateBalance/scheduler";
+import { startBalanceScheduler } from "./queues";
 
 const app = express();
 const serverAdapter = new ExpressAdapter();
 
 createBullBoard({
-  queues: [new BullAdapter(myQueue)],
+  queues: [new BullAdapter(balanceQueue)],
   serverAdapter,
 });
 
@@ -18,4 +18,4 @@ app.use("/admin/queues", serverAdapter.getRouter());
 
 app.listen(3000, () => console.log("Server running on http://localhost:3000"));
 
-startScheduler();
+startBalanceScheduler();
