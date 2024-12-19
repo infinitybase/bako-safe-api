@@ -20,7 +20,7 @@ const prod = [
         "0x01148c6a565f830e01a65160f7da98b6442425eac61ab9a9f9a78e17b5f2189e"
   ];
 
-export const predicates = (env: 'PROD' | 'STG') => {
+export const predicates_list = (env: 'PROD' | 'STG') => {
   const list = env === 'PROD' ? prod : stg;
   console.log(list)
   return list.map((i) => {

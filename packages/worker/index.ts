@@ -3,8 +3,7 @@ import { BullAdapter } from "@bull-board/api/bullAdapter";
 import { createBullBoard } from "@bull-board/api";
 import balanceQueue from "./queues/predicateBalance/queue";
 import express from "express";
-import { startBalanceCron } from "./queues";
-import { startAssetsCron } from "./queues/assetsValue/scheduler";
+import { startAssetsCron, startBalanceCron } from "./queues";
 
 const app = express();
 const serverAdapter = new ExpressAdapter();
@@ -20,5 +19,6 @@ app.get('/healthcheck', ({ res }) => res?.status(200).send({ status: 'ok' }));
 
 app.listen(3000, () => console.log("Server running on http://localhost:3000"));
 
-startBalanceCron();
 startAssetsCron();
+startBalanceCron();
+

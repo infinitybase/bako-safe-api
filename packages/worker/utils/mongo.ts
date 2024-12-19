@@ -80,14 +80,14 @@ export class MongoDatabase {
   ): Promise<MongoDatabase> {
     if (!MongoDatabase.instance) {
       // to atlas
-      // const uri = connection.username && connection.password
-      //   ? `mongodb+srv://${connection.username}:${connection.password}@${connection.host}/${connection.database}?retryWrites=true&w=majority`
-      //   : `mongodb+srv://${connection.host}/${connection.database}?retryWrites=true&w=majority`;
+      const uri = connection.username && connection.password
+        ? `mongodb+srv://${connection.username}:${connection.password}@${connection.host}/${connection.database}?retryWrites=true&w=majority`
+        : `mongodb+srv://${connection.host}/${connection.database}?retryWrites=true&w=majority`;
   
       // to local
-      const uri = connection.username && connection.password
-      ? `mongodb://${connection.username}:${connection.password}@${connection.host}:${connection.port}`
-      : `mongodb://${connection.host}:${connection.port}`;
+      // const uri = connection.username && connection.password
+      // ? `mongodb://${connection.username}:${connection.password}@${connection.host}:${connection.port}`
+      // : `mongodb://${connection.host}:${connection.port}`;
 
 
       const client = new MongoClient(uri, { 

@@ -22,6 +22,7 @@ balanceQueue.process(async (job) => {
     const balance_collection = db.getCollection<SchemaPredicateBalance>(CollectionName.PREDICATE_BALANCE);
     const assets_collection = db.getCollection<SchemaFuelAssets>(CollectionName.FUEL_ASSETS);
     const predicate_block = db.getCollection<SchemaPredicateBlocks>(CollectionName.PREDICATE_BLOCKS);
+    const price_collection = db.getCollection<SchemaFuelAssets>(CollectionName.ASSET_BALANCE);
     
     try {
         // group by transaction
@@ -39,7 +40,7 @@ balanceQueue.process(async (job) => {
         // process balance
         const deposits: SchemaPredicateBalance[] = await makeDeposits(tx_grouped, predicate_address);
         const assets = await syncAssets(deposits, assets_collection);
-        await syncBalance(deposits, balance_collection, assets);
+        await syncBalance(deposits, balance_collection, assets, price_collection);
         
         return `Processed ${deposits.length} deposits for ${predicate_address}`;
     } catch (e) {

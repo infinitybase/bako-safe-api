@@ -1,8 +1,9 @@
 import assetQueue from "./queue";
 import cron from "node-cron";
-import { EX_EXP } from "./constants";
+import { EX_EXP, QUEUE_ASSET } from "./constants";
 
-export const fn = async () => {
+const fn = async () => {
+    console.log(`[${QUEUE_ASSET}] Scheduler...`);
             await assetQueue.add({}, 
                 {
                     attempts: 3,
@@ -11,17 +12,19 @@ export const fn = async () => {
                     removeOnFail: false,
                 }
             );
+
+    console.log(`[${QUEUE_ASSET}] Finished processing scheduler.`);
 };
 
 export const startAssetsCron = () => {
-    console.log('[CRON] Starting scheduler...');
+    console.log(`[${QUEUE_ASSET}] Starting scheduler...`);
 
     // 1st execution
     fn();
 
     // Agendamento do cron
     cron.schedule(EX_EXP, async () => {
-        console.log('[CRON] Executing scheduled task...');
+        console.log(`[${QUEUE_ASSET}] Executing scheduled task...`);
         await fn();
     });
 };
