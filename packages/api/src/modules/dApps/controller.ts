@@ -80,6 +80,14 @@ export class DappController {
 
   async currentAccount({ params, headers }: IDappRequest) {
     try {
+      const dappCache = await RedisReadClient.get(`${PREFIX}${params.sessionId}`);
+      const dapp = dappCache ? JSON.parse(dappCache) : null;
+      if(dapp) {
+        return successful(
+          dapp.currentVault.predicateAddress,
+          Responses.Ok,
+        );
+      }
       const account = await this._dappService.findBySessionID(
         params.sessionId,
         headers.origin ?? headers.Origin,
