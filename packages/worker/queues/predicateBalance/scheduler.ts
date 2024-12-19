@@ -31,7 +31,7 @@ export const fn = async () => {
     }
 };
 
-export const startBalanceScheduler = () => {
+export const startBalanceCron = () => {
     console.log('[CRON] Starting scheduler...');
 
     // 1st execution

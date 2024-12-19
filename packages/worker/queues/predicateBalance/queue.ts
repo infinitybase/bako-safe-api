@@ -48,9 +48,4 @@ balanceQueue.process(async (job) => {
     }
 });
 
-// balanceQueue.on("completed", (job) => {
-//     console.log(job.returnvalue);
-// });
-
-
 export default balanceQueue;

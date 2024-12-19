@@ -20,6 +20,13 @@ export enum CollectionName {
   PREDICATE_BALANCE = 'predicate_balance',
   PREDICATE_BLOCKS = 'predicate_blocks',
   FUEL_ASSETS = 'fuel_assets',
+  ASSET_BALANCE = 'asset_balance',
+}
+
+export interface SchemaAssetBalance extends Document {
+  _id: string; // asset id
+  usdValue: number;
+  createdAt: Date;
 }
 
 export interface SchemaPredicateBlocks extends Document {
