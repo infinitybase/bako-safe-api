@@ -80,6 +80,14 @@ export class DappController {
 
   async currentAccount({ params, headers }: IDappRequest) {
     try {
+      const dappCache = await RedisReadClient.get(`${PREFIX}${params.sessionId}`);
+      const dapp = dappCache ? JSON.parse(dappCache) : null;
+      if(dapp) {
+        return successful(
+          dapp.currentVault.predicateAddress,
+          Responses.Ok,
+        );
+      }
       const account = await this._dappService.findBySessionID(
         params.sessionId,
         headers.origin ?? headers.Origin,
@@ -254,7 +262,7 @@ export class DappController {
         const _dapp = await this._dappService
           .findBySessionID(params.sessionId, headers.origin || headers.Origin)
           .then((data: DApp) => {
-            return !!data;
+            return data;
           });
 
           if(!_dapp) {
@@ -263,9 +271,9 @@ export class DappController {
           await RedisWriteClient.set(`${PREFIX}${params.sessionId}`, JSON.stringify(_dapp));
           return successful(true, Responses.Ok);
       }
-
+      
       return successful(
-        !!dapp,
+        true,
         Responses.Ok,
       );
     } catch (e) {
