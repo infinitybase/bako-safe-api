@@ -258,7 +258,7 @@ export class DappController {
       const dappCache = await RedisReadClient.get(`${PREFIX}${params.sessionId}`);
       const dapp = dappCache ? JSON.parse(dappCache) : null;
 
-      if(!dapp) {
+      if(!dapp.id) {
         const _dapp = await this._dappService
           .findBySessionID(params.sessionId, headers.origin || headers.Origin)
           .then((data: DApp) => {
@@ -273,7 +273,7 @@ export class DappController {
       }
 
       return successful(
-        !!dapp,
+        !!dapp.id,
         Responses.Ok,
       );
     } catch (e) {

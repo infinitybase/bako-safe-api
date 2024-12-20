@@ -20,12 +20,6 @@ const {
   createConnectorCode,
 } = new DappController(dAppService);
 
-// browser cache
-router.use((req, res, next) => {
-  res.set('Cache-Control', 'no-store');
-  next();
-});
-
 router.post('/', authMiddleware, handleResponse(connect));
 
 router.get(

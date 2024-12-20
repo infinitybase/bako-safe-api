@@ -23,7 +23,7 @@ export class RedisWriteClient {
   static async set(key: string, value: string | number) {
     try {
       await RedisWriteClient.client.set(key, value, {
-        EX: 60 * 40, // 40 minutes
+        EX: 60 * 60 * 48, // 40 minutes
       });
     } catch (e) {
       console.error('[CACHE_SET_ERROR]', e, key, value);
