@@ -6,6 +6,10 @@ import express from "express";
 import BalanceCron from "./queues/predicateBalance/scheduler";
 import AssetCron from "./queues/assetsValue/scheduler";
 import assetQueue from "./queues/assetsValue/queue";
+import { MongoDatabase } from "./utils/mongoClient";
+import { PsqlClient } from "./utils";
+
+const { WORKER_PORT } = process.env;
 
 const app = express();
 const serverAdapter = new ExpressAdapter();
@@ -19,7 +23,12 @@ serverAdapter.setBasePath("/admin/queues");
 app.use("/admin/queues", serverAdapter.getRouter());
 app.get("/healthcheck", ({ res }) => res?.status(200).send({ status: "ok" }));
 
+MongoDatabase.connect();
+PsqlClient.connect();
+
 BalanceCron.create();
 AssetCron.create();
 
-app.listen(3000, () => console.log("Server running on http://localhost:3000"));
+app.listen(WORKER_PORT ?? 3063, () =>
+  console.log(`Server running on ${WORKER_PORT}`)
+);

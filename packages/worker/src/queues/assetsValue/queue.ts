@@ -1,5 +1,5 @@
 import Queue from "bull";
-import { CollectionName, MongoDatabase } from "../../utils/mongo";
+import { CollectionName, MongoDatabase } from "../../utils/mongoClient";
 import { QUEUE_ASSET } from "./constants";
 import { fetchQuotes } from "./utils";
 

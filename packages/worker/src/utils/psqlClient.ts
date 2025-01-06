@@ -33,23 +33,23 @@ export const defaultConnection: ConnectionConfig = {
   }
 }
 
-export class Database {
+export class PsqlClient {
   private readonly client: Client
-  private static instance: Database;
+  private static instance: PsqlClient;
   protected constructor (client: Client) {
     this.client = client
   }
 
-  static async connect (connection: ConnectionConfig = defaultConnection): Promise<Database> {
+  static async connect (connection: ConnectionConfig = defaultConnection): Promise<PsqlClient> {
     try {
-      if (!Database.instance) {
+      if (!PsqlClient.instance) {
         const client = new Client(connection)
         console.log('[PSQL]: Connecting to PostgreSQL...')
         await client.connect()
-        Database.instance = new Database(client)
+        PsqlClient.instance = new PsqlClient(client)
       }
       console.log('[PSQL]: Connected to PostgreSQL successfully.')
-      return Database.instance
+      return PsqlClient.instance
     }catch (error) {
       console.error('[PSQL]: Error on connection', error)
       throw error

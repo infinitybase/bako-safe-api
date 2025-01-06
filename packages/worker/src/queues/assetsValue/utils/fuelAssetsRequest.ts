@@ -4,28 +4,29 @@ import { FUEL_ASSETS_URL, QUEUE_ASSET } from "../constants";
 const blocklist = ['rsteth', 'rsusde', 're7lrt', 'amphreth'];
 
 const format = (asset: Assets) => {
-    return asset.reduce<{
-        name: string;
-        slug: string;
-        assetId: string;
-    }[]>((acc, asset) => {
-        if (blocklist.includes(asset.name.toLocaleLowerCase())) return acc;
-        // biome-ignore lint/complexity/noForEach: <explanation>
-        asset.networks
-          .filter(
-            network => network && 'assetId' in network && network.type === 'fuel',
-          )
-          .forEach((network: NetworkFuel) =>
-            acc.push({
-              name: asset.name,
-              slug: asset.name,
-              assetId: network.assetId,
-            }),
-          );
-  
-        return acc;
-      }, []);
-}
+  return asset.reduce<
+    { name: string; slug: string; assetId: string }[]
+  >((acc, asset) => {
+    if (blocklist.includes(asset.name.toLocaleLowerCase())) {
+      return acc;
+    }
+
+    asset.networks
+      .filter(
+        (network): network is NetworkFuel =>
+          network.type === 'fuel' && 'assetId' in network
+      )
+      .forEach((network) => {
+        acc.push({
+          name: asset.name,
+          slug: asset.name,
+          assetId: network.assetId,
+        });
+      });
+
+    return acc;
+  }, []);
+};
 
 
 export const fetchFuelAssets = async (): Promise<{

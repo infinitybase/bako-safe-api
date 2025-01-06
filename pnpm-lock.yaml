@@ -348,6 +348,9 @@ importers:
       '@types/bull':
         specifier: ^4.10.4
         version: 4.10.4
+      '@types/node-cron':
+        specifier: 3.0.11
+        version: 3.0.11
       axios:
         specifier: 1.5.1
         version: 1.5.1
@@ -372,6 +375,9 @@ importers:
       mongodb:
         specifier: ^6.11.0
         version: 6.11.0
+      node-cron:
+        specifier: 3.0.3
+        version: 3.0.3
       pg:
         specifier: 8.5.1
         version: 8.5.1
@@ -2912,7 +2918,6 @@ packages:
 
   /@types/node-cron@3.0.11:
     resolution: {integrity: sha512-0ikrnug3/IyneSHqCBeslAhlK2aBfYek1fGo4bP4QnZPmiqSGRK+Oy7ZMisLWkesffJvQ1cqAcBnJC+8+nxIAg==}
-    dev: true
 
   /@types/node@20.6.0:
     resolution: {integrity: sha512-najjVq5KN2vsH2U/xyh2opaSEz6cZMR2SetLIlxlj08nOcmPOemJmUK2o4kUzfLqfrWE0PIrNeE16XhYDd3nqg==}

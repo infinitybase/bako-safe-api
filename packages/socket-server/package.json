@@ -1,7 +1,7 @@
 {
 	"name": "bakosafe-socket-server",
 	"description": "An express server with socket.io for bakosafe to emmit events to the all ecosystem",
-	"author": "Infinitybase - Guilherme Roque",
+	"author": "Guilherme Roque",
 	"license": "Apache-2.0",
 	"version": "0.0.1",
 	"scripts": {
