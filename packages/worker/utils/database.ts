@@ -1,38 +1,36 @@
-// eslint-disable-next-line prettier/prettier
 import { Client, type QueryResult } from 'pg'
 
 const {
-  DATABASE_HOST,
-  DATABASE_PORT,
-  DATABASE_USERNAME,
-  DATABASE_PASSWORD,
-  DATABASE_NAME
+  WORKER_DATABASE_HOST,
+  WORKER_DATABASE_PORT,
+  WORKER_DATABASE_USERNAME,
+  WORKER_DATABASE_PASSWORD,
+  WORKER_DATABASE_NAME
 } = process.env
 
 interface ConnectionConfig {
-  user: string
-  password: string
-  database: string
-  host: string
-  port: number
+  user?: string
+  password?: string
+  database?: string
+  host?: string
+  port?: number
   ssl: {
     rejectUnauthorized: boolean
   };
 }
 
-const isLocal = DATABASE_HOST && DATABASE_HOST === '127.0.0.1' 
+const isLocal = WORKER_DATABASE_HOST ? WORKER_DATABASE_HOST === '127.0.0.1' : true
+
 
 export const defaultConnection: ConnectionConfig = {
-  user: DATABASE_USERNAME ?? 'postgress',
-  password: DATABASE_PASSWORD ?? 'postgress', 
-  database: DATABASE_NAME ?? 'postgress',
-  host: DATABASE_HOST ?? '127.0.0.1',
-  port: Number(DATABASE_PORT ?? '5432'),
-  // ...!isLocal && {
+  user: WORKER_DATABASE_USERNAME,
+  password: WORKER_DATABASE_PASSWORD,
+  database: WORKER_DATABASE_NAME,
+  host: WORKER_DATABASE_HOST,
+  port: Number(WORKER_DATABASE_PORT),
   ssl: {
-      rejectUnauthorized: false
+      rejectUnauthorized: false,
   }
-  // },
 }
 
 export class Database {
@@ -43,23 +41,28 @@ export class Database {
   }
 
   static async connect (connection: ConnectionConfig = defaultConnection): Promise<Database> {
-    if (!Database.instance) {
-      const cl = new Client(connection)
-      await cl.connect();
-      Database.instance = new Database(cl);
+    try {
+      if (!Database.instance) {
+        const client = new Client(connection)
+        console.log('[PSQL]: Connecting to PostgreSQL...')
+        await client.connect()
+        Database.instance = new Database(client)
+      }
+      console.log('[PSQL]: Connected to PostgreSQL successfully.')
+      return Database.instance
+    }catch (error) {
+      console.error('[PSQL]: Error on connection', error)
+      throw error
     }
-
-    return Database.instance;
   }
 
-  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   async query (query: string, params?: string[]): Promise<any> {
     try {
       const { rows }: QueryResult = await this.client.query(query, params)
       if (rows.length === 1) return rows[0]
       return rows
     } catch (error) {
-      console.error('Erro ao executar a query:', error)
+      console.error('[PSQL]: Error on query', error)
       throw error
     }
   }

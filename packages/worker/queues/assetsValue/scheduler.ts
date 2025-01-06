@@ -1,30 +1,53 @@
 import assetQueue from "./queue";
 import cron from "node-cron";
-import { EX_EXP, QUEUE_ASSET } from "./constants";
+import { CRON_EXPRESSION, QUEUE_ASSET } from "./constants";
 
 const fn = async () => {
-    console.log(`[${QUEUE_ASSET}] Scheduler...`);
-            await assetQueue.add({}, 
-                {
-                    attempts: 3,
-                    backoff: 5000,
-                    removeOnComplete: true,
-                    removeOnFail: false,
-                }
-            );
-
-    console.log(`[${QUEUE_ASSET}] Finished processing scheduler.`);
+  console.log(`[${QUEUE_ASSET}] Scheduler running.`);
+  await assetQueue.add(
+    {},
+    {
+      attempts: 3,
+      backoff: 5000,
+      removeOnComplete: true,
+      removeOnFail: false,
+    }
+  );
 };
 
-export const startAssetsCron = () => {
-    console.log(`[${QUEUE_ASSET}] Starting scheduler...`);
+class AssetCron {
+  private static instance: AssetCron;
+  private isRunning: boolean = false;
 
-    // 1st execution
-    fn();
+  private constructor() {}
 
-    // Agendamento do cron
-    cron.schedule(EX_EXP, async () => {
-        console.log(`[${QUEUE_ASSET}] Executing scheduled task...`);
-        await fn();
+  public static create(): AssetCron {
+    if (!this.instance) {
+      this.instance = new AssetCron();
+    }
+    if (!this.instance.isRunning) {
+      this.instance.start();
+    }
+    return this.instance;
+  }
+
+  public start(): void {
+    console.log(`[CRON] ${QUEUE_ASSET} Starting asset cron`, {
+      CRON_EXPRESSION,
+      INITIAL_DELAY: 0, //
     });
-};
+
+    if (this.isRunning) {
+      return;
+    }
+
+    this.isRunning = true;
+    fn(); // 1st run
+
+    cron.schedule(CRON_EXPRESSION, () => {
+      fn();
+    });
+  }
+}
+
+export default AssetCron;

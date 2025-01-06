@@ -1,18 +1,22 @@
 import Queue from "bull";
 import { CollectionName, MongoDatabase, type SchemaPredicateBlocks, type SchemaFuelAssets, type SchemaPredicateBalance } from "../../utils/mongo";
-import { RedisReadClient } from "../../utils/redis/RedisReadClient";
 import { type QueueBalance, groupByTransaction, syncPredicateBlock, syncBalance, makeDeposits, syncAssets, QUEUE_BALANCE } from ".";
 import { predicateTransactions } from "./utils/envioQuery";
 
+const {
+  WORKER_REDIS_HOST,
+  WORKER_REDIS_PORT,
+} = process.env;
+
+
 const balanceQueue = new Queue<QueueBalance>(QUEUE_BALANCE, {
   redis: {
-    host: process.env.REDIS_HOST || "127.0.0.1",
-    port: Number(process.env.REDIS_PORT) || 6379,
+    host: WORKER_REDIS_HOST,
+    port: Number(WORKER_REDIS_PORT),
   },
 });
 
 balanceQueue.process(async (job) => {
-    await RedisReadClient.start();
     const db = await MongoDatabase.connect();
 
     const { predicate_address } = job.data;
