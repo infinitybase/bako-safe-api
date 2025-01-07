@@ -21,6 +21,7 @@ const fn = async () => {
           backoff: 5000,
           removeOnComplete: true,
           removeOnFail: false,
+          priority: 3,
         }
       );
     }
