@@ -5,9 +5,6 @@ on:
     branches:
       - FEAT/index-vaaul-balance
 
-env:
-  CLUSTER_NAME: "Bako-Safe-ECS"
-
 jobs:
   check-changes:
     name: "Check for Changes"
@@ -64,7 +61,7 @@ jobs:
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login_ecr.outputs.registry }}
-          ECR_REPOSITORY: "bako-safe-worker"
+          ECR_REPOSITORY: bako-safe-worker
           IMAGE_TAG: ${{ github.sha }}
         run: |
           echo "Building Docker image..."
@@ -78,6 +75,6 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ./packages/worker/task_def.json
-          service: "bako-safe-worker-service"
-          cluster: ${{ env.CLUSTER_NAME }}
+          service: bako-safe-worker-service
+          cluster: Bako-Safe-ECS
           wait-for-service-stability: true
