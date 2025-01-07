@@ -2,17 +2,11 @@ import Queue from "bull";
 import { CollectionName, MongoDatabase, type SchemaPredicateBlocks, type SchemaFuelAssets, type SchemaPredicateBalance } from "../../utils/mongoClient";
 import { type QueueBalance, groupByTransaction, syncPredicateBlock, syncBalance, makeDeposits, syncAssets, QUEUE_BALANCE } from ".";
 import { predicateTransactions } from "./utils/envioQuery";
-
-const {
-  WORKER_REDIS_HOST,
-} = process.env;
+import { redisConfig } from "@/utils/redis";
 
 
 const balanceQueue = new Queue<QueueBalance>(QUEUE_BALANCE, {
-    redis: {
-      host: WORKER_REDIS_HOST,
-      port: 6379,
-    },
+    redis: redisConfig,
 })
 
 

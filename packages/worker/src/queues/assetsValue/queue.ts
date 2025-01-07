@@ -2,14 +2,10 @@ import Queue from "bull";
 import { CollectionName, MongoDatabase } from "../../utils/mongoClient";
 import { QUEUE_ASSET } from "./constants";
 import { fetchQuotes } from "./utils";
-
-const { WORKER_REDIS_HOST } = process.env;
+import { redisConfig } from "@/utils/redis";
 
 const assetQueue = new Queue(QUEUE_ASSET, {
-  redis: {
-    host: WORKER_REDIS_HOST,
-    port: 6379,
-  },
+  redis: redisConfig,
 });
 
 assetQueue.process(async (job) => {
