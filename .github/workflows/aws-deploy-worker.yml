@@ -6,7 +6,6 @@ on:
       - FEAT/index-vaaul-balance
 
 env:
-  PACKAGE_NAME: "worker"
   CLUSTER_NAME: "Bako-Safe-ECS"
 
 jobs:
@@ -23,21 +22,14 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Set dynamic environment variables
-        run: |
-          echo "BASE_PATH=./packages/${{ env.PACKAGE_NAME }}" >> $GITHUB_ENV
-          echo "TASK_DEF_PATH=$BASE_PATH/task_def.json" >> $GITHUB_ENV
-          echo "SERVICE_NAME=bako-safe-${{ env.PACKAGE_NAME }}-service" >> $GITHUB_ENV
-          echo "ECR_REPOSITORY=bako-safe-${{ env.PACKAGE_NAME }}" >> $GITHUB_ENV
-
-      - name: Check for changes in ${{ env.PACKAGE_NAME }}
+      - name: Check for changes in ./packages/worker
         id: check
         run: |
-          if git diff --quiet HEAD~1 -- $BASE_PATH; then
-            echo "No changes detected in $BASE_PATH"
+          if git diff --quiet HEAD~1 -- ./packages/worker; then
+            echo "No changes detected in ./packages/worker"
             echo "::set-output name=should_deploy::false"
           else
-            echo "Changes detected in $BASE_PATH"
+            echo "Changes detected in ./packages/worker"
             echo "::set-output name=should_deploy::true"
           fi
 
@@ -72,27 +64,20 @@ jobs:
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login_ecr.outputs.registry }}
-          ECR_REPOSITORY: $ECR_REPOSITORY
+          ECR_REPOSITORY: "bako-safe-worker"
           IMAGE_TAG: ${{ github.sha }}
         run: |
           echo "Building Docker image..."
-          echo "BASE_PATH: $BASE_PATH"
-
-          # Verifica se a variável BASE_PATH está definida
-          if [ -z "$BASE_PATH" ]; then
-            echo "Error: BASE_PATH is not defined or is empty."
-            exit 1
-          fi
 
           # Comando Docker para build e push
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $BASE_PATH
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./packages/worker
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: $TASK_DEF_PATH
-          service: $SERVICE_NAME
+          task-definition: ./packages/worker/task_def.json
+          service: "bako-safe-worker-service"
           cluster: ${{ env.CLUSTER_NAME }}
           wait-for-service-stability: true
