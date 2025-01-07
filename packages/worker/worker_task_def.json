@@ -1,5 +1,4 @@
 {
-  "taskDefinitionArn": "arn:aws:ecs:us-east-1:392170836981:task-definition/bako-safe-worker:2",
   "containerDefinitions": [
     {
       "name": "bako-safe-worker",
@@ -44,46 +43,8 @@
   "taskRoleArn": "arn:aws:iam::392170836981:role/ecs-api-bsafe-s3-bako-safe-env",
   "executionRoleArn": "arn:aws:iam::392170836981:role/ecsTaskExecutionRole",
   "networkMode": "awsvpc",
-  "revision": 2,
   "volumes": [],
-  "status": "ACTIVE",
-  "requiresAttributes": [
-    {
-      "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
-    },
-    {
-      "name": "ecs.capability.execution-role-awslogs"
-    },
-    {
-      "name": "com.amazonaws.ecs.capability.ecr-auth"
-    },
-    {
-      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
-    },
-    {
-      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.28"
-    },
-    {
-      "name": "ecs.capability.env-files.s3"
-    },
-    {
-      "name": "com.amazonaws.ecs.capability.task-iam-role"
-    },
-    {
-      "name": "ecs.capability.execution-role-ecr-pull"
-    },
-    {
-      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
-    },
-    {
-      "name": "ecs.capability.task-eni"
-    },
-    {
-      "name": "com.amazonaws.ecs.capability.docker-remote-api.1.29"
-    }
-  ],
   "placementConstraints": [],
-  "compatibilities": ["EC2", "FARGATE"],
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "1024",
   "memory": "2048",
@@ -91,8 +52,6 @@
     "cpuArchitecture": "ARM64",
     "operatingSystemFamily": "LINUX"
   },
-  "registeredAt": "2025-01-07T14:15:39.007Z",
-  "registeredBy": "arn:aws:iam::392170836981:user/jota",
   "tags": [
     {
       "key": "name",
