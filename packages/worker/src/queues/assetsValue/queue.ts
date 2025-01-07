@@ -3,12 +3,14 @@ import { CollectionName, MongoDatabase } from "../../utils/mongoClient";
 import { QUEUE_ASSET } from "./constants";
 import { fetchQuotes } from "./utils";
 
-const { WORKER_REDIS_HOST, WORKER_REDIS_PORT } = process.env;
+const { WORKER_REDIS_HOST } = process.env;
 
 const assetQueue = new Queue(QUEUE_ASSET, {
   redis: {
     host: WORKER_REDIS_HOST,
-    port: Number(WORKER_REDIS_PORT),
+    tls: {
+      rejectUnauthorized: false,
+    },
   },
 });
 

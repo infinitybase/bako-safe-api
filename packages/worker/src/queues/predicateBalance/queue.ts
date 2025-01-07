@@ -12,7 +12,9 @@ const {
 const balanceQueue = new Queue<QueueBalance>(QUEUE_BALANCE, {
   redis: {
     host: WORKER_REDIS_HOST,
-    port: Number(WORKER_REDIS_PORT),
+    tls: {
+      rejectUnauthorized: false,
+    },
   },
 });
 
