@@ -6,13 +6,10 @@ import { fetchQuotes } from "./utils";
 const { WORKER_REDIS_HOST } = process.env;
 
 const assetQueue = new Queue(QUEUE_ASSET, {
-  redis: {
-    host: WORKER_REDIS_HOST,
-    tls: {
-      rejectUnauthorized: false,
-    },
-  },
+  redis: WORKER_REDIS_HOST,
 });
+
+console.log("[QUEUE_CREATION]", assetQueue.name);
 
 assetQueue.process(async (job) => {
   const db = await MongoDatabase.connect();
