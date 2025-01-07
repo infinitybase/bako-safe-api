@@ -28,12 +28,13 @@ jobs:
           else
             echo "Changes detected in ./packages/api"
             echo "::set-output name=should_deploy::true"
+          fi
 
   deploy:
     name: "[WORKER] Deploy to Amazon ECS"
     needs: check-changes
     runs-on: ubuntu-latest
-    if: needs.check-changes.outputs.should_deploy == 'true' # Só executa se houver alterações
+    if: needs.check-changes.outputs.should_deploy == 'true'
 
     steps:
       - name: Checkout
