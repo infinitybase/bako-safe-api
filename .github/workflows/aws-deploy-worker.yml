@@ -5,6 +5,14 @@ on:
     branches:
       - FEAT/index-vaaul-balance
 
+env:
+  PACKAGE_NAME: "worker"
+  BASE_PATH: "./packages/${{ env.PACKAGE_NAME }}"
+  TASK_DEF_PATH: "${{ env.BASE_PATH }}/task_def.json"
+  SERVICE_NAME: "bako-safe-${{ env.PACKAGE_NAME }}-service"
+  ECR_REPOSITORY: "bako-safe-${{ env.PACKAGE_NAME }}"
+  CLUSTER_NAME: "Bako-Safe-ECS"
+
 jobs:
   check-changes:
     name: "Check for Changes"
@@ -19,14 +27,14 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Check for changes in ./packages/worker
+      - name: Check for changes in ${{ env.BASE_PATH }}
         id: check
         run: |
-          if git diff --quiet HEAD~1 -- ./packages/worker; then
-            echo "No changes detected in ./packages/worker"
+          if git diff --quiet HEAD~1 -- ${{ env.BASE_PATH }}; then
+            echo "No changes detected in ${{ env.BASE_PATH }}"
             echo "::set-output name=should_deploy::false"
           else
-            echo "Changes detected in ./packages/worker"
+            echo "Changes detected in ${{ env.BASE_PATH }}"
             echo "::set-output name=should_deploy::true"
           fi
 
@@ -61,17 +69,17 @@ jobs:
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login_ecr.outputs.registry }}
-          ECR_REPOSITORY: bako-safe-worker
+          ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./packages/api
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ${{ env.BASE_PATH }}
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: ./packages/api/task_def.json
-          service: bako-safe-api-service
-          cluster: Bako-Safe-ECS
+          task-definition: ${{ env.TASK_DEF_PATH }}
+          service: ${{ env.SERVICE_NAME }}
+          cluster: ${{ env.CLUSTER_NAME }}
           wait-for-service-stability: true

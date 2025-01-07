@@ -47,7 +47,6 @@ console.log(
   })
 );
 
-// force change
 const app = express();
 const serverAdapter = new ExpressAdapter();
 
