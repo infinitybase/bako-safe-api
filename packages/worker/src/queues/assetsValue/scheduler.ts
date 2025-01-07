@@ -39,6 +39,8 @@ class AssetCron {
       return;
     }
 
+    fn(); // 1st execution to enable queue immediately
+
     this.isRunning = true;
     cron.schedule(CRON_EXPRESSION, () => {
       fn();
