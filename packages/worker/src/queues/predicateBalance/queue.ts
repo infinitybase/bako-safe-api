@@ -9,10 +9,12 @@ const {
 
 
 const balanceQueue = new Queue<QueueBalance>(QUEUE_BALANCE, {
-  redis: WORKER_REDIS_HOST,
-});
+    redis: {
+      host: WORKER_REDIS_HOST,
+      port: 6379,
+    },
+})
 
-console.log("[QUEUE_CREATION]", balanceQueue.name);
 
 balanceQueue.process(async (job) => {
     const db = await MongoDatabase.connect();

@@ -5,11 +5,6 @@ import { CRON_EXPRESSION, INITIAL_DELAY, QUEUE_BALANCE } from "./constants";
 
 const fn = async () => {
   try {
-    console.log(`[CRON] ${QUEUE_BALANCE} Scheduler running.`);
-    console.log(
-      `[CRON] ${QUEUE_BALANCE} Scheduler started.`,
-      balanceQueue.name
-    );
     const db = await PsqlClient.connect();
     const predicates = await db.query(
       `SELECT predicate_address 
@@ -17,7 +12,7 @@ const fn = async () => {
     );
 
     for (const p of predicates) {
-      await balanceQueue.add(
+      const a = await balanceQueue.add(
         {
           predicate_address: p.predicate_address,
         },
@@ -28,9 +23,13 @@ const fn = async () => {
           removeOnFail: false,
         }
       );
+
+      console.log(
+        `[${QUEUE_BALANCE}] Scheduler finished. With ${a.id}, ${balanceQueue.name}`
+      );
     }
   } catch (error) {
-    console.error(`[CRON] ${QUEUE_BALANCE} error on scheduling:`, error);
+    console.error(`[${QUEUE_BALANCE}] error on scheduling:`, error);
   }
 };
 
@@ -51,11 +50,6 @@ class BalanceCron {
   }
 
   public start(): void {
-    console.log(`[CRON] ${QUEUE_BALANCE} Starting balance cron`, {
-      CRON_EXPRESSION,
-      INITIAL_DELAY,
-    });
-
     if (this.isRunning) {
       return;
     }

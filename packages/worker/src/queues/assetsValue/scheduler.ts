@@ -4,8 +4,6 @@ import { CRON_EXPRESSION, QUEUE_ASSET } from "./constants";
 
 const fn = async () => {
   try {
-    console.log(`[${QUEUE_ASSET}] Scheduler running.`);
-    console.log(`[${QUEUE_ASSET}] Scheduler started.`, assetQueue.name);
     const queue = await assetQueue.add(
       {},
       {
@@ -15,7 +13,6 @@ const fn = async () => {
         removeOnFail: false,
       }
     );
-
     console.log(
       `[${QUEUE_ASSET}] Scheduler finished. With ${queue.id}, ${assetQueue.name}`
     );
@@ -41,11 +38,6 @@ class AssetCron {
   }
 
   public start(): void {
-    console.log(`[CRON] ${QUEUE_ASSET} Starting asset cron`, {
-      CRON_EXPRESSION,
-      INITIAL_DELAY: 0, //
-    });
-
     if (this.isRunning) {
       return;
     }

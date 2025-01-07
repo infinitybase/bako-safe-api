@@ -6,19 +6,17 @@ import { fetchQuotes } from "./utils";
 const { WORKER_REDIS_HOST } = process.env;
 
 const assetQueue = new Queue(QUEUE_ASSET, {
-  redis: WORKER_REDIS_HOST,
+  redis: {
+    host: WORKER_REDIS_HOST,
+    port: 6379,
+  },
 });
-
-console.log("[QUEUE_CREATION]", assetQueue.name);
 
 assetQueue.process(async (job) => {
   const db = await MongoDatabase.connect();
   const collection = db.getCollection(CollectionName.ASSET_BALANCE);
 
-  console.log("[QUEUE_ASSET] exec", job.data.assetId);
-
   const quots = await fetchQuotes();
-  console.log("[QUEUE_ASSET] quotes", quots);
   for await (const quote of quots) {
     await collection.updateOne(
       // @ts-ignore
