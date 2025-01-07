@@ -13,9 +13,6 @@ const fn = async () => {
         removeOnFail: false,
       }
     );
-    console.log(
-      `[${QUEUE_ASSET}] Scheduler finished. With ${queue.id}, ${assetQueue.name}`
-    );
   } catch (e) {
     console.error(e);
   }
@@ -43,8 +40,6 @@ class AssetCron {
     }
 
     this.isRunning = true;
-    fn(); // 1st run
-
     cron.schedule(CRON_EXPRESSION, () => {
       fn();
     });

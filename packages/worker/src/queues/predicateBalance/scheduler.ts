@@ -23,10 +23,6 @@ const fn = async () => {
           removeOnFail: false,
         }
       );
-
-      console.log(
-        `[${QUEUE_BALANCE}] Scheduler finished. With ${a.id}, ${balanceQueue.name}`
-      );
     }
   } catch (error) {
     console.error(`[${QUEUE_BALANCE}] error on scheduling:`, error);
