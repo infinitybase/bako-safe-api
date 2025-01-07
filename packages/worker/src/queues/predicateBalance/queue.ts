@@ -5,7 +5,6 @@ import { predicateTransactions } from "./utils/envioQuery";
 
 const {
   WORKER_REDIS_HOST,
-  WORKER_REDIS_PORT,
 } = process.env;
 
 

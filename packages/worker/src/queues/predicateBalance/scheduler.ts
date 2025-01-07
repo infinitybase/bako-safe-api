@@ -24,6 +24,8 @@ const fn = async () => {
         }
       );
     }
+
+    console.log(`[${QUEUE_BALANCE}] Scheduler finished.`, balanceQueue.name);
   } catch (error) {
     console.error(`[CRON] ${QUEUE_BALANCE} error on scheduling:`, error);
   }

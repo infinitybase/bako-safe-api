@@ -4,7 +4,7 @@ import { CRON_EXPRESSION, QUEUE_ASSET } from "./constants";
 
 const fn = async () => {
   console.log(`[${QUEUE_ASSET}] Scheduler running.`);
-  await assetQueue.add(
+  const queue = await assetQueue.add(
     {},
     {
       attempts: 3,
@@ -12,6 +12,10 @@ const fn = async () => {
       removeOnComplete: true,
       removeOnFail: false,
     }
+  );
+
+  console.log(
+    `[${QUEUE_ASSET}] Scheduler finished. With ${queue.id}, ${assetQueue.name}`
   );
 };
 
