@@ -19,14 +19,14 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Check for changes in ./packages/api
+      - name: Check for changes in ./packages/worker
         id: check
         run: |
-          if git diff --quiet HEAD~1 -- ./packages/api; then
-            echo "No changes detected in ./packages/api"
+          if git diff --quiet HEAD~1 -- ./packages/worker; then
+            echo "No changes detected in ./packages/worker"
             echo "::set-output name=should_deploy::false"
           else
-            echo "Changes detected in ./packages/api"
+            echo "Changes detected in ./packages/worker"
             echo "::set-output name=should_deploy::true"
           fi
 
