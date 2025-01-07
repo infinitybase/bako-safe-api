@@ -81,6 +81,6 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: bako-safe-worker
+          service: bako-safe-worker-service
           cluster: Bako-Safe-ECS
           wait-for-service-stability: true
