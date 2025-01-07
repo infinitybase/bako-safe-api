@@ -67,6 +67,7 @@ PsqlClient.connect();
 BalanceCron.create();
 AssetCron.create();
 
+//
 app.listen(WORKER_PORT ?? 3063, () =>
   console.log(`Server running on ${WORKER_PORT}`)
 );
