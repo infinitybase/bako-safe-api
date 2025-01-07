@@ -22,6 +22,7 @@ assetQueue.process(async (job) => {
     );
   }
 
+  console.log(`[${QUEUE_ASSET}] Processed JOB ${job.data.assetId}`, new Date());
   return `Processed ${job.data.assetId}`;
 });
 
