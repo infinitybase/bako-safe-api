@@ -55,13 +55,15 @@ createBullBoard({
   serverAdapter,
 });
 
-serverAdapter.setBasePath("/admin/queues");
-app.use("/admin/queues", serverAdapter.getRouter());
+serverAdapter.setBasePath("/worker/queues");
+app.use("/worker/queues", serverAdapter.getRouter());
 app.get("/healthcheck", ({ res }) => res?.status(200).send({ status: "ok" }));
 
+// database
 MongoDatabase.connect();
 PsqlClient.connect();
 
+// schedulers
 BalanceCron.create();
 AssetCron.create();
 
