@@ -75,6 +75,16 @@ jobs:
           ECR_REPOSITORY: $ECR_REPOSITORY
           IMAGE_TAG: ${{ github.sha }}
         run: |
+          echo "Building Docker image..."
+          echo "BASE_PATH: $BASE_PATH"
+
+          # Verifica se a variável BASE_PATH está definida
+          if [ -z "$BASE_PATH" ]; then
+            echo "Error: BASE_PATH is not defined or is empty."
+            exit 1
+          fi
+
+          # Comando Docker para build e push
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $BASE_PATH
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
