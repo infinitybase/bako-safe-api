@@ -9,7 +9,43 @@ import assetQueue from "./queues/assetsValue/queue";
 import { MongoDatabase } from "./utils/mongoClient";
 import { PsqlClient } from "./utils";
 
-const { WORKER_PORT } = process.env;
+const {
+  WORKER_PORT,
+  WORKER_ENVIRONMENT,
+  WORKER_NAME,
+  WORKER_REDIS_HOST,
+  WORKER_REDIS_PORT,
+  WORKER_MONGO_PORT,
+  WORKER_MONGO_ENVIRONMENT,
+  WORKER_MONGO_PASSWORD,
+  WORKER_MONGO_USERNAME,
+  WORKER_MONGO_HOST,
+  WORKER_DATABASE_NAME,
+  WORKER_DATABASE_PASSWORD,
+  WORKER_DATABASE_USERNAME,
+  WORKER_DATABASE_PORT,
+  WORKER_DATABASE_HOST,
+} = process.env;
+
+console.log(
+  JSON.stringify({
+    WORKER_PORT,
+    WORKER_ENVIRONMENT,
+    WORKER_NAME,
+    WORKER_REDIS_HOST,
+    WORKER_REDIS_PORT,
+    WORKER_MONGO_PORT,
+    WORKER_MONGO_ENVIRONMENT,
+    WORKER_MONGO_PASSWORD,
+    WORKER_MONGO_USERNAME,
+    WORKER_MONGO_HOST,
+    WORKER_DATABASE_NAME,
+    WORKER_DATABASE_PASSWORD,
+    WORKER_DATABASE_USERNAME,
+    WORKER_DATABASE_PORT,
+    WORKER_DATABASE_HOST,
+  })
+);
 
 const app = express();
 const serverAdapter = new ExpressAdapter();
