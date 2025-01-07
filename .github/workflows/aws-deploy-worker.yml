@@ -13,6 +13,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: Check for changes in ./packages/api
+        id: changes-check
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          if git diff --quiet origin/${{ github.base_ref }} -- ./packages/api; then
+            echo "No changes detected in ./packages/api"
+            exit 0
+          else
+            echo "Changes detected in ./packages/api"
+          fi
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
 
