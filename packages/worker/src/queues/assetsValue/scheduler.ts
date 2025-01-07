@@ -1,6 +1,6 @@
 import assetQueue from "./queue";
 import cron from "node-cron";
-import { CRON_EXPRESSION, QUEUE_ASSET } from "./constants";
+import { CRON_EXPRESSION } from "./constants";
 
 const fn = async () => {
   try {
