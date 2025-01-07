@@ -15,8 +15,10 @@ assetQueue.process(async (job) => {
   const db = await MongoDatabase.connect();
   const collection = db.getCollection(CollectionName.ASSET_BALANCE);
 
-  const quots = await fetchQuotes();
+  console.log("[QUEUE_ASSET] exec", job.data.assetId);
 
+  const quots = await fetchQuotes();
+  console.log("[QUEUE_ASSET] quotes", quots);
   for await (const quote of quots) {
     await collection.updateOne(
       // @ts-ignore
