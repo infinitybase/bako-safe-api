@@ -8,4 +8,4 @@ export const TRANSACTION_STATUS = {
 
 export const QUEUE_BALANCE = "QUEUE_BALANCE";
 export const CRON_EXPRESSION = "0 8,20 * * *";
-export const INITIAL_DELAY = 60 * 1000 * 1;
+export const INITIAL_DELAY = 6 * 1000 * 1;

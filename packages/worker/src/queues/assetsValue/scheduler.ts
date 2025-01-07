@@ -3,20 +3,25 @@ import cron from "node-cron";
 import { CRON_EXPRESSION, QUEUE_ASSET } from "./constants";
 
 const fn = async () => {
-  console.log(`[${QUEUE_ASSET}] Scheduler running.`);
-  const queue = await assetQueue.add(
-    {},
-    {
-      attempts: 3,
-      backoff: 5000,
-      removeOnComplete: true,
-      removeOnFail: false,
-    }
-  );
+  try {
+    console.log(`[${QUEUE_ASSET}] Scheduler running.`);
+    console.log(`[${QUEUE_ASSET}] Scheduler started.`, assetQueue.name);
+    const queue = await assetQueue.add(
+      {},
+      {
+        attempts: 3,
+        backoff: 5000,
+        removeOnComplete: true,
+        removeOnFail: false,
+      }
+    );
 
-  console.log(
-    `[${QUEUE_ASSET}] Scheduler finished. With ${queue.id}, ${assetQueue.name}`
-  );
+    console.log(
+      `[${QUEUE_ASSET}] Scheduler finished. With ${queue.id}, ${assetQueue.name}`
+    );
+  } catch (e) {
+    console.error(e);
+  }
 };
 
 class AssetCron {

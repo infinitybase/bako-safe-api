@@ -5,6 +5,11 @@ import { CRON_EXPRESSION, INITIAL_DELAY, QUEUE_BALANCE } from "./constants";
 
 const fn = async () => {
   try {
+    console.log(`[CRON] ${QUEUE_BALANCE} Scheduler running.`);
+    console.log(
+      `[CRON] ${QUEUE_BALANCE} Scheduler started.`,
+      balanceQueue.name
+    );
     const db = await PsqlClient.connect();
     const predicates = await db.query(
       `SELECT predicate_address 
@@ -24,8 +29,6 @@ const fn = async () => {
         }
       );
     }
-
-    console.log(`[${QUEUE_BALANCE}] Scheduler finished.`, balanceQueue.name);
   } catch (error) {
     console.error(`[CRON] ${QUEUE_BALANCE} error on scheduling:`, error);
   }
