@@ -7,10 +7,6 @@ on:
 
 env:
   PACKAGE_NAME: "worker"
-  BASE_PATH: "./packages/${{ env.PACKAGE_NAME }}"
-  TASK_DEF_PATH: "${{ env.BASE_PATH }}/task_def.json"
-  SERVICE_NAME: "bako-safe-${{ env.PACKAGE_NAME }}-service"
-  ECR_REPOSITORY: "bako-safe-${{ env.PACKAGE_NAME }}"
   CLUSTER_NAME: "Bako-Safe-ECS"
 
 jobs:
@@ -27,14 +23,21 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Check for changes in ${{ env.BASE_PATH }}
+      - name: Set dynamic environment variables
+        run: |
+          echo "BASE_PATH=./packages/${{ env.PACKAGE_NAME }}" >> $GITHUB_ENV
+          echo "TASK_DEF_PATH=$BASE_PATH/task_def.json" >> $GITHUB_ENV
+          echo "SERVICE_NAME=bako-safe-${{ env.PACKAGE_NAME }}-service" >> $GITHUB_ENV
+          echo "ECR_REPOSITORY=bako-safe-${{ env.PACKAGE_NAME }}" >> $GITHUB_ENV
+
+      - name: Check for changes in ${{ env.PACKAGE_NAME }}
         id: check
         run: |
-          if git diff --quiet HEAD~1 -- ${{ env.BASE_PATH }}; then
-            echo "No changes detected in ${{ env.BASE_PATH }}"
+          if git diff --quiet HEAD~1 -- $BASE_PATH; then
+            echo "No changes detected in $BASE_PATH"
             echo "::set-output name=should_deploy::false"
           else
-            echo "Changes detected in ${{ env.BASE_PATH }}"
+            echo "Changes detected in $BASE_PATH"
             echo "::set-output name=should_deploy::true"
           fi
 
@@ -69,17 +72,17 @@ jobs:
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login_ecr.outputs.registry }}
-          ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
+          ECR_REPOSITORY: $ECR_REPOSITORY
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ${{ env.BASE_PATH }}
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $BASE_PATH
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: ${{ env.TASK_DEF_PATH }}
-          service: ${{ env.SERVICE_NAME }}
+          task-definition: $TASK_DEF_PATH
+          service: $SERVICE_NAME
           cluster: ${{ env.CLUSTER_NAME }}
           wait-for-service-stability: true
