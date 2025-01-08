@@ -19,7 +19,6 @@ const prod = [
 
 export const predicates_list = (env: "PROD" | "STG") => {
   const list = env === "PROD" ? prod : stg;
-  console.log(list);
   return list.map((i) => {
     return { predicate_address: i };
   });
