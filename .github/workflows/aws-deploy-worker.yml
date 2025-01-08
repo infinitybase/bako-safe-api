@@ -1,8 +1,9 @@
-name: "[Socket Server STG] Deploy to Amazon ECS"
+name: "[WORKER] Deploy to Amazon ECS"
 
 on:
   push:
-    branches: [staging]
+    branches:
+      - [staging]
 
 jobs:
   check-changes:
@@ -18,19 +19,20 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Check for changes in ./packages/socket-server
+      - name: Check for changes in ./packages/worker
         id: check
         run: |
-          if git diff --quiet HEAD~1 -- ./packages/socket-server; then
-            echo "No changes detected in ./packages/socket-server"
+          if git diff --quiet HEAD~1 -- ./packages/worker; then
+            echo "No changes detected in ./packages/worker"
             echo "::set-output name=should_deploy::false"
           else
-            echo "Changes detected in ./packages/socket-server"
+            echo "Changes detected in ./packages/worker"
             echo "::set-output name=should_deploy::true"
           fi
 
   deploy:
-    name: "[Socket Server STG] Deploy to Amazon ECS"
+    name: "[WORKER] Deploy to Amazon ECS"
+    needs: check-changes
     runs-on: ubuntu-latest
     if: needs.check-changes.outputs.should_deploy == 'true'
 
@@ -59,11 +61,11 @@ jobs:
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login_ecr.outputs.registry }}
-          ECR_REPOSITORY: bako-safe-socket-server-api-stg
+          ECR_REPOSITORY: bako-safe-worker
           IMAGE_TAG: ${{ github.sha }}
         run: |
           # Build a docker container and push it to ECR
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./packages/socket-server
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./packages/worker
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
@@ -71,14 +73,14 @@ jobs:
         id: task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: ./packages/socket-server/stg_socket_task_definition.json
-          container-name: bako-safe-socket-server-api-stg
+          task-definition: ./packages/worker/worker_task_def.json
+          container-name: bako-safe-worker
           image: ${{ steps.build-image.outputs.image }}
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: bako-safe-socket-server-api-stg-service
-          cluster: Bako-Safe-Stg
+          service: bako-safe-worker-service
+          cluster: Bako-Safe-ECS
           wait-for-service-stability: true

@@ -43,15 +43,16 @@ export class DatabaseClass {
   }
 
   static async connect (connection: ConnectionConfig = defaultConnection): Promise<DatabaseClass> {
-    if (!this.instance) {
+    if (!DatabaseClass.instance) {
       const cl = new Client(connection)
       await cl.connect();
-      this.instance = new DatabaseClass(cl);
+      DatabaseClass.instance = new DatabaseClass(cl);
     }
 
-    return this.instance;
+    return DatabaseClass.instance;
   }
 
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   async query (query: string, params?: string[]): Promise<any> {
     try {
       const { rows }: QueryResult = await this.client.query(query, params)

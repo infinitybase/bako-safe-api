@@ -1,0 +1,69 @@
+{
+  "containerDefinitions": [
+    {
+      "name": "bako-safe-worker",
+      "image": "392170836981.dkr.ecr.us-east-1.amazonaws.com/bako-safe-worker:v1",
+      "cpu": 0,
+      "portMappings": [
+        {
+          "name": "p-3063",
+          "containerPort": 3063,
+          "hostPort": 3063,
+          "protocol": "tcp",
+          "appProtocol": "http"
+        }
+      ],
+      "essential": true,
+      "environment": [],
+      "environmentFiles": [
+        {
+          "value": "arn:aws:s3:::bako-safe-env/bako-safe-worker.env",
+          "type": "s3"
+        }
+      ],
+      "mountPoints": [],
+      "volumesFrom": [],
+      "ulimits": [],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/bako-safe-worker",
+          "mode": "non-blocking",
+          "awslogs-create-group": "true",
+          "max-buffer-size": "25m",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        },
+        "secretOptions": []
+      },
+      "systemControls": []
+    }
+  ],
+  "family": "bako-safe-worker",
+  "taskRoleArn": "arn:aws:iam::392170836981:role/ecs-api-bsafe-s3-bako-safe-env",
+  "executionRoleArn": "arn:aws:iam::392170836981:role/ecsTaskExecutionRole",
+  "networkMode": "awsvpc",
+  "volumes": [],
+  "placementConstraints": [],
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "runtimePlatform": {
+    "cpuArchitecture": "ARM64",
+    "operatingSystemFamily": "LINUX"
+  },
+  "tags": [
+    {
+      "key": "name",
+      "value": "bako-safe-worker"
+    },
+    {
+      "key": "cluster",
+      "value": "Bako-Safe-ECS"
+    },
+    {
+      "key": "environment",
+      "value": "prod"
+    }
+  ]
+}
