@@ -31,7 +31,9 @@ jobs:
 
   deploy:
     name: "[API-STG] Deploy to Amazon ECS"
+    needs: check-changes
     runs-on: ubuntu-latest
+    if: needs.check-changes.outputs.should_deploy == 'true'
 
     steps:
       - name: Checkout
