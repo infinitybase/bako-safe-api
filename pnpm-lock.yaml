@@ -343,7 +343,7 @@ importers:
         specifier: ^6.5.3
         version: 6.5.3
       '@envio-dev/hypersync-client':
-        specifier: ^0.6.2
+        specifier: 0.6.2
         version: 0.6.2
       '@types/bull':
         specifier: ^4.10.4

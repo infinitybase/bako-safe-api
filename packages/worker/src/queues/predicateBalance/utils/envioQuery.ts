@@ -1,4 +1,3 @@
-import { ObjectId } from "mongodb";
 import { CollectionName, MongoDatabase, type SchemaPredicateBlocks } from "../../../utils/mongoClient";
 
 export const makeQuery = ({
