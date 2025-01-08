@@ -9,6 +9,34 @@ const balanceQueue = new Queue<QueueBalance>(QUEUE_BALANCE, {
     redis: redisConfig,
 })
 
+/**
+ * This queue is responsible for reconstructing the transaction history of a Bako wallet to calculate its current balance.
+ * 
+ * Process:
+ * 1. Query the Fuel Network indexer at the API endpoint: https://fuel.hypersync.xyz/query. 
+ * The query retrieves all transactions involving the wallet starting from the last monitored block. 
+ * These transactions include both received and sent funds, limited to transaction types `create` and `script`. 
+ * The query ensures the wallet's address is present in the inputs or outputs and that the transaction was successfully executed.
+ * 
+ * 2. Group the retrieved transactions by their IDs, organizing inputs, outputs, and block-related information 
+ * in a key-value object structure: `{ tx_id: tx_infos }`.
+ * 
+ * 3. For each transaction, calculate the net balance (credit or debit) resulting from the transaction for the wallet:
+ *    - Subtract the total spent (gas fees and coins used) from the total received.
+ *    - Include values from the native bridge, which initially appear as `Message` type until consumed.
+ *    - Map all assets involved, including unofficial ones.
+ *    - Assign an equivalent value in USDC for official network assets, using currency values monitored by the corresponding queue.
+ * 
+ * 4. The result of this processing is a list of all balances for every transaction, broken down by `assetId` and `tx`.
+ * 
+ * 5. Save all balance information in a non-relational database.
+ * 
+ * 6. Record the last processed block for the wallet, linked to its address, to ensure subsequent executions start from the last processed block.
+ */
+
+
+
+
 
 balanceQueue.process(async (job) => {
     const db = await MongoDatabase.connect();
