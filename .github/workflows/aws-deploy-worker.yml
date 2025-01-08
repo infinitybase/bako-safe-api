@@ -3,11 +3,11 @@ name: "[WORKER] Deploy to Amazon ECS"
 on:
   push:
     branches:
-      - staging
+      - [staging]
 
 jobs:
   check-changes:
-    name: "Check for Changes"
+    name: "[VERIFY] Check for Changes"
     runs-on: ubuntu-latest
 
     outputs:
