@@ -2,8 +2,7 @@ name: "[WORKER] Deploy to Amazon ECS"
 
 on:
   push:
-    branches:
-      - [staging]
+    branches: [staging]
 
 jobs:
   check-changes:
