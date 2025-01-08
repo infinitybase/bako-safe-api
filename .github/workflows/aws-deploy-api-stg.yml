@@ -5,7 +5,6 @@ on:
     branches: [staging]
 
 jobs:
-  jobs:
   check-changes:
     name: "[VERIFY] Check for Changes"
     runs-on: ubuntu-latest
