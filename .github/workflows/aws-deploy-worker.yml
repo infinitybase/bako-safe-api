@@ -3,7 +3,7 @@ name: "[WORKER] Deploy to Amazon ECS"
 on:
   push:
     branches:
-      - FEAT/index-vaaul-balance
+      - staging
 
 jobs:
   check-changes:
