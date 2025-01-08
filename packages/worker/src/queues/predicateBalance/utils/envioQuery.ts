@@ -44,10 +44,9 @@ export const predicateTransactions = async (predicate: string) => {
         const last = await predicate_block.findOne({ _id: predicate });
     
         const data = await fetch(
-            "https://fuel.hypersync.xyz/query",
+            "https://fuel-legacy.hypersync.xyz/query",
             makeQuery({ from_block: last?.blockNumber ?? 0, predicate_address: predicate })
         );
         const response = await data.json();
-    
         return response ?? undefined;
 }
