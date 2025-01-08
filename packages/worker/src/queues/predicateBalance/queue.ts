@@ -1,8 +1,8 @@
 import Queue from "bull";
-import { CollectionName, MongoDatabase, type SchemaPredicateBlocks, type SchemaFuelAssets, type SchemaPredicateBalance } from "../../utils/mongoClient";
+import { CollectionName, MongoDatabase, type SchemaPredicateBlocks, type SchemaFuelAssets, type SchemaPredicateBalance } from "../../clients/mongoClient";
 import { type QueueBalance, groupByTransaction, syncPredicateBlock, syncBalance, makeDeposits, syncAssets, QUEUE_BALANCE } from ".";
 import { predicateTransactions } from "./utils/envioQuery";
-import { redisConfig } from "@/utils/redis";
+import { redisConfig } from "@/clients";
 
 
 const balanceQueue = new Queue<QueueBalance>(QUEUE_BALANCE, {

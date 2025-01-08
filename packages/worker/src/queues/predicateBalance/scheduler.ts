@@ -1,4 +1,4 @@
-import { PsqlClient } from "../../utils/psqlClient";
+import { PsqlClient } from "../../clients/psqlClient";
 import balanceQueue from "./queue";
 import cron from "node-cron";
 import { CRON_EXPRESSION, INITIAL_DELAY, QUEUE_BALANCE } from "./constants";
@@ -7,7 +7,7 @@ const fn = async () => {
   try {
     const db = await PsqlClient.connect();
     const predicates = await db.query(
-      `SELECT predicate_address 
+      `SELECT predicate_address
              FROM predicates`
     );
 

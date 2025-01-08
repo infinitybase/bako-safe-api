@@ -6,8 +6,8 @@ import express from "express";
 import BalanceCron from "./queues/predicateBalance/scheduler";
 import AssetCron from "./queues/assetsValue/scheduler";
 import assetQueue from "./queues/assetsValue/queue";
-import { MongoDatabase } from "./utils/mongoClient";
-import { PsqlClient } from "./utils";
+import { MongoDatabase } from "./clients/mongoClient";
+import { PsqlClient } from "./clients";
 
 const {
   WORKER_PORT,

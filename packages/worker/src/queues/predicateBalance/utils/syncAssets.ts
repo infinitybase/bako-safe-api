@@ -2,7 +2,7 @@ import type { Collection, WithId } from "mongodb";
 import type {
   SchemaPredicateBalance,
   SchemaFuelAssets,
-} from "../../../utils/mongoClient";
+} from "../../../clients/mongoClient";
 
 export async function syncAssets(
   deposits: SchemaPredicateBalance[],

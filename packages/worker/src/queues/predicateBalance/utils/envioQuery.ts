@@ -1,4 +1,5 @@
-import { CollectionName, MongoDatabase, type SchemaPredicateBlocks } from "../../../utils/mongoClient";
+
+import { CollectionName, MongoDatabase, type SchemaPredicateBlocks } from "../../../clients/mongoClient";
 
 export const makeQuery = ({
     from_block,
@@ -13,11 +14,13 @@ export const makeQuery = ({
             from_block,
             inputs: [
                 {
-                    inputType: [0, 2],
                     txStatus: [1],
                     owner: [predicate_address],
-                    recipient: [predicate_address],
                 },
+                {
+                    txStatus: [1],
+                    recipient: [predicate_address],
+                }
             ],
             outputs: [
                 {
@@ -43,7 +46,7 @@ export const predicateTransactions = async (predicate: string) => {
         const last = await predicate_block.findOne({ _id: predicate });
     
         const data = await fetch(
-            "https://fuel-legacy.hypersync.xyz/query",
+            "https://fuel.hypersync.xyz/query",
             makeQuery({ from_block: last?.blockNumber ?? 0, predicate_address: predicate })
         );
         const response = await data.json();

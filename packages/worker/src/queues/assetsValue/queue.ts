@@ -1,8 +1,8 @@
 import Queue from "bull";
-import { CollectionName, MongoDatabase } from "../../utils/mongoClient";
+import { CollectionName, MongoDatabase } from "../../clients/mongoClient";
 import { QUEUE_ASSET } from "./constants";
 import { fetchQuotes } from "./utils";
-import { redisConfig } from "@/utils/redis";
+import { redisConfig } from "@/clients";
 
 const assetQueue = new Queue(QUEUE_ASSET, {
   redis: redisConfig,

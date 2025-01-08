@@ -1,5 +1,5 @@
 import type { Collection } from "mongodb";
-import type { SchemaPredicateBlocks } from "../../../utils/mongoClient";
+import type { SchemaPredicateBlocks } from "../../../clients/mongoClient";
 
 export async function syncPredicateBlock(
   block: SchemaPredicateBlocks,

@@ -1,5 +1,5 @@
 import { InputType, bn, OutputType } from "fuels";
-import type { SchemaPredicateBalance } from "../../../utils/mongoClient";
+import type { SchemaPredicateBalance } from "../../../clients/mongoClient";
 import { ETH } from "../constants";
 import type { PredicateBalanceGrouped } from "../types";
 
