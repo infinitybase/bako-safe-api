@@ -164,6 +164,11 @@ export class UserController {
   async tokensUSDAmount() {
     try {
       const response = await this.userService.tokensUSDAmount();
+
+      if (response && Object.keys(response).length === 0) {
+        return successful([], Responses.Ok);
+      }
+
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
@@ -201,7 +206,6 @@ export class UserController {
   async create(req: ICreateRequest) {
     try {
       const { address, name, provider } = req.body;
-      const { network } = req;
 
       //verify user exists
       let existingUser = await this.userService.findByAddress(address);
@@ -251,6 +255,8 @@ export class UserController {
             userId: owner.id,
           };
         });
+
+      console.log('code', code);
 
       return successful(code, Responses.Created);
     } catch (e) {
