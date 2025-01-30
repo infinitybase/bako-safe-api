@@ -13,7 +13,7 @@
 	"keywords": [],
 	"dependencies": {
 		"axios": "1.5.1",
-		"bakosafe": "0.0.94-beta",
+		"bakosafe": "fee-preview",
 		"express": "4.17.1",
 		"express-joi-validation": "5.0.0",
 		"fuels": "0.96.1",
