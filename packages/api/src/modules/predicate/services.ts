@@ -121,8 +121,10 @@ export class PredicateService implements IPredicateService {
           'members.id',
           'members.avatar',
           'members.address',
+          'members.type',
           'owner.id',
           'owner.address',
+          'owner.type',
         ])
         .getOne();
     } catch (e) {
@@ -347,7 +349,9 @@ export class PredicateService implements IPredicateService {
     version?: string,
   ): Promise<Vault> {
     const conf = JSON.parse(configurable);
-    const _provider = await FuelProvider.create(provider.replace(/^https?:\/\/[^@]+@/, 'https://'));
+    const _provider = await FuelProvider.create(
+      provider.replace(/^https?:\/\/[^@]+@/, 'https://'),
+    );
     return new Vault(_provider, conf, version);
   }
 
