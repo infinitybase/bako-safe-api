@@ -163,13 +163,15 @@ export class UserController {
 
   async tokensUSDAmount() {
     try {
-      const response = await this.userService.tokensUSDAmount();
+      const url = `${process.env.WORKER_URL}/worker/assets`;
+      const response = await fetch(url);
+      const data = await response.json();
 
-      if (response && Object.keys(response).length === 0) {
+      if (!data) {
         return successful([], Responses.Ok);
       }
 
-      return successful(response, Responses.Ok);
+      return successful(data, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }

@@ -6,7 +6,7 @@ import express from "express";
 import BalanceCron from "./queues/predicateBalance/scheduler";
 import AssetCron from "./queues/assetsValue/scheduler";
 import assetQueue from "./queues/assetsValue/queue";
-import { MongoDatabase } from "./clients/mongoClient";
+import { CollectionName, MongoDatabase } from "./clients/mongoClient";
 import { PsqlClient } from "./clients";
 
 const {
@@ -58,6 +58,13 @@ createBullBoard({
 serverAdapter.setBasePath("/worker/queues");
 app.use("/worker/queues", serverAdapter.getRouter());
 app.get("/healthcheck", ({ res }) => res?.status(200).send({ status: "ok" }));
+app.get("/worker/assets", async (req, res) => {
+  const db = await MongoDatabase.connect();
+  const collection = db.getCollection(CollectionName.ASSET_BALANCE);
+  const assets = await collection.find().toArray();
+  const response = assets.map((asset) => [asset._id, asset.usdValue]);
+  return res.json(response);
+});
 
 // database
 MongoDatabase.connect();
