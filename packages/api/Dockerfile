@@ -16,9 +16,6 @@ ADD . /api
 # Install the application dependencies using pnpm
 RUN pnpm install
 
-# Rebuild the pprof package
-RUN pnpm rebuild pprof
-
 # Build the application
 RUN pnpm build
 
