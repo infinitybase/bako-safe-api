@@ -608,13 +608,7 @@ export class TransactionController {
       let transaction = await Transaction.findOne({
         where: {
           hash,
-          status: Not(
-            In([
-              TransactionStatus.DECLINED,
-              TransactionStatus.FAILED,
-              TransactionStatus.SUCCESS,
-            ]),
-          ),
+          status: TransactionStatus.AWAIT_REQUIREMENTS,
         },
       });
 
