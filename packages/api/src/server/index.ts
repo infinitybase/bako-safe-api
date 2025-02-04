@@ -1,4 +1,4 @@
-import * as pprof from 'pprof';
+// import * as pprof from 'pprof';
 
 import App from './app';
 
@@ -20,7 +20,7 @@ const {
   EXTERN_TOKEN_SECRET,
 } = process.env;
 
-pprof.heap.start(512 * 1024, 64);
+// pprof.heap.start(512 * 1024, 64);
 
 const start = async () => {
   const port = API_PORT || PORT || 3333;
