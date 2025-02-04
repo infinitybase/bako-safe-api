@@ -9,7 +9,7 @@
     "start": "node ./build/server/index.js",
     "build": "tsc --project . && tscpaths -p tsconfig.json -s ./src -o ./build",
     "copyFiles": "copyfiles --error --up 1 src/**/*.html build",
-    "postbuild": "yarn run copyFiles",
+    "postbuild": "pnpm run copyFiles",
     "migration:run": "ts-node -r tsconfig-paths/register -r dotenv/config ./node_modules/typeorm/cli.js migration:run --dataSource src/database",
     "migration:create": "chmod +x ./src/scripts/migration-create.sh && ./src/scripts/migration-create.sh",
     "migration:revert": "ts-node -r tsconfig-paths/register -r dotenv/config ./node_modules/typeorm/cli.js migration:revert",
