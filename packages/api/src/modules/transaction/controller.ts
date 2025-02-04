@@ -1,5 +1,4 @@
 import { TransactionStatus, TransactionType, WitnessStatus } from 'bakosafe';
-import { Provider } from 'fuels';
 import { isUUID } from 'class-validator';
 import { PermissionRoles, Workspace } from '@src/models/Workspace';
 import {
@@ -8,11 +7,11 @@ import {
 } from '@src/utils/error/Unauthorized';
 import { validatePermissionGeneral } from '@src/utils/permissionValidate';
 
-import { NotificationTitle, Predicate, Transaction, User } from '@models/index';
+import { NotificationTitle, Predicate, Transaction } from '@models/index';
 
 import { IPredicateService } from '@modules/predicate/types';
 
-import { error, ErrorTypes } from '@utils/error';
+import { BadRequest, error, ErrorTypes, NotFound } from '@utils/error';
 import {
   bindMethods,
   generateWitnessesUpdatedAt,
@@ -27,6 +26,7 @@ import { UserService } from '../user/service';
 import { WorkspaceService } from '../workspace/services';
 import { TransactionService } from './services';
 import {
+  ICancelTransactionRequest,
   ICloseTransactionRequest,
   ICreateTransactionHistoryRequest,
   ICreateTransactionRequest,
@@ -43,6 +43,7 @@ import {
 import { createTxHistoryEvent, mergeTransactionLists } from './utils';
 import { In, Not } from 'typeorm';
 import { NotificationService } from '../notification/services';
+import { Address } from 'fuels';
 
 // todo: use this provider by session, and move to transactions
 const { FUEL_PROVIDER } = process.env;
@@ -143,7 +144,13 @@ export class TransactionController {
       const existsTx = await Transaction.findOne({
         where: {
           hash,
-          status: Not(In([TransactionStatus.DECLINED, TransactionStatus.FAILED])),
+          status: Not(
+            In([
+              TransactionStatus.DECLINED,
+              TransactionStatus.FAILED,
+              TransactionStatus.CANCELED,
+            ]),
+          ),
         },
       });
 
@@ -278,16 +285,19 @@ export class TransactionController {
     const _witnesses = data.resume.witnesses.filter(
       witness =>
         witness.status === WitnessStatus.DONE ||
-        witness.status === WitnessStatus.REJECTED,
+        witness.status === WitnessStatus.REJECTED ||
+        witness.status === WitnessStatus.CANCELED,
     );
 
+    const witnessEventMap = {
+      [WitnessStatus.DONE]: TransactionHistory.SIGN,
+      [WitnessStatus.REJECTED]: TransactionHistory.DECLINE,
+      [WitnessStatus.CANCELED]: TransactionHistory.CANCEL,
+    };
     const witnessEvents = await Promise.all(
       _witnesses.map(async witness => {
         const user = await userService.findByAddress(witness.account);
-        const eventType =
-          witness.status === WitnessStatus.REJECTED
-            ? TransactionHistory.DECLINE
-            : TransactionHistory.SIGN;
+        const eventType = witnessEventMap[witness.status];
         return createTxHistoryEvent(eventType, witness.updatedAt, user);
       }),
     );
@@ -375,7 +385,13 @@ export class TransactionController {
       const transaction = await Transaction.findOne({
         where: {
           hash: txHash,
-          status: Not(In([TransactionStatus.DECLINED, TransactionStatus.FAILED])),
+          status: Not(
+            In([
+              TransactionStatus.DECLINED,
+              TransactionStatus.FAILED,
+              TransactionStatus.CANCELED,
+            ]),
+          ),
         },
       });
 
@@ -580,6 +596,60 @@ export class TransactionController {
       return successful(response, Responses.Ok);
     } catch (e) {
       console.log(`[INCOMING_ERROR]`, e);
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async cancel(req: ICancelTransactionRequest) {
+    const { user } = req;
+    const { hash } = req.params;
+
+    try {
+      let transaction = await Transaction.findOne({
+        where: {
+          hash,
+          status: Not(
+            In([
+              TransactionStatus.DECLINED,
+              TransactionStatus.FAILED,
+              TransactionStatus.SUCCESS,
+            ]),
+          ),
+        },
+      });
+
+      if (!transaction) {
+        throw new BadRequest({
+          type: ErrorTypes.NotFound,
+          title: 'Failed to cancel transaction',
+          detail: `Transaction with hash ${hash} not found`,
+        });
+      }
+
+      // Set transaction status to canceled
+      transaction.status = TransactionStatus.CANCELED;
+      transaction.resume.status = TransactionStatus.CANCELED;
+
+      // Find user signature or create a new one
+      const userSignature = transaction.resume.witnesses.find(witness =>
+        Address.fromB256(witness.account).equals(Address.fromB256(user.address)),
+      ) || {
+        status: WitnessStatus.CANCELED,
+        signature: null,
+        updatedAt: '',
+        account: user.address,
+      };
+
+      // Update user signature status and save transaction
+      userSignature.status = WitnessStatus.CANCELED;
+      userSignature.updatedAt = generateWitnessesUpdatedAt();
+      transaction.resume.witnesses = transaction.resume.witnesses.map(witness =>
+        witness.account === userSignature.account ? userSignature : witness,
+      );
+      transaction = await transaction.save();
+
+      return successful(transaction.resume, Responses.Ok);
+    } catch (e) {
       return error(e.error, e.statusCode);
     }
   }
