@@ -5,6 +5,7 @@ node_modules
 ##DB
 postgresql/
 **/database/inserts/**
+mongodbdev/
 
 ## API
 # Build
@@ -13,6 +14,7 @@ yarn.lock
 package-lock.json
 .editorconfig
 bsafe/
+dist/
 
 #env
 .env

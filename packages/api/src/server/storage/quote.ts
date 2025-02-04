@@ -32,10 +32,10 @@ export class QuoteStorage {
   }
 
   private async addMockQuotes(QuotesMock: IQuote[]): Promise<void> {
-          // biome-ignore lint/complexity/noForEach: <explanation>
-      QuotesMock.forEach(async quote => {
-        await this.setQuote(quote.assetId, quote.price);
-      });
+    // biome-ignore lint/complexity/noForEach: <explanation>
+    QuotesMock.forEach(async quote => {
+      await this.setQuote(quote.assetId, quote.price);
+    });
   }
 
   private async addQuotes(): Promise<void> {
@@ -84,7 +84,7 @@ export class QuoteStorage {
 
     const fromTo = {
       usdc: 'usd-coin',
-      usdf: 'usd-coin', // usdf -> token fuel fluid 
+      usdf: 'usd-coin', // usdf -> token fuel fluid
       weeth: 'bridged-weeth-linea',
       wbeth: 'wrapped-beacon-eth',
       'manta mbtc': 'manta-mbtc',
@@ -140,7 +140,9 @@ export class QuoteStorage {
       quotes.set(key.replace(`${PREFIX}-`, ''), Number(value));
     });
 
-    return Array.from(quotes);
+    const res = quotes.size > 0 ? Array.from(quotes) : [];
+
+    return Array.from(res);
   }
 
   public async getActiveQuotes(): Promise<Record<string, number>> {

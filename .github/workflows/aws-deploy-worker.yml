@@ -1,4 +1,4 @@
-name: "[API-STG] Deploy to Amazon ECS"
+name: "[WORKER] Deploy to Amazon ECS"
 
 on:
   push:
@@ -18,19 +18,19 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Check for changes in ./packages/api
+      - name: Check for changes in ./packages/worker
         id: check
         run: |
-          if git diff --quiet HEAD~1 -- ./packages/api; then
-            echo "No changes detected in ./packages/api"
+          if git diff --quiet HEAD~1 -- ./packages/worker; then
+            echo "No changes detected in ./packages/worker"
             echo "::set-output name=should_deploy::false"
           else
-            echo "Changes detected in ./packages/api"
+            echo "Changes detected in ./packages/worker"
             echo "::set-output name=should_deploy::true"
           fi
 
   deploy:
-    name: "[API-STG] Deploy to Amazon ECS"
+    name: "[WORKER] Deploy to Amazon ECS"
     needs: check-changes
     runs-on: ubuntu-latest
     if: needs.check-changes.outputs.should_deploy == 'true'
@@ -60,11 +60,11 @@ jobs:
         id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login_ecr.outputs.registry }}
-          ECR_REPOSITORY: bako-safe-api-stg
+          ECR_REPOSITORY: bako-safe-worker
           IMAGE_TAG: ${{ github.sha }}
         run: |
           # Build a docker container and push it to ECR
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./packages/api
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./packages/worker
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
@@ -72,14 +72,14 @@ jobs:
         id: task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: ./packages/api/stg_api_task_definition.json
-          container-name: bako-safe-api-stg
+          task-definition: ./packages/worker/worker_task_def.json
+          container-name: bako-safe-worker
           image: ${{ steps.build-image.outputs.image }}
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: bako-safe-api-stg-service
-          cluster: Bako-Safe-Stg
+          service: bako-safe-worker-service
+          cluster: Bako-Safe-ECS
           wait-for-service-stability: true
