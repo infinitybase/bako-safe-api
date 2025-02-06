@@ -136,6 +136,11 @@ interface ICloseTransactionRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Body]: ICloseTransactionBody;
   [ContainerTypes.Params]: { id: string };
 }
+
+interface ICancelTransactionRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Params]: { hash: string };
+}
+
 interface ISendTransactionRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Params]: { hash: string };
 }
@@ -203,6 +208,7 @@ export type ICreateTransactionHistoryRequest = AuthValidatedRequest<ICreateTrans
 export type IUpdateTransactionRequest = AuthValidatedRequest<IUpdateTransactionRequestSchema>;
 export type IDeleteTransactionRequest = AuthValidatedRequest<IDeleteTransactionRequestSchema>;
 export type ICloseTransactionRequest = AuthValidatedRequest<ICloseTransactionRequestSchema>;
+export type ICancelTransactionRequest = AuthValidatedRequest<ICancelTransactionRequestSchema>;
 export type ISendTransactionRequest = AuthValidatedRequest<ISendTransactionRequestSchema>;
 export type ISignByIdRequest = AuthValidatedRequest<ISignByIdRequestSchema>;
 export type IFindTransactionByIdRequest = AuthValidatedRequest<IFindTransactionByIdRequestSchema>;

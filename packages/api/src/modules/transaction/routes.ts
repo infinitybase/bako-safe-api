@@ -52,6 +52,7 @@ const {
   signByID,
   findByHash,
   createHistory,
+  cancel,
 } = new TransactionController(
   transactionService,
   predicateService,
@@ -85,6 +86,7 @@ router.put(
   txPermissionMiddleware,
   handleResponse(signByID),
 );
+router.put('/cancel/:hash', txPermissionMiddleware, handleResponse(cancel));
 router.get('/history/:id/:predicateId', handleResponse(createHistory));
 
 export default router;
