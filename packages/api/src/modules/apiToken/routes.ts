@@ -20,7 +20,7 @@ const permissionMiddleware = predicatePermissionMiddleware({
   predicateSelector: req => ({
     id: req.params.predicateId,
   }),
-  permissions: [PermissionRoles.OWNER],
+  permissions: [PermissionRoles.OWNER, PermissionRoles.SIGNER],
 });
 
 const { auth, create, list, delete: deleteAPIToken } = new APITokenController(
