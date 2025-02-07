@@ -31,6 +31,7 @@ router.use('/notifications', notifications);
 router.use('/external', externalRoute);
 
 // ping route
+//
 router.get('/ping', ({ res }) =>
   res.send(`${new Date().toISOString()} ${API_NAME} ${API_ENVIRONMENT}`),
 );
