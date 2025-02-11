@@ -220,7 +220,7 @@ export class TransactionController {
         },
         predicate,
         createdBy: user,
-        summary: summary || {
+        summary: summary ?? {
           type: 'cli',
           operations,
         },
