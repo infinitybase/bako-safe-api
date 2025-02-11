@@ -14,6 +14,7 @@ import { IPredicateService } from '@modules/predicate/types';
 import { BadRequest, error, ErrorTypes, NotFound } from '@utils/error';
 import {
   bindMethods,
+  FuelProvider,
   generateWitnessesUpdatedAt,
   Responses,
   successful,
@@ -43,7 +44,12 @@ import {
 import { createTxHistoryEvent, mergeTransactionLists } from './utils';
 import { In, Not } from 'typeorm';
 import { NotificationService } from '../notification/services';
-import { Address } from 'fuels';
+import {
+  Address,
+  getTransactionSummary,
+  getTransactionSummaryFromRequest,
+  transactionRequestify,
+} from 'fuels';
 
 // todo: use this provider by session, and move to transactions
 const { FUEL_PROVIDER } = process.env;
@@ -192,6 +198,10 @@ export class TransactionController {
 
       const config = JSON.parse(predicate.configurable);
 
+      const { operations } = await getTransactionSummaryFromRequest({
+        transactionRequest: transactionRequestify(transaction.txData),
+        provider: await FuelProvider.create(network.url),
+      });
       const newTransaction = await this.transactionService.create({
         ...transaction,
         type: Transaction.getTypeFromTransactionRequest(transaction.txData),
@@ -210,7 +220,10 @@ export class TransactionController {
         },
         predicate,
         createdBy: user,
-        summary,
+        summary: summary ?? {
+          type: 'cli',
+          operations,
+        },
         network,
       });
 
