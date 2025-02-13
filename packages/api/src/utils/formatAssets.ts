@@ -2,7 +2,7 @@ import { Operation, OutputCoin, OutputType, TransactionRequestOutput } from 'fue
 
 const { FUEL_PROVIDER_CHAIN_ID } = process.env;
 
-export type Asset = {
+export type AssetFormat = {
   assetId: string;
   amount: string;
   to: string;
@@ -11,7 +11,7 @@ export type Asset = {
 const formatAssets = (
   outputs: TransactionRequestOutput[],
   to?: string,
-): Asset[] => {
+): AssetFormat[] => {
   const assets = outputs
     .filter(
       (output: TransactionRequestOutput) =>
@@ -35,7 +35,7 @@ const formatAssets = (
 const formatAssetFromOperations = (
   operations: Operation[],
   account: string,
-): Asset[] => {
+): AssetFormat[] => {
   const assets = operations
     .filter(operation => operation.from.address === account)
     .filter(operation => !!operation.assetsSent)

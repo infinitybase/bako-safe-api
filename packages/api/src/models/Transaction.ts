@@ -18,7 +18,7 @@ import { Base } from './Base';
 import { Predicate } from './Predicate';
 import { ITransactionResponse } from '@src/modules/transaction/types';
 import {
-  Asset,
+  AssetFormat,
   formatAssetFromOperations,
   formatAssets,
 } from '@src/utils/formatAssets';
@@ -110,7 +110,7 @@ class Transaction extends Base {
   }
 
   static formatTransactionResponse(transaction: Transaction): ITransactionResponse {
-    let assets: Asset[] = [];
+    let assets: AssetFormat[] = [];
 
     if (transaction.summary?.operations) {
       assets = formatAssetFromOperations(
