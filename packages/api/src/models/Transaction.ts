@@ -17,10 +17,12 @@ import { User } from '@models/User';
 import { Base } from './Base';
 import { Predicate } from './Predicate';
 import { ITransactionResponse } from '@src/modules/transaction/types';
-import { formatAssets } from '@src/utils/formatAssets';
+import {
+  Asset,
+  formatAssetFromOperations,
+  formatAssets,
+} from '@src/utils/formatAssets';
 import { networks } from '@src/mocks/networks';
-import { cachedAssets } from '@src/server/storage/fuelAssetsFetcher';
-import { handleFuelUnitAssets } from '@src/utils/assets';
 
 const { FUEL_PROVIDER, FUEL_PROVIDER_CHAIN_ID } = process.env;
 
@@ -108,10 +110,17 @@ class Transaction extends Base {
   }
 
   static formatTransactionResponse(transaction: Transaction): ITransactionResponse {
-    const assets = formatAssets(
-      transaction.txData.outputs,
-      undefined,
-    );
+    let assets: Asset[] = [];
+
+    if (transaction.summary?.operations) {
+      assets = formatAssetFromOperations(
+        transaction.summary.operations,
+        transaction.predicate.predicateAddress,
+      );
+    } else {
+      assets = formatAssets(transaction.txData.outputs, undefined);
+    }
+
     const result = Object.assign(transaction, {
       assets,
     });

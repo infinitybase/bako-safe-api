@@ -1,8 +1,17 @@
-import { OutputCoin, OutputType, TransactionRequestOutput } from 'fuels';
+import { Operation, OutputCoin, OutputType, TransactionRequestOutput } from 'fuels';
 
 const { FUEL_PROVIDER_CHAIN_ID } = process.env;
 
-const formatAssets = (outputs: TransactionRequestOutput[], to?: string) => {
+export type Asset = {
+  assetId: string;
+  amount: string;
+  to: string;
+};
+
+const formatAssets = (
+  outputs: TransactionRequestOutput[],
+  to?: string,
+): Asset[] => {
   const assets = outputs
     .filter(
       (output: TransactionRequestOutput) =>
@@ -23,4 +32,22 @@ const formatAssets = (outputs: TransactionRequestOutput[], to?: string) => {
   return assets;
 };
 
-export { formatAssets };
+const formatAssetFromOperations = (
+  operations: Operation[],
+  account: string,
+): Asset[] => {
+  const assets = operations
+    .filter(operation => operation.from.address === account)
+    .filter(operation => !!operation.assetsSent)
+    .flatMap(operation =>
+      operation.assetsSent.map(asset => ({
+        assetId: asset.assetId,
+        amount: asset.amount.toString(),
+        to: operation.to.address,
+      })),
+    );
+
+  return assets;
+};
+
+export { formatAssets, formatAssetFromOperations };
