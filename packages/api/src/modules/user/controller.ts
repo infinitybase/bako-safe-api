@@ -245,7 +245,7 @@ export class UserController {
           validAt: addMinutes(new Date(), localAddTime + 5), //todo: change this number to dynamic
           network: {
             url: _provider.url,
-            chainId: _provider.getChainId(),
+            chainId: await _provider.getChainId(),
           },
         })
         .then((data: RecoverCode) => {

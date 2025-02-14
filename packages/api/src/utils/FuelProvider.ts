@@ -18,7 +18,7 @@ export class FuelProvider {
       return FuelProvider.instance.providers[url];
     }
 
-    const p = await Provider.create(url, options);
+    const p = new Provider(url, options);
     FuelProvider.instance.providers[url] = p;
 
     return FuelProvider.instance.providers[url];
@@ -27,7 +27,7 @@ export class FuelProvider {
   async reset(): Promise<void> {
     const providers: Record<string, Provider> = {};
 
-    providers[FUEL_PROVIDER] = await Provider.create(FUEL_PROVIDER);
+    providers[FUEL_PROVIDER] = new Provider(FUEL_PROVIDER);
 
     FuelProvider.instance.providers = providers;
   }

@@ -14,10 +14,10 @@ export class AddNetworkOnApiTokens1727717621119 implements MigrationInterface {
       }),
     );
 
-    const provider = await Provider.create(FUEL_PROVIDER);
+    const provider = new Provider(FUEL_PROVIDER);
     const network = {
       url: provider.url,
-      chainId: provider.getChainId(),
+      chainId: await provider.getChainId(),
     };
 
     const networkString = JSON.stringify(network);
