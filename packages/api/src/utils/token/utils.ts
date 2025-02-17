@@ -157,7 +157,7 @@ export class TokenUtils {
 
     const _network = {
       url: provider.url,
-      chainId: provider.getChainId(),
+      chainId: await provider.getChainId(),
     };
     _token.network = _network;
 

@@ -137,7 +137,7 @@ export class UserService implements IUserService {
 
         const network: Network = {
           url: provider.url,
-          chainId: provider.getChainId(),
+          chainId: await provider.getChainId(),
         };
 
         await new PredicateService().create(

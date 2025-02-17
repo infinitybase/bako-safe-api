@@ -84,7 +84,7 @@ export class AuthController {
         validAt: addMinutes(new Date(), 5),
         network: {
           url: provider.url,
-          chainId: provider.getChainId(),
+          chainId: await provider.getChainId(),
         },
       });
 

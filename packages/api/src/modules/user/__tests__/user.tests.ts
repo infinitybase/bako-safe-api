@@ -28,7 +28,7 @@ describe('[USER]', () => {
           name: `${new Date().getTime()} - Create user test`,
           type: TypeUser.FUEL,
           address: address.toAddress(),
-          provider: (await Provider.create(networks['local'])).url,
+          provider: networks['local'],
         })
         .then(({ data, status }) => {
           expect(status).toBe(201);
@@ -51,7 +51,7 @@ describe('[USER]', () => {
           name: `${new Date().getTime()} - Create user test`,
           type: TypeUser.FUEL,
           address: 'invalid_address',
-          provider: (await Provider.create(networks['local'])).url,
+          provider: networks['local'],
         })
         .catch(reason => {
           const { response } = reason;
@@ -207,7 +207,7 @@ describe('[USER]', () => {
           name,
           type,
           address: address.toAddress(),
-          provider: (await Provider.create(networks['local'])).url,
+          provider: networks['local'],
         })
         .then(async () => {
           //verify existing name
