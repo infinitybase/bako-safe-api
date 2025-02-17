@@ -99,10 +99,7 @@ export const formatFuelTransaction = async (
         single: predicate.workspace.single,
       },
     },
-    assets: formatAssets(
-      outputs,
-      predicate.predicateAddress,
-    ),
+    assets: formatAssets(outputs, predicate.predicateAddress),
     network: {
       url: provider.url,
       chainId,

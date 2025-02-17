@@ -102,6 +102,7 @@ export class QuoteStorage {
       sdai: 'savings-dai',
       fbtc: 'ignition-fbtc',
       rseth: 'kelp-dao-restaked-eth',
+      fuel: 'fuel-network',
     };
 
     return fromTo[_name] ?? _name;
