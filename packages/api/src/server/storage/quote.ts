@@ -27,15 +27,15 @@ export class QuoteStorage {
     return Number(quote) ?? 0;
   }
 
-  private async setQuote(assetId: string, price: number) {
-    await RedisWriteClient.set(`${PREFIX}-${assetId}`, price);
+  private async setQuotes(quotes: IQuote[]) {
+    await RedisWriteClient.hsetMany(
+      PREFIX,
+      quotes.map(quote => ({ field: quote.assetId, value: quote.price })),
+    );
   }
 
   private async addMockQuotes(QuotesMock: IQuote[]): Promise<void> {
-    // biome-ignore lint/complexity/noForEach: <explanation>
-    QuotesMock.forEach(async quote => {
-      await this.setQuote(quote.assetId, quote.price);
-    });
+    await this.setQuotes(QuotesMock);
   }
 
   private async addQuotes(): Promise<void> {
@@ -50,9 +50,7 @@ export class QuoteStorage {
 
     if (params) {
       const quotes = await this.fetchQuotes(_assets, params);
-      await Promise.all(
-        quotes.map(quote => this.setQuote(quote.assetId, quote.price)),
-      );
+      await this.setQuotes(quotes);
     }
   }
 
@@ -134,12 +132,10 @@ export class QuoteStorage {
   }
 
   public async getActiveQuotesValues(): Promise<[string, number][]> {
-    const result = await RedisReadClient.scan(`${PREFIX}-*`);
-    const quotes = new Map<string, number>();
-
-    result.forEach((value, key) => {
-      quotes.set(key.replace(`${PREFIX}-`, ''), Number(value));
-    });
+    const result = await RedisReadClient.hGetAll(PREFIX);
+    const quotes = new Map<string, number>(
+      Object.entries(result).map(([k, v]) => [k, Number(v)]),
+    );
 
     const res = quotes.size > 0 ? Array.from(quotes) : [];
 
@@ -147,14 +143,11 @@ export class QuoteStorage {
   }
 
   public async getActiveQuotes(): Promise<Record<string, number>> {
-    const result = await RedisReadClient.scan(`${PREFIX}-*`);
-    const quotes = {};
-
-    result.forEach((value, key) => {
-      quotes[key.replace(`${PREFIX}-`, '')] = Number(value);
-    });
-
-    return quotes;
+    const result = await RedisReadClient.hGetAll(PREFIX);
+    const quotes = new Map<string, number>(
+      Object.entries(result).map(([k, v]) => [k, Number(v)]),
+    );
+    return Object.fromEntries(quotes);
   }
 
   static start() {
