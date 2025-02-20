@@ -130,6 +130,7 @@ export class APITokenController {
         {
           code: recoverCode.code,
           address: user.address,
+          version: apiToken.predicate.version,
           configurable: JSON.parse(apiToken.predicate.configurable),
           tokenConfig: apiToken.config,
         },
