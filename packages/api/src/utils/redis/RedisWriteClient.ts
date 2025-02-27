@@ -30,6 +30,16 @@ export class RedisWriteClient {
     }
   }
 
+  static async hsetMany(key: string, values: {field: string, value: string | number}[]) {
+    try {
+      const fields = values.map(({field, value}) => [field, value]);
+      await RedisWriteClient.client.hSet(key, fields.flat());
+      await RedisWriteClient.client.expire(key, 60 * 40); // 5 min
+    } catch (e) {
+      console.error('[CACHE_HMSET_ERROR]', e, key, values);
+    }
+  }
+
   static async del(keys: string[]) {
     try {
       await RedisWriteClient.client.del(keys);
