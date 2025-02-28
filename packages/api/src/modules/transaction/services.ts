@@ -450,10 +450,14 @@ export class TransactionService implements ITransactionService {
       });
     }
 
+    const witnesses = transaction.getWitnesses();
     const commonResponse = {
       status: transaction.status,
-      txRequest: transaction.txData,
-    };
+      txRequest: {
+        ...transaction.txData,
+        witnesses,
+      },
+    } as ITransactionAdvancedDetail;
 
     if (transaction.status === TransactionStatus.FAILED) {
       const provider = await FuelProvider.create(
@@ -481,7 +485,10 @@ export class TransactionService implements ITransactionService {
 
       const { receipts } = await provider.dryRun(txRequest);
 
-      return { ...commonResponse, receipts };
+      return {
+        ...commonResponse,
+        receipts,
+      };
     }
 
     return commonResponse;
