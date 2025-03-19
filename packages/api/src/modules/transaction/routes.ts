@@ -11,6 +11,7 @@ import { PredicateService } from '@modules/predicate/services';
 
 import { handleResponse } from '@utils/index';
 
+import { PermissionRoles } from '@src/models';
 import { AddressBookService } from '../addressBook/services';
 import { NotificationService } from '../notification/services';
 import { TransactionController } from './controller';
@@ -20,7 +21,6 @@ import {
   validateCloseTransactionPayload,
   validateSignerByIdPayload,
 } from './validations';
-import { PermissionRoles } from '@src/models';
 
 const predicatePermissionMiddleware = predicatesPermissionMiddleware({
   predicatesSelector: req => req.query.predicateId as string[],
@@ -53,12 +53,15 @@ const {
   findByHash,
   createHistory,
   cancel,
+  findAdvancedDetails,
 } = new TransactionController(
   transactionService,
   predicateService,
   addressBookService,
   notificationService,
 );
+
+router.get('/:id/advanced-details', handleResponse(findAdvancedDetails));
 
 router.use(authMiddleware);
 

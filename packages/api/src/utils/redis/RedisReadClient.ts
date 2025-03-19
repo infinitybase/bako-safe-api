@@ -28,6 +28,14 @@ export class RedisReadClient {
     }
   }
 
+  static async hGetAll(key: string): Promise<Record<string, string | number>> {
+    try {
+      return await RedisReadClient.client.hGetAll(key);
+    } catch (e) {
+      console.error('[CACHE_SESSIONS_GET_ERROR]', e, key);
+    }
+  }
+
   static async scan(
     MATCH: string,
     COUNT: number = 100,
