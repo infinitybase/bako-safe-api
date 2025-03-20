@@ -2,12 +2,20 @@ import http from 'http'
 import express from 'express'
 import socketIo from 'socket.io'
 import axios from 'axios'
+import Redis from 'ioredis'
+import { createAdapter } from '@socket.io/redis-adapter'
 
 import { TransactionEventHandler } from '@modules/transactions'
 import { DatabaseClass } from '@utils/database'
 import { SocketEvents } from './types'
 
 const { SOCKET_PORT, SOCKET_TIMEOUT_DICONNECT, SOCKET_NAME, API_URL } = process.env
+
+const REDIS_URL_READ = process.env.REDIS_URL_READ || 'redis://127.0.0.1:6379'
+const REDIS_URL_WRITE = process.env.REDIS_URL_WRITE || 'redis://127.0.0.1:6379'
+
+const redisReadClient = new Redis(REDIS_URL_READ)
+const redisWriteClient = new Redis(REDIS_URL_WRITE)
 
 const app = express()
 const server = http.createServer(app)
@@ -20,6 +28,11 @@ export const io = new socketIo.Server(server, {
 export const api = axios.create({
 	baseURL: API_URL,
 })
+
+redisReadClient.on('error', err => console.error('Redis Pub Client Error:', err))
+redisWriteClient.on('error', err => console.error('Redis Sub Client Error:', err))
+
+io.adapter(createAdapter(redisReadClient, redisWriteClient))
 
 let database: DatabaseClass
 let transactionEventHandler: TransactionEventHandler
