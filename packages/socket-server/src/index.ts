@@ -86,12 +86,23 @@ io.on(SocketEvents.CONNECT, async socket => {
 		socket.to(room).emit(SocketEvents.DEFAULT, data)
 	})
 
+	socket.on(SocketEvents.TRANSACTION, data => {
+		const { sessionId, to } = data
+		const room = `${sessionId}:${to}`
+
+  		const clientsInRoom = io.sockets.adapter.rooms.get(room) || new Set()
+
+		if (clientsInRoom.size > 0) {
+			console.log(`[SOCKET]: ${clientsInRoom.size} cliente(s) conectado(s) na sala ${room}`)
+			socket.to(room).emit(SocketEvents.TRANSACTION, data)
+		} else {
+			console.warn(`[SOCKET]: Nenhum cliente conectado na sala ${room}, evento não enviado.`)
+		}
+	})
+
 	socket.on(SocketEvents.NOTIFICATION, data => {
 		const { sessionId, to } = data
 		const room = `${sessionId}:${to}`
-		// console.log('[SOCKET]: REAL TIME MESSAGE TO FRONT', {
-		// 	room, data
-		// })
 
 		socket.to(room).emit(SocketEvents.NOTIFICATION, data)
 	})

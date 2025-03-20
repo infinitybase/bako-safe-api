@@ -22,6 +22,8 @@ export enum SocketEvents {
 	TX_REQUEST = '[TX_EVENT_REQUESTED]',
 	
 	NEW_NOTIFICATION= '[NEW_NOTIFICATION]',
+
+	TRANSACTION = '[TRANSACTION]',
 }
 
 export enum SocketUsernames {

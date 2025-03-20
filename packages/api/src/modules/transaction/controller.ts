@@ -11,7 +11,7 @@ import { NotificationTitle, Predicate, Transaction } from '@models/index';
 
 import { IPredicateService } from '@modules/predicate/types';
 
-import { BadRequest, error, ErrorTypes, NotFound } from '@utils/error';
+import { BadRequest, error, ErrorTypes } from '@utils/error';
 import {
   bindMethods,
   FuelProvider,
@@ -41,15 +41,17 @@ import {
   ITransactionService,
   TransactionHistory,
 } from './types';
-import { createTxHistoryEvent, mergeTransactionLists } from './utils';
+import { createTxHistoryEvent, mergeTransactionLists, getPredicate } from './utils';
 import { In, Not } from 'typeorm';
 import { NotificationService } from '../notification/services';
 import {
   Address,
-  getTransactionSummary,
   getTransactionSummaryFromRequest,
   transactionRequestify,
 } from 'fuels';
+
+import { emitTransaction } from '@src/socket/events';
+import { SocketEvents, SocketUsernames } from '@src/socket/types';
 
 // todo: use this provider by session, and move to transactions
 const { FUEL_PROVIDER } = process.env;
@@ -164,10 +166,7 @@ export class TransactionController {
         return successful(existsTx, Responses.Ok);
       }
 
-      const predicate = await new PredicateService()
-        .filter({ address: predicateAddress })
-        .list()
-        .then((result: Predicate[]) => result[0]);
+      const predicate = await getPredicate(predicateAddress);
 
       // if possible move this next part to a middleware, but we dont have access to body of request
       // ========================================================================================================
@@ -252,6 +251,13 @@ export class TransactionController {
         });
 
         await new NotificationService().transactionUpdate(newTransaction.id);
+
+        emitTransaction(member.id, {
+          sessionId: member.id,
+          to: SocketUsernames.UI,
+          type: SocketEvents.TRANSACTION_CREATED,
+          transaction: newTransaction
+        });
       }
 
       return successful(newTransaction, Responses.Ok);
@@ -391,9 +397,11 @@ export class TransactionController {
   async signByID({
     body: { signature, approve },
     params: { hash: txHash },
-    user: { address: account },
+    user,
     network,
   }: ISignByIdRequest) {
+    const { address: account } = user;
+
     try {
       const transaction = await Transaction.findOne({
         where: {
@@ -406,6 +414,7 @@ export class TransactionController {
             ]),
           ),
         },
+        relations: ['predicate', 'predicate.members'],
       });
 
       if (!transaction) {
@@ -443,6 +452,19 @@ export class TransactionController {
       }
 
       await new NotificationService().transactionUpdate(transaction.id);
+
+      const predicate = await getPredicate(transaction.resume.predicate.address);
+
+      const signedTransaction = Transaction.formatTransactionResponse(transaction);
+
+      for await (const member of predicate.members) {
+        emitTransaction(member.id, {
+          sessionId: member.id,
+          to: SocketUsernames.UI,
+          type: SocketEvents.TRANSACTION_UPDATED,
+          transaction: signedTransaction
+        });
+      }
 
       return successful(true, Responses.Ok);
     } catch (e) {
@@ -623,6 +645,7 @@ export class TransactionController {
           hash,
           status: TransactionStatus.AWAIT_REQUIREMENTS,
         },
+        relations: ['predicate', 'predicate.members'],
       });
 
       if (!transaction) {
@@ -654,6 +677,19 @@ export class TransactionController {
         witness.account === userSignature.account ? userSignature : witness,
       );
       transaction = await transaction.save();
+
+      const predicate = await getPredicate(transaction.resume.predicate.address);
+
+      const canceledTransaction = Transaction.formatTransactionResponse(transaction);
+
+      for await (const member of predicate.members) {
+        emitTransaction(member.id, {
+          sessionId: member.id,
+          to: SocketUsernames.UI,
+          type: SocketEvents.TRANSACTION_CANCELED,
+          transaction: canceledTransaction
+        });
+      }
 
       return successful(transaction.resume, Responses.Ok);
     } catch (e) {
