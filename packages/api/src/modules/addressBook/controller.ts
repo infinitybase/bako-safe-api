@@ -51,11 +51,12 @@ export class AddressBookController {
         .then((response: AddressBook[]) => response.length > 0);
 
       const hasDuplicate = duplicatedNickname || duplicatedAddress;
+      const fieldError = duplicatedNickname ? 'nickname' : 'address';
 
       if (hasDuplicate) {
         throw new Internal({
           type: ErrorTypes.Internal,
-          title: 'Error on contact creation',
+          title: `Error on contact creation - ${fieldError} duplicated`,
           detail: `Duplicated ${duplicatedNickname ? 'nickname' : 'address'}`,
         });
       }
