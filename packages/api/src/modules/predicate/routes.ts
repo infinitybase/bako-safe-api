@@ -12,6 +12,7 @@ import { PredicateService } from './services';
 import {
   validateAddPredicatePayload,
   validatePredicateIdParams,
+  validateTooglePredicatePayload,
 } from './validations';
 
 const permissionMiddlewareById = predicatePermissionMiddleware({
@@ -39,6 +40,7 @@ const {
   findByAddress,
   hasReservedCoins,
   checkByAddress,
+  tooglePredicateVisibility,
 } = new PredicateController(predicateService, notificationsService);
 
 router.use(authMiddleware);
@@ -64,5 +66,9 @@ router.get(
   handleResponse(findByAddress),
 );
 router.get('/check/by-address/:address', handleResponse(checkByAddress));
-
+router.post(
+  '/toggle-predicate',
+  validateTooglePredicatePayload,
+  handleResponse(tooglePredicateVisibility),
+);
 export default router;

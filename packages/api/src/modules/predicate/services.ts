@@ -19,7 +19,8 @@ import { IPredicateOrdination, setOrdination } from './ordination';
 import { Network, ZeroBytes32 } from 'fuels';
 import { UserService } from '../user/service';
 import { IconUtils } from '@src/utils/icons';
-import { FuelProvider } from '@src/utils';
+import { FuelProvider, RedisReadClient, RedisWriteClient } from '@src/utils';
+import App from '@src/server/app';
 
 export class PredicateService implements IPredicateService {
   private _ordination: IPredicateOrdination = {
@@ -139,6 +140,36 @@ export class PredicateService implements IPredicateService {
         detail: e,
       });
     }
+  }
+
+  async togglePredicateStatus(
+    userId: string,
+    address: string,
+    authorization: string,
+  ) {
+    const userService = new UserService();
+    let user = await userService.findOne(userId);
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const inactives = user.settings?.inactivesPredicates || [];
+
+    const updatedInactives = inactives.includes(address.toLowerCase())
+      ? inactives.filter(addr => addr.toLowerCase() !== address.toLowerCase())
+      : [...inactives, address.toLowerCase()];
+
+    user.settings.inactivesPredicates = updatedInactives;
+    user = await user.save();
+
+    const session = await App.getInstance()._sessionCache.getSession(authorization);
+
+    session.settings = user.settings;
+
+    await App.getInstance()._sessionCache.addSession(authorization, session);
+
+    return user.settings.inactivesPredicates;
   }
 
   async findByAddress(address: string): Promise<Predicate> {

@@ -22,6 +22,7 @@ export interface IUserPayload {
   provider: string;
   avatar?: string;
   webauthn?: IWebAuthnSignUp;
+  settings?: Record<string, any>;
 }
 
 export interface IFilterParams {
