@@ -236,9 +236,3 @@ export const createTxHistoryEvent = (
   },
 });
 
-export async function getPredicate(predicateAddress: string) {
-  return await new PredicateService()
-    .filter({ address: predicateAddress })
-    .list()
-    .then((result: Predicate[]) => result[0]);
-}

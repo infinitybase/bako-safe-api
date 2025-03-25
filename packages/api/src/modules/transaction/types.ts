@@ -40,6 +40,16 @@ export enum TransactionHistory {
   SEND = 'SEND',
 }
 
+export interface ITransactionHistory {
+  type: TransactionHistory;
+  date: string;
+  owner: {
+    id: string;
+    avatar: string;
+    address: string;
+  };
+}
+
 export interface ITransactionResponse extends Transaction {
   assets: ITransferAsset[];
 }

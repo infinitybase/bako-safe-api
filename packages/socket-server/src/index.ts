@@ -93,10 +93,7 @@ io.on(SocketEvents.CONNECT, async socket => {
   		const clientsInRoom = io.sockets.adapter.rooms.get(room) || new Set()
 
 		if (clientsInRoom.size > 0) {
-			console.log(`[SOCKET]: ${clientsInRoom.size} cliente(s) conectado(s) na sala ${room}`)
 			socket.to(room).emit(SocketEvents.TRANSACTION, data)
-		} else {
-			console.warn(`[SOCKET]: Nenhum cliente conectado na sala ${room}, evento não enviado.`)
 		}
 	})
 
