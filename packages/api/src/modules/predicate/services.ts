@@ -145,9 +145,13 @@ export class PredicateService implements IPredicateService {
     try {
       return await Predicate.findOne({
         where: { predicateAddress: address },
-        relations: ['owner'],
+        relations: ['owner', 'members'],
         select: {
           owner: {
+            id: true,
+            address: true,
+          },
+          members: {
             id: true,
             address: true,
           },
