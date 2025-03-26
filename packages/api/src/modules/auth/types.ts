@@ -5,7 +5,7 @@ import { Workspace } from '@src/models/Workspace';
 import { Encoder } from '@models/UserToken';
 import {
   IPermissions,
-  PredicateSettings,
+  UserSettings,
   TypeUser,
   User,
   WebAuthn,
@@ -93,7 +93,7 @@ export type IUserSignin = {
   email?: string;
   network: Network;
   notify: boolean;
-  settings?: PredicateSettings;
+  settings?: UserSettings;
 };
 
 export interface ISignInResponse extends IUserSignin {
