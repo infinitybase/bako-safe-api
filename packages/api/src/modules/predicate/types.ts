@@ -128,7 +128,20 @@ export type IFindByIdRequest = AuthValidatedRequest<IFindByIdRequestSchema>;
 export type IFindByHashRequest = AuthValidatedRequest<IFindByHashRequestSchema>;
 export type IListRequest = AuthValidatedRequest<IListRequestSchema>;
 export type IFindByNameRequest = AuthValidatedRequest<IFindByNameRequestSchema>;
-export type PredicateWithHidden = Predicate & { isHidden: boolean };
+export type PredicateWithHidden = Omit<
+  Predicate,
+  | 'isHiddenForUser'
+  | 'insertCreatedAtAndUpdatedAt'
+  | 'insertUpdatedAt'
+  | 'hasId'
+  | 'save'
+  | 'remove'
+  | 'softRemove'
+  | 'recover'
+  | 'reload'
+> & {
+  isHidden: boolean;
+};
 
 export interface IPredicateService {
   ordination(ordination?: IPredicateOrdination): this;

@@ -17,7 +17,7 @@ export const validatePredicateIdParams = validator.params(
   }),
 );
 
-export const validateTooglePredicatePayload = validator.body(
+export const validateTooglePredicatePayload = validator.params(
   Joi.object({
     address: Joi.string().required().custom(AddressValidator.validate),
   }),

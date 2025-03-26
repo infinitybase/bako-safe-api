@@ -9,8 +9,6 @@ export class AddColumnSettingsInUser1742836011595 implements MigrationInterface 
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`
-      DROP INDEX IF EXISTS idx_users_settings
-    `);
+    await queryRunner.query(`ALTER TABLE users DROP COLUMN IF EXISTS settings`);
   }
 }

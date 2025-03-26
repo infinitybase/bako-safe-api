@@ -66,8 +66,8 @@ router.get(
   handleResponse(findByAddress),
 );
 router.get('/check/by-address/:address', handleResponse(checkByAddress));
-router.post(
-  '/toggle-predicate',
+router.put(
+  '/:address/visibility',
   validateTooglePredicatePayload,
   handleResponse(tooglePredicateVisibility),
 );

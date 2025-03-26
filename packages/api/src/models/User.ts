@@ -16,7 +16,7 @@ export enum TypeUser {
   WEB_AUTHN = 'WEB_AUTHN',
 }
 
-export type PredicateSettings = {
+export type UserSettings = {
   inactivesPredicates: string[];
 };
 
@@ -69,7 +69,7 @@ class User extends Base {
     type: 'jsonb',
     default: { inactivesPredicates: [] },
   })
-  settings: PredicateSettings;
+  settings: UserSettings;
 }
 
 export { User };

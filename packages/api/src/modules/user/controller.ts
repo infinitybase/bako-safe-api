@@ -155,9 +155,10 @@ export class UserController {
         user.settings?.inactivesPredicates?.map(addr => addr.toLowerCase()) || [];
 
       const addHiddenFlag = (vault: Predicate): PredicateWithHidden => {
-        const predicateAddress = vault.predicateAddress.toLowerCase();
-        const isHidden = inactives.includes(predicateAddress);
-        return Object.assign({}, vault, { isHidden });
+        return {
+          ...vault,
+          isHidden: vault.isHiddenForUser(user),
+        };
       };
 
       let processedResponse;
