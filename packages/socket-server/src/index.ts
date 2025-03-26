@@ -103,7 +103,8 @@ io.on(SocketEvents.CONNECT, async socket => {
 		const { sessionId, to } = data
 		const room = `${sessionId}:${to}`
 
-  		const clientsInRoom = io.sockets.adapter.rooms.get(room) || new Set()
+		const clientsInRoom = io.sockets.adapter.rooms.get(room) || new Set()
+		console.log('[SOCKET] Clients in room', clientsInRoom.size)
 
 		if (clientsInRoom.size > 0) {
 			socket.to(room).emit(SocketEvents.TRANSACTION, data)
