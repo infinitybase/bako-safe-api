@@ -10,11 +10,11 @@ export class Pagination<T> {
   }
 
   async paginate(params: PaginationParams): Promise<IPagination<T>> {
-    const currentPage = Number(params.page || 0);
+    const currentPage = Number(params.page || 1); // Adjust first page to 1
     const perPage = Number(params.perPage || 10);
 
     const take = perPage;
-    const skip = currentPage * perPage;
+    const skip = (currentPage - 1) * perPage; // Adjust skip calculation
 
     const data = await this._queryBuilder.take(take).skip(skip).getMany();
     const total = await this._queryBuilder.getCount();
