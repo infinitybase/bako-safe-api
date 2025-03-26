@@ -17,6 +17,7 @@ import { isUUID } from 'class-validator';
 import { ITransactionCounter } from './types';
 import { ITransactionPagination } from './pagination';
 import { getAssetsMaps } from '@src/utils';
+import { PredicateService } from '../predicate/services';
 
 export const formatTransactionsResponse = (
   transactions: IPagination<Transaction> | Transaction[],
@@ -234,3 +235,4 @@ export const createTxHistoryEvent = (
     address: user.address,
   },
 });
+

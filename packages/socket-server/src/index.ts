@@ -99,12 +99,20 @@ io.on(SocketEvents.CONNECT, async socket => {
 		socket.to(room).emit(SocketEvents.DEFAULT, data)
 	})
 
+	socket.on(SocketEvents.TRANSACTION, data => {
+		const { sessionId, to } = data
+		const room = `${sessionId}:${to}`
+
+  		const clientsInRoom = io.sockets.adapter.rooms.get(room) || new Set()
+
+		if (clientsInRoom.size > 0) {
+			socket.to(room).emit(SocketEvents.TRANSACTION, data)
+		}
+	})
+
 	socket.on(SocketEvents.NOTIFICATION, data => {
 		const { sessionId, to } = data
 		const room = `${sessionId}:${to}`
-		// console.log('[SOCKET]: REAL TIME MESSAGE TO FRONT', {
-		// 	room, data
-		// })
 
 		socket.to(room).emit(SocketEvents.NOTIFICATION, data)
 	})
