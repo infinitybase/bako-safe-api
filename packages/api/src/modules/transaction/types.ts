@@ -6,7 +6,7 @@ import {
   TransactionStatus,
 } from 'bakosafe';
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
-import { Network, TransactionRequest } from 'fuels';
+import { Network, Receipt, TransactionRequest } from 'fuels';
 
 import { Predicate, Transaction, TransactionType } from '@models/index';
 
@@ -123,6 +123,12 @@ export type ICloseTransactionBody = {
 export interface ISignByIdPayload {
   signature: string;
   approve: string;
+}
+
+export interface ITransactionAdvancedDetail {
+  status: TransactionStatus;
+  txRequest: TransactionRequest;
+  receipts?: Receipt[];
 }
 
 interface ICreateTransactionRequestSchema extends ValidatedRequestSchema {
@@ -251,6 +257,7 @@ export interface ITransactionService {
   findById: (id: string) => Promise<ITransactionResponse>;
   findByHash: (hash: string) => Promise<ITransactionResponse>;
   delete: (id: string) => Promise<boolean>;
+  findAdvancedDetailById(id: string): Promise<ITransactionAdvancedDetail>;
 
   // graphql
   fetchFuelTransactions: (

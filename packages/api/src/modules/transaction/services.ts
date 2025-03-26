@@ -1,14 +1,12 @@
 import { IWitnesses, TransactionStatus, Vault, WitnessStatus } from 'bakosafe';
 import {
   Address,
+  bn,
   getTransactionsSummaries,
-  hexlify,
-  OutputType,
-  Provider,
-  transactionRequestify,
-  TransactionType as FuelTransactionType,
   getTransactionSummary,
   Network,
+  OutputType,
+  transactionRequestify,
 } from 'fuels';
 import { Brackets, In, Not } from 'typeorm';
 
@@ -20,17 +18,18 @@ import Internal from '@utils/error/Internal';
 import { IOrdination, setOrdination } from '@utils/ordination';
 import { IPagination, Pagination, PaginationParams } from '@utils/pagination';
 
+import { FuelProvider } from '@src/utils';
 import { NotificationService } from '../notification/services';
+import { TransactionPagination, TransactionPaginationParams } from './pagination';
 import {
   ICreateTransactionPayload,
+  ITransactionAdvancedDetail,
   ITransactionFilterParams,
   ITransactionResponse,
   ITransactionService,
   IUpdateTransactionPayload,
 } from './types';
 import { formatFuelTransaction, formatTransactionsResponse } from './utils';
-import { TransactionPagination, TransactionPaginationParams } from './pagination';
-import { FuelProvider } from '@src/utils';
 
 export class TransactionService implements ITransactionService {
   private _ordination: IOrdination<Transaction> = {
@@ -435,6 +434,64 @@ export class TransactionService implements ITransactionService {
           detail: e,
         });
       });
+  }
+
+  async findAdvancedDetailById(id: string): Promise<ITransactionAdvancedDetail> {
+    const transaction = await Transaction.findOne({
+      where: { id },
+      relations: { predicate: true },
+    });
+
+    if (!transaction) {
+      throw new NotFound({
+        type: ErrorTypes.NotFound,
+        detail: `Transaction with id ${id} not found.`,
+        title: 'Transaction not found',
+      });
+    }
+
+    const witnesses = transaction.getWitnesses();
+    const commonResponse = {
+      status: transaction.status,
+      txRequest: {
+        ...transaction.txData,
+        witnesses,
+      },
+    } as ITransactionAdvancedDetail;
+
+    if (transaction.status === TransactionStatus.FAILED) {
+      const provider = await FuelProvider.create(
+        transaction.network.url.replace(/^https?:\/\/[^@]+@/, 'https://'),
+      );
+
+      const vault = new Vault(
+        provider,
+        JSON.parse(transaction.predicate.configurable),
+        transaction.predicate.version,
+      );
+
+      const assetId = await provider.getBaseAssetId();
+
+      const resources = vault.generateFakeResources([
+        {
+          amount: bn(1),
+          assetId,
+        },
+      ]);
+
+      const txRequest = transactionRequestify(transaction.txData);
+
+      txRequest.addResources(resources);
+
+      const { receipts } = await provider.dryRun(txRequest);
+
+      return {
+        ...commonResponse,
+        receipts,
+      };
+    }
+
+    return commonResponse;
   }
 
   validateStatus(

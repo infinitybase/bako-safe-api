@@ -1,11 +1,11 @@
-import { TransactionStatus, TransactionType, WitnessStatus } from 'bakosafe';
-import { isUUID } from 'class-validator';
 import { PermissionRoles, Workspace } from '@src/models/Workspace';
 import {
   Unauthorized,
   UnauthorizedErrorTitles,
 } from '@src/utils/error/Unauthorized';
 import { validatePermissionGeneral } from '@src/utils/permissionValidate';
+import { TransactionStatus, TransactionType, WitnessStatus } from 'bakosafe';
+import { isUUID } from 'class-validator';
 
 import { NotificationTitle, Predicate, Transaction } from '@models/index';
 
@@ -20,7 +20,14 @@ import {
   successful,
 } from '@utils/index';
 
+import {
+  Address,
+  getTransactionSummaryFromRequest,
+  transactionRequestify,
+} from 'fuels';
+import { In, Not } from 'typeorm';
 import { IAddressBookService } from '../addressBook/types';
+import { NotificationService } from '../notification/services';
 import { INotificationService } from '../notification/types';
 import { PredicateService } from '../predicate/services';
 import { UserService } from '../user/service';
@@ -43,13 +50,6 @@ import {
   TransactionHistory,
 } from './types';
 import { createTxHistoryEvent, mergeTransactionLists } from './utils';
-import { In, Not } from 'typeorm';
-import { NotificationService } from '../notification/services';
-import {
-  Address,
-  getTransactionSummaryFromRequest,
-  transactionRequestify,
-} from 'fuels';
 
 import { emitTransaction } from '@src/socket/events';
 import { SocketEvents, SocketUsernames } from '@src/socket/types';
@@ -746,6 +746,16 @@ export class TransactionController {
       const response = await this.transactionService
         .paginate({ page: page || 0, perPage: perPage || 30 })
         .listAll();
+      return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async findAdvancedDetails(req: IFindTransactionByIdRequest) {
+    try {
+      const { id } = req.params;
+      const response = await this.transactionService.findAdvancedDetailById(id);
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
