@@ -33,11 +33,6 @@ export interface IPredicatePayload {
   isHidden?: boolean;
 }
 
-export interface IPredicateTooglePayload {
-  userId: string;
-  address: string;
-}
-
 export interface IPredicateMemberPayload {
   user_id: string;
   predicate_id: string;
@@ -78,7 +73,7 @@ interface ICreatePredicateRequestSchema extends ValidatedRequestSchema {
 }
 
 interface ITooglePredicateRequestSchema extends ValidatedRequestSchema {
-  [ContainerTypes.Body]: IPredicateTooglePayload;
+  [ContainerTypes.Params]: { address: string };
 }
 
 interface IUpdatePredicateRequestSchema extends ValidatedRequestSchema {

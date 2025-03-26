@@ -181,7 +181,6 @@ export class UserController {
         Responses.Ok,
       );
     } catch (e) {
-      console.error('Erro na função predicates:', e);
       return error(e.error, e.statusCode);
     }
   }
