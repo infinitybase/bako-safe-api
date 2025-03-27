@@ -14,6 +14,7 @@ import { Transaction } from './Transaction';
 import { User } from './User';
 import { Workspace } from './Workspace';
 import { DEFAULT_PREDICATE_VERSION } from 'bakosafe';
+import { Address } from 'fuels';
 
 export interface PredicateMember {
   avatar: string;
@@ -62,6 +63,12 @@ class Predicate extends Base {
     inverseJoinColumn: { name: 'user_id', referencedColumnName: 'id' },
   })
   members: User[];
+
+  isHiddenForUser(user: User): boolean {
+    const address = new Address(this.predicateAddress);
+    const isEqual = (value: string) => address.equals(new Address(value));
+    return user.settings?.inactivesPredicates?.some(isEqual) || false;
+  }
 }
 
 export { Predicate };

@@ -23,6 +23,7 @@ export class TokenAuthStrategy implements AuthStrategy {
         email: token.email,
         first_login: token.first_login,
         notify: token.notify,
+        settings: token.settings,
       },
       network: token.network,
       workspace: token.workspace,

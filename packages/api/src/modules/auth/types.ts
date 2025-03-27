@@ -3,7 +3,13 @@ import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 import { Workspace } from '@src/models/Workspace';
 
 import { Encoder } from '@models/UserToken';
-import { IPermissions, TypeUser, User, WebAuthn } from '@models/index';
+import {
+  IPermissions,
+  UserSettings,
+  TypeUser,
+  User,
+  WebAuthn,
+} from '@models/index';
 
 import { AuthValidatedRequest, UnloggedRequest } from '@middlewares/auth/types';
 import { Network } from 'fuels';
@@ -87,6 +93,7 @@ export type IUserSignin = {
   email?: string;
   network: Network;
   notify: boolean;
+  settings?: UserSettings;
 };
 
 export interface ISignInResponse extends IUserSignin {

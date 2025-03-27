@@ -16,6 +16,10 @@ export enum TypeUser {
   WEB_AUTHN = 'WEB_AUTHN',
 }
 
+export type UserSettings = {
+  inactivesPredicates: string[];
+};
+
 export const notFoundUser = {
   address: undefined,
   name: undefined,
@@ -60,6 +64,12 @@ class User extends Base {
 
   @Column()
   avatar: string;
+
+  @Column({
+    type: 'jsonb',
+    default: { inactivesPredicates: [] },
+  })
+  settings: UserSettings;
 }
 
 export { User };

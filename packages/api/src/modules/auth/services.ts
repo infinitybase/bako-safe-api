@@ -49,6 +49,7 @@ export class AuthService implements IAuthService {
         'user.email',
         'user.first_login',
         'user.notify',
+        'user.settings',
         'workspace.id',
         'workspace.name',
         'workspace.avatar',
@@ -91,6 +92,7 @@ export class AuthService implements IAuthService {
       email: user.email,
       notify: user.notify,
       first_login: user.first_login,
+      settings: user.settings,
       // network
       network: token.network,
       // workspace

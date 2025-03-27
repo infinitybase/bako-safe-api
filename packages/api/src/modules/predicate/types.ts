@@ -30,6 +30,7 @@ export interface IPredicatePayload {
   owner?: User;
   members?: User[];
   workspace?: Workspace;
+  isHidden?: boolean;
 }
 
 export interface IPredicateMemberPayload {
@@ -47,6 +48,7 @@ export interface IPredicateFilterParams {
   workspace?: string[];
   ids?: string[];
   select?: string[];
+  settings?: string[];
 }
 
 export interface IGetTxEndCursorQueryProps {
@@ -68,6 +70,10 @@ export interface IEndCursorPayload {
 
 interface ICreatePredicateRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Body]: IPredicatePayload;
+}
+
+interface ITooglePredicateRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Params]: { address: string };
 }
 
 interface IUpdatePredicateRequestSchema extends ValidatedRequestSchema {
@@ -105,16 +111,32 @@ interface IListRequestSchema extends ValidatedRequestSchema {
     sort: Sort;
     page: string;
     perPage: string;
+    hidden?: boolean;
   };
 }
 
 export type ICreatePredicateRequest = AuthValidatedRequest<ICreatePredicateRequestSchema>;
+export type ITooglePredicateRequest = AuthValidatedRequest<ITooglePredicateRequestSchema>;
 export type IUpdatePredicateRequest = AuthValidatedRequest<IUpdatePredicateRequestSchema>;
 export type IDeletePredicateRequest = AuthValidatedRequest<IDeletePredicateRequestSchema>;
 export type IFindByIdRequest = AuthValidatedRequest<IFindByIdRequestSchema>;
 export type IFindByHashRequest = AuthValidatedRequest<IFindByHashRequestSchema>;
 export type IListRequest = AuthValidatedRequest<IListRequestSchema>;
 export type IFindByNameRequest = AuthValidatedRequest<IFindByNameRequestSchema>;
+export type PredicateWithHidden = Omit<
+  Predicate,
+  | 'isHiddenForUser'
+  | 'insertCreatedAtAndUpdatedAt'
+  | 'insertUpdatedAt'
+  | 'hasId'
+  | 'save'
+  | 'remove'
+  | 'softRemove'
+  | 'recover'
+  | 'reload'
+> & {
+  isHidden: boolean;
+};
 
 export interface IPredicateService {
   ordination(ordination?: IPredicateOrdination): this;
@@ -138,4 +160,9 @@ export interface IPredicateService {
     version?: string,
   ) => Promise<Vault>;
   listDateMoreThan(d: Date): Promise<IPagination<Predicate>>;
+  togglePredicateStatus: (
+    userId: string,
+    address: string,
+    authorization: string,
+  ) => Promise<string[]>;
 }

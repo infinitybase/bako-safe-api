@@ -16,3 +16,9 @@ export const validatePredicateIdParams = validator.params(
     predicateId: Joi.string().uuid().required(),
   }),
 );
+
+export const validateTooglePredicatePayload = validator.params(
+  Joi.object({
+    address: Joi.string().required().custom(AddressValidator.validate),
+  }),
+);
