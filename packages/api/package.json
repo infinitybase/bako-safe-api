@@ -17,7 +17,8 @@
     "run:stg": "make -C ./ deploy-stg env_file=.env.staging",
     "run:test": "make -C ./ deploy-test env_file=.env.test",
     "database:populate": "chmod +x ./src/scripts/db-populate.sh && ./src/scripts/db-populate.sh",
-    "database:clear": "chmod +x ./src/scripts/db-clear.sh && ./src/scripts/db-clear.sh"
+    "database:clear": "chmod +x ./src/scripts/db-clear.sh && ./src/scripts/db-clear.sh",
+    "tests:init": "chmod +x ./src/scripts/tests-init-env.sh && ./src/scripts/tests-init-env.sh"
   },
   "dependencies": {
     "@noble/curves": "1.3.0",
