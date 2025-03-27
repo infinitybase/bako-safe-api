@@ -1,18 +1,16 @@
-echo "Iniciando Redis Container..."
+echo "Starting Redis Container..."
 (cd ../../packages/redis && docker compose up -d)
 
-echo "Iniciando Database Containers..."
+echo "Starging Database Containers..."
 (cd ../../packages/database && docker compose up -d)
 
-echo "Iniciando Chain Containers..."
+echo "Starging Chain Containers..."
 (cd ../../packages/chain && pnpm chain:dev:start)
 
-echo "Iniciando Socket server.."
+echo "Starting Socket server.."
 (cd ../../packages/socket-server && pnpm dev) &
 
-echo "Iniciando API server..."
+echo "Starting API server..."
 (pnpm dev)
 
-echo "Todos os serviços foram iniciados!"
-
-
+echo "All services have been started!"
