@@ -256,16 +256,14 @@ export class TransactionController {
 
         await new NotificationService().transactionUpdate(newTransaction.id);
 
-        const transactionHistory = await TransactionController.formatTransactionsHistory(
-          newTransaction,
-        );
+        const transactionHistory = await TransactionController.formatTransactionsHistory(newTransaction);
 
         emitTransaction(member.id, {
           sessionId: member.id,
           to: SocketUsernames.UI,
           type: SocketEvents.TRANSACTION_CREATED,
           transaction: newTransaction,
-          history: transactionHistory as ITransactionHistory[],
+          history: transactionHistory as ITransactionHistory[]
         });
       }
 
@@ -462,15 +460,11 @@ export class TransactionController {
 
       await new NotificationService().transactionUpdate(transaction.id);
 
-      const predicate = await this.predicateService.findByAddress(
-        transaction.predicate.predicateAddress,
-      );
+      const predicate = await this.predicateService.findByAddress(transaction.predicate.predicateAddress);
 
       const signedTransaction = Transaction.formatTransactionResponse(transaction);
 
-      const transactionHistory = await TransactionController.formatTransactionsHistory(
-        transaction,
-      );
+      const transactionHistory = await TransactionController.formatTransactionsHistory(transaction);
 
       for (const member of predicate.members) {
         emitTransaction(member.id, {
@@ -478,7 +472,7 @@ export class TransactionController {
           to: SocketUsernames.UI,
           type: SocketEvents.TRANSACTION_UPDATED,
           transaction: signedTransaction,
-          history: transactionHistory as ITransactionHistory[],
+          history: transactionHistory as ITransactionHistory[]
         });
       }
 
@@ -694,17 +688,11 @@ export class TransactionController {
       );
       transaction = await transaction.save();
 
-      const predicate = await this.predicateService.findByAddress(
-        transaction.predicate.predicateAddress,
-      );
+      const predicate = await this.predicateService.findByAddress(transaction.predicate.predicateAddress);
 
-      const canceledTransaction = Transaction.formatTransactionResponse(
-        transaction,
-      );
+      const canceledTransaction = Transaction.formatTransactionResponse(transaction);
 
-      const transactionHistory = await TransactionController.formatTransactionsHistory(
-        transaction,
-      );
+      const transactionHistory = await TransactionController.formatTransactionsHistory(transaction);
 
       for (const member of predicate.members) {
         emitTransaction(member.id, {
@@ -712,7 +700,7 @@ export class TransactionController {
           to: SocketUsernames.UI,
           type: SocketEvents.TRANSACTION_CANCELED,
           transaction: canceledTransaction,
-          history: transactionHistory as ITransactionHistory[],
+          history: transactionHistory as ITransactionHistory[]
         });
       }
 
