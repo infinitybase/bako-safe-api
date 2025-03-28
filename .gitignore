@@ -6,6 +6,7 @@ node_modules
 postgresql/
 **/database/inserts/**
 mongodbdev/
+mongodbdevelopment/
 
 ## API
 # Build

@@ -8,7 +8,7 @@ import {
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 import { Network, Receipt, TransactionRequest } from 'fuels';
 
-import { Predicate, Transaction, TransactionType } from '@models/index';
+import { Predicate, Transaction, TransactionType, TypeUser } from '@models/index';
 
 import { AuthValidatedRequest } from '@middlewares/auth/types';
 
@@ -47,6 +47,7 @@ export interface ITransactionHistory {
     id: string;
     avatar: string;
     address: string;
+    type: TypeUser;
   };
 }
 
