@@ -6,18 +6,14 @@ import { bindMethods } from '@src/utils/bindMethods';
 
 import {
   BadRequest,
-  error,
   ErrorTypes,
   Unauthorized,
   UnauthorizedErrorTitles,
+  error,
 } from '@utils/error';
 import { IconUtils } from '@utils/icons';
 import { Responses, successful, TokenUtils } from '@utils/index';
 
-import App from '@src/server/app';
-import { FuelProvider } from '@src/utils/FuelProvider';
-import { Not } from 'typeorm';
-import { IChangenetworkRequest } from '../auth/types';
 import { PredicateService } from '../predicate/services';
 import { RecoverCodeService } from '../recoverCode/services';
 import { TransactionService } from '../transaction/services';
@@ -35,6 +31,10 @@ import {
   IUpdateRequest,
   IUserService,
 } from './types';
+import { Not } from 'typeorm';
+import App from '@src/server/app';
+import { IChangenetworkRequest } from '../auth/types';
+import { FuelProvider } from '@src/utils/FuelProvider';
 
 export class UserController {
   private userService: IUserService;
@@ -91,7 +91,7 @@ export class UserController {
           signer: hasSingle ? user.address : undefined,
           network: network.url,
         })
-        .paginate({ page: '1', perPage: '6' })
+        .paginate({ page: '0', perPage: '6' })
         .ordination({ orderBy: 'createdAt', sort: 'DESC' })
         .list();
 
@@ -146,7 +146,7 @@ export class UserController {
           workspace: workspaceList,
           signer: hasSingle ? user.address : undefined,
         })
-        .paginate({ page: '1', perPage: '8' })
+        .paginate({ page: '0', perPage: '8' })
         .ordination({ orderBy: 'updatedAt', sort: 'DESC' })
         .list();
 
