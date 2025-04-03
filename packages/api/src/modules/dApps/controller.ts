@@ -12,6 +12,7 @@ import { RecoverCodeService } from '../recoverCode/services';
 import { TransactionService } from '../transaction/services';
 import { DAppsService } from './service';
 import type {
+  IChangeNetworkRequest,
   ICreateRecoverCodeRequest,
   ICreateRequest,
   IDAppsService,
@@ -300,6 +301,18 @@ export class DappController {
       await RedisWriteClient.set(`${PREFIX}${sessionId}`, JSON.stringify(dapp));
 
       return successful(true, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async changeNetwork({ body }: IChangeNetworkRequest) {
+    try {
+      const { sessionId, newNetwork, origin } = body;
+      
+      const response = await this._dappService.updateNetwork({sessionId, newNetwork, origin});
+
+      return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }

@@ -1,8 +1,8 @@
 import { DApp } from '@src/models';
-import { ErrorTypes } from '@src/utils/error';
+import { ErrorTypes, NotFound } from '@src/utils/error';
 import Internal from '@src/utils/error/Internal';
-
-import { IDAPPCreatePayload, IDAppsService } from './types';
+import { RedisReadClient, RedisWriteClient } from '@src/utils';
+import { IDAPPChangeNetwork, IDAPPCreatePayload, IDAppsService } from './types';
 import { DeepPartial } from 'typeorm';
 
 export class DAppsService implements IDAppsService {
@@ -93,5 +93,39 @@ export class DAppsService implements IDAppsService {
         detail: e,
       });
     }
+  }
+
+  async updateNetwork(payload: IDAPPChangeNetwork) {
+    const { sessionId, newNetwork, origin } = payload;
+
+    // ---- updating network in redis cache
+    const PREFIX = 'dapp';
+    const dappCache = await RedisReadClient.get(`${PREFIX}${sessionId}`);
+
+    if (!dappCache) {
+      throw new NotFound({
+        type: ErrorTypes.NotFound,
+        title: 'DApp not found in cache',
+        detail: `No dapp was found for sessionId: ${sessionId}.`,
+      });
+    }
+
+    const _dapp = JSON.parse(dappCache);
+    _dapp.network = newNetwork;
+    await RedisWriteClient.set(`${PREFIX}${sessionId}`, JSON.stringify(_dapp));
+
+    // ---- updating network in database
+    return await this.findBySessionID(sessionId, origin).then(async dapp => {
+      if (!dapp) {
+        throw new NotFound({
+          type: ErrorTypes.NotFound,
+          title: 'DApp not found',
+          detail: `No dapp was found for these sessionID or origin.`,
+        });
+      }
+      dapp.network = newNetwork;
+      await dapp.save();
+      return dapp.network;
+    });
   }
 }

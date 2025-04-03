@@ -26,6 +26,12 @@ export interface IDAPPConfirmTx {
   tx: TransactionRequestLike;
 }
 
+export interface IDAPPChangeNetwork {
+  sessionId: string;
+  newNetwork: Network;
+  origin: string;
+}
+
 interface ICreateRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Body]: Omit<
     IDAPPCreatePayload,
@@ -55,6 +61,10 @@ interface IConfirmTx extends ValidatedRequestSchema {
   };
 }
 
+interface IChangeNetork extends ValidatedRequestSchema {
+  [ContainerTypes.Body]: IDAPPChangeNetwork;
+}
+
 export interface IDAPPUser {
   id: string;
   address: string;
@@ -70,6 +80,7 @@ export interface IDAppsService {
   create: (payload: IDAPPCreatePayload) => Promise<DApp>;
   findBySessionID: (sessionID: string, origin: string) => Promise<DApp>;
   findCurrent: (sessionID: string) => Promise<string>;
+  updateNetwork: (payload: IDAPPChangeNetwork) => Promise<Network>;
 }
 
 interface IDappRequestSchema extends ValidatedRequestSchema {
@@ -81,3 +92,4 @@ export type ICreateRecoverCodeRequest = UnloggedRequest<ICreateRecoverCodeSchema
 export type IConfirmTxRequest = AuthValidatedRequest<IConfirmTx>;
 export type ICreateRequest = AuthValidatedRequest<ICreateRequestSchema>;
 export type IDappRequest = AuthValidatedRequest<IDappRequestSchema>;
+export type IChangeNetworkRequest = AuthValidatedRequest<IChangeNetork>;
