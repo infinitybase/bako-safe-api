@@ -85,38 +85,63 @@ export class TransactionController {
       const predicate =
         predicateId && predicateId.length > 0 ? predicateId[0] : undefined;
 
-      const networkUrl = network.url.replace(/^https?:\/\/[^@]+@/, 'https://');
-
-      const baseQuery = Transaction.createQueryBuilder('t')
-        .addSelect(['t.status', 't.resume'])
-        .where('t.status = :status', {
-          status: TransactionStatus.AWAIT_REQUIREMENTS,
-        })
-        .andWhere(
-          // TODO: On release to mainnet we need to remove this condition
-          `regexp_replace(t.network->>'url', '^https?://[^@]+@', 'https://') = :network`,
-          { network: networkUrl },
-        );
-
-      if (predicate) {
-        baseQuery.andWhere('t.predicateId = :predicate', { predicate });
-      } else {
-        baseQuery
+      if (!predicate) {
+        const qb = Transaction.createQueryBuilder('t')
           .innerJoinAndSelect('t.predicate', 'pred')
           .innerJoin('pred.workspace', 'wks', 'wks.id = :workspaceId', {
             workspaceId: workspace.id,
-          });
+          })
+          .addSelect(['t.status', 't.resume'])
+          .where('t.status = :status', {
+            status: TransactionStatus.AWAIT_REQUIREMENTS,
+          })
+          .andWhere(
+            // TODO: On release to mainnet we need to remove this condition
+            `regexp_replace(t.network->>'url', '^https?://[^@]+@', 'https://') = :network`,
+            {
+              network: network.url.replace(/^https?:\/\/[^@]+@/, 'https://'),
+            },
+          );
+
+        const transactions = await qb.getMany();
+
+        const ofUser = transactions.length;
+        const pendingSignature = transactions.some(tx =>
+          tx.resume?.witnesses?.some(
+            w => w.account === user.address && !w.signature,
+          ),
+        );
+
+        return successful(
+          {
+            ofUser,
+            transactionsBlocked: ofUser > 0,
+            pendingSignature,
+          },
+          Responses.Ok,
+        );
       }
 
-      const transactions = await baseQuery.getMany();
+      const qb = Transaction.createQueryBuilder('t')
+        .addSelect(['t.resume'])
+        .where('t.status = :status', {
+          status: TransactionStatus.AWAIT_REQUIREMENTS,
+        })
+        .andWhere('t.predicateId = :predicate', { predicate })
+        .andWhere(
+          // TODO: On release to mainnet we need to remove this condition
+          `regexp_replace(t.network->>'url', '^https?://[^@]+@', 'https://') = :network`,
+          {
+            network: network.url.replace(/^https?:\/\/[^@]+@/, 'https://'),
+          },
+        );
+
+      const transactions = await qb.getMany();
 
       const ofUser = transactions.length;
-
-      const userWitnesses = transactions
-        .map(tx => tx.resume?.witnesses?.find(w => w.account === user.address))
-        .filter(Boolean);
-
-      const pendingSignature = userWitnesses.some(w => !w?.signature);
+      const pendingSignature = transactions.some(tx =>
+        tx.resume?.witnesses?.some(w => w.account === user.address && !w.signature),
+      );
 
       return successful(
         {
