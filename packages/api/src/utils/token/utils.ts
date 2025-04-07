@@ -16,7 +16,7 @@ import App from '@src/server/app';
 import { ISignInResponse } from '@src/modules/auth/types';
 
 import { MoreThan } from 'typeorm';
-import { FuelProvider } from '../FuelProvider';
+import { Provider } from 'fuels';
 
 const { FUEL_PROVIDER } = process.env;
 
@@ -149,7 +149,7 @@ export class TokenUtils {
   }
 
   static async changeNetwork(userId: string, network: string) {
-    const provider = await FuelProvider.create(network ?? FUEL_PROVIDER);
+    const provider = new Provider(network ?? FUEL_PROVIDER);
     const _token = await UserToken.findOne({
       where: { user_id: userId },
       relations: ['workspace'],

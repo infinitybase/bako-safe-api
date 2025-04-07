@@ -25,12 +25,10 @@ import {
 } from './types';
 
 import App from '@src/server/app';
-import { Address, Network } from 'fuels';
-import { Vault } from 'bakosafe';
+import { Address, Network, Provider } from 'fuels';
 import { PredicateService } from '../predicate/services';
 
 import { Maybe } from '@src/utils/types/maybe';
-import { FuelProvider } from '@src/utils';
 
 const { UI_URL } = process.env;
 
@@ -121,7 +119,7 @@ export class UserService implements IUserService {
         });
 
         // insert a root wallet predicate
-        const provider = await FuelProvider.create(payload.provider);
+        const provider = new Provider(payload.provider);
         const configurable = {
           SIGNATURES_COUNT: 1,
           SIGNERS: [user.address],

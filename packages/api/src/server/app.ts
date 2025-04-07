@@ -11,7 +11,7 @@ import { handleErrors } from '@middlewares/index';
 import { QuoteStorage, SessionStorage } from './storage';
 import Monitoring from './monitoring';
 import Bootstrap from './bootstrap';
-import { RedisWriteClient, RedisReadClient, FuelProvider } from '@src/utils';
+import { RedisWriteClient, RedisReadClient } from '@src/utils';
 
 class App {
   private static instance?: App;
@@ -74,7 +74,6 @@ class App {
       await Bootstrap.start();
       await RedisWriteClient.start();
       await RedisReadClient.start();
-      await FuelProvider.start();
 
       App.instance = new App();
       Object.freeze(App.instance);

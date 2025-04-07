@@ -6,6 +6,7 @@ import {
   getTransactionSummary,
   Network,
   OutputType,
+  Provider,
   transactionRequestify,
 } from 'fuels';
 import { Brackets, In, Not } from 'typeorm';
@@ -18,7 +19,6 @@ import Internal from '@utils/error/Internal';
 import { IOrdination, setOrdination } from '@utils/ordination';
 import { IPagination, Pagination, PaginationParams } from '@utils/pagination';
 
-import { FuelProvider } from '@src/utils';
 import { NotificationService } from '../notification/services';
 import { TransactionPagination, TransactionPaginationParams } from './pagination';
 import {
@@ -460,7 +460,7 @@ export class TransactionService implements ITransactionService {
     } as ITransactionAdvancedDetail;
 
     if (transaction.status === TransactionStatus.FAILED) {
-      const provider = await FuelProvider.create(
+      const provider = new Provider(
         transaction.network.url.replace(/^https?:\/\/[^@]+@/, 'https://'),
       );
 
@@ -577,7 +577,7 @@ export class TransactionService implements ITransactionService {
       return await this.findById(id);
     }
 
-    const provider = await FuelProvider.create(
+    const provider = new Provider(
       transaction.network.url.replace(/^https?:\/\/[^@]+@/, 'https://'),
     );
 
@@ -636,7 +636,7 @@ export class TransactionService implements ITransactionService {
 
       for await (const predicate of predicates) {
         const address = Address.fromString(predicate.predicateAddress).toB256();
-        const provider = await FuelProvider.create(providerUrl);
+        const provider = new Provider(providerUrl);
 
         // TODO: change this to use pagination and order DESC
         const { transactions } = await getTransactionsSummaries({
@@ -675,7 +675,7 @@ export class TransactionService implements ITransactionService {
     providerUrl: string,
   ): Promise<ITransactionResponse> {
     try {
-      const provider = await FuelProvider.create(providerUrl);
+      const provider = new Provider(providerUrl);
 
       const tx = await getTransactionSummary({
         id,

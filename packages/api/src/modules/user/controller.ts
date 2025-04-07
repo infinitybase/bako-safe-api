@@ -34,7 +34,7 @@ import {
 import { Not } from 'typeorm';
 import App from '@src/server/app';
 import { IChangenetworkRequest } from '../auth/types';
-import { FuelProvider } from '@src/utils/FuelProvider';
+import { Provider } from 'fuels';
 
 export class UserController {
   private userService: IUserService;
@@ -230,9 +230,7 @@ export class UserController {
         });
       }
 
-      const _provider = await FuelProvider.create(
-        provider ?? process.env.FUEL_PROVIDER,
-      );
+      const _provider = new Provider(provider ?? process.env.FUEL_PROVIDER);
 
       const localAddTime = process.env.API_ENVIRONMENT === 'development' ? 180 : 0;
 
