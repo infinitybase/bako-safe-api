@@ -85,54 +85,44 @@ export class TransactionController {
       const predicate =
         predicateId && predicateId.length > 0 ? predicateId[0] : undefined;
 
-      if (!predicate) {
-        const qb = Transaction.createQueryBuilder('t')
-          .innerJoinAndSelect('t.predicate', 'pred')
-          .innerJoin('pred.workspace', 'wks', 'wks.id = :workspaceId', {
-            workspaceId: workspace.id,
-          })
-          .addSelect(['t.status'])
-          .where('t.status = :status', {
-            status: TransactionStatus.AWAIT_REQUIREMENTS,
-          })
-          .andWhere(
-            // TODO: On release to mainnet we need to remove this condition
-            `regexp_replace(t.network->>'url', '^https?://[^@]+@', 'https://') = :network`,
-            {
-              network: network.url.replace(/^https?:\/\/[^@]+@/, 'https://'),
-            },
-          );
+      const networkUrl = network.url.replace(/^https?:\/\/[^@]+@/, 'https://');
 
-        const result = await qb.getCount();
-
-        return successful(
-          {
-            ofUser: result,
-            transactionsBlocked: result > 0,
-          },
-          Responses.Ok,
-        );
-      }
-
-      const qb = Transaction.createQueryBuilder('t')
+      const baseQuery = Transaction.createQueryBuilder('t')
+        .addSelect(['t.status', 't.resume'])
         .where('t.status = :status', {
           status: TransactionStatus.AWAIT_REQUIREMENTS,
         })
-        .andWhere('t.predicateId = :predicate', { predicate })
         .andWhere(
           // TODO: On release to mainnet we need to remove this condition
           `regexp_replace(t.network->>'url', '^https?://[^@]+@', 'https://') = :network`,
-          {
-            network: network.url.replace(/^https?:\/\/[^@]+@/, 'https://'),
-          },
+          { network: networkUrl },
         );
 
-      const result = await qb.getCount();
+      if (predicate) {
+        baseQuery.andWhere('t.predicateId = :predicate', { predicate });
+      } else {
+        baseQuery
+          .innerJoinAndSelect('t.predicate', 'pred')
+          .innerJoin('pred.workspace', 'wks', 'wks.id = :workspaceId', {
+            workspaceId: workspace.id,
+          });
+      }
+
+      const transactions = await baseQuery.getMany();
+
+      const ofUser = transactions.length;
+
+      const userWitnesses = transactions
+        .map(tx => tx.resume?.witnesses?.find(w => w.account === user.address))
+        .filter(Boolean);
+
+      const pendingSignature = userWitnesses.some(w => !w?.signature);
 
       return successful(
         {
-          ofUser: result,
-          transactionsBlocked: result > 0,
+          ofUser,
+          transactionsBlocked: ofUser > 0,
+          pendingSignature,
         },
         Responses.Ok,
       );
@@ -256,14 +246,16 @@ export class TransactionController {
 
         await new NotificationService().transactionUpdate(newTransaction.id);
 
-        const transactionHistory = await TransactionController.formatTransactionsHistory(newTransaction);
+        const transactionHistory = await TransactionController.formatTransactionsHistory(
+          newTransaction,
+        );
 
         emitTransaction(member.id, {
           sessionId: member.id,
           to: SocketUsernames.UI,
           type: SocketEvents.TRANSACTION_CREATED,
           transaction: newTransaction,
-          history: transactionHistory as ITransactionHistory[]
+          history: transactionHistory as ITransactionHistory[],
         });
       }
 
@@ -460,11 +452,15 @@ export class TransactionController {
 
       await new NotificationService().transactionUpdate(transaction.id);
 
-      const predicate = await this.predicateService.findByAddress(transaction.predicate.predicateAddress);
+      const predicate = await this.predicateService.findByAddress(
+        transaction.predicate.predicateAddress,
+      );
 
       const signedTransaction = Transaction.formatTransactionResponse(transaction);
 
-      const transactionHistory = await TransactionController.formatTransactionsHistory(transaction);
+      const transactionHistory = await TransactionController.formatTransactionsHistory(
+        transaction,
+      );
 
       for (const member of predicate.members) {
         emitTransaction(member.id, {
@@ -472,7 +468,7 @@ export class TransactionController {
           to: SocketUsernames.UI,
           type: SocketEvents.TRANSACTION_UPDATED,
           transaction: signedTransaction,
-          history: transactionHistory as ITransactionHistory[]
+          history: transactionHistory as ITransactionHistory[],
         });
       }
 
@@ -688,11 +684,17 @@ export class TransactionController {
       );
       transaction = await transaction.save();
 
-      const predicate = await this.predicateService.findByAddress(transaction.predicate.predicateAddress);
+      const predicate = await this.predicateService.findByAddress(
+        transaction.predicate.predicateAddress,
+      );
 
-      const canceledTransaction = Transaction.formatTransactionResponse(transaction);
+      const canceledTransaction = Transaction.formatTransactionResponse(
+        transaction,
+      );
 
-      const transactionHistory = await TransactionController.formatTransactionsHistory(transaction);
+      const transactionHistory = await TransactionController.formatTransactionsHistory(
+        transaction,
+      );
 
       for (const member of predicate.members) {
         emitTransaction(member.id, {
@@ -700,7 +702,7 @@ export class TransactionController {
           to: SocketUsernames.UI,
           type: SocketEvents.TRANSACTION_CANCELED,
           transaction: canceledTransaction,
-          history: transactionHistory as ITransactionHistory[]
+          history: transactionHistory as ITransactionHistory[],
         });
       }
 
