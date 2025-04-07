@@ -5,10 +5,9 @@ import { SetupApi } from '@src/utils/testUtils/setup';
 import { Predicate, Encoder } from '@src/models';
 import { networks } from '@src/mocks/networks';
 import { IPredicatePayload } from '@src/modules/predicate/types';
-import { FuelProvider } from '@src/utils';
 import axios from 'axios';
 import { TypeUser, Vault } from 'bakosafe';
-import { Wallet, Address } from 'fuels';
+import { Wallet, Address, Provider } from 'fuels';
 import { accounts } from '@src/mocks/accounts';
 
 const { API_URL } = process.env;
@@ -25,7 +24,7 @@ describe('[API TOKEN]', () => {
     const api = axios.create({
       baseURL: API_URL,
     });
-    const provider = await FuelProvider.create(networks['local']);
+    const provider = new Provider(networks['local']);
 
     // create a new user
     const wallet = Wallet.generate();

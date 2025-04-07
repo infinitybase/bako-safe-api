@@ -1,11 +1,9 @@
 import axios, { AxiosInstance } from 'axios';
-// import { IBakoSafeApi } from 'bakosafe';
-import { Wallet } from 'fuels';
+import { Provider, Wallet } from 'fuels';
 
 import { TypeUser } from '@src/models';
 
 import { IDefaultAccount } from '../../mocks/accounts';
-import { FuelProvider } from '../FuelProvider';
 
 const { API_URL } = process.env;
 
@@ -111,7 +109,7 @@ export class AuthValidations {
   }
 
   async signer(message: string) {
-    const provider = await FuelProvider.create(this.provider);
+    const provider = new Provider(this.provider);
     const signer = Wallet.fromPrivateKey(this.account.privateKey, provider);
     return await signer.signMessage(message);
   }
