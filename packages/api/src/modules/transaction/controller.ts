@@ -44,11 +44,15 @@ import {
   IListWithIncomingsRequest,
   ISendTransactionRequest,
   ISignByIdRequest,
+  ITransactionHistory,
   ITransactionResponse,
   ITransactionService,
   TransactionHistory,
 } from './types';
 import { createTxHistoryEvent, mergeTransactionLists } from './utils';
+
+import { emitTransaction } from '@src/socket/events';
+import { SocketEvents, SocketUsernames } from '@src/socket/types';
 
 // todo: use this provider by session, and move to transactions
 const { FUEL_PROVIDER } = process.env;
@@ -251,6 +255,16 @@ export class TransactionController {
         });
 
         await new NotificationService().transactionUpdate(newTransaction.id);
+
+        const transactionHistory = await TransactionController.formatTransactionsHistory(newTransaction);
+
+        emitTransaction(member.id, {
+          sessionId: member.id,
+          to: SocketUsernames.UI,
+          type: SocketEvents.TRANSACTION_CREATED,
+          transaction: newTransaction,
+          history: transactionHistory as ITransactionHistory[]
+        });
       }
 
       return successful(newTransaction, Responses.Ok);
@@ -390,9 +404,11 @@ export class TransactionController {
   async signByID({
     body: { signature, approve },
     params: { hash: txHash },
-    user: { address: account },
+    user,
     network,
   }: ISignByIdRequest) {
+    const { address: account } = user;
+
     try {
       const transaction = await Transaction.findOne({
         where: {
@@ -405,6 +421,7 @@ export class TransactionController {
             ]),
           ),
         },
+        relations: ['predicate', 'predicate.members', 'createdBy'],
       });
 
       if (!transaction) {
@@ -442,6 +459,22 @@ export class TransactionController {
       }
 
       await new NotificationService().transactionUpdate(transaction.id);
+
+      const predicate = await this.predicateService.findByAddress(transaction.predicate.predicateAddress);
+
+      const signedTransaction = Transaction.formatTransactionResponse(transaction);
+
+      const transactionHistory = await TransactionController.formatTransactionsHistory(transaction);
+
+      for (const member of predicate.members) {
+        emitTransaction(member.id, {
+          sessionId: member.id,
+          to: SocketUsernames.UI,
+          type: SocketEvents.TRANSACTION_UPDATED,
+          transaction: signedTransaction,
+          history: transactionHistory as ITransactionHistory[]
+        });
+      }
 
       return successful(true, Responses.Ok);
     } catch (e) {
@@ -622,6 +655,7 @@ export class TransactionController {
           hash,
           status: TransactionStatus.AWAIT_REQUIREMENTS,
         },
+        relations: ['predicate', 'predicate.members', 'createdBy'],
       });
 
       if (!transaction) {
@@ -653,6 +687,22 @@ export class TransactionController {
         witness.account === userSignature.account ? userSignature : witness,
       );
       transaction = await transaction.save();
+
+      const predicate = await this.predicateService.findByAddress(transaction.predicate.predicateAddress);
+
+      const canceledTransaction = Transaction.formatTransactionResponse(transaction);
+
+      const transactionHistory = await TransactionController.formatTransactionsHistory(transaction);
+
+      for (const member of predicate.members) {
+        emitTransaction(member.id, {
+          sessionId: member.id,
+          to: SocketUsernames.UI,
+          type: SocketEvents.TRANSACTION_CANCELED,
+          transaction: canceledTransaction,
+          history: transactionHistory as ITransactionHistory[]
+        });
+      }
 
       return successful(transaction.resume, Responses.Ok);
     } catch (e) {
