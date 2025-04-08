@@ -28,3 +28,4 @@ dist/
 # Logs
 .log
 .local
+mongodbdevelopment/
