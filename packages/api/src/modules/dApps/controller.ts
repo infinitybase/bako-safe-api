@@ -4,7 +4,7 @@ import { addMinutes } from 'date-fns';
 import { type DApp, Predicate, RecoverCodeType, User } from '@src/models';
 import { SocketClient } from '@src/socket/client';
 
-import { error } from '@utils/error';
+import { error, ErrorTypes, NotFound } from "@utils/error";
 import { RedisReadClient, RedisWriteClient, Responses, TokenUtils, bindMethods, successful } from '@utils/index';
 
 import { PredicateService } from '../predicate/services';
@@ -306,10 +306,25 @@ export class DappController {
     }
   }
 
-  async changeNetwork({ body }: IChangeNetworkRequest) {
+  async changeNetwork({ params, body }: IChangeNetworkRequest) {
     try {
-      const { sessionId, newNetwork, origin } = body;
-      
+      const { sessionId } = params;
+      const { newNetwork, origin } = body;
+
+      const dappCache = await RedisReadClient.get(`${PREFIX}${sessionId}`);
+
+      if (!dappCache) {
+        throw new NotFound({
+          type: ErrorTypes.NotFound,
+          title: 'DApp not found in cache',
+          detail: `No dapp was found for sessionId: ${sessionId}.`,
+        });
+      }
+
+      const _dapp = JSON.parse(dappCache);
+      _dapp.network = newNetwork;
+      await RedisWriteClient.set(`${PREFIX}${sessionId}`, JSON.stringify(_dapp));
+
       const response = await this._dappService.updateNetwork({sessionId, newNetwork, origin});
 
       return successful(response, Responses.Ok);

@@ -28,7 +28,7 @@ router.get(
   handleResponse(createConnectorCode),
 );
 
-router.post('/changeNetwork', handleResponse(changeNetwork));
+router.put('/:sessionId/network', handleResponse(changeNetwork));
 
 router.get('/:sessionId/state', handleResponse(state));
 router.get('/:sessionId/accounts', handleResponse(accounts));

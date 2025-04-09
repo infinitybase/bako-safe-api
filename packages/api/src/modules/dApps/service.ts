@@ -98,23 +98,6 @@ export class DAppsService implements IDAppsService {
   async updateNetwork(payload: IDAPPChangeNetwork) {
     const { sessionId, newNetwork, origin } = payload;
 
-    // ---- updating network in redis cache
-    const PREFIX = 'dapp';
-    const dappCache = await RedisReadClient.get(`${PREFIX}${sessionId}`);
-
-    if (!dappCache) {
-      throw new NotFound({
-        type: ErrorTypes.NotFound,
-        title: 'DApp not found in cache',
-        detail: `No dapp was found for sessionId: ${sessionId}.`,
-      });
-    }
-
-    const _dapp = JSON.parse(dappCache);
-    _dapp.network = newNetwork;
-    await RedisWriteClient.set(`${PREFIX}${sessionId}`, JSON.stringify(_dapp));
-
-    // ---- updating network in database
     return await this.findBySessionID(sessionId, origin).then(async dapp => {
       if (!dapp) {
         throw new NotFound({
