@@ -20,6 +20,7 @@ import type {
 } from './types';
 import type { ITransactionResponse } from '../transaction/types';
 import App from '@src/server/app';
+import { SocketEvents, SocketUsernames } from "@src/socket/types";
 
 const { API_URL, FUEL_PROVIDER } = process.env;
 const PREFIX = 'dapp';
@@ -321,11 +322,26 @@ export class DappController {
         });
       }
 
-      const _dapp = JSON.parse(dappCache);
-      _dapp.network = newNetwork;
-      await RedisWriteClient.set(`${PREFIX}${sessionId}`, JSON.stringify(_dapp));
+      const dapp = JSON.parse(dappCache);
+      dapp.network = newNetwork;
 
-      const response = await this._dappService.updateNetwork({sessionId, newNetwork, origin});
+      const response = await this._dappService.updateNetwork({
+        sessionId,
+        newNetwork,
+        origin
+      });
+
+      await TokenUtils.changeNetwork(dapp.user.id, dapp.network.url);
+      await RedisWriteClient.set(`${PREFIX}${sessionId}`, JSON.stringify(dapp));
+
+      const socketClient = new SocketClient(dapp.user.id, API_URL);
+      socketClient.socket.emit(SocketEvents.SWITCH_NETWORK, {
+        sessionId: dapp.user.id,
+        to: SocketUsernames.UI,
+        request_id: undefined,
+        type: SocketEvents.SWITCH_NETWORK,
+        data: response,
+      });
 
       return successful(response, Responses.Ok);
     } catch (e) {

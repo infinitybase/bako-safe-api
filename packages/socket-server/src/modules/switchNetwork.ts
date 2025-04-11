@@ -97,7 +97,7 @@ export class SwitchNetworkEventHandler {
 
 		const { network } = data
 
-		if (!network) throw new Error('New dapp network not found')
+		if (!network) return
 
 		socket.to(connectorRoom).emit(SocketEvents.DEFAULT, {
 			username,

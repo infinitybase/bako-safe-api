@@ -117,20 +117,24 @@ io.on(SocketEvents.CONNECT, async socket => {
 		const requestId = request_id === undefined ? '' : request_id
 		const room = `${sessionId}:${to}:${requestId}`
 
-		// console.log('[SOCKET]: SEND MESSAGE TO', room)
-
 		socket.to(room).emit(SocketEvents.DEFAULT, data)
 	})
 
 	socket.on(SocketEvents.TRANSACTION, data => {
 		const { sessionId, to } = data
 		const room = `${sessionId}:${to}`
-
 		const clientsInRoom = io.sockets.adapter.rooms.get(room) || new Set()
-		console.log('[SOCKET] Clients in room', clientsInRoom.size)
-
 		if (clientsInRoom.size > 0) {
 			socket.to(room).emit(SocketEvents.TRANSACTION, data)
+		}
+	})
+
+	socket.on(SocketEvents.SWITCH_NETWORK, data => {
+		const { sessionId, to } = data
+		const room = `${sessionId}:${to}`
+		const clientsInRoom = io.sockets.adapter.rooms.get(room) || new Set()
+		if (clientsInRoom.size > 0) {
+			socket.to(room).emit(SocketEvents.SWITCH_NETWORK, data)
 		}
 	})
 
