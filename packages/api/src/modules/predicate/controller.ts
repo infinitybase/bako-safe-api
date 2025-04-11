@@ -222,6 +222,7 @@ export class PredicateController {
     } = req.query;
     const { workspace, user } = req;
     const hidden = req.query.hidden === 'true';
+
     try {
       const singleWorkspace = await new WorkspaceService()
         .filter({ user: user.id, single: true })
@@ -247,31 +248,33 @@ export class PredicateController {
           signer: hasSingle ? user.address : undefined,
         })
         .ordination({ orderByRoot, orderBy, sort })
-        .paginate({ page, perPage })
         .list();
 
-      const addHiddenFlag = (vault: Predicate): PredicateWithHidden => {
-        return {
-          ...vault,
-          isHidden: vault.isHiddenForUser(user),
-        };
+      const addHiddenFlag = (vault: Predicate): PredicateWithHidden => ({
+        ...vault,
+        isHidden: vault.isHiddenForUser(user),
+      });
+
+      const allData = 'data' in response ? response.data : response;
+      const enhancedData = allData.map(addHiddenFlag);
+      const filteredData = enhancedData.filter(vault => hidden || !vault.isHidden);
+
+      const currentPageNumber = Number(page) || 0;
+      const itemsPerPage = Number(perPage) || 8;
+      const paginated = filteredData.slice(
+        currentPageNumber * itemsPerPage,
+        (currentPageNumber + 1) * itemsPerPage,
+      );
+
+      const processedResponse = {
+        nextPage: currentPageNumber + 1,
+        prevPage: currentPageNumber > 0 ? currentPageNumber - 1 : 0,
+        currentPage: currentPageNumber,
+        totalPages: Math.ceil(filteredData.length / itemsPerPage),
+        perPage: itemsPerPage,
+        total: filteredData.length,
+        data: paginated,
       };
-
-      let processedResponse;
-
-      if ('data' in response) {
-        const enhancedData = response.data.map(addHiddenFlag);
-        processedResponse = {
-          ...response,
-          data: enhancedData.filter(vault => (hidden ? true : !vault.isHidden)),
-        };
-      } else {
-        const enhancedData = response.map(addHiddenFlag);
-        processedResponse = {
-          ...response,
-          data: enhancedData.filter(vault => (hidden ? true : !vault.isHidden)),
-        };
-      }
 
       return successful(processedResponse, Responses.Ok);
     } catch (e) {
