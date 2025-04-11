@@ -80,7 +80,7 @@ export interface IDAppsService {
   create: (payload: IDAPPCreatePayload) => Promise<DApp>;
   findBySessionID: (sessionID: string, origin: string) => Promise<DApp>;
   findCurrent: (sessionID: string) => Promise<string>;
-  updateNetwork: (payload: IDAPPChangeNetwork) => Promise<Network>;
+  updateNetwork: (payload: IDAPPChangeNetwork) => Promise<DApp>;
 }
 
 interface IDappRequestSchema extends ValidatedRequestSchema {

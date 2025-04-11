@@ -108,7 +108,7 @@ export class DAppsService implements IDAppsService {
       }
       dapp.network = newNetwork;
       await dapp.save();
-      return dapp.network;
+      return dapp;
     });
   }
 }

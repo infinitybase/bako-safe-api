@@ -322,10 +322,7 @@ export class DappController {
         });
       }
 
-      const dapp = JSON.parse(dappCache);
-      dapp.network = newNetwork;
-
-      const response = await this._dappService.updateNetwork({
+      const dapp = await this._dappService.updateNetwork({
         sessionId,
         newNetwork,
         origin
@@ -340,11 +337,12 @@ export class DappController {
         to: SocketUsernames.UI,
         request_id: undefined,
         type: SocketEvents.SWITCH_NETWORK,
-        data: response,
+        data: dapp.network,
       });
 
-      return successful(response, Responses.Ok);
+      return successful(dapp.network, Responses.Ok);
     } catch (e) {
+      console.log(e);
       return error(e.error, e.statusCode);
     }
   }
