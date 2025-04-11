@@ -34,7 +34,6 @@ import {
 
 import { PredicateService } from './services';
 import { NotificationService } from '../notification/services';
-import { Address } from 'fuels';
 const { FUEL_PROVIDER } = process.env;
 
 export class PredicateController {
