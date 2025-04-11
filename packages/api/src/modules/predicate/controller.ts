@@ -251,18 +251,10 @@ export class PredicateController {
         .ordination({ orderByRoot, orderBy, sort })
         .list();
 
-      const addHiddenFlag = (vault: Predicate): PredicateWithHidden => {
-        const isHidden = vault.predicateAddress
-          ? user.settings.inactivesPredicates.some(value =>
-              new Address(value).equals(new Address(vault.predicateAddress)),
-            )
-          : false;
-
-        return {
-          ...vault,
-          isHidden,
-        };
-      };
+      const addHiddenFlag = (vault: Predicate): PredicateWithHidden => ({
+        ...vault,
+        isHidden: vault.isHiddenForUser(user),
+      });
 
       const allData = 'data' in response ? response.data : response;
       const enhancedData = allData.map(addHiddenFlag);
