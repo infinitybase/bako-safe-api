@@ -14,13 +14,12 @@ interface ConnectionConfig {
   database?: string
   host?: string
   port?: number
-  ssl: {
+  ssl?: {
     rejectUnauthorized: boolean
   };
 }
 
 const isLocal = WORKER_DATABASE_HOST ? WORKER_DATABASE_HOST === '127.0.0.1' : true
-
 
 export const defaultConnection: ConnectionConfig = {
   user: WORKER_DATABASE_USERNAME,
@@ -28,9 +27,11 @@ export const defaultConnection: ConnectionConfig = {
   database: WORKER_DATABASE_NAME,
   host: WORKER_DATABASE_HOST,
   port: Number(WORKER_DATABASE_PORT),
-  ssl: {
-      rejectUnauthorized: false,
-  }
+  ...!isLocal && {
+    ssl: {
+      rejectUnauthorized: false
+    }
+  },
 }
 
 export class PsqlClient {

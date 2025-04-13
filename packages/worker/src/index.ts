@@ -1,11 +1,12 @@
 import { ExpressAdapter } from "@bull-board/express";
 import { BullAdapter } from "@bull-board/api/bullAdapter";
 import { createBullBoard } from "@bull-board/api";
-import balanceQueue from "./queues/predicateBalance/queue";
 import express from "express";
+import assetQueue from "./queues/assetsValue/queue";
+import balanceQueue from "./queues/predicateBalance/queue";
 import BalanceCron from "./queues/predicateBalance/scheduler";
 import AssetCron from "./queues/assetsValue/scheduler";
-import assetQueue from "./queues/assetsValue/queue";
+import DepositCron from "./queues/depositProcess/scheduler";
 import { MongoDatabase } from "./clients/mongoClient";
 import { PsqlClient } from "./clients";
 
@@ -66,6 +67,7 @@ PsqlClient.connect();
 // schedulers
 BalanceCron.create();
 AssetCron.create();
+DepositCron.create();
 
 app.listen(WORKER_PORT ?? 3063, () =>
   console.log(`Server running on ${WORKER_PORT}`)

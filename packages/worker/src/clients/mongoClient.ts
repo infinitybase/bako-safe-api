@@ -19,6 +19,8 @@ interface MongoConnectionConfig {
 export enum CollectionName {
   PREDICATE_BALANCE = 'predicate_balance',
   PREDICATE_BLOCKS = 'predicate_blocks',
+  DEPOSIT_TRANSACTIONS_LAST_UPDATE = 'deposit_transactions_last_update',
+  DEPOSIT_TRANSACTIONS_LAST_BLOCK = 'deposit_transactions_last_block',
   FUEL_ASSETS = 'fuel_assets',
   ASSET_BALANCE = 'asset_balance',
 }
@@ -30,9 +32,10 @@ export interface SchemaAssetBalance extends Document {
 }
 
 export interface SchemaPredicateBlocks extends Document {
+  _id: string; // predicate address
   blockNumber: number;
   timestamp: number;
-  transactions: number;
+  transactions?: number;
 }
 
 export interface SchemaFuelAssets extends Document {
