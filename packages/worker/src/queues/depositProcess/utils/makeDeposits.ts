@@ -30,7 +30,7 @@ export async function makeDeposits(
 
     return {
       predicateId: item?.output?.to,
-      hash: item?.output?.tx_id,
+      hash: item?.output?.tx_id, // Todo[Erik]: Tratar hash para remover o 0x do inicio da hash
       status: item?.output?.tx_status,
       sendTime: new Date(item?.block?.time || item?.transaction?.time),
       created_at: new Date(item?.block?.time || item?.transaction?.time),

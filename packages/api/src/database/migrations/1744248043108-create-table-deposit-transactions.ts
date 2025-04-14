@@ -27,7 +27,6 @@ export class CreateTableDepositTransactions1744248043108 implements MigrationInt
             {
               name: 'hash',
               type: 'varchar',
-              isUnique: true,
             },
             {
               name: 'type',

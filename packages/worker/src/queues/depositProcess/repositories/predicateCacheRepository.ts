@@ -1,17 +1,9 @@
 import { CollectionName, MongoDatabase, type SchemaPredicateBlocks } from "../../../clients/mongoClient";
 
 export class PredicateCacheRepository {
-  private client: MongoDatabase | undefined;
-
-  async init() {
-    this.client = await MongoDatabase.connect();
-  }
+  constructor(private readonly client: MongoDatabase) {}
 
   async getLastUpdatePredicate(predicateAddress: string) {
-    if (!this.client) {
-      throw new Error("Client not initialized. Call init() first.");
-    }
-
     const predicateCache = this.client.getCollection<SchemaPredicateBlocks>(CollectionName.DEPOSIT_TRANSACTIONS_LAST_UPDATE);
 
     const data = await predicateCache.findOne({ _id: predicateAddress });
@@ -19,10 +11,6 @@ export class PredicateCacheRepository {
   }
 
   async setLastUpdatePredicate(predicateAddress: string, date: Date) {
-    if (!this.client) {
-      throw new Error("Client not initialized. Call init() first.");
-    }
-
     const predicateCache = this.client.getCollection<SchemaPredicateBlocks>(CollectionName.DEPOSIT_TRANSACTIONS_LAST_UPDATE);
 
     await predicateCache.updateOne(

@@ -1,17 +1,9 @@
 import { PsqlClient } from "@/clients";
 
 export class PredicateRepository {
-  private client: PsqlClient | undefined;
-
-  async init() {
-    this.client = await PsqlClient.connect();
-  }
+  constructor(private readonly client: PsqlClient) {}
 
   async listPredicates() {
-    if (!this.client) {
-      throw new Error("Client not initialized. Call init() first.");
-    }
-
     const query = `
       SELECT 
         p.id,
@@ -24,7 +16,7 @@ export class PredicateRepository {
     `;
 
     const result = await this.client.query(query);
-    
+
     return result;
   }
 

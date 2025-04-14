@@ -2,17 +2,9 @@ import { PsqlClient } from "@/clients";
 import { PredicateDepositData } from "../types";
 
 export class DepositTransactionRepository {
-  private client: PsqlClient | undefined;
-
-  async init() {
-    this.client = await PsqlClient.connect();
-  }
+  constructor(private readonly client: PsqlClient) {}
 
   async createDepositTransaction(predicate_id: string, transaction: PredicateDepositData) {
-    if (!this.client) {
-      throw new Error("Client not initialized. Call init() first.");
-    }
-
     // Todo[Erik]: Ajustar implementação para utilizar o schema do banco de dados e receber os dados de forma mais correta
     const query = `
       INSERT INTO deposit_transactions (
@@ -23,11 +15,11 @@ export class DepositTransactionRepository {
         status,
         summary,
         send_time,
-        network
+        network,
         created_at,
         updated_at
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *;
     `;
 
@@ -50,8 +42,6 @@ export class DepositTransactionRepository {
 
   async createAllDepositTransactions(predicate_id: string, tx_deposits: PredicateDepositData[]) {
     if (!tx_deposits.length) return;
-  
-    const client = await PsqlClient.connect();
   
     const values: string[] = [];
     const params: any[] = [];
@@ -109,11 +99,10 @@ export class DepositTransactionRepository {
         updated_at
       )
       VALUES ${values.join(', ')}
-      ON CONFLICT (hash) DO NOTHING;
     `;
 
     try {
-      return await client.query(query, params);
+      return await this.client.query(query, params);
     } catch (err) {
       throw err;
     }

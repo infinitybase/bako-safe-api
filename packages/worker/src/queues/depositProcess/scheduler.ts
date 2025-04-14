@@ -9,10 +9,16 @@ import {
 import { PredicatesFactory } from "./factories/predicatesFactory";
 import redisClient from "@/clients/redisClient";
 import { getDynamicTTL } from "./utils/getDynamicTTL";
+import { getPsqlClientInstance } from "@/database/psqlInstance";
+import { getMongoClientInstance } from "@/database/mongoInstance";
 
 const fn = async () => {
   try {
-    const predicateService = await PredicatesFactory.getInstance();
+    const PSQLClient = await getPsqlClientInstance();
+    const MongoClient = await getMongoClientInstance();
+
+    // Todo[Erik]: Verificar se é necessário criar uma instância separada para o predicateService e predicateCacheRepository
+    const predicateService = await PredicatesFactory.getInstance(PSQLClient, MongoClient);
 
     const predicates = await predicateService.listPredicates();
 
@@ -42,7 +48,6 @@ const fn = async () => {
         }
       );
 
-      const predicateService = await PredicatesFactory.getInstance();
       const lastUpdated = await predicateService.getLastUpdatedPredicate(p.predicate_address);
 
       const ttl = await getDynamicTTL(p, lastUpdated);

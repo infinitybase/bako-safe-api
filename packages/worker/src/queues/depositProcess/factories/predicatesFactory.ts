@@ -1,16 +1,14 @@
 import { PredicateCacheRepository } from '../repositories/predicateCacheRepository';
 import { PredicateRepository } from '../repositories/predicateRepository'
 import { PredicateService } from '../services/predicateService'
+import { PsqlClient, MongoDatabase } from "@/clients";
 
 export class PredicatesFactory {
   constructor() {}
 
-  static async getInstance() {
-    const predicateRepository = new PredicateRepository()
-    await predicateRepository.init();
-
-    const predicateCacheRepository = new PredicateCacheRepository()
-    await predicateCacheRepository.init();
+  static async getInstance(psqlClient: PsqlClient, mongoClient: MongoDatabase) {
+    const predicateRepository = new PredicateRepository(psqlClient)
+    const predicateCacheRepository = new PredicateCacheRepository(mongoClient)
 
     const predicateService = new PredicateService(
       predicateRepository,

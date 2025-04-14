@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import path from 'path';
 import { ConnectionOptions } from 'typeorm';
+import { DataSource } from 'typeorm';
 
 dotenv.config();
 
@@ -13,7 +14,7 @@ const {
   API_ENVIRONMENT,
 } = process.env;
 
-const environment: string = API_ENVIRONMENT;
+const environment = (API_ENVIRONMENT || 'development') as keyof typeof database;
 const entitiesDir = path.resolve(__dirname, '..', 'models', '**', '*{.ts,.js}');
 
 export const migrationsDir = path.resolve(
@@ -119,4 +120,6 @@ const database = {
   test,
 };
 
-export default database[environment || 'development'];
+export default database[environment];
+
+export const AppDataSource = new DataSource(database[environment]);
