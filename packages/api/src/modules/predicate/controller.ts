@@ -220,8 +220,10 @@ export class PredicateController {
       perPage,
       q,
     } = req.query;
+
     const { workspace, user } = req;
     const hidden = req.query.hidden === 'true';
+
     try {
       const singleWorkspace = await new WorkspaceService()
         .filter({ user: user.id, single: true })
@@ -245,6 +247,8 @@ export class PredicateController {
           q,
           workspace: _wk,
           signer: hasSingle ? user.address : undefined,
+          hidden,
+          userId: user.id,
         })
         .ordination({ orderByRoot, orderBy, sort })
         .paginate({ page, perPage })

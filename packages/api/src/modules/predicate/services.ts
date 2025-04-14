@@ -289,6 +289,23 @@ export class PredicateService implements IPredicateService {
         );
       }
 
+      if (
+        typeof this._filter.hidden === 'boolean' &&
+        this._filter.userId &&
+        !this._filter.hidden
+      ) {
+        queryBuilder.andWhere(
+          `
+          p.predicateAddress NOT IN (
+            SELECT jsonb_array_elements_text(u.settings->'inactivesPredicates')
+            FROM users u
+            WHERE u.id = :userId
+          )
+          `,
+          { userId: this._filter.userId },
+        );
+      }
+
       if (this._ordination.orderByRoot === 'true') {
         queryBuilder.addOrderBy('p.root', this._ordination.sort);
       }

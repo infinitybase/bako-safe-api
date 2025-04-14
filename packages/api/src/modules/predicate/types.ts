@@ -49,6 +49,8 @@ export interface IPredicateFilterParams {
   ids?: string[];
   select?: string[];
   settings?: string[];
+  hidden?: boolean;
+  userId?: string;
 }
 
 export interface IGetTxEndCursorQueryProps {
