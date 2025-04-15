@@ -7,8 +7,9 @@ import balanceQueue from "./queues/predicateBalance/queue";
 import BalanceCron from "./queues/predicateBalance/scheduler";
 import AssetCron from "./queues/assetsValue/scheduler";
 import DepositCron from "./queues/depositProcess/scheduler";
-import { MongoDatabase } from "./clients/mongoClient";
-import { PsqlClient } from "./clients";
+import { getPsqlClientInstance } from "./database/psqlInstance";
+import { getMongoClientInstance } from "./database/mongoInstance";
+import { router } from "./routes";
 
 const {
   WORKER_PORT,
@@ -58,11 +59,12 @@ createBullBoard({
 
 serverAdapter.setBasePath("/worker/queues");
 app.use("/worker/queues", serverAdapter.getRouter());
+app.use("/worker", router);
 app.get("/healthcheck", ({ res }) => res?.status(200).send({ status: "ok" }));
 
 // database
-MongoDatabase.connect();
-PsqlClient.connect();
+getPsqlClientInstance()
+getMongoClientInstance()
 
 // schedulers
 BalanceCron.create();

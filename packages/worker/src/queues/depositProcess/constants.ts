@@ -7,14 +7,17 @@ export const TRANSACTION_STATUS = {
 };
 
 export const PRIORITY = {
-  LOGGED_IN: 1,
+  IMMEDIATELY: 1,
   ACTIVE: 2,
   INACTIVE: 3,
 };
 
 export const TTL_CONFIG = {
-  ACTIVE: 60 * 2,
+  IMMEDIATELY: 1,
+  ACTIVE: 60 * 1,
   INACTIVE: 60 * 60 * 6,
+  RECENTLY_UPDATED: 60 * 5,
+  MODERATELY_UPDATED: 60 * 30,
 };
 
 export const QUEUE_DEPOSIT = "QUEUE_DEPOSIT";

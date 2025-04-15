@@ -1,12 +1,14 @@
 import { DepositBlockRepository } from '../repositories/depositBlockRepository'
 import { DepositBlockService } from '../services/depositBlockService'
-import { MongoDatabase } from '@/clients'
+import { getMongoClientInstance } from '@/database/mongoInstance';
 
 export class DepositBlockFactory {
   constructor() {}
 
-  static async getInstance(mongoClient: MongoDatabase) {
-    const depositBlockRepository = new DepositBlockRepository(mongoClient)
+  static async getInstance() {
+    const MongoClient = await getMongoClientInstance();
+
+    const depositBlockRepository = new DepositBlockRepository(MongoClient)
     const depositBlockService = new DepositBlockService(depositBlockRepository)
     return depositBlockService
   }

@@ -1,6 +1,6 @@
 export const makeQuery = ({
-  from_block = 27066725,
-  predicate_address = '0x2E8aa750d32892016B22306d6FE0E5753851F43d1448332f7997AFae4fDc81e0',
+  from_block,
+  predicate_address
 }: { from_block?: number; predicate_address: string }) => {
   return {
     method: "POST",
@@ -26,8 +26,7 @@ export const makeQuery = ({
       "outputs": [
         {
           "output_type": [
-            0,
-            3
+            0
           ],
           "tx_status": [
             1
@@ -71,13 +70,11 @@ export const makeQuery = ({
 };
 
 export const predicateTransactions = async (predicate: string, block: number) => {
-  const data = await fetch(
-    "https://fuel-testnet.hypersync.xyz/query",
-    makeQuery({
-      from_block: block,
-      predicate_address: predicate
-    })
-  );
-  const response = await data.json();
-  return response ?? undefined;
+  const queryUrl = makeQuery({
+    from_block: block,
+    predicate_address: predicate
+  });
+
+  const data = await fetch("https://fuel-testnet.hypersync.xyz/query", queryUrl).then(res => res.json());
+  return data ?? undefined;
 }

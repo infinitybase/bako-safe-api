@@ -4,7 +4,8 @@ let psqlClientInstance: PsqlClient
 
 export async function getPsqlClientInstance(): Promise<PsqlClient> {
   if (!psqlClientInstance) {
-    psqlClientInstance = await PsqlClient.connect()
+    psqlClientInstance = new PsqlClient()
+    PsqlClient.connect();
   }
   return psqlClientInstance
 }

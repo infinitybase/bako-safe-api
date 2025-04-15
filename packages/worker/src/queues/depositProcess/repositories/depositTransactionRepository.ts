@@ -5,7 +5,6 @@ export class DepositTransactionRepository {
   constructor(private readonly client: PsqlClient) {}
 
   async createDepositTransaction(predicate_id: string, transaction: PredicateDepositData) {
-    // Todo[Erik]: Ajustar implementação para utilizar o schema do banco de dados e receber os dados de forma mais correta
     const query = `
       INSERT INTO deposit_transactions (
         predicate_reference_id,
@@ -43,20 +42,26 @@ export class DepositTransactionRepository {
   async createAllDepositTransactions(predicate_id: string, tx_deposits: PredicateDepositData[]) {
     if (!tx_deposits.length) return;
   
+    const CHUNK_SIZE = 1000;
+  
+    for (let i = 0; i < tx_deposits.length; i += CHUNK_SIZE) {
+      const chunk = tx_deposits.slice(i, i + CHUNK_SIZE);
+      await this.createChunkedDepositTransactions(predicate_id, chunk);
+    }
+  }
+
+  private async createChunkedDepositTransactions(predicate_id: string, tx_deposits: PredicateDepositData[]) {
     const values: string[] = [];
     const params: any[] = [];
-
+  
     const safeJson = (input: unknown): string => {
       try {
         if (typeof input === 'string') {
           JSON.parse(input);
           return input;
         }
-
         return JSON.stringify(input, (key, value) => {
-          if (value instanceof Date) {
-            return value.toISOString();
-          }
+          if (value instanceof Date) return value.toISOString();
           return value;
         });
       } catch (err) {
@@ -67,9 +72,15 @@ export class DepositTransactionRepository {
         });
       }
     }
+  
+    let validIndex = 0;
+    for (const [i, tx] of tx_deposits.entries()) {
+      if (!tx.predicateId) {
+        console.warn(`[IGNORE - No predicateId] Record ${i} ignored:`, tx);
+        continue;
+      }
 
-    tx_deposits.forEach((tx, i) => {
-      const offset = i * 10;
+      const offset = validIndex * 10;
       values.push(`(${Array.from({ length: 10 }, (_, j) => `$${offset + j + 1}`).join(', ')})`);
       params.push(
         predicate_id,
@@ -83,8 +94,10 @@ export class DepositTransactionRepository {
         tx.created_at,
         tx.updated_at
       );
-    });
 
+      validIndex++;
+    };
+  
     const query = `
       INSERT INTO deposit_transactions (
         predicate_reference_id,
@@ -100,11 +113,12 @@ export class DepositTransactionRepository {
       )
       VALUES ${values.join(', ')}
     `;
-
+  
     try {
-      return await this.client.query(query, params);
+      await this.client.query(query, params);
     } catch (err) {
+      console.error('[ERROR INSERTING CHUNK]:', err);
       throw err;
     }
-  };
+  }
 }
