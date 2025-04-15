@@ -28,6 +28,8 @@ import {
   IFindByNameRequest,
   IListRequest,
   IPredicateService,
+  ITooglePredicateRequest,
+  PredicateWithHidden,
 } from './types';
 
 import { PredicateService } from './services';
@@ -87,7 +89,7 @@ export class PredicateController {
     }
 
     await new NotificationService().vaultUpdate(predicate.id);
-    
+
     return successful(predicate, Responses.Ok);
   }
 
@@ -218,14 +220,13 @@ export class PredicateController {
       perPage,
       q,
     } = req.query;
+
     const { workspace, user } = req;
+    const hidden = req.query.hidden === 'true';
 
     try {
       const singleWorkspace = await new WorkspaceService()
-        .filter({
-          user: user.id,
-          single: true,
-        })
+        .filter({ user: user.id, single: true })
         .list()
         .then((response: Workspace[]) => response[0]);
 
@@ -233,9 +234,7 @@ export class PredicateController {
 
       const _wk = hasSingle
         ? await new WorkspaceService()
-            .filter({
-              user: user.id,
-            })
+            .filter({ user: user.id })
             .list()
             .then((response: Workspace[]) => response.map(wk => wk.id))
         : [workspace.id];
@@ -248,12 +247,37 @@ export class PredicateController {
           q,
           workspace: _wk,
           signer: hasSingle ? user.address : undefined,
+          hidden,
+          userId: user.id,
         })
         .ordination({ orderByRoot, orderBy, sort })
         .paginate({ page, perPage })
         .list();
 
-      return successful(response, Responses.Ok);
+      const addHiddenFlag = (vault: Predicate): PredicateWithHidden => {
+        return {
+          ...vault,
+          isHidden: vault.isHiddenForUser(user),
+        };
+      };
+
+      let processedResponse;
+
+      if ('data' in response) {
+        const enhancedData = response.data.map(addHiddenFlag);
+        processedResponse = {
+          ...response,
+          data: enhancedData.filter(vault => (hidden ? true : !vault.isHidden)),
+        };
+      } else {
+        const enhancedData = response.map(addHiddenFlag);
+        processedResponse = {
+          ...response,
+          data: enhancedData.filter(vault => (hidden ? true : !vault.isHidden)),
+        };
+      }
+
+      return successful(processedResponse, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }
@@ -264,6 +288,23 @@ export class PredicateController {
       const predicate = await this.predicateService.findByAddress(address);
 
       return successful(!!predicate, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+  async tooglePredicateVisibility({
+    user,
+    params: { address },
+    headers,
+  }: ITooglePredicateRequest) {
+    try {
+      const updatedSettings = await this.predicateService.togglePredicateStatus(
+        user.id,
+        address,
+        headers.authorization,
+      );
+
+      return successful(updatedSettings, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }

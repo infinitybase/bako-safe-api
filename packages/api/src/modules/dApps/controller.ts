@@ -4,7 +4,7 @@ import { addMinutes } from 'date-fns';
 import { type DApp, Predicate, RecoverCodeType, User } from '@src/models';
 import { SocketClient } from '@src/socket/client';
 
-import { error } from '@utils/error';
+import { error, ErrorTypes, NotFound } from "@utils/error";
 import { RedisReadClient, RedisWriteClient, Responses, TokenUtils, bindMethods, successful } from '@utils/index';
 
 import { PredicateService } from '../predicate/services';
@@ -12,6 +12,7 @@ import { RecoverCodeService } from '../recoverCode/services';
 import { TransactionService } from '../transaction/services';
 import { DAppsService } from './service';
 import type {
+  IChangeNetworkRequest,
   ICreateRecoverCodeRequest,
   ICreateRequest,
   IDAppsService,
@@ -19,6 +20,7 @@ import type {
 } from './types';
 import type { ITransactionResponse } from '../transaction/types';
 import App from '@src/server/app';
+import { SocketEvents, SocketUsernames } from "@src/socket/types";
 
 const { API_URL, FUEL_PROVIDER } = process.env;
 const PREFIX = 'dapp';
@@ -301,6 +303,46 @@ export class DappController {
 
       return successful(true, Responses.Ok);
     } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async changeNetwork({ params, body }: IChangeNetworkRequest) {
+    try {
+      const { sessionId } = params;
+      const { newNetwork, origin } = body;
+
+      const dappCache = await RedisReadClient.get(`${PREFIX}${sessionId}`);
+
+      if (!dappCache) {
+        throw new NotFound({
+          type: ErrorTypes.NotFound,
+          title: 'DApp not found in cache',
+          detail: `No dapp was found for sessionId: ${sessionId}.`,
+        });
+      }
+
+      const dapp = await this._dappService.updateNetwork({
+        sessionId,
+        newNetwork,
+        origin
+      });
+
+      await TokenUtils.changeNetwork(dapp.user.id, dapp.network.url);
+      await RedisWriteClient.set(`${PREFIX}${sessionId}`, JSON.stringify(dapp));
+
+      const socketClient = new SocketClient(dapp.user.id, API_URL);
+      socketClient.socket.emit(SocketEvents.SWITCH_NETWORK, {
+        sessionId: dapp.user.id,
+        to: SocketUsernames.UI,
+        request_id: undefined,
+        type: SocketEvents.SWITCH_NETWORK,
+        data: dapp.network,
+      });
+
+      return successful(dapp.network, Responses.Ok);
+    } catch (e) {
+      console.log(e);
       return error(e.error, e.statusCode);
     }
   }
