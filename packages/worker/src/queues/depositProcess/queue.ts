@@ -16,21 +16,20 @@ const depositQueue = new Queue<QueueDeposit>(QUEUE_DEPOSIT, {
 })
 
 depositQueue.process(async (job) => {
-  const { predicate_id, /* predicate_address */ } = job.data;
-  const predicate_address = '0x2E8aa750d32892016B22306d6FE0E5753851F43d1448332f7997AFae4fDc81e0';
+  const { predicate_id, predicate_address } = job.data;
 
   try {
     const depositBlockService = await DepositBlockFactory.getInstance();
     const lastBlock = await depositBlockService.getLastBlock(predicate_address);
 
-    const depositTransactions = await predicateTransactions(predicate_address, 6860859 /*lastBlock?.blockNumber ?? 0*/);
-
+    const depositTransactions = await predicateTransactions(predicate_address, lastBlock?.blockNumber ?? 0);
+  
     if (depositTransactions.next_block === lastBlock?.blockNumber) {
       console.log('[NO NEW BLOCKS]: ', depositTransactions.next_block);
       return `No new blocks for ${predicate_address}`;
     }
 
-    const transactionsGrouped = groupByTransaction(depositTransactions.data ?? []);
+    const transactionsGrouped = await groupByTransaction(depositTransactions.data ?? []);
 
     if (transactionsGrouped.length === 0) {
       console.log('[MALFORMED TRANSACTIONS]: ', depositTransactions.next_block);

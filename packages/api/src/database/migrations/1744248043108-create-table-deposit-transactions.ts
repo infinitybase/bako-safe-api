@@ -17,12 +17,8 @@ export class CreateTableDepositTransactions1744248043108 implements MigrationInt
               default: `uuid_generate_v4()`,
             },
             {
-              name: 'predicate_reference_id',
-              type: 'uuid',
-            },
-            {
               name: 'predicate_id',
-              type: 'varchar',
+              type: 'uuid',
             },
             {
               name: 'hash',
@@ -45,7 +41,7 @@ export class CreateTableDepositTransactions1744248043108 implements MigrationInt
               type: 'jsonb',
             },
             {
-              name: 'send_time',
+              name: 'sendTime',
               type: 'timestamp',
               isNullable: true,
             },
@@ -70,8 +66,8 @@ export class CreateTableDepositTransactions1744248043108 implements MigrationInt
           ],
           foreignKeys: [
             {
-              name: 'FK-predicate-transactions',
-              columnNames: ['predicate_reference_id'],
+              name: 'FK-predicate-deposit-transactions',
+              columnNames: ['predicate_id'],
               referencedColumnNames: ['id'],
               referencedTableName: 'predicates',
               onDelete: 'CASCADE',

@@ -1,20 +1,21 @@
 import type { PredicateDepositData, PredicateDepositTx } from "../types";
+import { getSummaryTransactionFuels } from "./getSummaryTransactionFuels";
 
 export async function makeDeposits(
   tx_data: PredicateDepositTx[],
 ): Promise<PredicateDepositData[] | null> {
 
-  const status = {
+  const status: Record<number, string> = {
     1: "success",
     3: "failure",
   }
 
-  const tx_type = {
-    0: "script",
-    1: "create",
-    2: "mint",
-    3: "upgrade",
-    4: "upload",
+  const tx_type: Record<number, string> = {
+    0: "TRANSACTION_SCRIPT",
+    1: "TRANSACTION_CREATE",
+    2: "TRANSACTION_BLOB",
+    3: "TRANSACTION_UPGRADE",
+    4: "TRANSACTION_UPLOAD",
   }
 
   const output_type = {
@@ -25,42 +26,25 @@ export async function makeDeposits(
     4: "contract_created",
   }
 
-  const groupedData = tx_data.map((item: PredicateDepositTx) => {
+  const groupedData = await Promise.all(tx_data.map(async (item: PredicateDepositTx) => {
     if (!item) return null;
 
-    return {
-      predicateId: item?.output?.to,
-      hash: item?.output?.tx_id, // Todo[Erik]: Tratar hash para remover o 0x do inicio da hash
-      status: item?.output?.tx_status,
-      sendTime: new Date(item?.block?.time || item?.transaction?.time),
-      created_at: new Date(item?.block?.time || item?.transaction?.time),
-      updated_at: new Date(item?.block?.time || item?.transaction?.time),
-      summary: {
-        type: "worker",
-        operations: [
-          {
-            to: {
-              type: status[1], // Todo[Erik]: Verificar se retorna da API
-              address: item?.output?.to
-            },
-            from: {
-              type: tx_type[1], // Todo[Erik]: Verificar se retorna da API
-              address: item?.input?.owner
-            },
-            name: "Transfer asset",
-            assetsSent: [
-              {
-                amount: item?.output?.amount,
-                assetId: item?.output?.asset_id
-              }
-            ]
-          }
-        ]
-      },
-      type: item?.output?.tx_type,
-      network: "de acordo com o endpoitn de envio utilizado"
-    } as PredicateDepositData;
-  });
+    const summary = await getSummaryTransactionFuels(item);
 
-  return groupedData.filter((item): item is PredicateDepositData => item !== null);
+    return {
+      predicateId: item?.outputs?.[0]?.to,
+      hash: item?.outputs?.[0]?.tx_id, // Todo[Erik]: Tratar hash para remover o 0x do inicio da hash
+      status: status[item?.outputs?.[0]?.tx_status],
+      sendTime: new Date(item?.transaction?.time ?? 0),
+      created_at: new Date(item?.transaction?.time ?? 0),
+      updated_at: new Date(item?.transaction?.time ?? 0),
+      summary: {
+        type: summary.type,
+        operations: summary.operations,
+      },
+      type: tx_type[item?.outputs?.[0]?.tx_type],
+    } as PredicateDepositData;
+  }));
+
+  return groupedData.filter(Boolean) as PredicateDepositData[];
 }

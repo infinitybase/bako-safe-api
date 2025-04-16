@@ -1,4 +1,4 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 import { Base } from './Base';
 import {
@@ -8,6 +8,7 @@ import {
 } from 'bakosafe';
 import { Network } from 'fuels';
 import { networks } from '@src/mocks/networks';
+import { Predicate } from './Predicate';
 
 const { FUEL_PROVIDER, FUEL_PROVIDER_CHAIN_ID } = process.env;
 
@@ -52,6 +53,10 @@ class DepositTransactions extends Base {
 
   @Column({ name: 'predicate_id' })
   predicateId: string;
+
+  @JoinColumn({ name: 'predicate_id' })
+  @ManyToOne(() => Predicate)
+  predicate: Predicate;
 }
 
 export { DepositTransactions };

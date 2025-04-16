@@ -1,33 +1,37 @@
 import type {
   PredicateDeposit,
   Output,
-  Block,
   Input,
   Transaction,
   PredicateDepositTx,
 } from "../types";
 
-export function groupByTransaction(
+export async function groupByTransaction(
   data: PredicateDeposit[]
-): PredicateDepositTx[] {
+) {
+
+  if (!data) return [];
 
   const filterData = data.flatMap((item: PredicateDeposit) => {
     const transactions = item.transactions ?? [];
     const inputs = item.inputs ?? [];
     const outputs = item.outputs ?? [];
-    const blocks = item.blocks ?? [];
 
-    const outputByTxId = new Map(outputs.map((output: Output) => [output.tx_id, output]));
-    const blockByHeight = new Map(blocks.map((block: Block) => [block.height, block]));
+    const outputByTxId = new Map(
+      outputs
+        .filter((o) => o.output_type === 0 || o.output_type === 3)
+        .map((o: Output) => [o.tx_id, o])
+    );
+
+    const inputByTxId = new Map(inputs.map((input: Input) => [input.tx_id, input]));
 
     return transactions.map((transaction: Transaction): PredicateDepositTx | null => {
       const output = outputByTxId.get(transaction.id);
-      const block = blockByHeight.get(transaction.block_height);
-      const input = inputs.find((input: Input) => input.tx_id === transaction.id);
+      const input = inputByTxId.get(transaction.id);
 
-      if (!output || !block || !input) return null;
+      if (!output || !input) return null;
 
-      return { transaction, output, block, input };
+      return { transaction, outputs, inputs };
     }).filter(Boolean);
   });
 

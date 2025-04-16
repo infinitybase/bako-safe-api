@@ -12,13 +12,14 @@ export async function enqueueDepositWithTTL(predicate: {
 }) {
   const redisKey = `predicate:scheduled:${predicate.predicate_address}`;
 
+  const isActive = Boolean(predicate.token_user_id);
+
   const exists = await redisClient.exists(redisKey);
-  if (exists) {
+  if (exists && !isActive) {
     console.log('\n\n[REDIS EXISTS SCHEDULED]: ', `${predicate.predicate_address}`);
     return false;
   }
 
-  const isActive = Boolean(predicate.token_user_id);
   const priority = isActive ? PRIORITY.ACTIVE : PRIORITY.INACTIVE;
 
   const data = {

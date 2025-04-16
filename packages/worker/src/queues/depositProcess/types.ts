@@ -3,6 +3,10 @@ export type Input = {
     tx_status: number;
     owner: string;
     asset_id: string;
+    witness_index?: number;
+    input_type?: number;
+    amount?: string;
+    utxo_id?: string;
 };
 
 export type Output = {
@@ -48,16 +52,17 @@ export type QueueDeposit = {
 }
 
 export type PredicateDepositTx = {
-    input: Input;
-    output: Output;
-    block: Block;
-    transaction: Transaction;
+    id?: string;
+    inputs: Input[];
+    outputs: Output[];
+    transaction?: Transaction;
+    block?: Block;
 }
 
 export type PredicateDepositData = {
     predicateId: string;
     hash: string;
-    status: number;
+    status: string;
     sendTime: Date;
     created_at: Date;
     updated_at: Date;
@@ -65,8 +70,8 @@ export type PredicateDepositData = {
         type: string;
         operations: any[];
     };
-    type: number;
-    network: string;
+    type: string;
+    network?: string;
 }
 
 export type PredicateDepositGrouped = PredicateDepositData[] | null;
