@@ -6,7 +6,6 @@ export class DepositTransactionRepository {
   constructor(private readonly client: PsqlClient) {}
 
   private getNetwork() {
-    // Todo[Erik]: Verificar se deve ser passado via env
     const defaultNetwork = {
       url: process.env.WORKER_ENVIRONMENT === 'production' ? networks['mainnet'] : networks['devnet'],
       chainId: process.env.FUEL_PROVIDER_CHAIN_ID ? Number(process.env.FUEL_PROVIDER_CHAIN_ID) : 0,

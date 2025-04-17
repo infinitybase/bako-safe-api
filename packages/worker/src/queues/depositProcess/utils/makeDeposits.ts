@@ -26,16 +26,18 @@ export async function makeDeposits(
     4: "contract_created",
   }
 
+  const perserHash = (hash: string) => {
+    return hash.replace('0x', '');
+  }
+
   const groupedData = await Promise.all(tx_data.map(async (item: PredicateDepositTx) => {
     if (!item) return null;
 
-    // console.log('[DEBUG] Item:', item);
     const summary = await getSummaryTransactionFuels(item);
-    // console.log('[DEBUG] Summary:', summary);
 
     return {
       predicateId: item?.output?.to,
-      hash: item?.output?.tx_id, // Todo[Erik]: Tratar hash para remover o 0x do inicio da hash
+      hash: perserHash(item?.output?.tx_id),
       status: status[item?.output?.tx_status],
       sendTime: new Date(item?.transaction?.time ?? 0),
       created_at: new Date(item?.transaction?.time ?? 0),

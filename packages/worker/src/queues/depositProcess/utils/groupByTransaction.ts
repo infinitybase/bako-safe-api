@@ -3,7 +3,6 @@ import type {
   Output,
   Input,
   Transaction,
-  PredicateDepositTx,
 } from "../types";
 
 export async function groupByTransaction(
@@ -25,7 +24,7 @@ export async function groupByTransaction(
   
       const filteredOutputs = outputs.filter(
         (o: Output) =>
-          o.tx_id === transaction.id && (o.output_type === 0 || o.output_type === 3)
+          o.tx_id === transaction.id && (o.output_type === 0 || o.output_type === 3) // Filtra por outputs do tipo coin = 0 ou variable = 3
       );
   
       return filteredOutputs.map((output) => ({
