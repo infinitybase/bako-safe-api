@@ -1,3 +1,4 @@
+import { networks } from "@/mocks/networks";
 import { PredicateDepositTx } from "../types";
 
 import {
@@ -12,7 +13,8 @@ export async function getSummaryTransactionFuels({
   input,
   output
 }: PredicateDepositTx) {
-  const provider = new Provider("https://testnet.fuel.network/v1/graphql");
+  const url = process.env.WORKER_ENVIRONMENT === 'production' ? networks['mainnet'] : networks['devnet'];
+  const provider = new Provider(url);
 
   const requestsTransactions = ScriptTransactionRequest.from({
     outputs: [{
