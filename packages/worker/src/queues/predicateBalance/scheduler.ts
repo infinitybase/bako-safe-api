@@ -1,11 +1,11 @@
-import { PsqlClient } from "../../clients/psqlClient";
 import balanceQueue from "./queue";
 import cron from "node-cron";
 import { CRON_EXPRESSION, INITIAL_DELAY, QUEUE_BALANCE } from "./constants";
+import { getPsqlClientInstance } from "@/database/psqlInstance";
 
 const fn = async () => {
   try {
-    const db = await PsqlClient.connect();
+    const db = await getPsqlClientInstance()
     const predicates = await db.query(
       `SELECT predicate_address
              FROM predicates`
