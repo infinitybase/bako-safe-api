@@ -29,12 +29,14 @@ export async function makeDeposits(
   const groupedData = await Promise.all(tx_data.map(async (item: PredicateDepositTx) => {
     if (!item) return null;
 
+    // console.log('[DEBUG] Item:', item);
     const summary = await getSummaryTransactionFuels(item);
+    // console.log('[DEBUG] Summary:', summary);
 
     return {
-      predicateId: item?.outputs?.[0]?.to,
-      hash: item?.outputs?.[0]?.tx_id, // Todo[Erik]: Tratar hash para remover o 0x do inicio da hash
-      status: status[item?.outputs?.[0]?.tx_status],
+      predicateId: item?.output?.to,
+      hash: item?.output?.tx_id, // Todo[Erik]: Tratar hash para remover o 0x do inicio da hash
+      status: status[item?.output?.tx_status],
       sendTime: new Date(item?.transaction?.time ?? 0),
       created_at: new Date(item?.transaction?.time ?? 0),
       updated_at: new Date(item?.transaction?.time ?? 0),
@@ -42,7 +44,7 @@ export async function makeDeposits(
         type: summary.type,
         operations: summary.operations,
       },
-      type: tx_type[item?.outputs?.[0]?.tx_type],
+      type: tx_type[item?.output?.tx_type],
     } as PredicateDepositData;
   }));
 

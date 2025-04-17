@@ -9,26 +9,26 @@ import {
 } from "fuels";
 
 export async function getSummaryTransactionFuels({
-  inputs,
-  outputs
+  input,
+  output
 }: PredicateDepositTx) {
   const provider = new Provider("https://testnet.fuel.network/v1/graphql");
 
   const requestsTransactions = ScriptTransactionRequest.from({
     outputs: [{
-      type: outputs[0].output_type,
-      amount: outputs[0].amount,
-      assetId: outputs[0].asset_id,
-      to: outputs[0].to,
+      type: output.output_type,
+      amount: output.amount,
+      assetId: output.asset_id,
+      to: output.to,
     }],
     inputs: [{
-      type: inputs[0].input_type as InputType.Coin,
-      amount: inputs[0].amount || "0",
-      assetId: inputs[0].asset_id,
+      type: input.input_type as InputType.Coin,
+      amount: input.amount || "0",
+      assetId: input.asset_id,
       txPointer: "0x",
-      witnessIndex: inputs[0].witness_index || 0,
-      id: inputs[0].utxo_id || "0x",
-      owner: inputs[0].owner,
+      witnessIndex: input.witness_index || 0,
+      id: input.utxo_id || "0x",
+      owner: input.owner,
     }],
   });
 

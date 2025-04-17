@@ -13,8 +13,8 @@ const fn = async () => {
 
     const predicates = await predicateService.listPredicates();
 
-    for (const p of predicates) {
-      await enqueueDepositWithTTL(p);
+    for (const predicate of predicates) {
+      await enqueueDepositWithTTL(predicate);
     }
 
   } catch (error) {

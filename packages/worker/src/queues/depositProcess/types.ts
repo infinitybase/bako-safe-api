@@ -53,8 +53,8 @@ export type QueueDeposit = {
 
 export type PredicateDepositTx = {
     id?: string;
-    inputs: Input[];
-    outputs: Output[];
+    input: Input;
+    output: Output;
     transaction?: Transaction;
     block?: Block;
 }

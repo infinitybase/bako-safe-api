@@ -9,7 +9,7 @@ export class DepositTransactionRepository {
     // Todo[Erik]: Verificar se deve ser passado via env
     const defaultNetwork = {
       url: process.env.WORKER_ENVIRONMENT === 'production' ? networks['mainnet'] : networks['devnet'],
-      chainId: Number(process.env.FUEL_PROVIDER_CHAIN_ID) ?? 0,
+      chainId: process.env.FUEL_PROVIDER_CHAIN_ID ? Number(process.env.FUEL_PROVIDER_CHAIN_ID) : 0,
     };
 
     return defaultNetwork;
