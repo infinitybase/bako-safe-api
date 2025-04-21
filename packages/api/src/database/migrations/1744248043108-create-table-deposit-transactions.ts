@@ -46,6 +46,16 @@ export class CreateTableDepositTransactions1744248043108 implements MigrationInt
               isNullable: true,
             },
             {
+              name: 'gasUsed',
+              type: 'varchar',
+              isNullable: true,
+            },
+            {
+              name: 'resume',
+              type: 'jsonb',
+              isNullable: true,
+            },
+            {
               name: 'network',
               type: 'jsonb',
             },

@@ -2,6 +2,7 @@ import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 import { Base } from './Base';
 import {
+  ITransactionResume,
   ITransactionSummary,
   TransactionStatus,
   TransactionType,
@@ -40,6 +41,15 @@ class DepositTransactions extends Base {
 
   @Column()
   sendTime?: Date;
+
+  @Column()
+  gasUsed?: string;
+
+  @Column({
+    type: 'jsonb',
+    name: 'resume',
+  })
+  resume?: ITransactionResume;
 
   @Column({
     type: 'jsonb',
