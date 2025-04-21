@@ -7,7 +7,9 @@ export class PredicateRepository {
     const query = `
       SELECT 
         p.id,
+        p.name,
         p.predicate_address,
+        p.configurable,
         p.owner_id,
         ut.user_id AS token_user_id,
         ut.token
@@ -18,13 +20,5 @@ export class PredicateRepository {
     const result = await this.client.query(query);
 
     return result;
-  }
-
-  async setPredicateLastUpdated(predicate_id: string) {
-    if (!this.client) {
-      throw new Error("Client not initialized. Call init() first.");
-    }
-    
-    
   }
 }

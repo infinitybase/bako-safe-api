@@ -1,3 +1,5 @@
+import { Predicate } from "fuels";
+
 export type Input = {
     tx_id: string;
     tx_status: number;
@@ -39,6 +41,16 @@ export type PredicateDeposit = {
     blocks: Block[];
 }
 
+export type PredicateQueue = {
+    id: string;
+    name: string;
+    predicate_address: string;
+    configurables: object;
+    owner_id: string;
+    token_user_id: string;
+    token: string;
+}
+
 export type PredicateDepositQuery = {
     data: PredicateDeposit[];
     archive_height: number;
@@ -47,8 +59,7 @@ export type PredicateDepositQuery = {
 }
 
 export type QueueDeposit = {
-    predicate_id: string;
-    predicate_address: string;
+    predicate: PredicateQueue;
 }
 
 export type PredicateDepositTx = {
@@ -64,6 +75,8 @@ export type PredicateDepositData = {
     hash: string;
     status: string;
     sendTime: Date;
+    gasUsed: string;
+    resume: object;
     created_at: Date;
     updated_at: Date;
     summary: {

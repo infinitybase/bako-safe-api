@@ -46,7 +46,7 @@ export class DepositTransactionRepository {
         created_at,
         updated_at
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       RETURNING *;
     `;
 
@@ -69,7 +69,7 @@ export class DepositTransactionRepository {
   async createAllDepositTransactions(predicate_id: string, tx_deposits: PredicateDepositData[]) {
     if (!tx_deposits.length) return;
   
-    const CHUNK_SIZE = 1000;
+    const CHUNK_SIZE = 100;
   
     for (let i = 0; i < tx_deposits.length; i += CHUNK_SIZE) {
       const chunk = tx_deposits.slice(i, i + CHUNK_SIZE);
@@ -88,8 +88,8 @@ export class DepositTransactionRepository {
         continue;
       }
 
-      const offset = validIndex * 9;
-      values.push(`(${Array.from({ length: 9 }, (_, j) => `$${offset + j + 1}`).join(', ')})`);
+      const offset = validIndex * 11;
+      values.push(`(${Array.from({ length: 11 }, (_, j) => `$${offset + j + 1}`).join(', ')})`);
       params.push(
         predicate_id,
         tx.hash,
@@ -97,6 +97,8 @@ export class DepositTransactionRepository {
         tx.status,
         this.safeJson(tx.summary),
         tx.sendTime,
+        tx.gasUsed,
+        tx.resume,
         this.safeJson(this.getNetwork()),
         tx.created_at,
         tx.updated_at
@@ -113,6 +115,8 @@ export class DepositTransactionRepository {
         status,
         summary,
         "sendTime",
+        "gasUsed",
+        "resume",
         network,
         created_at,
         updated_at

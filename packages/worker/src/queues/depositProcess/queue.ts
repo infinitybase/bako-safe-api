@@ -16,7 +16,8 @@ const depositQueue = new Queue<QueueDeposit>(QUEUE_DEPOSIT, {
 })
 
 depositQueue.process(async (job) => {
-  const { predicate_id, predicate_address } = job.data;
+  const { predicate } = job.data;
+  const { id: predicate_id, predicate_address } = predicate;
 
   try {
     const depositBlockService = await DepositBlockFactory.getInstance();
@@ -36,7 +37,7 @@ depositQueue.process(async (job) => {
       return `Malformed transactions for ${predicate_address}`;
     }
 
-    const formatedDepositsTransactions = await makeDeposits(transactionsGrouped);
+    const formatedDepositsTransactions = await makeDeposits(transactionsGrouped, predicate);
 
     const depositTransactionService = await DepositTransactionsFactory.getInstance();
     await depositTransactionService.createAllDepositTransactions(predicate_id, formatedDepositsTransactions ?? []);

@@ -3,6 +3,7 @@ import { getSummaryTransactionFuels } from "./getSummaryTransactionFuels";
 
 export async function makeDeposits(
   tx_data: PredicateDepositTx[],
+  predicate: any
 ): Promise<PredicateDepositData[] | null> {
 
   const status: Record<number, string> = {
@@ -26,27 +27,45 @@ export async function makeDeposits(
     4: "contract_created",
   }
 
-  const perserHash = (hash: string) => {
+  const parserHash = (hash: string) => {
     return hash.replace('0x', '');
+  }
+
+  const getDepositType = (item: PredicateDepositTx) => {
+    return tx_type[item?.output?.tx_type] === tx_type[0] ? "DEPOSIT" : tx_type[item?.output?.tx_type];
   }
 
   const groupedData = await Promise.all(tx_data.map(async (item: PredicateDepositTx) => {
     if (!item) return null;
 
     const summary = await getSummaryTransactionFuels(item);
+    const config = JSON.parse(predicate.configurable);
 
     return {
       predicateId: item?.output?.to,
-      hash: perserHash(item?.output?.tx_id),
+      hash: parserHash(item?.output?.tx_id),
       status: status[item?.output?.tx_status],
-      sendTime: new Date(item?.transaction?.time ?? 0),
-      created_at: new Date(item?.transaction?.time ?? 0),
-      updated_at: new Date(item?.transaction?.time ?? 0),
+      sendTime: new Date((item?.transaction?.time ?? 0) * 1000),
+      created_at: new Date((item?.transaction?.time ?? 0) * 1000),
+      updated_at: new Date((item?.transaction?.time ?? 0) * 1000),
       summary: {
         type: summary.type,
         operations: summary.operations,
       },
-      type: tx_type[item?.output?.tx_type],
+      gasUsed: summary.gasUsed.format(),
+      resume: {
+        hash: parserHash(item?.output?.tx_id),
+        status: status[item?.output?.tx_status],
+        witnesses: [],
+        requiredSigners: config.SIGNATURES_COUNT ?? 1,
+        totalSigners: predicate.members?.length ?? 0,
+        predicate: {
+          id: predicate.id,
+          address: predicate.predicateAddress,
+        },
+        id: item.transaction?.id,
+      },
+      type: getDepositType(item),
     } as PredicateDepositData;
   }));
 

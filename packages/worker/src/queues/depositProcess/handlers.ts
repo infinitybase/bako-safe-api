@@ -1,15 +1,11 @@
-
 import depositQueue from "./queue";
 import redisClient from "@/clients/redisClient";
 import { PRIORITY, QUEUE_DEPOSIT } from "./constants";
 import { getDynamicTTL } from "./utils/getDynamicTTL";
 import { PredicatesFactory } from "./factories/predicatesFactory";
+import { PredicateQueue } from "./types";
 
-export async function enqueueDepositWithTTL(predicate: {
-  id: string;
-  predicate_address: string;
-  token_user_id?: string | null;
-}) {
+export async function enqueueDepositWithTTL(predicate: PredicateQueue) {
   const redisKey = `predicate:scheduled:${predicate.predicate_address}`;
 
   const isActive = Boolean(predicate.token_user_id);
@@ -22,18 +18,19 @@ export async function enqueueDepositWithTTL(predicate: {
 
   const priority = isActive ? PRIORITY.ACTIVE : PRIORITY.INACTIVE;
 
-  const data = {
-    predicate_id: predicate.id,
-    predicate_address: predicate.predicate_address,
-  };
-
-  await depositQueue.add(data, {
-    attempts: 3,
-    backoff: 5000,
-    removeOnComplete: true,
-    removeOnFail: false,
-    priority,
-  });
+  await depositQueue.add(
+    { predicate },
+    {
+      attempts: 3,
+      backoff: {
+        type: 'exponential',
+        delay: 1000,
+      },
+      removeOnComplete: true,
+      removeOnFail: false,
+      priority,
+    }
+  );
 
   const predicateService = await PredicatesFactory.getInstance();
 
@@ -46,18 +43,21 @@ export async function enqueueDepositWithTTL(predicate: {
   return `[${QUEUE_DEPOSIT}] Predicate ${predicate.predicate_address} enqueued`;
 }
 
-export async function enqueueImmediateDeposit(predicate_id: string, predicate_address: string) {
+export async function enqueueImmediateDeposit(predicate: PredicateQueue) {
   await depositQueue.add(
-    { predicate_id, predicate_address },
+    { predicate },
     {
       attempts: 3,
-      backoff: 5000,
+      backoff: {
+        type: 'exponential',
+        delay: 1000,
+      },
       removeOnComplete: true,
       removeOnFail: false,
       priority: PRIORITY.IMMEDIATELY,
     }
   );
 
-  console.log(`[${QUEUE_DEPOSIT}] Immediate deposit for ${predicate_address} enqueued`);
-  return `[${QUEUE_DEPOSIT}] Immediate deposit for ${predicate_address} enqueued`;
+  console.log(`[${QUEUE_DEPOSIT}] Immediate deposit for ${predicate.predicate_address} enqueued`);
+  return `[${QUEUE_DEPOSIT}] Immediate deposit for ${predicate.predicate_address} enqueued`;
 }
