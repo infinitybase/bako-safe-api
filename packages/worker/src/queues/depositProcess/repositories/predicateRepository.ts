@@ -12,9 +12,22 @@ export class PredicateRepository {
         p.configurable,
         p.owner_id,
         ut.user_id AS token_user_id,
-        ut.token
+        ut.token,
+        COALESCE(pm.members, '[]') AS members
       FROM predicates p
-      LEFT JOIN user_tokens ut ON p.owner_id = ut.user_id;
+      LEFT JOIN user_tokens ut ON p.owner_id = ut.user_id
+      LEFT JOIN (
+        SELECT 
+          predicate_id,
+          json_agg(
+            jsonb_build_object(
+              'predicate_id', predicate_id,
+              'user_id', user_id
+            )
+          ) AS members
+        FROM predicate_members
+        GROUP BY predicate_id
+      ) pm ON p.id = pm.predicate_id;
     `;
 
     const result = await this.client.query(query);

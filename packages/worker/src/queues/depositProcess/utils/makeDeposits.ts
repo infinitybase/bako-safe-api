@@ -58,7 +58,7 @@ export async function makeDeposits(
         status: status[item?.output?.tx_status],
         witnesses: [],
         requiredSigners: config.SIGNATURES_COUNT ?? 1,
-        totalSigners: predicate.members?.length ?? 0,
+        totalSigners: predicate?.members?.length ?? 0,
         predicate: {
           id: predicate.id,
           address: predicate.predicateAddress,
