@@ -20,16 +20,20 @@ import { IPagination, Pagination, PaginationParams } from '@utils/pagination';
 
 import { FuelProvider } from '@src/utils';
 import { NotificationService } from '../notification/services';
-import { TransactionPagination, TransactionPaginationParams } from './pagination';
+import { TransactionPaginationParams } from './pagination/index';
 import {
   ICreateTransactionPayload,
   ITransactionAdvancedDetail,
   ITransactionFilterParams,
   ITransactionResponse,
+  ITransactionResponseList,
   ITransactionService,
+  ITransactionsListResponse,
   IUpdateTransactionPayload,
 } from './types';
-import { formatFuelTransaction, formatTransactionsResponse } from './utils';
+import { formatFuelTransaction, formatTransactionsResponse, mergeTransactionLists } from './utils';
+import { paginateTransactions } from './pagination/paginateTransactions';
+import { paginateDeposits } from './pagination/paginateDeposits';
 
 export class TransactionService implements ITransactionService {
   private _ordination: IOrdination<Transaction> = {
@@ -180,6 +184,7 @@ export class TransactionService implements ITransactionService {
       .leftJoin('t.predicate', 'predicate')
       .leftJoin('predicate.members', 'members')
       .leftJoin('predicate.workspace', 'workspace')
+      .leftJoin('t.predicate', 'predicate_reference_id')
       .addSelect([
         'predicate.name',
         'predicate.id',
@@ -316,112 +321,60 @@ export class TransactionService implements ITransactionService {
     return _transactions;
   }
 
-  async listWithIncomings(): Promise<ITransactionResponse[]> {
-    const hasPagination =
-      this._transactionPagination?.perPage && this._transactionPagination?.offsetDb;
-    const queryBuilder = Transaction.createQueryBuilder('t')
-      .select([
-        't.createdAt',
-        't.gasUsed',
-        't.hash',
-        't.id',
-        't.name',
-        't.predicateId',
-        't.txData',
-        't.resume',
-        't.sendTime',
-        't.status',
-        't.summary',
-        't.updatedAt',
-        't.type',
-        't.network',
-      ])
-      .leftJoin('t.predicate', 'predicate')
-      .leftJoin('predicate.members', 'members')
-      .leftJoin('predicate.workspace', 'workspace')
-      .addSelect([
-        'predicate.name',
-        'predicate.id',
-        'predicate.predicateAddress',
-        'members.id',
-        'members.avatar',
-        'members.address',
-        'workspace.id',
-        'workspace.name',
-        'workspace.single',
-      ])
-      .andWhere(
-        `regexp_replace(t.network->>'url', '^https?://[^@]+@', 'https://') = :network`,
-        {
-          network: this._filter.network.replace(/^https?:\/\/[^@]+@/, 'https://'),
-        },
-      );
+  async listWithIncomings(): Promise<ITransactionResponseList> {
 
-    // =============== specific for workspace ===============
-    if (this._filter.workspaceId || this._filter.signer) {
-      queryBuilder.andWhere(
-        new Brackets(qb => {
-          if (this._filter.workspaceId) {
-            qb.orWhere('workspace.id IN (:...workspace)', {
-              workspace: this._filter.workspaceId,
-            });
-          }
-          if (this._filter.signer) {
-            qb.orWhere('members.address = :signer', {
-              signer: this._filter.signer,
-            });
-          }
-        }),
-      );
+    const combinedTransactions = await this.getAllTransactionsLists();
+
+    this._transactionPagination.offsetDb = combinedTransactions.offsetDb.toString();
+    this._transactionPagination.offsetFuel = combinedTransactions.offsetFuel.toString();
+
+    return combinedTransactions as ITransactionResponseList;
+  }
+
+  // Todo[Erik]: Abstrair essa logica para o utils
+  private async getAllTransactionsLists(): Promise<ITransactionsListResponse> {
+
+    const hasPagination = this._transactionPagination?.perPage && this._transactionPagination?.offsetDb || this._transactionPagination?.perPage && this._transactionPagination?.offsetFuel;
+    const _perPage = hasPagination ? Number(this._transactionPagination.perPage) : 10;
+    let _offsetDb = hasPagination ? Number(this._transactionPagination.offsetDb) : 0;
+    let _offsetFuel = hasPagination ? Number(this._transactionPagination.offsetFuel) : 0;
+    let loopGuard = 10;
+  
+    const seen = new Set<string>();
+    let combined: ITransactionResponse[] = [];
+  
+    combined.forEach(tx => seen.add(tx.id));
+  
+    while (combined.length < _perPage && loopGuard-- > 0) {
+      const missing = _perPage - combined.length;
+    
+      const [moreTransactions, moreDeposits] = await Promise.all([
+        paginateTransactions(missing, _offsetDb, this._filter),
+        paginateDeposits(missing, _offsetFuel, this._filter),
+      ]);
+    
+      if (!moreTransactions.length && !moreDeposits.length) break;
+    
+      const newTransactions = moreTransactions.filter(tx => !seen.has(tx.id));
+      const newDeposits = moreDeposits.filter(tx => !seen.has(tx.id));
+    
+      newTransactions.forEach(tx => seen.add(tx.id));
+      newDeposits.forEach(tx => seen.add(tx.id));
+    
+      combined.push(...newTransactions, ...newDeposits);
+    
+      _offsetDb += newTransactions.length;
+      _offsetFuel += newDeposits.length;
     }
-
-    // =============== specific for home ===============
-
-    this._filter.predicateId &&
-      this._filter.predicateId.length > 0 &&
-      queryBuilder.andWhere('t.predicate_id IN (:...predicateID)', {
-        predicateID: this._filter.predicateId,
-      });
-
-    this._filter.status &&
-      queryBuilder.andWhere('t.status IN (:...status)', {
-        status: this._filter.status,
-      });
-
-    this._filter.type &&
-      queryBuilder.andWhere('t.type = :type', {
-        type: this._filter.type,
-      });
-
-    this._filter.id &&
-      queryBuilder.andWhere('t.id = :id', {
-        id: this._filter.id,
-      });
-
-    queryBuilder.orderBy(`t.${this._ordination.orderBy}`, this._ordination.sort);
-
-    const handleInternalError = e => {
-      if (e instanceof GeneralError) throw e;
-      throw new Internal({
-        type: ErrorTypes.Internal,
-        title: 'Error on transaction list',
-        detail: e,
-      });
+  
+    const ordered = combined.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  
+    return {
+      data: ordered,
+      perPage: Number(_perPage),
+      offsetDb: Number(_offsetDb),
+      offsetFuel: Number(_offsetFuel),
     };
-
-    const transactions = hasPagination
-      ? await TransactionPagination.create(queryBuilder)
-          .paginate(this._transactionPagination)
-          .then(paginationResult => paginationResult)
-          .catch(handleInternalError)
-      : await queryBuilder
-          .getMany()
-          .then(transactions => {
-            return transactions ?? [];
-          })
-          .catch(handleInternalError);
-
-    return formatTransactionsResponse(transactions) as ITransactionResponse[];
   }
 
   async delete(id: string): Promise<boolean> {

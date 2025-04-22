@@ -37,7 +37,7 @@ const formatAssetFromOperations = (
   account: string,
 ): AssetFormat[] => {
   const assets = operations
-    .filter(operation => operation.from.address === account)
+    .filter(operation => operation.from.address === account || operation.to.address === account)
     .filter(operation => !!operation.assetsSent)
     .flatMap(operation =>
       operation.assetsSent.map(asset => ({

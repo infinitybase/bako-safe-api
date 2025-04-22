@@ -1,8 +1,9 @@
-import { Predicate, Transaction, TransactionType, User } from '@src/models';
+import { DepositTransactions, Predicate, Transaction, TransactionType, User } from '@src/models';
 import { IPagination } from '@src/utils/pagination';
 import {
   ITransactionResponse,
   ITransactionsListParams,
+  ITransactionsListResponse,
   TransactionHistory,
 } from './types';
 import { TransactionStatus } from 'bakosafe';
@@ -15,19 +16,22 @@ import {
 } from '@src/utils/ordination/helper';
 import { isUUID } from 'class-validator';
 import { ITransactionCounter } from './types';
+import GeneralError, { ErrorTypes } from '@src/utils/error/GeneralError';
+import { Internal } from '@src/utils/error';
+import { paginateTransactions } from './pagination/paginateTransactions';
+import { paginateDeposits } from './pagination/paginateDeposits';
 import { ITransactionPagination } from './pagination';
-import { getAssetsMaps } from '@src/utils';
 
 export const formatTransactionsResponse = (
-  transactions: IPagination<Transaction> | Transaction[],
+  transactions: IPagination<Transaction | DepositTransactions> | (Transaction | DepositTransactions)[],
 ): IPagination<ITransactionResponse> | ITransactionResponse[] => {
   if (Array.isArray(transactions)) {
-    return transactions.map(Transaction.formatTransactionResponse);
+    return transactions.map(tx => Transaction.formatTransactionResponse(tx));
   } else {
     return {
       ...transactions,
-      data: transactions.data.map(Transaction.formatTransactionResponse),
-    };
+      data: transactions.data.map(tx => Transaction.formatTransactionResponse(tx)
+    )};
   }
 };
 
@@ -110,11 +114,11 @@ export const formatFuelTransaction = async (
 };
 
 export const mergeTransactionLists = (
-  dbList:
+  transactionQuery:
     | IPagination<ITransactionResponse>
     | ITransactionPagination<ITransactionResponse>
     | ITransactionResponse[],
-  fuelList: ITransactionResponse[],
+  depositTransactions: ITransactionResponse[],
   params: ITransactionsListParams,
 ): ITransactionPagination<ITransactionResponse> | ITransactionResponse[] => {
   const {
@@ -133,26 +137,18 @@ export const mergeTransactionLists = (
   const _offsetFuel = offsetFuel ? Number(offsetFuel) : undefined;
   const isPaginated = perPage && offsetDb && offsetFuel;
 
-  const dbListArray: ITransactionResponse[] = Array.isArray(dbList)
-    ? dbList
-    : dbList.data;
+  const transactionQueryArray: ITransactionResponse[] = Array.isArray(transactionQuery)
+    ? transactionQuery
+    : transactionQuery.data;
 
-  // Filter out deposits that are already in the database
-  const filteredFuelList = fuelList.filter(
-    tx =>
-      !dbListArray.some(
-        dbTx => dbTx.hash === tx.hash && dbTx.type === TransactionType.DEPOSIT,
-      ),
-  );
-
-  const sortedFuelList = sortTransactions(filteredFuelList, _ordination);
+  const sortedFuelList = sortTransactions(depositTransactions, _ordination);
 
   // Keeps the number of transactions according to perPage if paginated
   const _fuelList = isPaginated
     ? sortedFuelList.slice(_offsetFuel, _offsetFuel + _perPage)
     : sortedFuelList;
 
-  const mergedList = sortTransactions([...dbListArray, ..._fuelList], _ordination);
+  const mergedList = sortTransactions([...transactionQueryArray, ..._fuelList], _ordination);
   const list = isPaginated ? mergedList.slice(0, _perPage) : mergedList;
 
   if (!isPaginated) {
@@ -234,3 +230,13 @@ export const createTxHistoryEvent = (
     address: user.address,
   },
 });
+
+export const handleInternalError = (error: unknown, context: string): never => {
+  if (error instanceof GeneralError) throw error;
+
+  throw new Internal({
+    type: ErrorTypes.Internal,
+    title: `Error on ${context} pagination`,
+    detail: error instanceof Error ? error.message : 'Unknown error',
+  });
+}

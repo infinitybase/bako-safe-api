@@ -23,6 +23,7 @@ import {
   formatAssets,
 } from '@src/utils/formatAssets';
 import { networks } from '@src/mocks/networks';
+import { DepositTransactions } from './DepositTransactions';
 
 const { FUEL_PROVIDER, FUEL_PROVIDER_CHAIN_ID } = process.env;
 
@@ -109,7 +110,7 @@ class Transaction extends Base {
     return transactionType[type] ?? transactionType.default;
   }
 
-  static formatTransactionResponse(transaction: Transaction): ITransactionResponse {
+  static formatTransactionResponse(transaction: Transaction | DepositTransactions): ITransactionResponse {
     let assets: AssetFormat[] = [];
 
     if (transaction.summary?.operations) {
@@ -117,7 +118,9 @@ class Transaction extends Base {
         transaction.summary.operations,
         transaction.predicate.predicateAddress,
       );
-    } else {
+    }
+
+    if ('txData' in transaction && transaction.txData) {
       assets = formatAssets(transaction.txData.outputs, undefined);
     }
 
@@ -125,7 +128,7 @@ class Transaction extends Base {
       assets,
     });
 
-    return result;
+    return result as ITransactionResponse;
   }
 
   getWitnesses() {
