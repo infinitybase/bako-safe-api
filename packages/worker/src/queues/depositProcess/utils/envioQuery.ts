@@ -63,6 +63,13 @@ export const predicateTransactions = async (predicate: string, block: number) =>
     predicate_address: predicate
   });
 
-  const data = await fetch("https://fuel-testnet.hypersync.xyz/query", queryUrl).then(res => res.json());
+  const networks = {
+    testnet: "https://fuel-testnet.hypersync.xyz",
+    mainnet: "https://fuel.hypersync.xyz"
+  }
+
+  const url = process.env.WORKER_ENVIRONMENT === "production" ? networks.mainnet : networks.testnet;
+
+  const data = await fetch(`${url}/query`, queryUrl).then(res => res.json());
   return data ?? undefined;
 }

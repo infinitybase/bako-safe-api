@@ -1,3 +1,4 @@
+import { TRANSACTION_TYPE } from "../constants";
 import type { PredicateDepositData, PredicateDepositTx } from "../types";
 import { getSummaryTransactionFuels } from "./getSummaryTransactionFuels";
 
@@ -31,10 +32,6 @@ export async function makeDeposits(
     return hash.replace('0x', '');
   }
 
-  const getDepositType = (item: PredicateDepositTx) => {
-    return tx_type[item?.output?.tx_type] === tx_type[0] ? "DEPOSIT" : tx_type[item?.output?.tx_type];
-  }
-
   const groupedData = await Promise.all(tx_data.map(async (item: PredicateDepositTx) => {
     if (!item) return null;
 
@@ -42,7 +39,7 @@ export async function makeDeposits(
     const config = JSON.parse(predicate.configurable);
 
     return {
-      predicateId: item?.output?.to,
+      predicateId: predicate.id,
       hash: parserHash(item?.output?.tx_id),
       status: status[item?.output?.tx_status],
       sendTime: new Date((item?.transaction?.time ?? 0) * 1000),
@@ -65,7 +62,7 @@ export async function makeDeposits(
         },
         id: item.transaction?.id,
       },
-      type: getDepositType(item),
+      type: TRANSACTION_TYPE.DEPOSIT,
     } as PredicateDepositData;
   }));
 

@@ -20,6 +20,10 @@ export const TTL_CONFIG = {
   MODERATELY_UPDATED: 60 * 30,
 };
 
+export const TRANSACTION_TYPE = {
+  DEPOSIT: "DEPOSIT"
+};
+
 export const QUEUE_DEPOSIT = "QUEUE_DEPOSIT";
 export const CRON_EXPRESSION = "0/30 * * * * *";
 export const INITIAL_DELAY = 6 * 1000 * 1;

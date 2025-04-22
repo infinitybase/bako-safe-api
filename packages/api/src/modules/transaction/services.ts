@@ -184,7 +184,6 @@ export class TransactionService implements ITransactionService {
       .leftJoin('t.predicate', 'predicate')
       .leftJoin('predicate.members', 'members')
       .leftJoin('predicate.workspace', 'workspace')
-      .leftJoin('t.predicate', 'predicate_reference_id')
       .addSelect([
         'predicate.name',
         'predicate.id',

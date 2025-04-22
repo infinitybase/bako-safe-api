@@ -1,8 +1,9 @@
 import { DepositTransactions } from "@src/models/DepositTransactions";
 import { SelectQueryBuilder } from "typeorm";
+import { ITransactionFilterParams } from "../types";
 
 export class DepositsTransactionRepository {
-  constructor(private readonly filter: any) {}
+  constructor(private readonly filter: ITransactionFilterParams) {}
 
   buildQuery(): SelectQueryBuilder<DepositTransactions> {
     const queryBuilder = DepositTransactions.createQueryBuilder('dt')

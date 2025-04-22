@@ -26,15 +26,13 @@ export class CreateTableDepositTransactions1744248043108 implements MigrationInt
             },
             {
               name: 'type',
-              type: 'enum',
-              enum: Object.values(TransactionType) as string[],
-              default: `'${TransactionType.TRANSACTION_SCRIPT}'`,
+              type: 'varchar',
+              default: `'${TransactionType.DEPOSIT}'`,
             },
             {
               name: 'status',
-              type: 'enum',
-              enum: Object.values(TransactionStatus) as string[],
-              default: `'${TransactionStatus.AWAIT_REQUIREMENTS}'`,
+              type: 'varchar',
+              default: `'${TransactionStatus.SUCCESS}'`,
             },
             {
               name: 'summary',
