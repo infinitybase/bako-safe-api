@@ -3,7 +3,6 @@ import { IPagination } from '@src/utils/pagination';
 import {
   ITransactionResponse,
   ITransactionsListParams,
-  ITransactionsListResponse,
   TransactionHistory,
 } from './types';
 import { TransactionStatus } from 'bakosafe';
@@ -18,8 +17,6 @@ import { isUUID } from 'class-validator';
 import { ITransactionCounter } from './types';
 import GeneralError, { ErrorTypes } from '@src/utils/error/GeneralError';
 import { Internal } from '@src/utils/error';
-import { paginateTransactions } from './pagination/paginateTransactions';
-import { paginateDeposits } from './pagination/paginateDeposits';
 import { ITransactionPagination } from './pagination';
 
 export const formatTransactionsResponse = (
