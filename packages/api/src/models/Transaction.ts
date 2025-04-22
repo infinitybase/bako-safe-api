@@ -113,7 +113,7 @@ class Transaction extends Base {
   static formatTransactionResponse(transaction: Transaction | DepositTransactions): ITransactionResponse {
     let assets: AssetFormat[] = [];
 
-    if (transaction.summary?.operations) {
+    if (transaction.summary?.operations && transaction?.predicate) {
       assets = formatAssetFromOperations(
         transaction.summary.operations,
         transaction.predicate.predicateAddress,

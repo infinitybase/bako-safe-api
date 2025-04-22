@@ -220,7 +220,7 @@ const countTransactionsPerOrigin = (
 export const createTxHistoryEvent = (
   type: TransactionHistory,
   date: Date | string,
-  user: Pick<User, 'id' | 'avatar' | 'address'>,
+  user: Pick<User, 'id' | 'avatar' | 'address' | 'type'>,
 ) => ({
   type,
   date,
@@ -228,6 +228,7 @@ export const createTxHistoryEvent = (
     id: user.id,
     avatar: user.avatar,
     address: user.address,
+    type: user.type,
   },
 });
 

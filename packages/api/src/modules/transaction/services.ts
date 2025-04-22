@@ -617,11 +617,8 @@ export class TransactionService implements ITransactionService {
 
       return _transactions;
     } catch (e) {
-      throw new Internal({
-        type: ErrorTypes.Internal,
-        title: 'Error on transaction fetchFuelTransactions',
-        detail: e,
-      });
+      console.log('[ERROR] fetchFuelTransactions', e);
+      return [];
     }
   }
 
