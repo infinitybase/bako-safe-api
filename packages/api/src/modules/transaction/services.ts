@@ -342,8 +342,6 @@ export class TransactionService implements ITransactionService {
     const seen = new Set<string>();
     let combined: ITransactionResponse[] = [];
   
-    combined.forEach(tx => seen.add(tx.id));
-  
     while (combined.length < _perPage && loopGuard-- > 0) {
       const missing = _perPage - combined.length;
     
