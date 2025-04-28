@@ -91,7 +91,7 @@ export class TransactionController {
           .innerJoin('pred.workspace', 'wks', 'wks.id = :workspaceId', {
             workspaceId: workspace.id,
           })
-          .addSelect(['t.status'])
+          .addSelect(['t.status', 't.resume'])
           .where('t.status = :status', {
             status: TransactionStatus.AWAIT_REQUIREMENTS,
           })
@@ -103,18 +103,27 @@ export class TransactionController {
             },
           );
 
-        const result = await qb.getCount();
+        const transactions = await qb.getMany();
+
+        const ofUser = transactions.length;
+        const pendingSignature = transactions.some(tx =>
+          tx.resume?.witnesses?.some(
+            w => w.account === user.address && !w.signature,
+          ),
+        );
 
         return successful(
           {
-            ofUser: result,
-            transactionsBlocked: result > 0,
+            ofUser,
+            transactionsBlocked: ofUser > 0,
+            pendingSignature,
           },
           Responses.Ok,
         );
       }
 
       const qb = Transaction.createQueryBuilder('t')
+        .addSelect(['t.resume'])
         .where('t.status = :status', {
           status: TransactionStatus.AWAIT_REQUIREMENTS,
         })
@@ -127,12 +136,18 @@ export class TransactionController {
           },
         );
 
-      const result = await qb.getCount();
+      const transactions = await qb.getMany();
+
+      const ofUser = transactions.length;
+      const pendingSignature = transactions.some(tx =>
+        tx.resume?.witnesses?.some(w => w.account === user.address && !w.signature),
+      );
 
       return successful(
         {
-          ofUser: result,
-          transactionsBlocked: result > 0,
+          ofUser,
+          transactionsBlocked: ofUser > 0,
+          pendingSignature,
         },
         Responses.Ok,
       );
@@ -256,14 +271,16 @@ export class TransactionController {
 
         await new NotificationService().transactionUpdate(newTransaction.id);
 
-        const transactionHistory = await TransactionController.formatTransactionsHistory(newTransaction);
+        const transactionHistory = await TransactionController.formatTransactionsHistory(
+          newTransaction,
+        );
 
         emitTransaction(member.id, {
           sessionId: member.id,
           to: SocketUsernames.UI,
           type: SocketEvents.TRANSACTION_CREATED,
           transaction: newTransaction,
-          history: transactionHistory as ITransactionHistory[]
+          history: transactionHistory as ITransactionHistory[],
         });
       }
 
@@ -460,11 +477,15 @@ export class TransactionController {
 
       await new NotificationService().transactionUpdate(transaction.id);
 
-      const predicate = await this.predicateService.findByAddress(transaction.predicate.predicateAddress);
+      const predicate = await this.predicateService.findByAddress(
+        transaction.predicate.predicateAddress,
+      );
 
       const signedTransaction = Transaction.formatTransactionResponse(transaction);
 
-      const transactionHistory = await TransactionController.formatTransactionsHistory(transaction);
+      const transactionHistory = await TransactionController.formatTransactionsHistory(
+        transaction,
+      );
 
       for (const member of predicate.members) {
         emitTransaction(member.id, {
@@ -472,7 +493,7 @@ export class TransactionController {
           to: SocketUsernames.UI,
           type: SocketEvents.TRANSACTION_UPDATED,
           transaction: signedTransaction,
-          history: transactionHistory as ITransactionHistory[]
+          history: transactionHistory as ITransactionHistory[],
         });
       }
 
@@ -688,11 +709,17 @@ export class TransactionController {
       );
       transaction = await transaction.save();
 
-      const predicate = await this.predicateService.findByAddress(transaction.predicate.predicateAddress);
+      const predicate = await this.predicateService.findByAddress(
+        transaction.predicate.predicateAddress,
+      );
 
-      const canceledTransaction = Transaction.formatTransactionResponse(transaction);
+      const canceledTransaction = Transaction.formatTransactionResponse(
+        transaction,
+      );
 
-      const transactionHistory = await TransactionController.formatTransactionsHistory(transaction);
+      const transactionHistory = await TransactionController.formatTransactionsHistory(
+        transaction,
+      );
 
       for (const member of predicate.members) {
         emitTransaction(member.id, {
@@ -700,7 +727,7 @@ export class TransactionController {
           to: SocketUsernames.UI,
           type: SocketEvents.TRANSACTION_CANCELED,
           transaction: canceledTransaction,
-          history: transactionHistory as ITransactionHistory[]
+          history: transactionHistory as ITransactionHistory[],
         });
       }
 

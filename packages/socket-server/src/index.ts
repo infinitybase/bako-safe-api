@@ -7,7 +7,9 @@ import { createAdapter } from '@socket.io/redis-adapter'
 
 import { TransactionEventHandler } from '@modules/transactions'
 import { DatabaseClass } from '@utils/database'
-import { SocketEvents } from './types'
+import { SocketEvents, SocketUsernames } from './types'
+import { Address } from 'fuels'
+import { SwitchNetworkEventHandler } from './modules/switchNetwork'
 
 const { SOCKET_PORT, SOCKET_TIMEOUT_DICONNECT, SOCKET_NAME, API_URL } = process.env
 
@@ -36,6 +38,7 @@ export const api = axios.create({
 
 let database: DatabaseClass
 let transactionEventHandler: TransactionEventHandler
+let switchNetworkEventHandler: SwitchNetworkEventHandler
 
 // Health Check
 app.get('/health', ({ res }) => res.status(200).send({ status: 'ok', message: `Health check ${SOCKET_NAME} passed` }))
@@ -46,6 +49,7 @@ io.on(SocketEvents.CONNECT, async socket => {
 	const requestId = request_id === undefined ? '' : request_id
 
 	const room = `${sessionId}:${username}${requestId && `:${requestId}`}`
+	console.log('[SOCKET]: CONNECTED TO', room)
 
 	socket.data.messageQueue = []
 	await socket.join(room)
@@ -87,6 +91,25 @@ io.on(SocketEvents.CONNECT, async socket => {
 	 */
 	socket.on(SocketEvents.TX_REQUEST, data => transactionEventHandler.request({ data, socket }))
 
+	socket.on(SocketEvents.CHANGE_NETWORK, data => switchNetworkEventHandler.requestSwitchNetwork({ data, socket }))
+
+	socket.on(SocketEvents.NETWORK_CHANGED, data => switchNetworkEventHandler.confirmationChangedNetwork({ data, socket }))
+
+	socket.on(SocketEvents.CONNECTION_STATE, async () => {
+		const { sessionId, request_id } = socket.handshake.auth
+		const connectorRoom = `${sessionId}:${SocketUsernames.CONNECTOR}:${request_id}`
+		const { data: connected } = await api.get(`/connections/${sessionId}/state`)
+
+		io.to(connectorRoom).emit(SocketEvents.CONNECTION_STATE, {
+			username: SocketUsernames.CONNECTOR,
+			request_id,
+			room: sessionId,
+			to: SocketUsernames.CONNECTOR,
+			type: SocketEvents.CONNECTION_STATE,
+			data: connected,
+		})
+	})
+
 	// Lidar com mensagens recebidas do cliente
 	socket.on(SocketEvents.DEFAULT, data => {
 		const { sessionId, to, request_id } = data
@@ -94,19 +117,24 @@ io.on(SocketEvents.CONNECT, async socket => {
 		const requestId = request_id === undefined ? '' : request_id
 		const room = `${sessionId}:${to}:${requestId}`
 
-		// console.log('[SOCKET]: SEND MESSAGE TO', room)
-
 		socket.to(room).emit(SocketEvents.DEFAULT, data)
 	})
 
 	socket.on(SocketEvents.TRANSACTION, data => {
 		const { sessionId, to } = data
 		const room = `${sessionId}:${to}`
-
-  		const clientsInRoom = io.sockets.adapter.rooms.get(room) || new Set()
-
+		const clientsInRoom = io.sockets.adapter.rooms.get(room) || new Set()
 		if (clientsInRoom.size > 0) {
 			socket.to(room).emit(SocketEvents.TRANSACTION, data)
+		}
+	})
+
+	socket.on(SocketEvents.SWITCH_NETWORK, data => {
+		const { sessionId, to } = data
+		const room = `${sessionId}:${to}`
+		const clientsInRoom = io.sockets.adapter.rooms.get(room) || new Set()
+		if (clientsInRoom.size > 0) {
+			socket.to(room).emit(SocketEvents.SWITCH_NETWORK, data)
 		}
 	})
 
@@ -133,6 +161,7 @@ const databaseConnect = async () => {
 
 const setupEventHandlers = () => {
 	transactionEventHandler = TransactionEventHandler.getInstance(database)
+	switchNetworkEventHandler = SwitchNetworkEventHandler.getInstance(database)
 }
 
 // Iniciar o servidor

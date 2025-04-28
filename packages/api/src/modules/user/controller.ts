@@ -1,23 +1,19 @@
 import { addMinutes } from 'date-fns';
 
-import { RecoverCode, RecoverCodeType } from '@src/models';
+import { Predicate, RecoverCode, RecoverCodeType } from '@src/models';
 import { User } from '@src/models/User';
 import { bindMethods } from '@src/utils/bindMethods';
 
 import {
   BadRequest,
-  error,
   ErrorTypes,
   Unauthorized,
   UnauthorizedErrorTitles,
+  error,
 } from '@utils/error';
 import { IconUtils } from '@utils/icons';
 import { Responses, successful, TokenUtils } from '@utils/index';
 
-import App from '@src/server/app';
-import { FuelProvider } from '@src/utils/FuelProvider';
-import { Not } from 'typeorm';
-import { IChangenetworkRequest } from '../auth/types';
 import { PredicateService } from '../predicate/services';
 import { RecoverCodeService } from '../recoverCode/services';
 import { TransactionService } from '../transaction/services';
@@ -35,6 +31,11 @@ import {
   IUpdateRequest,
   IUserService,
 } from './types';
+import { Not } from 'typeorm';
+import App from '@src/server/app';
+import { IChangenetworkRequest } from '../auth/types';
+import { FuelProvider } from '@src/utils/FuelProvider';
+import { PredicateWithHidden } from '../predicate/types';
 
 export class UserController {
   private userService: IUserService;
@@ -91,7 +92,7 @@ export class UserController {
           signer: hasSingle ? user.address : undefined,
           network: network.url,
         })
-        .paginate({ page: '1', perPage: '6' })
+        .paginate({ page: '0', perPage: '6' })
         .ordination({ orderBy: 'createdAt', sort: 'DESC' })
         .list();
 
@@ -117,6 +118,7 @@ export class UserController {
         webauthn: user.webauthn,
         first_login: user.first_login,
         network,
+        settings: user.settings,
         onSingleWorkspace:
           workspace.single && workspace.name.includes(`[${user.id}]`),
         workspace: {
@@ -134,7 +136,6 @@ export class UserController {
 
   async predicates(req: IMeRequest) {
     try {
-      //list all 8 last vaults of user
       const { workspace, user } = req;
       const { workspaceList, hasSingle } = await new UserService().workspacesByUser(
         workspace,
@@ -146,13 +147,36 @@ export class UserController {
           workspace: workspaceList,
           signer: hasSingle ? user.address : undefined,
         })
-        .paginate({ page: '1', perPage: '8' })
+        .paginate({ page: '0', perPage: '8' })
         .ordination({ orderBy: 'updatedAt', sort: 'DESC' })
         .list();
 
+      const inactives =
+        user.settings?.inactivesPredicates?.map(addr => addr.toLowerCase()) || [];
+
+      const addHiddenFlag = (vault: Predicate): PredicateWithHidden => {
+        return {
+          ...vault,
+          isHidden: vault.isHiddenForUser(user),
+        };
+      };
+
+      let processedResponse;
+
+      if ('data' in predicates) {
+        const enhancedData = predicates.data.map(addHiddenFlag);
+        processedResponse = {
+          ...predicates,
+          data: enhancedData.filter(vault => !vault.isHidden),
+        };
+      } else {
+        const enhancedData = predicates.map(addHiddenFlag);
+        processedResponse = enhancedData.filter(vault => !vault.isHidden);
+      }
+
       return successful(
         {
-          predicates,
+          predicates: processedResponse,
         },
         Responses.Ok,
       );
