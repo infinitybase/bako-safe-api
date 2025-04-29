@@ -141,24 +141,22 @@ export class UserController {
         workspace,
         user,
       );
-      const hidden = false;
+
       const predicates = await new PredicateService()
         .filter({
           workspace: workspaceList,
           signer: hasSingle ? user.address : undefined,
-          hidden,
+          hidden: false,
           userId: user.id,
         })
         .paginate({ page: '0', perPage: '8' })
         .ordination({ orderBy: 'updatedAt', sort: 'DESC' })
         .list();
 
-      const addHiddenFlag = (vault: Predicate): PredicateWithHidden => {
-        return {
-          ...vault,
-          isHidden: vault.isHiddenForUser(user),
-        };
-      };
+      const addHiddenFlag = (vault: Predicate): PredicateWithHidden => ({
+        ...vault,
+        isHidden: vault.isHiddenForUser(user),
+      });
 
       let processedResponse;
 
@@ -166,13 +164,13 @@ export class UserController {
         const enhancedData = predicates.data.map(addHiddenFlag);
         processedResponse = {
           ...predicates,
-          data: enhancedData.filter(vault => (hidden ? true : !vault.isHidden)),
+          data: enhancedData,
         };
       } else {
         const enhancedData = predicates.map(addHiddenFlag);
         processedResponse = {
           ...predicates,
-          data: enhancedData.filter(vault => (predicates ? true : !vault.isHidden)),
+          data: enhancedData,
         };
       }
 
