@@ -55,6 +55,13 @@ export interface ITransactionResponse extends Transaction {
   assets: ITransferAsset[];
 }
 
+export interface ITransactionResponseList {
+  offsetDb: number;
+  offsetFuel: number;
+  perPage: number;
+  data: ITransactionResponse[];
+}
+
 export interface ICreateTransactionPayload {
   name: string;
   hash: string;
@@ -113,6 +120,14 @@ export interface ITransactionsListParams {
   perPage?: string;
   offsetDb?: string;
   offsetFuel?: string;
+  filter?: ITransactionFilterParams;
+}
+
+export interface ITransactionsListResponse {
+  data: ITransactionResponse[];
+  perPage: number;
+  offsetDb: number;
+  offsetFuel: number;
 }
 
 export type ICloseTransactionBody = {
@@ -234,6 +249,7 @@ export type IFindTransactionByPredicateIdRequest = AuthValidatedRequest<IFindTra
 export type IFindTransactionByToRequest = AuthValidatedRequest<IFindTransactionByToRequestSchema>;
 export type IListRequest = AuthValidatedRequest<IListRequestSchema>;
 export type IListWithIncomingsRequest = AuthValidatedRequest<IListWithIncomingsRequestSchema>;
+export type IListAllRequest = AuthValidatedRequest<IListRequestSchema>;
 
 export interface ITransactionService {
   ordination(ordination?: IOrdination<Transaction>): this;
@@ -254,7 +270,7 @@ export interface ITransactionService {
     payload: IUpdateTransactionPayload,
   ) => Promise<ITransactionResponse>;
   list: () => Promise<IPagination<ITransactionResponse> | ITransactionResponse[]>;
-  listWithIncomings: () => Promise<ITransactionResponse[]>;
+  listWithIncomings: () => Promise<ITransactionResponseList>;
   findById: (id: string) => Promise<ITransactionResponse>;
   findByHash: (hash: string) => Promise<ITransactionResponse>;
   delete: (id: string) => Promise<boolean>;

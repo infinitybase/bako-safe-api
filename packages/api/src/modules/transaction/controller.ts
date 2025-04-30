@@ -49,7 +49,7 @@ import {
   ITransactionService,
   TransactionHistory,
 } from './types';
-import { createTxHistoryEvent, mergeTransactionLists } from './utils';
+import { createTxHistoryEvent } from './utils';
 
 import { emitTransaction } from '@src/socket/events';
 import { SocketEvents, SocketUsernames } from '@src/socket/types';
@@ -605,7 +605,7 @@ export class TransactionController {
       const signer = hasSingle ? user.address : undefined;
       const ordination = { orderBy, sort };
 
-      const dbTxs = await new TransactionService()
+      const response = await new TransactionService()
         .filter({
           status: _status,
           workspaceId: _wk,
@@ -619,49 +619,12 @@ export class TransactionController {
         .transactionPaginate({
           perPage,
           offsetDb: offsetDb,
-          offsetFuel: offsetFuel,
+          offsetFuel: offsetFuel
         })
         .listWithIncomings();
 
-      let fuelTxs = [];
-
-      if (
-        _wk.length > 0 &&
-        (!_status ||
-          _status?.some(status => status === TransactionStatus.SUCCESS)) &&
-        (!type || type === TransactionType.DEPOSIT)
-      ) {
-        const predicates = await this.predicateService
-          .filter({
-            workspace: _wk,
-            signer,
-            ids: predicateId,
-          })
-          .list()
-          .then((data: Predicate[]) => data);
-
-        fuelTxs = await this.transactionService
-          .transactionPaginate({
-            perPage,
-            offsetDb: offsetDb,
-            offsetFuel: offsetFuel,
-          })
-          // todo: use this provider by session
-          .fetchFuelTransactions(predicates, network.url || FUEL_PROVIDER);
-      }
-
-      const mergedList = mergeTransactionLists(dbTxs, fuelTxs, {
-        ordination,
-        perPage,
-        offsetDb,
-        offsetFuel,
-      });
-
-      const response = mergedList;
-
       return successful(response, Responses.Ok);
     } catch (e) {
-      console.log(`[INCOMING_ERROR]`, e);
       return error(e.error, e.statusCode);
     }
   }
