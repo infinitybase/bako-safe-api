@@ -6,6 +6,8 @@ import { TypeUser } from '@src/models';
 
 import { IDefaultAccount } from '../../mocks/accounts';
 import { FuelProvider } from '../FuelProvider';
+import request from 'supertest';
+import App from '@src/server/app';
 
 const { API_URL } = process.env;
 
@@ -35,6 +37,10 @@ export class AuthValidations {
     avatar: string;
   };
   public code: string;
+  public sessionAuth: {
+    token: string;
+    address: string;
+  };
 
   constructor(
     private readonly provider: string,
@@ -59,8 +65,21 @@ export class AuthValidations {
   }
 
   async create() {
-    const { data } = await this.axios.post('/user', {
-      address: this.account.address,
+    console.log('>>> create addres', this.account.address);
+    //let app: Express.Application;
+    const appInstance = await App.start();
+    const app = appInstance.serverApp as Express.Application;
+
+    // const { data } = await this.axios.post('/user', {
+    //   address: this.account.address,
+    //   provider: this.provider,
+    //   type: TypeUser.FUEL,
+    // });
+
+    //console.log('>>> datatest', datatest);
+
+    const { body: data } = await request(app).post('/user').send({
+      address: this.account?.address,
       provider: this.provider,
       type: TypeUser.FUEL,
     });
@@ -69,13 +88,23 @@ export class AuthValidations {
   }
 
   async createSession() {
+    console.log('>>> chamou create Seassion');
     const tx = await this.signer(this.code);
+    const appInstance = await App.start();
+    const app = appInstance.serverApp as Express.Application;
 
-    const { data } = await this.axios.post('/auth/sign-in', {
+    // const { data } = await this.axios.post('/auth/sign-in', {
+    //   digest: this.code,
+    //   encoder: TypeUser.FUEL,
+    //   signature: tx,
+    //   userAddress: this.account.address, //this.account.account,
+    // });
+
+    const { body: data } = await request(app).post('/auth/sign-in').send({
       digest: this.code,
       encoder: TypeUser.FUEL,
       signature: tx,
-      userAddress: this.account.account,
+      userAddress: this.account.address, //this.account.account,
     });
 
     this.axios.defaults.headers.common['Authorization'] = data.accessToken;
@@ -92,6 +121,10 @@ export class AuthValidations {
     };
 
     this.workspace = data.workspace;
+    this.sessionAuth = {
+      token: data.accessToken,
+      address: data.address,
+    };
   }
 
   async selectWorkspace(workspaceId: string) {
@@ -111,6 +144,7 @@ export class AuthValidations {
   }
 
   async signer(message: string) {
+    console.log('>>> chamou signer');
     const provider = await FuelProvider.create(this.provider);
     const signer = Wallet.fromPrivateKey(this.account.privateKey, provider);
     return await signer.signMessage(message);

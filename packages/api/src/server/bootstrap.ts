@@ -10,6 +10,12 @@ class Bootstrap {
     // await runSeeders();
   }
 
+  static async closeDatabase() {
+    if (databaseInstance.isInitialized) {
+      await databaseInstance.destroy();
+    }
+  }
+
   static startEnv() {
     dotenv.config();
   }
@@ -17,6 +23,10 @@ class Bootstrap {
   static async start() {
     this.startEnv();
     await this.connectDatabase();
+  }
+
+  static async stop() {
+    await this.closeDatabase();
   }
 }
 

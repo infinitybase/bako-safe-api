@@ -1,4 +1,4 @@
-import { type RedisClientType, createClient } from 'redis';
+import { RedisClientType, createClient } from 'redis';
 
 const REDIS_URL_WRITE = process.env.REDIS_URL_WRITE || 'redis://127.0.0.1:6379';
 
@@ -20,6 +20,18 @@ export class RedisWriteClient {
     }
   }
 
+  static async stop() {
+    if (RedisWriteClient.client) {
+      try {
+        await RedisWriteClient.client.disconnect();
+        console.log('>>> RedisWriteClient.client.disconnect');
+      } catch (e) {
+        console.error('[REDIS WRITE DISCONNECT ERROR]', e);
+        process.exit(1);
+      }
+    }
+  }
+
   static async set(key: string, value: string | number) {
     try {
       await RedisWriteClient.client.set(key, value, {
@@ -30,9 +42,12 @@ export class RedisWriteClient {
     }
   }
 
-  static async hsetMany(key: string, values: {field: string, value: string | number}[]) {
+  static async hsetMany(
+    key: string,
+    values: { field: string; value: string | number }[],
+  ) {
     try {
-      const fields = values.map(({field, value}) => [field, value]);
+      const fields = values.map(({ field, value }) => [field, value]);
       await RedisWriteClient.client.hSet(key, fields.flat());
       await RedisWriteClient.client.expire(key, 60 * 40); // 5 min
     } catch (e) {
