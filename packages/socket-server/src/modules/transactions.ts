@@ -119,6 +119,7 @@ export class TransactionEventHandler {
 						origin: dapp.origin,
 					},
 					vault: {
+						id: vault.id,
 						name: dapp.current_vault_name,
 						description: dapp.current_vault_description,
 						address: vault.predicate_address,
