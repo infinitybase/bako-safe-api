@@ -4,7 +4,7 @@ import { addMinutes } from 'date-fns';
 import { type DApp, Predicate, RecoverCodeType, User } from '@src/models';
 import { SocketClient } from '@src/socket/client';
 
-import { error, ErrorTypes, NotFound } from "@utils/error";
+import { error, ErrorTypes, NotFound } from '@utils/error';
 import { RedisReadClient, RedisWriteClient, Responses, TokenUtils, bindMethods, successful } from '@utils/index';
 
 import { PredicateService } from '../predicate/services';
@@ -20,10 +20,11 @@ import type {
 } from './types';
 import type { ITransactionResponse } from '../transaction/types';
 import App from '@src/server/app';
-import { SocketEvents, SocketUsernames } from "@src/socket/types";
+import { SocketEvents, SocketUsernames } from '@src/socket/types';
 
 const { API_URL, FUEL_PROVIDER } = process.env;
 const PREFIX = 'dapp';
+
 export class DappController {
   private _dappService: IDAppsService;
 
@@ -84,7 +85,7 @@ export class DappController {
     try {
       const dappCache = await RedisReadClient.get(`${PREFIX}${params.sessionId}`);
       const dapp = dappCache ? JSON.parse(dappCache) : null;
-      if(dapp) {
+      if (dapp) {
         return successful(
           dapp.currentVault.predicateAddress,
           Responses.Ok,
@@ -191,7 +192,7 @@ export class DappController {
     try {
       const dappCache = await RedisReadClient.get(`${PREFIX}${params.sessionId}`);
       const dapp = dappCache ? JSON.parse(dappCache) : null;
-      if(dapp) {
+      if (dapp) {
         return successful(
           dapp.currentVault.predicateAddress,
           Responses.Ok,
@@ -208,7 +209,7 @@ export class DappController {
     try {
       const dappCache = await RedisReadClient.get(`${PREFIX}${params.sessionId}`);
       const _dapp = dappCache ? JSON.parse(dappCache) : null;
-      if(_dapp) {
+      if (_dapp) {
         return successful(
           _dapp.network.url,
           Responses.Ok,
@@ -237,7 +238,7 @@ export class DappController {
     try {
       const dappCache = await RedisReadClient.get(`${PREFIX}${params.sessionId}`);
       const dapp = dappCache ? JSON.parse(dappCache) : null;
-      if(dapp) {
+      if (dapp) {
         return successful(
           dapp.vaults.map(vault => vault.predicateAddress),
           Responses.Ok,
@@ -254,26 +255,26 @@ export class DappController {
       return error(e.error, e.statusCode);
     }
   }
-  
+
   async state({ params, headers }: IDappRequest) {
     try {
       const dappCache = await RedisReadClient.get(`${PREFIX}${params.sessionId}`);
       const dapp = dappCache ? JSON.parse(dappCache) : null;
 
-      if(!dapp) {
+      if (!dapp) {
         const _dapp = await this._dappService
           .findBySessionID(params.sessionId, headers.origin || headers.Origin)
           .then((data: DApp) => {
             return data;
           });
 
-          if(!_dapp) {
-            return successful(false, Responses.Ok);
-          }
-          await RedisWriteClient.set(`${PREFIX}${params.sessionId}`, JSON.stringify(_dapp));
-          return successful(true, Responses.Ok);
+        if (!_dapp) {
+          return successful(false, Responses.Ok);
+        }
+        await RedisWriteClient.set(`${PREFIX}${params.sessionId}`, JSON.stringify(_dapp));
+        return successful(true, Responses.Ok);
       }
-      
+
       return successful(
         true,
         Responses.Ok,
@@ -315,17 +316,24 @@ export class DappController {
       const dappCache = await RedisReadClient.get(`${PREFIX}${sessionId}`);
 
       if (!dappCache) {
-        throw new NotFound({
-          type: ErrorTypes.NotFound,
-          title: 'DApp not found in cache',
-          detail: `No dapp was found for sessionId: ${sessionId}.`,
-        });
+        const _dapp = await this._dappService
+          .findBySessionID(params.sessionId, origin)
+          .then((data: DApp) => {
+            return data;
+          });
+        if (!_dapp) {
+          throw new NotFound({
+            type: ErrorTypes.NotFound,
+            title: 'DApp not found in cache',
+            detail: `No dapp was found for sessionId: ${sessionId}.`,
+          });
+        }
       }
 
       const dapp = await this._dappService.updateNetwork({
         sessionId,
         newNetwork,
-        origin
+        origin,
       });
 
       await TokenUtils.changeNetwork(dapp.user.id, dapp.network.url);
@@ -339,13 +347,12 @@ export class DappController {
         request_id: undefined,
         type: SocketEvents.SWITCH_NETWORK,
         data: dapp.network,
-      }
+      };
 
       socketClient.emit(SocketEvents.SWITCH_NETWORK, socketData);
 
       return successful(dapp.network, Responses.Ok);
     } catch (e) {
-      console.log(e);
       return error(e.error, e.statusCode);
     }
   }
