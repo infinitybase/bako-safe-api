@@ -4,7 +4,7 @@ import { BN, Wallet } from 'fuels';
 import { FuelProvider } from '../FuelProvider';
 
 export const txParams = {
-  maxFee: 1000,
+  maxFee: 1556,
   gasLimit: 1000,
 };
 

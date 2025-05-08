@@ -32,8 +32,8 @@ export class PredicateMock {
     };
 
     const vault = await new PredicateService().instancePredicate(
-      _provider.url,
       JSON.stringify(_configurable),
+      _provider.url,
     );
 
     const predicatePayload: IPredicateMockPayload = {

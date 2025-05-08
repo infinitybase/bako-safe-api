@@ -6,9 +6,15 @@ class CatchError extends Error {
   }
 }
 
-export const catchApplicationError = async (fn: Promise<unknown>) => {
+export const catchApplicationError = async (fn: Promise<any>) => {
   try {
-    await fn;
+    const response = await fn;
+
+    // IF response is a from superTest with error status
+    if (response?.status >= 400 && response?.body) {
+      return response.body;
+    }
+
     throw new CatchError();
   } catch (error) {
     if (error instanceof AxiosError) {
