@@ -79,17 +79,12 @@ export class UserController {
   async meTransactions(req: IMeRequest) {
     try {
       const { type } = req.query;
-      const { workspace, user, network } = req;
+      const { user, network } = req;
 
-      const { hasSingle } = await new UserService().workspacesByUser(
-        workspace,
-        user,
-      );
       const transactions = await new TransactionService()
         .filter({
           type,
-          workspaceId: [workspace.id],
-          signer: hasSingle ? user.address : undefined,
+          signer: user.address,
           network: network.url,
         })
         .paginate({ page: '0', perPage: '6' })
