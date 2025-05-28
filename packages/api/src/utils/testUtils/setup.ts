@@ -3,13 +3,20 @@ import { accounts } from '@src/mocks/accounts';
 import { networks } from '@mocks/networks';
 import { generateUser } from '@utils/testUtils/Workspace';
 import { PredicateMock } from '@mocks/predicate';
+import App from '@src/server/app';
+import Express from 'express';
+import request from 'supertest';
+//import * as http from 'http';
 
 export class SetupApi {
   static async setup() {
+    const appInstance = await App.start();
+    const app: Express.Application = appInstance.serverApp;
+
     const api = await this.defaultApi();
 
-    const data_user1 = await generateUser(api);
-    const data_user2 = await generateUser(api);
+    const data_user1 = await generateUser(api, app);
+    const data_user2 = await generateUser(api, app);
 
     // const {
     //   data_user1,
@@ -21,10 +28,17 @@ export class SetupApi {
     const members = [data_user1.address, data_user2.address];
     const { predicatePayload } = await PredicateMock.create(1, members);
 
-    const { data: predicate } = await api.axios.post(
-      '/predicate',
-      predicatePayload,
-    );
+    console.log('>>> API SETUP', api.axios.defaults.headers);
+    // const { data: predicate } = await api.axios.post(
+    //   '/predicate',
+    //   predicatePayload,
+    // );
+
+    const { body: predicate } = await request(app)
+      .post('/predicate')
+      .send(predicatePayload)
+      .set('Authorization', api.sessionAuth.token)
+      .set('Signeraddress', api.sessionAuth.address);
 
     // const notWorkspaceMemberApi = await this.notWorkspaceMemberApi();
     // const notFoundPermissionApi = await this.notFoundPermissionApi(
@@ -41,7 +55,7 @@ export class SetupApi {
 
   static async defaultApi() {
     return AuthValidations.authenticateUser({
-      account: accounts['USER_1'],
+      account: accounts['USER_5'],
       provider: networks['local'],
     });
   }

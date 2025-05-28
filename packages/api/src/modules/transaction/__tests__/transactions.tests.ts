@@ -1,384 +1,457 @@
-// import { BakoSafe, IPayloadVault, TransactionStatus, Vault } from 'bakosafe';
-// import { Address, Provider, Wallet, bn, hash, ZeroBytes32 } from 'fuels';
+import Express from 'express';
+import request from 'supertest';
+import App from '@src/server/app';
+import * as http from 'http';
 
-// import { accounts } from '@src/mocks/accounts';
-// import { networks } from '@src/mocks/networks';
-// import { PredicateMock } from '@src/mocks/predicate';
-// import { transactionMock } from '@src/mocks/transaction';
-// import { AuthValidations } from '@src/utils/testUtils/Auth';
-// import { generateWorkspacePayload } from '@src/utils/testUtils/Workspace';
-// import { assetsMapBySymbol } from '@src/utils/assets';
-// import { signBypK } from '@src/utils/testUtils/Wallet';
-// import { catchApplicationError, TestError } from '@utils/testUtils/Errors';
+//import { BakoSafe, IPayloadVault, TransactionStatus, Vault } from 'bakosafe';
+import { Address, Provider, Wallet, bn, hash, ZeroBytes32 } from 'fuels';
 
-// describe('[TRANSACTION]', () => {
-//   let api: AuthValidations;
+import { accounts } from '@src/mocks/accounts';
+import { networks } from '@src/mocks/networks';
+import { PredicateMock } from '@src/mocks/predicate';
+//import { transactionMock } from '@src/mocks/txdata';
+import { transactionMock } from '@src/mocks/transaction';
+import { AuthValidations } from '@src/utils/testUtils/Auth';
+import { generateWorkspacePayload } from '@src/utils/testUtils/Workspace';
+//import { assetsMapBySymbol } from '@src/utils/assets';
+import { signBypK } from '@src/utils/testUtils/Wallet';
+import { catchApplicationError, TestError } from '@utils/testUtils/Errors';
+import { TransactionStatus } from 'bakosafe';
 
-//   beforeAll(async () => {
-//     api = new AuthValidations(networks['local'], accounts['USER_1']);
+describe('[TRANSACTION]', () => {
+  let app: Express.Application;
+  let server: http.Server;
+  let api: AuthValidations;
 
-//     await api.create();
-//     await api.createSession();
-//   });
+  beforeAll(async () => {
+    const appInstance = await App.start();
+    app = appInstance.serverApp;
+    server = app.listen(0);
 
-//   test(
-//     'Create transaction',
-//     async () => {
-//       const user_aux = Address.fromRandom().toString();
-//       const members = [accounts['USER_1'].address, user_aux];
-//       const { predicatePayload, vault } = await PredicateMock.create(1, members);
-//       await api.axios.post('/predicate', predicatePayload);
+    api = new AuthValidations(networks['local'], accounts['USER_5']);
 
-//       const { tx, payload_transfer } = await transactionMock(vault);
+    await api.create();
+    await api.createSession();
+  });
 
-//       const { data: data_transaction } = await api.axios.post(
-//         '/transaction',
-//         payload_transfer,
-//       );
+  test(
+    'Create transaction',
+    async () => {
+      const user_aux = Address.fromRandom().toString();
+      const members = [accounts['USER_4'].address, user_aux];
+      const { predicatePayload, vault } = await PredicateMock.create(1, members);
+      await api.axios.post('/predicate', predicatePayload);
+      console.log('>>> vault', vault);
 
-//       expect(data_transaction).toHaveProperty('id');
-//       expect(data_transaction).toHaveProperty(
-//         'predicate.predicateAddress',
-//         vault.address.toB256(),
-//       );
-//       expect(data_transaction).toHaveProperty('assets');
-//       expect(data_transaction).toHaveProperty('resume.witnesses');
-//       expect(data_transaction.resume.witnesses).toHaveLength(members.length);
-//       expect(tx.getHashTxId()).toEqual(data_transaction.hash);
-//     },
-//     60 * 1000,
-//   );
+      const { tx, payload_transfer } = await transactionMock(vault);
+      console.log('>>>> payload_transfer', payload_transfer);
 
-//   test(
-//     'Error when creating transaction with invalid payload',
-//     async () => {
-//       const payload = {
-//         predicateAddress: 'invalid_address',
-//         name: `[TESTE_MOCK] ${Address.fromRandom().toString()}`,
-//         hash: ZeroBytes32,
-//         txData: {},
-//         status: TransactionStatus.AWAIT_REQUIREMENTS,
-//         assets: [],
-//       };
-//       const payloadError = await catchApplicationError(
-//         api.axios.post('/transaction', payload),
-//       );
-//       TestError.expectValidation(payloadError, {
-//         type: 'custom',
-//         field: 'Invalid address',
-//         origin: 'body',
-//       });
-//     },
-//     60 * 1000,
-//   );
+      // export interface ICreateTransactionPayload {
+      //   name: string;
+      //   hash: string;
+      //   predicateAddress: string;
+      //   status: TransactionStatus;
+      //   txData: TransactionRequest;
+      //   assets: {
+      //     assetId: string;
+      //     amount: string;
+      //     to: string;
+      //   }[];
+      //   resume?: ITransactionResume;
+      //   sendTime?: Date;
+      //   gasUsed?: string;
+      //   predicateID?: string;
+      //   summary?: ITransactionSummary;
+      // }
 
-//   test(
-//     'Create transaction with invalid permission',
-//     async () => {
-//       // logar com usuário inválido no workspace
-//       const auth = new AuthValidations(networks['local'], accounts['USER_3']);
+      const { data: data_transaction } = await api.axios.post(
+        '/transaction',
+        payload_transfer,
+      );
 
-//       await auth.create();
-//       await auth.createSession();
+      console.log('>>> data_transaction', data_transaction);
 
-//       const {
-//         data_user1,
-//         data_user2,
-//         data: workspace,
-//       } = await generateWorkspacePayload(auth);
-//       await auth.selectWorkspace(workspace.id);
+      expect(data_transaction).toHaveProperty('id');
+      expect(data_transaction).toHaveProperty(
+        'predicate.predicateAddress',
+        vault.address.toB256(),
+      );
+      expect(data_transaction).toHaveProperty('assets');
+      expect(data_transaction).toHaveProperty('resume.witnesses');
+      expect(data_transaction.resume.witnesses).toHaveLength(members.length);
+      expect(tx.getHashTxId()).toEqual(data_transaction.hash);
+    },
+    60 * 1000,
+  );
 
-//       //gerar um predicate
-//       const members = [data_user1.address, data_user2.address];
+  // test(
+  //   'Error when creating transaction with invalid payload',
+  //   async () => {
+  //     const payload = {
+  //       predicateAddress: 'invalid_address',
+  //       name: `[TESTE_MOCK] ${Address.fromRandom().toString()}`,
+  //       hash: ZeroBytes32,
+  //       txData: {},
+  //       status: TransactionStatus.AWAIT_REQUIREMENTS,
+  //       assets: [],
+  //     };
+  //     const payloadError = await catchApplicationError(
+  //       //api.axios.post('/transaction', payload),
+  //       request(app)
+  //         .post('/transaction')
+  //         .send(payload)
+  //         .set('Authorization', api.sessionAuth.token)
+  //         .set('Signeraddress', api.sessionAuth.address)
+  //         .catch(e => {
+  //           return e.response;
+  //         }),
+  //     );
+  //     TestError.expectValidation(payloadError, {
+  //       type: 'custom',
+  //       field: 'Invalid address',
+  //       origin: 'body',
+  //     });
+  //   },
+  //   60 * 1000,
+  // );
 
-//       const { predicatePayload, vault } = await PredicateMock.create(1, members);
-//       await auth.axios.post('/predicate', predicatePayload);
+  // test(
+  //   'Error when creating transaction with invalid payload',
+  //   async () => {
+  //     const payload = {
+  //       predicateAddress: 'invalid_address',
+  //       name: `[TESTE_MOCK] ${Address.fromRandom().toString()}`,
+  //       hash: ZeroBytes32,
+  //       txData: {},
+  //       status: TransactionStatus.AWAIT_REQUIREMENTS,
+  //       assets: [],
+  //     };
+  //     const payloadError = await catchApplicationError(
+  //       api.axios.post('/transaction', payload).catch(e => {
+  //         return e.response;
+  //       }),
+  //     );
+  //     TestError.expectValidation(payloadError, {
+  //       type: 'custom',
+  //       field: 'Invalid address',
+  //       origin: 'body',
+  //     });
+  //   },
+  //   60 * 1000,
+  // );
 
-//       const aux_auth = new AuthValidations(networks['local'], accounts['USER_5']);
-//       await aux_auth.create();
-//       await aux_auth.createSession();
-//       await aux_auth.selectWorkspace(workspace.id);
+  // test(
+  //   'Create transaction with invalid permission',
+  //   async () => {
+  //     // logar com usuário inválido no workspace
+  //     const auth = new AuthValidations(networks['local'], accounts['USER_3']);
 
-//       //gerar uma transacao com um usuário inválido
-//       const { payload_transfer } = await transactionMock(vault);
-//       const {
-//         status: status_transaction,
-//         data: data_transaction,
-//       } = await aux_auth.axios.post('/transaction', payload_transfer).catch(e => {
-//         return e.response;
-//       });
+  //     await auth.create();
+  //     await auth.createSession();
 
-//       //validacoes
-//       expect(status_transaction).toBe(401);
-//       expect(data_transaction).toHaveProperty(
-//         'detail',
-//         'You do not have permission to access this resource',
-//       );
-//     },
-//     60 * 1000,
-//   );
+  //     const {
+  //       data_user1,
+  //       data_user2,
+  //       data: workspace,
+  //     } = await generateWorkspacePayload(auth);
+  //     await auth.selectWorkspace(workspace.id);
 
-//   test(
-//     'Create transaction with vault member',
-//     async () => {
-//       // logar com usuário inválido no workspace
-//       const auth = new AuthValidations(networks['local'], accounts['USER_5']);
-//       await auth.create();
-//       await auth.createSession();
-//       const { data_user1, data_user2, USER_5 } = await generateWorkspacePayload(
-//         auth,
-//       );
+  //     //gerar um predicate
+  //     const members = [data_user1.address, data_user2.address];
 
-//       //gerar um predicate
-//       const members = [data_user1.address, data_user2.address, USER_5.address];
+  //     const { predicatePayload, vault } = await PredicateMock.create(1, members);
+  //     await auth.axios.post('/predicate', predicatePayload);
 
-//       const { predicatePayload, vault } = await PredicateMock.create(1, members);
-//       await api.axios.post('/predicate', predicatePayload);
+  //     const aux_auth = new AuthValidations(networks['local'], accounts['USER_5']);
+  //     await aux_auth.create();
+  //     await aux_auth.createSession();
+  //     await aux_auth.selectWorkspace(workspace.id);
 
-//       //gerar uma transacao com um usuário inválido
-//       const { payload_transfer } = await transactionMock(vault);
-//       const { status: status_transaction } = await auth.axios.post(
-//         '/transaction',
-//         payload_transfer,
-//       );
+  //     //gerar uma transacao com um usuário inválido
+  //     const { payload_transfer } = await transactionMock(vault);
+  //     const {
+  //       status: status_transaction,
+  //       data: data_transaction,
+  //     } = await aux_auth.axios.post('/transaction', payload_transfer).catch(e => {
+  //       return e.response;
+  //     });
 
-//       //validacoes
-//       expect(status_transaction).toBe(200);
-//     },
-//     60 * 1000,
-//   );
+  //     //validacoes
+  //     expect(status_transaction).toBe(401);
+  //     expect(data_transaction).toHaveProperty(
+  //       'detail',
+  //       'You do not have permission to access this resource',
+  //     );
+  //   },
+  //   60 * 1000,
+  // );
 
-//   test('List transactions', async () => {
-//     const auth = new AuthValidations(networks['local'], accounts['USER_5']);
-//     await auth.create();
-//     await auth.createSession();
+  // test(
+  //   'Create transaction with vault member',
+  //   async () => {
+  //     // logar com usuário inválido no workspace
+  //     const auth = new AuthValidations(networks['local'], accounts['USER_5']);
+  //     await auth.create();
+  //     await auth.createSession();
+  //     const { data_user1, data_user2, USER_5 } = await generateWorkspacePayload(
+  //       auth,
+  //     );
 
-//     //on single workspace
-//     await auth.axios.get('/transaction').then(({ data, status }) => {
-//       expect(status).toBe(200);
-//       let prev = undefined;
+  //     //gerar um predicate
+  //     const members = [data_user1.address, data_user2.address, USER_5.address];
 
-//       data.forEach((element, index) => {
-//         const aux = element.predicate;
-//         if (prev && index > 0) {
-//           expect(new Date(prev).getTime()).toBeGreaterThan(
-//             new Date(element.updatedAt).getTime(),
-//           );
-//         }
-//         prev = element.updatedAt;
+  //     const { predicatePayload, vault } = await PredicateMock.create(1, members);
+  //     await api.axios.post('/predicate', predicatePayload);
 
-//         expect(aux).toHaveProperty('id');
-//         expect(aux).toHaveProperty('predicateAddress');
-//         expect(aux.workspace).toHaveProperty('id');
-//         expect(aux.workspace).toHaveProperty('name');
-//       });
-//     });
+  //     //gerar uma transacao com um usuário inválido
+  //     const { payload_transfer } = await transactionMock(vault);
+  //     const { status: status_transaction } = await auth.axios.post(
+  //       '/transaction',
+  //       payload_transfer,
+  //     );
 
-//     //with pagination
-//     const page = 1;
-//     const perPage = 9;
-//     await auth.axios
-//       .get(`/transaction?page=${page}&perPage=${perPage}`)
-//       .then(({ data, status }) => {
-//         expect(status).toBe(200);
-//         expect(data).toHaveProperty('data');
-//         expect(data.data.length).toBeLessThanOrEqual(perPage);
-//         expect(data).toHaveProperty('total');
-//         expect(data).toHaveProperty('currentPage', page);
-//         expect(data).toHaveProperty('perPage', perPage);
-//       });
+  //     //validacoes
+  //     expect(status_transaction).toBe(200);
+  //   },
+  //   60 * 1000,
+  // );
 
-//     const _status = [
-//       TransactionStatus.AWAIT_REQUIREMENTS,
-//       TransactionStatus.PENDING_SENDER,
-//     ];
-//     await auth.axios
-//       .get(`/transaction?status=${_status[0]}&status=${_status[1]}`)
-//       .then(({ data, status }) => {
-//         expect(status).toBe(200);
-//         data.forEach(element => {
-//           const aux = _status.includes(element.status);
-//           expect(aux).toBe(true);
-//         });
-//       });
+  // test('List transactions', async () => {
+  //   const auth = new AuthValidations(networks['local'], accounts['USER_5']);
+  //   await auth.create();
+  //   await auth.createSession();
 
-//     //an another workspace
-//     const { data: data_workspace } = await generateWorkspacePayload(auth);
-//     await auth.selectWorkspace(data_workspace.id);
-//     await auth.axios.get('/transaction').then(({ data, status }) => {
-//       expect(status).toBe(200);
-//       expect(data).toHaveLength(0);
-//     });
-//   });
+  //   //on single workspace
+  //   await auth.axios.get('/transaction').then(({ data, status }) => {
+  //     console.log('>>> data first workspace', data);
+  //     expect(status).toBe(200);
+  //     let prev = undefined;
 
-//   test('Should save missing deposits in db', async () => {
-//     // Gerando autenticação
-//     const auth = new AuthValidations(networks['local'], accounts['USER_1']);
-//     await auth.create();
-//     await auth.createSession();
+  //     data.forEach((element, index) => {
+  //       const aux = element.predicate;
+  //       if (prev && index > 0) {
+  //         expect(new Date(prev).getTime()).toBeGreaterThan(
+  //           new Date(element.updatedAt).getTime(),
+  //         );
+  //       }
+  //       prev = element.updatedAt;
 
-//     const provider = await Provider.create(networks['local']);
+  //       expect(aux).toHaveProperty('id');
+  //       expect(aux).toHaveProperty('predicateAddress');
+  //       expect(aux.workspace).toHaveProperty('id');
+  //       expect(aux.workspace).toHaveProperty('name');
+  //     });
+  //   });
 
-//     // Criar predicate novo
-//     const VaultPayload: IPayloadVault = {
-//       configurable: {
-//         SIGNATURES_COUNT: 1,
-//         SIGNERS: [accounts['USER_1'].address],
-//         network: provider.url,
-//       },
-//       BakoSafeAuth: auth.authToken,
-//     };
+  //   //with pagination
+  //   const page = 1;
+  //   const perPage = 9;
+  //   await auth.axios
+  //     .get(`/transaction?page=${page}&perPage=${perPage}`)
+  //     .then(({ data, status }) => {
+  //       console.log('>>> data.data.length', data.data.length);
+  //       console.log('>>> + 5', perPage + 5);
+  //       console.log('>>> - 5', perPage - 5);
+  //       expect(status).toBe(200);
+  //       expect(data).toHaveProperty('data');
+  //       expect(data.data.length).toBeLessThanOrEqual(perPage + 5);
+  //       expect(data.data.length).toBeLessThanOrEqual(perPage - 5);
+  //       expect(data).toHaveProperty('total');
+  //       expect(data).toHaveProperty('currentPage', page);
+  //       expect(data).toHaveProperty('perPage', perPage);
+  //     });
 
-//     const vault = await Vault.create(VaultPayload);
+  //   const _status = [
+  //     TransactionStatus.AWAIT_REQUIREMENTS,
+  //     TransactionStatus.PENDING_SENDER,
+  //   ];
+  //   await auth.axios
+  //     .get(`/transaction?status=${_status[0]}&status=${_status[1]}`)
+  //     .then(({ data, status }) => {
+  //       expect(status).toBe(200);
+  //       data.forEach(element => {
+  //         const aux = _status.includes(element.status);
+  //         expect(aux).toBe(false);
+  //       });
+  //     });
 
-//     // Usando conta genesis para enviar transação para esse predicate
-//     const wallet = Wallet.fromPrivateKey(accounts['FULL'].privateKey, provider);
+  //an another workspace
+  // const { data: data_workspace } = await generateWorkspacePayload(auth);
+  // await auth.selectWorkspace(data_workspace.id);
+  // await auth.axios.get('/transaction').then(({ data, status }) => {
+  //   expect(status).toBe(200);
+  //   expect(data).toHaveLength(0);
+  // });
+  //});
 
-//     // Transferindo moedas para o predicate recem criado pela genesis wallet
-//     const transfer1 = await wallet.transfer(
-//       vault.address,
-//       bn.parseUnits('0.10'),
-//       assetsMapBySymbol['ETH'].id,
-//       {
-//         maxFee: BakoSafe.getGasConfig('MAX_FEE'),
-//         gasLimit: BakoSafe.getGasConfig('GAS_LIMIT'),
-//       },
-//     );
+  // test('Should save missing deposits in db', async () => {
+  //   // Gerando autenticação
+  //   const auth = new AuthValidations(networks['local'], accounts['USER_1']);
+  //   await auth.create();
+  //   await auth.createSession();
 
-//     const transfer2 = await wallet.transfer(
-//       vault.address,
-//       bn.parseUnits('0.10'),
-//       assetsMapBySymbol['BTC'].id,
-//       {
-//         maxFee: BakoSafe.getGasConfig('MAX_FEE'),
-//         gasLimit: BakoSafe.getGasConfig('GAS_LIMIT'),
-//       },
-//     );
+  //   const provider = await Provider.create(networks['local']);
 
-//     await transfer1.waitForResult();
-//     await transfer2.waitForResult();
+  //   // Criar predicate novo
+  //   const VaultPayload: IPayloadVault = {
+  //     configurable: {
+  //       SIGNATURES_COUNT: 1,
+  //       SIGNERS: [accounts['USER_1'].address],
+  //       network: provider.url,
+  //     },
+  //     BakoSafeAuth: auth.authToken,
+  //   };
 
-//     // Criando de fato a transação agora que o predicate tem moedas pra isso
-//     const tx = await vault.BakoSafeIncludeTransaction({
-//       name: 'Test 1',
-//       assets: [
-//         {
-//           amount: '0.01',
-//           assetId: assetsMapBySymbol['ETH'].id,
-//           to: vault.address.toB256(),
-//         },
-//         {
-//           amount: '0.01',
-//           assetId: assetsMapBySymbol['BTC'].id,
-//           to: vault.address.toB256(),
-//         },
-//       ],
-//     });
+  //   const vault = await Vault.create(VaultPayload);
 
-//     // Assinando a transação recem criada
-//     await auth.axios.put(`/transaction/signer/${tx.BakoSafeTransactionId}`, {
-//       account: accounts['USER_1'].address,
-//       signer: await signBypK(tx.getHashTxId(), accounts['USER_1'].privateKey),
-//       confirm: true,
-//     });
+  //   // Usando conta genesis para enviar transação para esse predicate
+  //   const wallet = Wallet.fromPrivateKey(accounts['FULL'].privateKey, provider);
 
-//     await tx.send();
-//     await tx.wait();
+  //   // Transferindo moedas para o predicate recem criado pela genesis wallet
+  //   const transfer1 = await wallet.transfer(
+  //     vault.address,
+  //     bn.parseUnits('0.10'),
+  //     assetsMapBySymbol['ETH'].id,
+  //     {
+  //       maxFee: BakoSafe.getGasConfig('MAX_FEE'),
+  //       gasLimit: BakoSafe.getGasConfig('GAS_LIMIT'),
+  //     },
+  //   );
 
-//     const id_vault = vault.BakoSafeVault.id;
+  //   const transfer2 = await wallet.transfer(
+  //     vault.address,
+  //     bn.parseUnits('0.10'),
+  //     assetsMapBySymbol['BTC'].id,
+  //     {
+  //       maxFee: BakoSafe.getGasConfig('MAX_FEE'),
+  //       gasLimit: BakoSafe.getGasConfig('GAS_LIMIT'),
+  //     },
+  //   );
 
-//     // Buscando as transações desse novo vault, deve ter apenas 1 (const tx)
-//     const { data: transactions } = await auth.axios.get('/transaction', {
-//       params: {
-//         predicateId: [id_vault],
-//       },
-//     });
+  //   await transfer1.waitForResult();
+  //   await transfer2.waitForResult();
 
-//     // validação para ter apenas 1
-//     expect(transactions.length).toBe(1);
-//     // confirmando se o nome é igual ao da tx criada
-//     expect(transactions[0].name).toEqual(tx.name);
+  //   // Criando de fato a transação agora que o predicate tem moedas pra isso
+  //   const tx = await vault.BakoSafeIncludeTransaction({
+  //     name: 'Test 1',
+  //     assets: [
+  //       {
+  //         amount: '0.01',
+  //         assetId: assetsMapBySymbol['ETH'].id,
+  //         to: vault.address.toB256(),
+  //       },
+  //       {
+  //         amount: '0.01',
+  //         assetId: assetsMapBySymbol['BTC'].id,
+  //         to: vault.address.toB256(),
+  //       },
+  //     ],
+  //   });
 
-//     // Batendo no endpoint onde busca pelos depositos e salva os pendentes.
-//     await auth.axios.get(`/predicate/${id_vault}`);
+  //   // Assinando a transação recem criada
+  //   await auth.axios.put(`/transaction/signer/${tx.BakoSafeTransactionId}`, {
+  //     account: accounts['USER_1'].address,
+  //     signer: await signBypK(tx.getHashTxId(), accounts['USER_1'].privateKey),
+  //     confirm: true,
+  //   });
 
-//     const transfer1Id = transfer1.id;
-//     const transfer2Id = transfer2.id;
+  //   await tx.send();
+  //   await tx.wait();
 
-//     // Buscando as transações do vault mais uma vez, após os depositos salvos
-//     const { data: transactionsAfterDeposit } = await auth.axios.get(
-//       '/transaction',
-//       {
-//         params: {
-//           predicateId: [id_vault],
-//         },
-//       },
-//     );
+  //   const id_vault = vault.BakoSafeVault.id;
 
-//     // O motivo do slice(8) no nome das transações que vêm do banco é que os depósitos são salvos como
-//     // DEPOSIT_${deposit.id}, então o slice(8) remove o DEPOSIT_, assim comparando apenas o id
-//     const checkTransactionName = (transactions, name) =>
-//       transactions.some(tx => tx.name.slice(8) === name || tx.name === name);
+  //   // Buscando as transações desse novo vault, deve ter apenas 1 (const tx)
+  //   const { data: transactions } = await auth.axios.get('/transaction', {
+  //     params: {
+  //       predicateId: [id_vault],
+  //     },
+  //   });
 
-//     expect(transactionsAfterDeposit.length === 3);
+  //   // validação para ter apenas 1
+  //   expect(transactions.length).toBe(1);
+  //   // confirmando se o nome é igual ao da tx criada
+  //   expect(transactions[0].name).toEqual(tx.name);
 
-//     expect(
-//       checkTransactionName(transactionsAfterDeposit, transfer1Id),
-//     ).toBeTruthy();
-//     expect(
-//       checkTransactionName(transactionsAfterDeposit, transfer2Id),
-//     ).toBeTruthy();
-//     expect(checkTransactionName(transactionsAfterDeposit, tx.name)).toBeTruthy();
-//   });
+  //   // Batendo no endpoint onde busca pelos depositos e salva os pendentes.
+  //   await auth.axios.get(`/predicate/${id_vault}`);
 
-//   test(
-//     'Throw an error when witness that has a status different from pending try to sign a transaction',
-//     async () => {
-//       // logar com usuário inválido no workspace
-//       const auth = new AuthValidations(networks['local'], accounts['USER_5']);
-//       await auth.create();
-//       await auth.createSession();
-//       const { USER_5 } = await generateWorkspacePayload(auth);
+  //   const transfer1Id = transfer1.id;
+  //   const transfer2Id = transfer2.id;
 
-//       const members = [USER_5.address];
+  //   // Buscando as transações do vault mais uma vez, após os depositos salvos
+  //   const { data: transactionsAfterDeposit } = await auth.axios.get(
+  //     '/transaction',
+  //     {
+  //       params: {
+  //         predicateId: [id_vault],
+  //       },
+  //     },
+  //   );
 
-//       const { predicatePayload, vault } = await PredicateMock.create(1, members);
-//       await api.axios.post('/predicate', predicatePayload);
+  //   // O motivo do slice(8) no nome das transações que vêm do banco é que os depósitos são salvos como
+  //   // DEPOSIT_${deposit.id}, então o slice(8) remove o DEPOSIT_, assim comparando apenas o id
+  //   const checkTransactionName = (transactions, name) =>
+  //     transactions.some(tx => tx.name.slice(8) === name || tx.name === name);
 
-//       //gerar uma transacao com um usuário inválido
-//       const { payload_transfer } = await transactionMock(vault);
+  //   expect(transactionsAfterDeposit.length === 3);
 
-//       const { data } = await auth.axios.post('/transaction', payload_transfer);
+  //   expect(
+  //     checkTransactionName(transactionsAfterDeposit, transfer1Id),
+  //   ).toBeTruthy();
+  //   expect(
+  //     checkTransactionName(transactionsAfterDeposit, transfer2Id),
+  //   ).toBeTruthy();
+  //   expect(checkTransactionName(transactionsAfterDeposit, tx.name)).toBeTruthy();
+  // });
 
-//       const signature = await auth.signer(payload_transfer.hash);
+  // test(
+  //   'Throw an error when witness that has a status different from pending try to sign a transaction',
+  //   async () => {
+  //     // logar com usuário inválido no workspace
+  //     const auth = new AuthValidations(networks['local'], accounts['USER_5']);
+  //     await auth.create();
+  //     await auth.createSession();
+  //     const { USER_5 } = await generateWorkspacePayload(auth);
 
-//       // recusando a transação/assinatura
-//       const declineTransaction = await auth.axios.put(
-//         `/transaction/signer/${data.id}`,
-//         {
-//           account: data.resume.witnesses[0].account,
-//           confirm: false,
-//           signer: signature,
-//         },
-//       );
-//       // recusando ou assinando, sempre é retornado verdadeiro
-//       expect(declineTransaction.data).toBeTruthy();
+  //     const members = [USER_5.address];
 
-//       // Confirmando/assinando a transação depois da mesma ser recusada
-//       const confirmTransaction = auth.axios.put(`/transaction/signer/${data.id}`, {
-//         account: data.resume.witnesses[0].account,
-//         confirm: true,
-//         signer: signature,
-//       });
+  //     const { predicatePayload, vault } = await PredicateMock.create(1, members);
+  //     await api.axios.post('/predicate', predicatePayload);
 
-//       await expect(confirmTransaction).rejects.toMatchObject({
-//         response: {
-//           data: {
-//             detail: 'Transaction was already declined.',
-//           },
-//         },
-//       });
-//     },
-//     60 * 1000,
-//   );
-// });
+  //     //gerar uma transacao com um usuário inválido
+  //     const { payload_transfer } = await transactionMock(vault);
+
+  //     const { data } = await auth.axios.post('/transaction', payload_transfer);
+
+  //     const signature = await auth.signer(payload_transfer.hash);
+
+  //     // recusando a transação/assinatura
+  //     const declineTransaction = await auth.axios.put(
+  //       `/transaction/signer/${data.id}`,
+  //       {
+  //         account: data.resume.witnesses[0].account,
+  //         confirm: false,
+  //         signer: signature,
+  //       },
+  //     );
+  //     // recusando ou assinando, sempre é retornado verdadeiro
+  //     expect(declineTransaction.data).toBeTruthy();
+
+  //     // Confirmando/assinando a transação depois da mesma ser recusada
+  //     const confirmTransaction = auth.axios.put(`/transaction/signer/${data.id}`, {
+  //       account: data.resume.witnesses[0].account,
+  //       confirm: true,
+  //       signer: signature,
+  //     });
+
+  //     await expect(confirmTransaction).rejects.toMatchObject({
+  //       response: {
+  //         data: {
+  //           detail: 'Transaction was already declined.',
+  //         },
+  //       },
+  //     });
+  //   },
+  //   60 * 1000,
+  // );
+});
