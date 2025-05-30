@@ -16,6 +16,7 @@
     "run:prod": "make -C ./ deploy-prod env_file=.env.prod",
     "run:stg": "make -C ./ deploy-stg env_file=.env.staging",
     "run:test": "make -C ./ deploy-test env_file=.env.test",
+    "test:build": "tsc --project . && tscpaths -p tsconfig.json -s ./src -o ./build && cross-env TESTCONTAINERS_DB=true node --test build/modules/addressBook/__tests__/addressBook.tests.js",
     "database:populate": "chmod +x ./src/scripts/db-populate.sh && ./src/scripts/db-populate.sh",
     "database:clear": "chmod +x ./src/scripts/db-clear.sh && ./src/scripts/db-clear.sh"
   },
@@ -24,6 +25,7 @@
     "@passwordless-id/webauthn": "1.4.0",
     "@sentry/node": "8.32.0",
     "@sentry/profiling-node": "8.32.0",
+    "@testcontainers/postgresql": "11.0.0",
     "axios": "1.5.1",
     "bakosafe": "0.1.8",
     "body-parser": "1.20.2",
@@ -71,6 +73,7 @@
     "@types/supertest": "2.0.10",
     "@typescript-eslint/eslint-plugin": "6.5.0",
     "@typescript-eslint/parser": "6.5.0",
+    "cross-env": "7.0.3",
     "eslint": "7.22.0",
     "eslint-config-prettier": "8.1.0",
     "eslint-plugin-prettier": "3.3.1",
@@ -82,7 +85,8 @@
     "supertest": "6.1.3",
     "ts-jest": "^29.1.3",
     "ts-node-dev": "1.1.6",
-    "tscpaths": "0.0.9"
+    "tscpaths": "0.0.9",
+    "tsx": "4.19.3"
   },
   "resolutions": {
     "string-width": "4.1.0"

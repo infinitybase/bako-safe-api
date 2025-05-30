@@ -67,6 +67,22 @@ class App {
     return this.quoteCache;
   }
 
+  static stop() {
+    return Bootstrap.stop()
+      .then(() => RedisWriteClient.stop())
+      .then(() => RedisReadClient.stop())
+      .then(() => FuelProvider.stop())
+      .then(() => SessionStorage.stop())
+      .then(() => QuoteStorage.stop())
+      .then(() => {
+        App.instance = undefined;
+        console.log('[APP] Application stopped');
+      })
+      .catch(error => {
+        console.error('[APP] Error stopping application:', error);
+      });
+  }
+
   static async start() {
     if (!App.instance) {
       Monitoring.init();

@@ -47,6 +47,7 @@ export class RedisWriteClient {
     values: { field: string; value: string | number }[],
   ) {
     try {
+      if (!RedisWriteClient.client.isOpen) return;
       const fields = values.map(({ field, value }) => [field, value]);
       await RedisWriteClient.client.hSet(key, fields.flat());
       await RedisWriteClient.client.expire(key, 60 * 40); // 5 min

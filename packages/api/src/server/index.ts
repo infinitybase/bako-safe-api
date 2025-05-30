@@ -1,48 +1,11 @@
-// import * as pprof from 'pprof';
+import 'reflect-metadata';
 
 import App from './app';
 
-const {
-  API_PORT,
-  PORT,
-  API_ENVIRONMENT,
-  UI_URL,
-  API_URL,
-  FUEL_PROVIDER,
-  GAS_LIMIT,
-  MAX_FEE,
-  COIN_MARKET_CAP_API_KEY,
-  AWS_SMTP_USER,
-  AWS_SMTP_PASS,
-  REDIS_URL,
-  REDIS_URL_WRITE,
-  REDIS_URL_READ,
-  EXTERN_TOKEN_SECRET,
-} = process.env;
-
-// pprof.heap.start(512 * 1024, 64);
-
 const start = async () => {
-  const port = API_PORT || PORT || 3333;
-
-  console.log('[ENVIRONMENTS]: ', {
-    API_PORT,
-    PORT,
-    API_ENVIRONMENT,
-    UI_URL,
-    API_URL,
-    FUEL_PROVIDER,
-    GAS_LIMIT,
-    MAX_FEE,
-    COIN_MARKET_CAP_API_KEY,
-    AWS_SMTP_USER,
-    AWS_SMTP_PASS,
-    REDIS_URL_WRITE,
-    REDIS_URL_READ,
-    EXTERN_TOKEN_SECRET,
-  });
-
   const app = await App.start();
+  const port = process.env.API_PORT || process.env.PORT || 3000;
+  const API_ENVIRONMENT = process.env.API_ENVIRONMENT || 'development';
 
   console.log('[APP] Storages started');
 
