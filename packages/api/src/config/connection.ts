@@ -7,8 +7,6 @@ export async function getDatabaseInstance(): Promise<DataSource> {
   if (databaseInstance?.isInitialized) return databaseInstance;
 
   if (process.env.TESTCONTAINERS_DB === 'true') {
-    console.log('[DATABASE]: Testcontainers mode');
-
     const { PostgreSqlContainer } = await import('@testcontainers/postgresql');
     const container = await new PostgreSqlContainer('postgres:15-alpine')
       .withDatabase('test')

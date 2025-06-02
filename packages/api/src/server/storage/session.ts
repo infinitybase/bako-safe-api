@@ -77,8 +77,6 @@ export class SessionStorage {
       SessionStorage.intervalRef = setInterval(() => {
         SessionStorage.instance?.clearExpiredSessions();
       }, REFRESH_TIME);
-
-      console.log('[REDIS] SESSION STARTED');
     }
 
     return SessionStorage.instance;

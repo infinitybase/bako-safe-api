@@ -41,11 +41,8 @@ export class FuelProvider {
       await instance.reset();
 
       instance.intervalRef = setInterval(() => {
-        console.log('[PROVIDER] Refreshing providers');
         instance.reset();
       }, REFRESH_TIME);
-
-      console.log('[PROVIDER] FuelProvider started');
     }
   }
 

@@ -143,8 +143,6 @@ export class QuoteStorage {
       QuoteStorage.intervalRef = setInterval(() => {
         QuoteStorage.instance?.addQuotes();
       }, REFRESH_TIME);
-
-      console.log('[REDIS] QUOTE STARTED');
     }
 
     return QuoteStorage.instance;
