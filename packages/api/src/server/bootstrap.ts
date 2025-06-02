@@ -15,16 +15,12 @@ class Bootstrap {
 
     const envFile = isTest ? '.env.test' : '.env';
     dotenv.config({ path: envFile });
-
-    console.log('[BOOTSTRAP]: Loaded', envFile);
   }
 
   static async connectDatabase() {
-    console.log('[BOOTSTRAP]: Inicializando banco...');
     const db = await getDatabaseInstance();
 
     await db.initialize();
-    console.log('[BOOTSTRAP]: Conectado ao banco');
 
     await db.runMigrations();
     // await runSeeders();
@@ -35,7 +31,6 @@ class Bootstrap {
   static async closeDatabase() {
     if (this.databaseInstance?.isInitialized) {
       await this.databaseInstance.destroy();
-      console.log('[BOOTSTRAP]: Banco encerrado');
     }
   }
 

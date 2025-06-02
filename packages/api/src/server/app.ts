@@ -76,7 +76,6 @@ class App {
       .then(() => QuoteStorage.stop())
       .then(() => {
         App.instance = undefined;
-        console.log('[APP] Application stopped');
       })
       .catch(error => {
         console.error('[APP] Error stopping application:', error);

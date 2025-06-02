@@ -154,7 +154,6 @@ export class QuoteStorage {
     if (QuoteStorage.intervalRef) {
       clearInterval(QuoteStorage.intervalRef);
       QuoteStorage.intervalRef = undefined;
-      console.log('[REDIS] QUOTE STOPPED');
     }
   }
 }

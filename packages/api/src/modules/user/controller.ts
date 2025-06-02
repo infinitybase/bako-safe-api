@@ -280,8 +280,6 @@ export class UserController {
           };
         });
 
-      console.log('code', code);
-
       return successful(code, Responses.Created);
     } catch (e) {
       console.log(e);

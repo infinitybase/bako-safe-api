@@ -88,7 +88,6 @@ export class SessionStorage {
     if (SessionStorage.intervalRef) {
       clearInterval(SessionStorage.intervalRef);
       SessionStorage.intervalRef = undefined;
-      console.log('[REDIS] SESSION STOPPED');
     }
   }
 }

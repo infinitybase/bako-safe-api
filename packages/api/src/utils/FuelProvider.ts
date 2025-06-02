@@ -52,7 +52,6 @@ export class FuelProvider {
   static stop(): void {
     if (FuelProvider.instance?.intervalRef) {
       clearInterval(FuelProvider.instance.intervalRef);
-      console.log('[PROVIDER] FuelProvider stopped');
     }
   }
 }

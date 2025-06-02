@@ -24,7 +24,6 @@ export class RedisWriteClient {
     if (RedisWriteClient.client) {
       try {
         await RedisWriteClient.client.disconnect();
-        console.log('>>> RedisWriteClient.client.disconnect');
       } catch (e) {
         console.error('[REDIS WRITE DISCONNECT ERROR]', e);
         process.exit(1);

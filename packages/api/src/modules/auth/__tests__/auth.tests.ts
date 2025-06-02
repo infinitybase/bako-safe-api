@@ -1,224 +1,108 @@
-import axios from 'axios';
-
-import { networks } from '@src/mocks/networks';
-import { Encoder } from '@src/models';
-
-import { Address, Wallet } from 'fuels';
-import { TypeUser } from 'bakosafe';
-
-import Express from 'express';
-import request from 'supertest';
+import test from 'node:test';
+import assert from 'node:assert';
 import App from '@src/server/app';
-import * as http from 'http';
-import Bootstrap from '@src/server/bootstrap';
-import { FuelProvider, RedisReadClient, RedisWriteClient } from '@src/utils';
+import request from 'supertest';
+import { TypeUser } from '@src/models';
+import { newUser } from '@src/tests/mocks/User';
+import { networks } from '@src/tests/mocks/Networks';
 
-const { API_URL } = process.env;
+test('AuthController endpoints', async t => {
+  const appInstance = await App.start();
+  const server = appInstance.serverApp;
 
-describe('[AUTH]', () => {
-  let app: Express.Application;
-  let server: http.Server;
-
-  beforeAll(async () => {
-    const appInstance = await App.start();
-    app = appInstance.serverApp;
-    server = app.listen(0);
-    server.on('close', () => {
-      console.log('>>> HTTP server closed');
-    });
+  t.after(async () => {
+    await App.stop();
   });
 
-  afterAll(async () => {
-    console.log('Stopping bootstrap...');
-    await Bootstrap.stop();
+  await t.test('POST /user should create user and autenticate', async () => {
+    const { payload, wallet } = newUser();
+    const res = await request(server).post('/user').send(payload);
+    assert.strictEqual(res.status, 201);
 
-    await RedisWriteClient.stop();
-    await RedisReadClient.stop();
+    assert.ok(res.body.code);
 
-    console.log('Bootstrap stopped');
-
-    await new Promise<void>((resolve, reject) => {
-      console.log('>>> try close server');
-      server.close(err => {
-        console.log('>>> err close server', err);
-        if (err) reject(err);
-        else resolve();
-      });
+    const signature = await wallet.signMessage(res.body.code);
+    const authRes = await request(server).post('/auth/sign-in').send({
+      digest: res.body.code,
+      encoder: TypeUser.FUEL,
+      signature,
+      userAddress: payload.address,
     });
 
-    console.log('TEST CLEANUP COMPLETE');
-
-    // setTimeout(() => {
-    //   process.exit(0);
-    // }, 5000);
+    assert.strictEqual(authRes.status, 200);
+    assert.ok(authRes.body.accessToken);
+    assert.strictEqual(authRes.body.address, payload.address);
   });
 
-  it('should handle the TOKEN strategy correctly', async () => {
-    console.log('>>> chegamos no provider');
+  await t.test(
+    'POST /auth/code should allow regenerating code and authenticating with new one',
+    async () => {
+      const { payload, wallet } = newUser();
 
-    const provider = await FuelProvider.create(networks['local']);
+      const createRes = await request(server).post('/user').send(payload);
+      assert.strictEqual(createRes.status, 201);
+      const firstCode = createRes.body.code;
+      assert.ok(firstCode);
 
-    console.log('>>> passamos do provider');
-
-    // // create a new user
-    const wallet = Wallet.generate();
-    const address = wallet.address.toB256();
-
-    const newUser = {
-      address,
-      provider: networks['local'],
-      name: `test mock - ${Address.fromRandom().toB256()}`,
-      type: TypeUser.FUEL,
-    };
-
-    console.log('>>>> POST AUTH', newUser);
-
-    // // create a new user, and recive a new code to sign-in
-    const { body: user } = await request(app).post('/user/').send(newUser);
-    expect(user).toHaveProperty('code');
-
-    // sign message code
-    const token = await Wallet.fromPrivateKey(wallet.privateKey).signMessage(
-      user.code,
-    );
-
-    // // sign-in with code
-    const { body: session } = await request(app).post(`/auth/sign-in`).send({
-      encoder: Encoder.FUEL,
-      signature: token,
-      digest: user.code,
-      userAddress: address,
-    });
-
-    expect(session).toHaveProperty('accessToken', token);
-    expect(session).toHaveProperty('workspace');
-    expect(session).toHaveProperty('user_id', user.userId);
-    expect(session).toHaveProperty('network', {
-      url: provider.url,
-      chainId: await provider.getChainId(),
-    });
-
-    // // get a route with required auth
-    const { body: userInfo } = await request(app)
-      .get(`/user/latest/info`)
-      .set('Authorization', session.accessToken)
-      .set('Signeraddress', address);
-
-    console.log('>>> userInfo', userInfo);
-
-    expect(userInfo).toHaveProperty('address', newUser.address);
-    expect(userInfo).toHaveProperty('name', newUser.name);
-    expect(userInfo).toHaveProperty('network', {
-      url: provider.url,
-      chainId: await provider.getChainId(),
-    });
-
-    //change network
-    const newNetwork = networks['devnet'];
-
-    await request(app)
-      .post(`/user/select-network`)
-      .set('Authorization', session.accessToken)
-      .set('Signeraddress', address)
-      .send({
-        network: newNetwork,
+      const codeRes = await request(server).post('/auth/code').send({
+        name: payload.name,
+        networkUrl: networks['LOCAL'],
+        origin: 'http://localhost',
       });
 
-    //console.log('updatedSession', updatedSession);
+      assert.strictEqual(codeRes.status, 200);
+      const newCode = codeRes.body.code;
+      assert.ok(newCode);
+      assert.notStrictEqual(newCode, firstCode);
 
-    const { body: updatedNetwork } = await request(app)
-      .get(`/user/latest/info`)
-      .set('Authorization', session.accessToken)
-      .set('Signeraddress', address);
+      const signature = await wallet.signMessage(newCode);
+      const authRes = await request(server).post('/auth/sign-in').send({
+        digest: newCode,
+        encoder: TypeUser.FUEL,
+        signature,
+        userAddress: payload.address,
+      });
 
-    const newProvider = await FuelProvider.create(newNetwork);
+      assert.strictEqual(authRes.status, 200);
+      assert.ok(authRes.body.accessToken);
+    },
+  );
 
-    expect(updatedNetwork).toHaveProperty('network', {
-      url: newProvider.url,
-      chainId: await newProvider.getChainId(),
+  await t.test('POST /auth/code should generate code successfully', async () => {
+    const { payload } = newUser();
+    const createRes = await request(server).post('/user').send(payload);
+    assert.strictEqual(createRes.status, 201);
+
+    const codeRes = await request(server).post('/auth/code').send({
+      name: payload.name,
+      networkUrl: networks['LOCAL'],
     });
+
+    assert.strictEqual(codeRes.status, 200);
+    assert.ok(codeRes.body.code);
+  });
+
+  await t.test('POST /auth/sign-out should succeed', async () => {
+    const { payload, wallet } = newUser();
+    const createRes = await request(server).post('/user').send(payload);
+    assert.strictEqual(createRes.status, 201);
+
+    const signature = await wallet.signMessage(createRes.body.code);
+    const authRes = await request(server).post('/auth/sign-in').send({
+      digest: createRes.body.code,
+      encoder: TypeUser.FUEL,
+      signature,
+      userAddress: payload.address,
+    });
+
+    assert.strictEqual(authRes.status, 200);
+    const token = authRes.body.accessToken;
+    assert.ok(token);
+
+    const logoutRes = await request(server)
+      .delete('/auth/sign-out')
+      .set('Authorization', token);
+
+    assert.strictEqual(logoutRes.status, 200);
   });
 });
-
-//   describe('[AUTH]', () => {
-//     it('should handle the TOKEN strategy correctly', async () => {
-//       const api = axios.create({
-//         baseURL: API_URL,
-//       });
-
-//       //const provider = await FuelProvider.create(networks['local']);
-
-//       // // create a new user
-//       const wallet = Wallet.generate();
-//       const address = wallet.address.toB256();
-
-//       const newUser = {
-//         address,
-//         provider: networks['local'],
-//         name: `test mock - ${Address.fromRandom().toB256()}`,
-//         type: TypeUser.FUEL,
-//       };
-
-//       console.log('>>>> POST AUTH', newUser);
-
-//       // // create a new user, and recive a new code to sign-in
-//       const { data: user } = await api.post(`/user`, newUser);
-//       expect(user).toHaveProperty('code');
-
-//       // sign message code
-//       const token = await Wallet.fromPrivateKey(wallet.privateKey).signMessage(
-//         user.code,
-//       );
-
-//       console.log('>>> token', token);
-
-//       // // sign-in with code
-//       const { data: session } = await api.post(`/auth/sign-in`, {
-//         encoder: Encoder.FUEL,
-//         signature: token,
-//         digest: user.code,
-//         userAddress: address,
-//       });
-
-//       expect(session).toHaveProperty('accessToken', token);
-//       expect(session).toHaveProperty('workspace');
-//       expect(session).toHaveProperty('user_id', user.userId);
-//       // expect(session).toHaveProperty('network', {
-//       //   url: provider.url,
-//       //   chainId: provider.getChainId(),
-//       // });
-
-//       api.defaults.headers.common['Authorization'] = session.accessToken;
-//       api.defaults.headers.common['Signeraddress'] = address;
-
-//       // // get a route with required auth
-//       const { data: userInfo } = await api.get(`/user/latest/info`);
-
-//       expect(userInfo).toHaveProperty('address', newUser.address);
-//       expect(userInfo).toHaveProperty('name', newUser.name);
-//       // expect(userInfo).toHaveProperty('network', {
-//       //   url: provider.url,
-//       //   chainId: provider.getChainId(),
-//       // });
-
-//       // change network
-//       const newNetwork = networks['devnet'];
-
-//       // // update network
-//       await api.post(`/user/select-network`, {
-//         network: newNetwork,
-//       });
-
-//       // console.log('updatedSession', updatedSession);
-
-//       const { data: updatedNetwork } = await api.get(`/user/latest/info`);
-
-//       // const newProvider = await FuelProvider.create(newNetwork);
-
-//       // expect(updatedNetwork).toHaveProperty('network', {
-//       //   url: newProvider.url,
-//       //   chainId: newProvider.getChainId(),
-//       // });
-//     });
-//   });
-// });
