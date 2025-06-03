@@ -172,7 +172,9 @@ export class PredicateController {
         queryResult.version,
       );
 
-      const balances = (await instance.getBalances()).balances;
+      const balances = (await instance.getBalances()).balances.filter(a =>
+        a.amount.gt(0),
+      );
       const allAssets =
         reservedCoins.length > 0 ? subCoins(balances, reservedCoins) : balances;
 
