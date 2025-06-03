@@ -88,7 +88,7 @@ export class TestEnvironment {
     const userSignersQtd = n >= 1 ? n : 1;
     const version = getPredicateVersion();
 
-    for (let i = 0; i < predicatesQtd; i++) {
+    for await (const _ of Array(predicatesQtd)) {
       const _p = new Vault(
         provider,
         {
@@ -99,7 +99,7 @@ export class TestEnvironment {
         },
         version,
       );
-
+      await (await wallets[0].transfer(_p.address, 1000)).waitForResult();
       predicates.push(_p);
     }
 
