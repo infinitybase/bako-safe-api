@@ -11,15 +11,17 @@ import axios from 'axios';
 const { COIN_MARKET_CAP_API_KEY } = process.env;
 
 const PREFIX = 'quotes';
+const REFRESH_TIME = 60000 * 25; // 25 minutes
 
 export interface IQuote {
   assetId: string;
   price: number;
 }
 
-const REFRESH_TIME = 60000 * 25; // 25 minutes
-
 export class QuoteStorage {
+  private static instance?: QuoteStorage;
+  private static intervalRef?: NodeJS.Timeout;
+
   protected constructor() {}
 
   public async getQuote(assetId: string): Promise<number> {
@@ -64,17 +66,13 @@ export class QuoteStorage {
   private generateParams(assetsMapById: IAssetMapById, assets?: IAsset[]): string {
     if (!assets) return '';
 
-    const params = assets.reduce((acc, asset) => {
+    return assets.reduce((acc, asset) => {
       const _asset = assetsMapById[asset.id];
-
       if (_asset && _asset.slug) {
         acc += (acc ? ',' : '') + this.parseName(_asset.slug);
       }
-
       return acc;
     }, '');
-
-    return params;
   }
 
   private parseName(name: string) {
@@ -82,7 +80,7 @@ export class QuoteStorage {
 
     const fromTo = {
       usdc: 'usd-coin',
-      usdf: 'usd-coin', // usdf -> token fuel fluid
+      usdf: 'usd-coin',
       weeth: 'bridged-weeth-linea',
       wbeth: 'wrapped-beacon-eth',
       'manta mbtc': 'manta-mbtc',
@@ -111,21 +109,15 @@ export class QuoteStorage {
       const { data } = await axios.get(
         `https://api.coingecko.com/api/v3/simple/price?vs_currencies=usd`,
         {
-          params: {
-            ids: params,
-          },
+          params: { ids: params },
           headers: { 'x-cg-demo-api-key': COIN_MARKET_CAP_API_KEY },
         },
       );
 
-      const aux = Object.entries(assets).map(([key, value]) => {
-        return {
-          assetId: value.id,
-          price: data[value.symbol]?.usd ?? 0.0,
-        };
-      });
-
-      return aux;
+      return assets.map(({ id, symbol }) => ({
+        assetId: id,
+        price: data[symbol]?.usd ?? 0.0,
+      }));
     } catch (e) {
       return [];
     }
@@ -133,35 +125,33 @@ export class QuoteStorage {
 
   public async getActiveQuotesValues(): Promise<[string, number][]> {
     const result = await RedisReadClient.hGetAll(PREFIX);
-    const quotes = new Map<string, number>(
-      Object.entries(result).map(([k, v]) => [k, Number(v)]),
-    );
-
-    const res = quotes.size > 0 ? Array.from(quotes) : [];
-
-    return Array.from(res);
+    return Object.entries(result).map(([k, v]) => [k, Number(v)]);
   }
 
   public async getActiveQuotes(): Promise<Record<string, number>> {
     const result = await RedisReadClient.hGetAll(PREFIX);
-    const quotes = new Map<string, number>(
+    return Object.fromEntries(
       Object.entries(result).map(([k, v]) => [k, Number(v)]),
     );
-    return Object.fromEntries(quotes);
   }
 
-  static start() {
-    const _this = new QuoteStorage();
-    _this.addQuotes();
+  static start(): QuoteStorage {
+    if (!QuoteStorage.instance) {
+      QuoteStorage.instance = new QuoteStorage();
+      QuoteStorage.instance.addQuotes();
 
-    console.log('>>>>>>>>>>>>>>>>>> REDIS QUOTE STARTED');
+      QuoteStorage.intervalRef = setInterval(() => {
+        QuoteStorage.instance?.addQuotes();
+      }, REFRESH_TIME);
+    }
 
-    // setInterval(() => {
-    //   _this.addQuotes();
-    // }, REFRESH_TIME);
+    return QuoteStorage.instance;
+  }
 
-    console.log('[REDIS] QUOTE STARTED');
-
-    return _this;
+  static stop(): void {
+    if (QuoteStorage.intervalRef) {
+      clearInterval(QuoteStorage.intervalRef);
+      QuoteStorage.intervalRef = undefined;
+    }
   }
 }

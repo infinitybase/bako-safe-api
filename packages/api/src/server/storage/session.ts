@@ -14,10 +14,13 @@ export interface ISession {
   user: User;
 }
 
-const REFRESH_TIME = 60 * 1000; // 5 minutes
+const REFRESH_TIME = 60 * 1000; // 1 minute
 const PREFIX = 'session';
 
 export class SessionStorage {
+  private static instance?: SessionStorage;
+  private static intervalRef?: NodeJS.Timeout;
+
   private redisClientWrite?: redis.RedisClientType;
   private redisClientRead?: redis.RedisClientType;
 
@@ -55,15 +58,11 @@ export class SessionStorage {
     return token;
   }
 
-  // remove section from database
   public async removeSession(sessionId: string) {
-    await UserToken.delete({
-      token: sessionId,
-    });
+    await UserToken.delete({ token: sessionId });
     await RedisWriteClient.del([`${PREFIX}-${sessionId}`]);
   }
 
-  // clean experied sessions
   public async clearExpiredSessions() {
     console.log('>>> clear expiration sessions');
     const removedTokens = await AuthService.clearExpiredTokens();
@@ -72,15 +71,22 @@ export class SessionStorage {
     }
   }
 
-  static start() {
-    const _this = new SessionStorage();
+  static start(): SessionStorage {
+    if (!SessionStorage.instance) {
+      SessionStorage.instance = new SessionStorage();
 
-    // setInterval(() => {
-    //   _this.clearExpiredSessions();
-    // }, REFRESH_TIME);
+      SessionStorage.intervalRef = setInterval(() => {
+        SessionStorage.instance?.clearExpiredSessions();
+      }, REFRESH_TIME);
+    }
 
-    console.log('[REDIS] SESSION STARTED');
+    return SessionStorage.instance;
+  }
 
-    return _this;
+  static stop(): void {
+    if (SessionStorage.intervalRef) {
+      clearInterval(SessionStorage.intervalRef);
+      SessionStorage.intervalRef = undefined;
+    }
   }
 }

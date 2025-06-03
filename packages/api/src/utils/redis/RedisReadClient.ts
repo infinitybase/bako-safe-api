@@ -24,7 +24,6 @@ export class RedisReadClient {
     if (RedisReadClient.client) {
       try {
         await RedisReadClient.client.disconnect();
-        console.log('>>> RedisReadClient.client.disconnect');
       } catch (e) {
         console.error('[REDIS READ DISCONNECT ERROR]', e);
         process.exit(1);
