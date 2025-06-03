@@ -1,3 +1,4 @@
+console.log('>>> INICIOU SERVICE USER');
 import axios from 'axios';
 import { Brackets } from 'typeorm';
 
@@ -7,11 +8,13 @@ import {
   Workspace,
   defaultPermissions,
 } from '@src/models/Workspace';
+console.log('>>> PASSOU DO MODELS WORKSPACE');
 import { ErrorTypes, NotFound } from '@src/utils/error';
 import GeneralError from '@src/utils/error/GeneralError';
 import Internal from '@src/utils/error/Internal';
 import { IOrdination, setOrdination } from '@src/utils/ordination';
 import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination';
+console.log('>>> PASSOU DO PAGINATION');
 
 import { IconUtils } from '@utils/icons';
 
@@ -23,14 +26,18 @@ import {
   IValidateNameResponse,
   IFindByNameResponse,
 } from './types';
+console.log('>>> PASSOU DO TYPES');
 
 import App from '@src/server/app';
+console.log('>>> PASSOU DO APP');
 import { Address, Network } from 'fuels';
 import { Vault } from 'bakosafe';
 import { PredicateService } from '../predicate/services';
 
 import { Maybe } from '@src/utils/types/maybe';
+console.log('>>> ANTES DO FUEL PROVIDER');
 import { FuelProvider } from '@src/utils';
+console.log('>>> PASSOU DO FUEL PROVIDER');
 
 const { UI_URL } = process.env;
 

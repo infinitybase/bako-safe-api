@@ -234,6 +234,8 @@ export class UserController {
       //verify user exists
       let existingUser = await this.userService.findByAddress(address);
 
+      console.log('>>> existingUser', existingUser?.id);
+
       if (!existingUser) {
         //verify name exists
         const existingName = await User.findOne({ where: { name } });

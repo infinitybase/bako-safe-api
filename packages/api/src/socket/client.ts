@@ -1,7 +1,6 @@
 import { io, Socket } from 'socket.io-client';
 import { IMessage, SocketEvents, SocketUsernames } from './types';
 
-
 export class SocketClient {
   _socket: Socket = null;
 
@@ -17,6 +16,7 @@ export class SocketClient {
     const URL = isDev ? process.env.SOCKET_URL : process.env.API_URL;
 
     this._socket = io(URL, { autoConnect: true, auth });
+    console.log('>>> SOCKER INICIADO');
   }
 
   // Método para enviar uma mensagem para o servidor
@@ -30,6 +30,6 @@ export class SocketClient {
   }
 
   get socket() {
-    return this._socket
+    return this._socket;
   }
 }

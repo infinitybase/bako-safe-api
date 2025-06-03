@@ -154,9 +154,11 @@ export class QuoteStorage {
     const _this = new QuoteStorage();
     _this.addQuotes();
 
-    setInterval(() => {
-      _this.addQuotes();
-    }, REFRESH_TIME);
+    console.log('>>>>>>>>>>>>>>>>>> REDIS QUOTE STARTED');
+
+    // setInterval(() => {
+    //   _this.addQuotes();
+    // }, REFRESH_TIME);
 
     console.log('[REDIS] QUOTE STARTED');
 

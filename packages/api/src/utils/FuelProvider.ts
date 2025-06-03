@@ -14,6 +14,7 @@ export class FuelProvider {
   }
 
   static async create(url: string, options?: ProviderOptions): Promise<Provider> {
+    console.log('>>> FUEL PROVIDER CREATE - INSTANCE - url');
     if (FuelProvider.instance.providers[url]) {
       return FuelProvider.instance.providers[url];
     }
@@ -33,14 +34,16 @@ export class FuelProvider {
   }
 
   static async start(): Promise<void> {
+    console.log('>>> FUEL PROVIDER START');
     if (!FuelProvider.instance) {
       FuelProvider.instance = new FuelProvider();
-      FuelProvider.instance.reset();
+      await FuelProvider.instance.reset();
+      console.log('>>>>>>>>>>>> FUEL PROVIDER STARTADO', FuelProvider.instance);
 
-      setInterval(() => {
-        console.log('[PROVIDER] Refreshing providers');
-        FuelProvider.instance.reset();
-      }, REFRESH_TIME);
+      // setInterval(() => {
+      //   console.log('[PROVIDER] Refreshing providers');
+      //   FuelProvider.instance.reset();
+      // }, REFRESH_TIME);
     }
   }
 }

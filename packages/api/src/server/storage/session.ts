@@ -65,6 +65,7 @@ export class SessionStorage {
 
   // clean experied sessions
   public async clearExpiredSessions() {
+    console.log('>>> clear expiration sessions');
     const removedTokens = await AuthService.clearExpiredTokens();
     if (removedTokens.length > 0) {
       await RedisWriteClient.del(removedTokens.map(t => `${PREFIX}-${t}`));
@@ -74,9 +75,9 @@ export class SessionStorage {
   static start() {
     const _this = new SessionStorage();
 
-    setInterval(() => {
-      _this.clearExpiredSessions();
-    }, REFRESH_TIME);
+    // setInterval(() => {
+    //   _this.clearExpiredSessions();
+    // }, REFRESH_TIME);
 
     console.log('[REDIS] SESSION STARTED');
 

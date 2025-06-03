@@ -13,8 +13,9 @@ import {
 } from './validation';
 
 const router = Router();
-
+console.log('>>> USER SERIVE - USER', UserService);
 const userService = new UserService();
+console.log('>>> passou do user service user');
 
 const userController = new UserController(userService);
 
