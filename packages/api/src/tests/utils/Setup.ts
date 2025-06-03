@@ -1,10 +1,13 @@
 import { Application } from 'express';
 import request from 'supertest';
 import { newUser } from '@src/tests/mocks/User';
-import { WalletUnlocked, Wallet } from 'fuels';
+import { WalletUnlocked, Wallet, Provider, Predicate } from 'fuels';
 import { TypeUser } from '@src/models';
 import App from '@src/server/app';
 import { Provider as FuelProvider } from 'fuels';
+import { generateNode } from '../mocks/Networks';
+import { Vault } from 'bakosafe';
+import { getPredicateVersion } from '../mocks/Predicate';
 
 interface TestUser {
   payload: ReturnType<typeof newUser>['payload'];
@@ -13,25 +16,37 @@ interface TestUser {
 }
 
 export class TestEnvironment {
-  public app: Application;
-  public server: any;
-  public users: TestUser[] = [];
-
   static async init(
-    usersQtd: number = 3,
+    usersQtd: number = 2,
+    predicatesQtd: number = 0,
   ): Promise<{
     app: Application;
     users: TestUser[];
+    predicates: Predicate[];
     close: () => Promise<void>;
+    network: Provider;
+    wallets: WalletUnlocked[];
   }> {
     const appInstance = await App.start();
     const app = appInstance.serverApp;
-    const server = app.listen(3000);
+
+    const {
+      provider,
+      closeNode,
+      node: { wallets },
+    } = await generateNode();
 
     const users: TestUser[] = [];
+    const predicates: Predicate[] = [];
 
     for (let i = 0; i < usersQtd; i++) {
-      const { payload, wallet } = newUser();
+      const wallet = wallets[i];
+
+      const payload = {
+        address: wallet.address.toB256(),
+        provider: provider.url,
+        type: TypeUser.FUEL,
+      };
 
       const userRes = await request(app).post('/user').send(payload);
       if (userRes.status !== 201) {
@@ -41,10 +56,7 @@ export class TestEnvironment {
       }
 
       const code = userRes.body.code;
-
-      const provider = new FuelProvider(payload.provider);
-      const fuelsWallet = Wallet.fromPrivateKey(wallet.privateKey, provider);
-      const signature = await fuelsWallet.signMessage(code);
+      const signature = await wallet.signMessage(code);
 
       const authRes = await request(app).post('/auth/sign-in').send({
         digest: code,
@@ -60,23 +72,49 @@ export class TestEnvironment {
       }
 
       users.push({
-        payload,
+        payload: {
+          address: payload.address,
+          provider: payload.provider,
+          type: payload.type,
+          name: `User ${i + 1}`,
+          email: `${new Date().getTime()}@example.com`,
+        },
         wallet,
         token: authRes.body.accessToken,
       });
     }
 
-    const close = async () => {
-      await new Promise<void>((resolve, reject) => {
-        server.close((err: any) => (err ? reject(err) : resolve()));
-      });
+    const n = Math.ceil(usersQtd / 3);
+    const userSignersQtd = n >= 1 ? n : 1;
+    const version = getPredicateVersion();
+
+    for (let i = 0; i < predicatesQtd; i++) {
+      const _p = new Vault(
+        provider,
+        {
+          SIGNATURES_COUNT: 1,
+          SIGNERS: users
+            .slice(0, userSignersQtd)
+            .map(u => u.wallet.address.toB256()),
+        },
+        version,
+      );
+
+      predicates.push(_p);
+    }
+
+    const closeAll = async () => {
+      closeNode();
       await App.stop();
     };
 
     return {
       app,
       users,
-      close,
+      wallets,
+      predicates,
+      close: closeAll,
+      network: provider,
     };
   }
 }
