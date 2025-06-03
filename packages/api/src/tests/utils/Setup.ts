@@ -22,7 +22,7 @@ export class TestEnvironment {
   ): Promise<{
     app: Application;
     users: TestUser[];
-    predicates: Predicate[];
+    predicates: Vault[];
     close: () => Promise<void>;
     network: Provider;
     wallets: WalletUnlocked[];
@@ -32,16 +32,17 @@ export class TestEnvironment {
 
     const {
       provider,
-      closeNode,
-      node: { wallets },
+      node: { wallets, cleanup },
     } = await generateNode();
 
     const users: TestUser[] = [];
-    const predicates: Predicate[] = [];
+    const predicates: Vault[] = [];
 
-    for (let i = 0; i < usersQtd; i++) {
+    for (let i = 0; i <= usersQtd; i++) {
+      if (i > 0) {
+        wallets.push(WalletUnlocked.generate());
+      }
       const wallet = wallets[i];
-
       const payload = {
         address: wallet.address.toB256(),
         provider: provider.url,
@@ -103,9 +104,12 @@ export class TestEnvironment {
       predicates.push(_p);
     }
 
-    const closeAll = async () => {
-      closeNode();
+    const close = async () => {
+      console.log('Closing test environment...');
       await App.stop();
+      console.log('App stopped successfully.');
+      cleanup();
+      console.log('Node cleanup completed.');
     };
 
     return {
@@ -113,7 +117,7 @@ export class TestEnvironment {
       users,
       wallets,
       predicates,
-      close: closeAll,
+      close,
       network: provider,
     };
   }

@@ -11,5 +11,5 @@ test('Address Book Endpoints', async t => {
     await close();
   });
 
-  await t.test('Create transaction', async () => {});
+  // await t.test('Create transaction', async () => {});
 });

@@ -9,7 +9,7 @@ export const networks = {
 };
 
 export const generateNode = async () => {
-  const node = await launchTestNode({
+  let node = await launchTestNode({
     walletsConfig: {
       assets: assets(),
       coinsPerAsset: 1,
@@ -23,6 +23,5 @@ export const generateNode = async () => {
     node,
     provider: node.provider,
     url: node.provider.url,
-    closeNode: node.cleanup,
   };
 };
