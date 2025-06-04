@@ -41,10 +41,8 @@ describe('[TRANSACTION]', () => {
       const members = [accounts['USER_4'].address, user_aux];
       const { predicatePayload, vault } = await PredicateMock.create(1, members);
       await api.axios.post('/predicate', predicatePayload);
-      console.log('>>> vault', vault);
 
       const { tx, payload_transfer } = await transactionMock(vault);
-      console.log('>>>> payload_transfer', payload_transfer);
 
       // export interface ICreateTransactionPayload {
       //   name: string;
@@ -68,8 +66,6 @@ describe('[TRANSACTION]', () => {
         '/transaction',
         payload_transfer,
       );
-
-      console.log('>>> data_transaction', data_transaction);
 
       expect(data_transaction).toHaveProperty('id');
       expect(data_transaction).toHaveProperty(

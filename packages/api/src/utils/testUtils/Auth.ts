@@ -65,7 +65,6 @@ export class AuthValidations {
   }
 
   async create() {
-    console.log('>>> create addres', this.account.address);
     //let app: Express.Application;
     const appInstance = await App.start();
     const app = appInstance.serverApp as Express.Application;
@@ -75,8 +74,6 @@ export class AuthValidations {
     //   provider: this.provider,
     //   type: TypeUser.FUEL,
     // });
-
-    //console.log('>>> datatest', datatest);
 
     const { body: data } = await request(app).post('/user').send({
       address: this.account?.address,
@@ -88,7 +85,6 @@ export class AuthValidations {
   }
 
   async createSession() {
-    console.log('>>> chamou create Seassion');
     const tx = await this.signer(this.code);
     const appInstance = await App.start();
     const app = appInstance.serverApp as Express.Application;
@@ -144,7 +140,6 @@ export class AuthValidations {
   }
 
   async signer(message: string) {
-    console.log('>>> chamou signer');
     const provider = await FuelProvider.create(this.provider);
     const signer = Wallet.fromPrivateKey(this.account.privateKey, provider);
     return await signer.signMessage(message);

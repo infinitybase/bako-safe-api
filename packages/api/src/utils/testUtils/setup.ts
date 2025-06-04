@@ -28,7 +28,6 @@ export class SetupApi {
     const members = [data_user1.address, data_user2.address];
     const { predicatePayload } = await PredicateMock.create(1, members);
 
-    console.log('>>> API SETUP', api.axios.defaults.headers);
     // const { data: predicate } = await api.axios.post(
     //   '/predicate',
     //   predicatePayload,

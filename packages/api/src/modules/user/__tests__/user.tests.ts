@@ -159,8 +159,6 @@ describe('[USER]', () => {
 
       const { token, address } = authUser.sessionAuth;
 
-      // console.log(">>> auth", auth);
-
       //get user info
       //await auth.axios.get('user/latest/info')
       await request(app)

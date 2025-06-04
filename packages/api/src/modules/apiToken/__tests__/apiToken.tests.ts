@@ -46,7 +46,6 @@ describe('[API TOKEN]', () => {
     predicate = setup.predicate;
     // notWorkspaceMemberApi = setup.notWorkspaceMemberApi;
     // notFoundPermissionApi = setup.notFoundPermissionApi;
-    console.log('>>> api tokenn', api.axios.defaults.headers);
   });
 
   afterAll(async () => {

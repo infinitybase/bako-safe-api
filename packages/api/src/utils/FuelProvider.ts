@@ -14,8 +14,6 @@ export class FuelProvider {
   }
 
   static async create(url: string, options?: ProviderOptions): Promise<Provider> {
-    console.log('>>> FUEL PROVIDER CREATE - INSTANCE - url');
-
     if (!FuelProvider.instance) {
       throw new Error('FuelProvider not started');
     }
@@ -37,7 +35,6 @@ export class FuelProvider {
   }
 
   static async start(): Promise<void> {
-    console.log('>>> FUEL PROVIDER START');
     if (!FuelProvider.instance) {
       const instance = new FuelProvider();
       FuelProvider.instance = instance;

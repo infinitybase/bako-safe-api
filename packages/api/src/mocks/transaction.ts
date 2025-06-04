@@ -27,7 +27,6 @@ export const transactionMock = async (vault: Vault) => {
   //const provider = await Provider.create(BakoSafe.getProviders('CHAIN_URL'));
   const provider = await FuelProvider.create(FUEL_PROVIDER);
 
-  console.log('>>> provider base asset id', await provider.getBaseAssetId());
   await sendPredicateCoins(
     vault,
     bn.parseUnits('0.5'),

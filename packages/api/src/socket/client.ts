@@ -16,7 +16,6 @@ export class SocketClient {
     const URL = isDev ? process.env.SOCKET_URL : process.env.API_URL;
 
     this._socket = io(URL, { autoConnect: true, auth });
-    console.log('>>> SOCKER INICIADO');
   }
 
   // Método para enviar uma mensagem para o servidor

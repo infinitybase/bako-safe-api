@@ -64,7 +64,6 @@ export class SessionStorage {
   }
 
   public async clearExpiredSessions() {
-    console.log('>>> clear expiration sessions');
     const removedTokens = await AuthService.clearExpiredTokens();
     if (removedTokens.length > 0) {
       await RedisWriteClient.del(removedTokens.map(t => `${PREFIX}-${t}`));

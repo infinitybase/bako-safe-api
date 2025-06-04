@@ -400,7 +400,6 @@ export class PredicateService implements IPredicateService {
     provider: string,
     version?: string,
   ): Promise<Vault> {
-    console.log('>>> configurable', configurable);
     const conf = JSON.parse(configurable);
     const _provider = await FuelProvider.create(
       provider.replace(/^https?:\/\/[^@]+@/, 'https://'),
