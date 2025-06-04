@@ -1,68 +1,52 @@
-import crypto from 'crypto';
-import request from 'supertest';
-import { IPredicatePayload } from '@src/modules/predicate/types';
-import { Vault, VaultConfigurable } from 'bakosafe';
-import { FuelProvider } from '@src/utils';
-import { PredicateService } from '@src/modules/predicate/services';
-import { TestUser } from '../utils/Setup';
-import { Application } from 'express';
+import { readFileSync } from 'fs';
+import { Predicate, WalletUnlocked } from 'fuels';
+import path from 'path';
 
-const { FUEL_PROVIDER } = process.env;
+/**
+ * we need deploy a predicate on network just if we can send a transaction by predicate
+ *
+ * if we can't send a transaction by predicate, we don't need deploy a predicate on network
+ * just use a predicate loader, to instance and get balance or make transactions
+ *
+ */
 
-type IPredicateMockPayload = Omit<IPredicatePayload, 'user' | 'version' | 'root'>;
+const bytecodePath = path.resolve(
+  __dirname,
+  './predicate-release/bako-predicate.bin',
+);
+const abiPath = path.resolve(
+  __dirname,
+  './predicate-release/bako-predicate-abi.json',
+);
+const versionPath = path.resolve(
+  __dirname,
+  './predicate-release/bako-predicate-loader-bin-root',
+);
 
-export class PredicateMock {
-  public configurable: VaultConfigurable;
-  public predicatePayload: IPredicateMockPayload;
-  public vault: Vault;
+export const deployPredicate = async (wallet: WalletUnlocked) => {
+  const bytecode = new Uint8Array(readFileSync(bytecodePath));
+  const abi = JSON.parse(readFileSync(abiPath, 'utf-8'));
 
-  protected constructor(
-    configurable: VaultConfigurable,
-    predicatePayload: IPredicateMockPayload,
-    vault: Vault,
-  ) {
-    this.configurable = configurable;
-    this.predicatePayload = predicatePayload;
-    this.vault = vault;
+  if (!bytecode || !abi) {
+    throw new Error('Failed to read predicate bytecode or ABI');
   }
 
-  public static async create(signaturesCount: number, signers: string[]) {
-    const _provider = await FuelProvider.create(FUEL_PROVIDER);
-    const _configurable: VaultConfigurable = {
-      SIGNATURES_COUNT: signaturesCount,
-      SIGNERS: signers,
-    };
+  const _predicate = new Predicate({
+    abi,
+    bytecode,
+    provider: wallet.provider,
+  });
 
-    const vault = await new PredicateService().instancePredicate(
-      JSON.stringify(_configurable),
-      _provider.url,
-    );
+  const predicate = await _predicate.deploy(wallet);
 
-    const predicatePayload: IPredicateMockPayload = {
-      name: crypto.randomUUID(),
-      description: crypto.randomUUID(),
-      predicateAddress: vault.address.toString(),
-      configurable: JSON.stringify(_configurable),
-    };
+  const p = await predicate.waitForResult().catch(e => {
+    return null;
+  });
 
-    return new PredicateMock(_configurable, predicatePayload, vault);
-  }
+  return !!p;
+};
 
-  public static async getPredicate(users: TestUser[], app: Application) {
-    const members: string[] = [];
-
-    for (const user of users) {
-      members.push(user.payload.address);
-    }
-
-    const { predicatePayload } = await PredicateMock.create(1, members);
-
-    const { body: predicate } = await request(app)
-      .post('/predicate')
-      .set('Authorization', users[0].token)
-      .set('signeraddress', users[0].payload.address)
-      .send(predicatePayload);
-
-    return predicate;
-  }
+export function getPredicateVersion(): string {
+  const filePath = path.resolve(versionPath);
+  return readFileSync(filePath, 'utf-8').trim();
 }
