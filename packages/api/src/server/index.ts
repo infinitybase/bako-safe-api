@@ -1,5 +1,5 @@
 // import * as pprof from 'pprof';
-
+import './tracing';
 import App from './app';
 
 const {

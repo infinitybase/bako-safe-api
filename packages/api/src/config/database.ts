@@ -16,6 +16,13 @@ const {
 const environment: string = API_ENVIRONMENT;
 const entitiesDir = path.resolve(__dirname, '..', 'models', '**', '*{.ts,.js}');
 
+export const poolConfig = {
+  max: 20,
+  min: 5,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+};
+
 export const migrationsDir = path.resolve(
   __dirname,
   '..',
@@ -119,4 +126,7 @@ const database = {
   test,
 };
 
-export default database[environment || 'development'];
+export default {
+  ...database[environment || 'development'],
+  extra: poolConfig,
+};
