@@ -6,10 +6,11 @@ import { TypeUser } from '@src/models';
 import App from '@src/server/app';
 import { Provider as FuelProvider } from 'fuels';
 
-interface TestUser {
+export interface TestUser {
   payload: ReturnType<typeof newUser>['payload'];
   wallet: WalletUnlocked;
   token: string;
+  id: string;
 }
 
 export class TestEnvironment {
@@ -63,6 +64,7 @@ export class TestEnvironment {
         payload,
         wallet,
         token: authRes.body.accessToken,
+        id: userRes.body.userId,
       });
     }
 
