@@ -1,6 +1,10 @@
+import { Vault } from 'bakosafe';
+import { Application } from 'express';
 import { readFileSync } from 'fs';
 import { Predicate, WalletUnlocked } from 'fuels';
 import path from 'path';
+import request from 'supertest';
+import { TestUser } from '../utils/Setup';
 
 /**
  * we need deploy a predicate on network just if we can send a transaction by predicate
@@ -49,4 +53,29 @@ export const deployPredicate = async (wallet: WalletUnlocked) => {
 export function getPredicateVersion(): string {
   const filePath = path.resolve(versionPath);
   return readFileSync(filePath, 'utf-8').trim();
+}
+
+export async function saveMockPredicate(
+  vault: Vault,
+  user: TestUser,
+  app: Application,
+) {
+  const configurable = JSON.stringify(vault.configurable);
+  const predicateAddress = vault.address.toB256();
+
+  const payload = {
+    name: `VaultPredicate ${Date.now()}`,
+    description: 'Test predicate created from vault instance',
+    configurable,
+    predicateAddress,
+    version: vault.version,
+  };
+
+  const { body: predicate } = await request(app)
+    .post('/predicate')
+    .send(payload)
+    .set('Authorization', user.token)
+    .set('Signeraddress', user.payload.address);
+
+  return { predicate, payload };
 }

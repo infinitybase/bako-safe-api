@@ -3,9 +3,12 @@ import assert from 'node:assert/strict';
 import request from 'supertest';
 
 import { TestEnvironment } from './utils/Setup';
+import { generateNode } from './mocks/Networks';
 
 test('User Endpoints', async t => {
-  const { app, users, close } = await TestEnvironment.init();
+  const { provider, node } = await generateNode();
+
+  const { app, users, close } = await TestEnvironment.init(2, 0, node, provider);
 
   t.after(async () => {
     await close();
