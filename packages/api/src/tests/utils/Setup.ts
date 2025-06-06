@@ -8,6 +8,7 @@ import { Provider as FuelProvider } from 'fuels';
 import { generateNode } from '../mocks/Networks';
 import { Vault } from 'bakosafe';
 import { getPredicateVersion } from '../mocks/Predicate';
+import { DeployContractConfig, LaunchTestNodeReturn } from 'fuels/test-utils';
 
 export interface TestUser {
   payload: ReturnType<typeof newUser>['payload'];
@@ -20,6 +21,8 @@ export class TestEnvironment {
   static async init(
     usersQtd: number = 2,
     predicatesQtd: number = 0,
+    node: LaunchTestNodeReturn<DeployContractConfig[]>,
+    provider: Provider,
   ): Promise<{
     app: Application;
     users: TestUser[];
@@ -31,10 +34,12 @@ export class TestEnvironment {
     const appInstance = await App.start();
     const app = appInstance.serverApp;
 
-    const {
-      provider,
-      node: { wallets, cleanup },
-    } = await generateNode();
+    // const {
+    //   provider,
+    //   node: { wallets, cleanup },
+    // } = await generateNode();
+
+    const { wallets } = node;
 
     const users: TestUser[] = [];
     const predicates: Vault[] = [];
@@ -110,7 +115,7 @@ export class TestEnvironment {
       console.log('Closing test environment...');
       await App.stop();
       console.log('App stopped successfully.');
-      cleanup();
+      //cleanup();
       console.log('Node cleanup completed.');
     };
 

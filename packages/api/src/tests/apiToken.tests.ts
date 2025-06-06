@@ -3,13 +3,23 @@ import assert from 'node:assert/strict';
 import request from 'supertest';
 
 import { TestEnvironment } from './utils/Setup';
-import { PredicateMock } from './mocks/Predicate';
-import { tokenMock } from './mocks/ApiToken';
+import { apiTokenMock } from './mocks/Tokens';
+import { saveMockPredicate } from './mocks/Predicate';
+import { generateNode } from './mocks/Networks';
 
 test('Api token Endpoints', async t => {
-  const { app, users, close } = await TestEnvironment.init();
+  const { provider, node } = await generateNode();
 
-  const predicate = await PredicateMock.getPredicate(users, app);
+  const { app, users, close, predicates } = await TestEnvironment.init(
+    2,
+    1,
+    node,
+    provider,
+  );
+
+  const vault = predicates[0];
+
+  const { predicate } = await saveMockPredicate(vault, users[0], app);
 
   t.after(async () => {
     await close();
@@ -22,24 +32,24 @@ test('Api token Endpoints', async t => {
         .post(`/api-token/${predicate.id}`)
         .set('Authorization', users[0].token)
         .set('signeraddress', users[0].payload.address)
-        .send(tokenMock);
+        .send(apiTokenMock);
 
       assert.ok('token' in apiTokenComplete);
-      assert.strictEqual(apiTokenComplete.name, tokenMock.name);
+      assert.strictEqual(apiTokenComplete.name, apiTokenMock.name);
       assert.strictEqual(
         apiTokenComplete.config.transactionTitle,
-        tokenMock.config.transactionTitle,
+        apiTokenMock.config.transactionTitle,
       );
 
       const { body: apiTokenWithoutTitle } = await request(app)
         .post(`/api-token/${predicate.id}`)
         .set('Authorization', users[0].token)
         .set('signeraddress', users[0].payload.address)
-        .send({ ...tokenMock, config: undefined });
+        .send({ ...apiTokenMock, config: undefined });
 
       assert.ok('id' in apiTokenWithoutTitle);
       assert.ok('token' in apiTokenWithoutTitle);
-      assert.strictEqual(apiTokenWithoutTitle.name, tokenMock.name);
+      assert.strictEqual(apiTokenWithoutTitle.name, apiTokenMock.name);
       assert.strictEqual(apiTokenWithoutTitle.config.transactionTitle, '');
     },
   );
@@ -49,7 +59,7 @@ test('Api token Endpoints', async t => {
       .post(`/api-token/${predicate.id}`)
       .set('Authorization', users[0].token)
       .set('signeraddress', users[0].payload.address)
-      .send(tokenMock);
+      .send(apiTokenMock);
 
     const { body: data } = await request(app)
       .get(`/api-token/${predicate.id}`)
@@ -69,7 +79,7 @@ test('Api token Endpoints', async t => {
         .post(`/api-token/${predicate.id}`)
         .set('Authorization', users[0].token)
         .set('signeraddress', users[0].payload.address)
-        .send(tokenMock);
+        .send(apiTokenMock);
 
       const { body: data, status } = await request(app)
         .delete(`/api-token/${predicate.id}/${apiToken.id}`)
