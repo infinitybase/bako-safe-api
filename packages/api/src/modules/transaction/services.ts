@@ -205,14 +205,9 @@ export class TransactionService implements ITransactionService {
       });
 
     // =============== specific for workspace ===============
-    if (this._filter.workspaceId || this._filter.signer) {
+    if (this._filter.signer) {
       queryBuilder.andWhere(
         new Brackets(qb => {
-          if (this._filter.workspaceId) {
-            qb.orWhere('workspace.id IN (:...workspace)', {
-              workspace: this._filter.workspaceId,
-            });
-          }
           if (this._filter.signer) {
             qb.orWhere('members.address = :signer', {
               signer: this._filter.signer,
@@ -361,11 +356,6 @@ export class TransactionService implements ITransactionService {
     if (this._filter.workspaceId || this._filter.signer) {
       queryBuilder.andWhere(
         new Brackets(qb => {
-          if (this._filter.workspaceId) {
-            qb.orWhere('workspace.id IN (:...workspace)', {
-              workspace: this._filter.workspaceId,
-            });
-          }
           if (this._filter.signer) {
             qb.orWhere('members.address = :signer', {
               signer: this._filter.signer,

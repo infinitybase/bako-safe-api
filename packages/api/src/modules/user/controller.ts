@@ -79,17 +79,12 @@ export class UserController {
   async meTransactions(req: IMeRequest) {
     try {
       const { type } = req.query;
-      const { workspace, user, network } = req;
+      const { user, network } = req;
 
-      const { hasSingle } = await new UserService().workspacesByUser(
-        workspace,
-        user,
-      );
       const transactions = await new TransactionService()
         .filter({
           type,
-          workspaceId: [workspace.id],
-          signer: hasSingle ? user.address : undefined,
+          signer: user.address,
           network: network.url,
         })
         .paginate({ page: '0', perPage: '6' })
@@ -146,20 +141,17 @@ export class UserController {
         .filter({
           workspace: workspaceList,
           signer: hasSingle ? user.address : undefined,
+          hidden: false,
+          userId: user.id,
         })
         .paginate({ page: '0', perPage: '8' })
         .ordination({ orderBy: 'updatedAt', sort: 'DESC' })
         .list();
 
-      const inactives =
-        user.settings?.inactivesPredicates?.map(addr => addr.toLowerCase()) || [];
-
-      const addHiddenFlag = (vault: Predicate): PredicateWithHidden => {
-        return {
-          ...vault,
-          isHidden: vault.isHiddenForUser(user),
-        };
-      };
+      const addHiddenFlag = (vault: Predicate): PredicateWithHidden => ({
+        ...vault,
+        isHidden: vault.isHiddenForUser(user),
+      });
 
       let processedResponse;
 
@@ -167,11 +159,14 @@ export class UserController {
         const enhancedData = predicates.data.map(addHiddenFlag);
         processedResponse = {
           ...predicates,
-          data: enhancedData.filter(vault => !vault.isHidden),
+          data: enhancedData,
         };
       } else {
         const enhancedData = predicates.map(addHiddenFlag);
-        processedResponse = enhancedData.filter(vault => !vault.isHidden);
+        processedResponse = {
+          ...predicates,
+          data: enhancedData,
+        };
       }
 
       return successful(

@@ -332,13 +332,16 @@ export class DappController {
       await RedisWriteClient.set(`${PREFIX}${sessionId}`, JSON.stringify(dapp));
 
       const socketClient = new SocketClient(dapp.user.id, API_URL);
-      socketClient.socket.emit(SocketEvents.SWITCH_NETWORK, {
+
+      const socketData = {
         sessionId: dapp.user.id,
         to: SocketUsernames.UI,
         request_id: undefined,
         type: SocketEvents.SWITCH_NETWORK,
         data: dapp.network,
-      });
+      }
+
+      socketClient.emit(SocketEvents.SWITCH_NETWORK, socketData);
 
       return successful(dapp.network, Responses.Ok);
     } catch (e) {
