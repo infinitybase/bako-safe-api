@@ -1,0 +1,55 @@
+name: Run API Tests
+
+on:
+  push:
+    branches: [main, staging]
+
+jobs:
+  check-changes:
+    name: "[VERIFY] Check for Changes"
+    runs-on: ubuntu-latest
+
+    outputs:
+      should_deploy: ${{ steps.check.outputs.should_deploy }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
+
+      - name: Check for changes in ./packages/api
+        id: check
+        run: |
+          if git diff --quiet HEAD~1 -- ./packages/api; then
+            echo "No changes detected in ./packages/api"
+            echo "::set-output name=should_deploy::false"
+          else
+            echo "Changes detected in ./packages/api"
+            echo "::set-output name=should_deploy::true"
+          fi
+
+  test:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: packages/api
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build and run tests
+        run: pnpm test:build
+        env:
+          TESTCONTAINERS_DB: "true"
