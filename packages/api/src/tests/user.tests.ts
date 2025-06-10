@@ -6,9 +6,7 @@ import { TestEnvironment } from './utils/Setup';
 import { generateNode } from './mocks/Networks';
 
 test('User Endpoints', async t => {
-  const { provider, node } = await generateNode();
-
-  const { app, users, close } = await TestEnvironment.init(2, 0, node, provider);
+  const { app, users, close } = await TestEnvironment.init(2, 0);
 
   t.after(async () => {
     await close();

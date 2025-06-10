@@ -15,6 +15,9 @@ export const generateNode = async () => {
       coinsPerAsset: 1,
       amountPerCoin: 10_000_000_000,
     },
+    nodeOptions: {
+      killProcessOnExit: true,
+    },
   });
 
   await deployPredicate(node.wallets[0]);

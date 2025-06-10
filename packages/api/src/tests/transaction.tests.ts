@@ -11,13 +11,12 @@ import { Transaction } from '@src/models';
 import { generateNode } from './mocks/Networks';
 
 test('Transaction Endpoints', async t => {
-  const { provider, node } = await generateNode();
+  const { node } = await generateNode();
 
   const { app, users, predicates, wallets, close } = await TestEnvironment.init(
     5,
     5,
     node,
-    provider,
   );
 
   t.after(async () => {
@@ -88,13 +87,15 @@ test('Transaction Endpoints', async t => {
   await t.test(
     'GET /transaction?page=${}&perPage=${} should list transactions with pagination',
     async () => {
-      const page = 0;
+      const page = 1;
       const perPage = 6;
 
       const res = await request(app)
         .get(`/transaction?page=${page}&perPage=${perPage}`)
         .set('Authorization', users[0].token)
         .set('Signeraddress', users[0].payload.address);
+
+      // console.log('[TESTE_PAGINACAO]', res.body);
 
       assert.equal(res.status, 200);
       assert.ok('total' in res.body);

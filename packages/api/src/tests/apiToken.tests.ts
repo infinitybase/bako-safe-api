@@ -10,12 +10,7 @@ import { generateNode } from './mocks/Networks';
 test('Api token Endpoints', async t => {
   const { provider, node } = await generateNode();
 
-  const { app, users, close, predicates } = await TestEnvironment.init(
-    2,
-    1,
-    node,
-    provider,
-  );
+  const { app, users, close, predicates } = await TestEnvironment.init(2, 1, node);
 
   const vault = predicates[0];
 

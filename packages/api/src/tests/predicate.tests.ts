@@ -8,14 +8,9 @@ import { saveMockPredicate } from './mocks/Predicate';
 import { generateNode } from './mocks/Networks';
 
 test('Predicate Endpoints', async t => {
-  const { provider, node } = await generateNode();
+  const { node } = await generateNode();
 
-  const { app, users, close, predicates } = await TestEnvironment.init(
-    9,
-    1,
-    node,
-    provider,
-  );
+  const { app, users, close, predicates } = await TestEnvironment.init(9, 1, node);
 
   t.after(async () => {
     await close();

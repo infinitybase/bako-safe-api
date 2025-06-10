@@ -10,7 +10,7 @@ export const newUser = () => {
       name: `${new Date().getTime()} - Created User`,
       email: `user-${new Date().getTime()}@example.com`,
       address: wallet.address.toB256(),
-      provider: networks['LOCAL'],
+      provider: networks['DEVNET'],
       type: TypeUser.FUEL,
     },
     wallet,

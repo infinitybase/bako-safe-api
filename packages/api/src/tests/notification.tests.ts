@@ -8,13 +8,12 @@ import { NotificationTitle } from '@src/models';
 import { generateNode } from './mocks/Networks';
 
 test('Notifications Endpoints', async t => {
-  const { provider, node } = await generateNode();
+  const { node } = await generateNode();
 
   const { app, users, predicates, network, close } = await TestEnvironment.init(
     2,
     1,
     node,
-    provider,
   );
   const vault = predicates[0];
   const { predicate } = await saveMockPredicate(vault, users[0], app);

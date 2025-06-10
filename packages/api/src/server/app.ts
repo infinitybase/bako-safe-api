@@ -27,6 +27,10 @@ class App {
     this.setupMonitoring();
     this.initErrorHandler();
 
+    // if (!(process.env.TESTCONTAINERS_DB === 'true')) {
+    //   this.sessionCache = SessionStorage.start();
+    //   this.quoteCache = QuoteStorage.start();
+    // }
     this.sessionCache = SessionStorage.start();
     this.quoteCache = QuoteStorage.start();
   }
@@ -87,10 +91,14 @@ class App {
       Monitoring.init();
 
       await Bootstrap.start();
+      // if (!(process.env.TESTCONTAINERS_DB === 'true')) {
+      //   await RedisWriteClient.start();
+      //   await RedisReadClient.start();
+      // }
+
       await RedisWriteClient.start();
       await RedisReadClient.start();
       await FuelProvider.start();
-
       App.instance = new App();
       Object.freeze(App.instance);
     }

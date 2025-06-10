@@ -62,10 +62,11 @@ export class NotificationService implements INotificationService {
       to: SocketUsernames.UI,
       request_id: undefined,
       type: SocketEvents.NEW_NOTIFICATION,
-      data: {}
+      data: {},
     });
 
-    return notification
+    socketClient.disconnect();
+    return notification;
   }
 
   async list(): Promise<IPagination<Notification> | Notification[]> {
@@ -100,13 +101,13 @@ export class NotificationService implements INotificationService {
 
     return hasPagination
       ? Pagination.create(queryBuilder)
-        .paginate(this._pagination)
-        .then(result => result)
-        .catch(e => Internal.handler(e, 'Error on notification list'))
+          .paginate(this._pagination)
+          .then(result => result)
+          .catch(e => Internal.handler(e, 'Error on notification list'))
       : queryBuilder
-        .getMany()
-        .then(notifications => notifications)
-        .catch(e => Internal.handler(e, 'Error on notification list'));
+          .getMany()
+          .then(notifications => notifications)
+          .catch(e => Internal.handler(e, 'Error on notification list'));
   }
 
   async update(
@@ -147,7 +148,6 @@ export class NotificationService implements INotificationService {
       });
   }
 
-
   async vaultUpdate(vaultId: string) {
     const vault = await new PredicateService().findById(vaultId);
 
@@ -164,8 +164,10 @@ export class NotificationService implements INotificationService {
         to: SocketUsernames.UI,
         request_id: undefined,
         type: SocketEvents.VAULT_UPDATE,
-        data: {}
+        data: {},
       });
+
+      socketClient.disconnect();
     }
   }
 
@@ -185,8 +187,10 @@ export class NotificationService implements INotificationService {
         to: SocketUsernames.UI,
         request_id: undefined,
         type: SocketEvents.TRANSACTION_UPDATE,
-        data: {}
+        data: {},
       });
+
+      socketClient.disconnect();
     }
   }
 
@@ -229,8 +233,10 @@ export class NotificationService implements INotificationService {
         to: SocketUsernames.UI,
         request_id: undefined,
         type: SocketEvents.TRANSACTION_UPDATE,
-        data: {}
+        data: {},
       });
+
+      socketClient.disconnect();
     }
   }
 }

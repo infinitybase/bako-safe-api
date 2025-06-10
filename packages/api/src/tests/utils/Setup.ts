@@ -1,14 +1,13 @@
 import { Application } from 'express';
 import request from 'supertest';
 import { newUser } from '@src/tests/mocks/User';
-import { WalletUnlocked, Wallet, Provider, Predicate } from 'fuels';
+import { WalletUnlocked, Wallet, Provider } from 'fuels';
 import { TypeUser } from '@src/models';
 import App from '@src/server/app';
-import { Provider as FuelProvider } from 'fuels';
-import { generateNode } from '../mocks/Networks';
 import { Vault } from 'bakosafe';
 import { getPredicateVersion } from '../mocks/Predicate';
 import { DeployContractConfig, LaunchTestNodeReturn } from 'fuels/test-utils';
+import { networks } from '../mocks/Networks';
 
 export interface TestUser {
   payload: ReturnType<typeof newUser>['payload'];
@@ -21,8 +20,7 @@ export class TestEnvironment {
   static async init(
     usersQtd: number = 2,
     predicatesQtd: number = 0,
-    node: LaunchTestNodeReturn<DeployContractConfig[]>,
-    provider: Provider,
+    node?: LaunchTestNodeReturn<DeployContractConfig[]>,
   ): Promise<{
     app: Application;
     users: TestUser[];
@@ -33,22 +31,15 @@ export class TestEnvironment {
   }> {
     const appInstance = await App.start();
     const app = appInstance.serverApp;
-
-    // const {
-    //   provider,
-    //   node: { wallets, cleanup },
-    // } = await generateNode();
-
-    const { wallets } = node;
-
+    const wallets = node?.wallets ?? [];
     const users: TestUser[] = [];
     const predicates: Vault[] = [];
 
-    for (let i = 0; i <= usersQtd; i++) {
-      if (i > 0) {
-        wallets.push(WalletUnlocked.generate());
-      }
-      const wallet = wallets[i];
+    const provider = node?.provider ?? new Provider(networks['DEVNET']);
+
+    for (let i = 0; i < usersQtd; i++) {
+      const wallet = wallets[i] ?? newUser().wallet;
+
       const payload = {
         address: wallet.address.toB256(),
         provider: provider.url,
@@ -84,7 +75,7 @@ export class TestEnvironment {
           provider: payload.provider,
           type: payload.type,
           name: `User ${i + 1}`,
-          email: `${new Date().getTime()}@example.com`,
+          email: `${Date.now()}_${i}@example.com`,
         },
         wallet,
         token: authRes.body.accessToken,
@@ -92,31 +83,35 @@ export class TestEnvironment {
       });
     }
 
-    const n = Math.ceil(usersQtd / 3);
-    const userSignersQtd = n >= 1 ? n : 1;
+    const userSignersQtd = Math.max(1, Math.ceil(usersQtd / 3));
     const version = getPredicateVersion();
 
-    for await (const _ of Array(predicatesQtd)) {
-      const _p = new Vault(
+    for (let i = 0; i < predicatesQtd; i++) {
+      const signers = users
+        .slice(0, userSignersQtd)
+        .map(u => u.wallet.address.toB256());
+
+      const vault = new Vault(
         provider,
         {
           SIGNATURES_COUNT: 1,
-          SIGNERS: users
-            .slice(0, userSignersQtd)
-            .map(u => u.wallet.address.toB256()),
+          SIGNERS: signers,
         },
         version,
       );
-      await (await wallets[0].transfer(_p.address, 1000)).waitForResult();
-      predicates.push(_p);
+
+      await (await wallets[0].transfer(vault.address, 1000)).waitForResult();
+      predicates.push(vault);
     }
 
     const close = async () => {
-      console.log('Closing test environment...');
-      await App.stop();
-      console.log('App stopped successfully.');
-      //cleanup();
-      console.log('Node cleanup completed.');
+      try {
+        await App.stop();
+        node?.cleanup();
+        console.log('Cleanup finalizado com sucesso.');
+      } catch (error) {
+        console.error('Erro durante cleanup:', error);
+      }
     };
 
     return {

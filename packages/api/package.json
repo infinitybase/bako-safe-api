@@ -16,13 +16,11 @@
     "run:prod": "make -C ./ deploy-prod env_file=.env.prod",
     "run:stg": "make -C ./ deploy-stg env_file=.env.staging",
     "run:test": "make -C ./ deploy-test env_file=.env.test",
-    "test:build": "pnpm build > /dev/null 2>&1 && pnpm copy:predicate-releases && cross-env TESTCONTAINERS_DB=true node --test build/tests/**/*.tests.js",
+    "test:build": "pnpm build > /dev/null 2>&1 && pnpm copy:predicate-releases && cross-env TESTCONTAINERS_DB=true node --test build/tests/*.tests.js",
     "test:one": "pnpm build > /dev/null 2>&1 && pnpm copy:predicate-releases && cross-env TESTCONTAINERS_DB=true sh -c 'node --test build/tests/$1.tests.js' --",
     "database:populate": "chmod +x ./src/scripts/db-populate.sh && ./src/scripts/db-populate.sh",
     "database:clear": "chmod +x ./src/scripts/db-clear.sh && ./src/scripts/db-clear.sh",
-    "copy:predicate-releases": "cp -r src/tests/mocks/predicate-release build/tests/mocks/",
-    "dev:test": "concurrently -k -n TSC,NODE -c yellow,cyan \"tsc --watch\" \"wait-on build/tests/*.js && cross-env TESTCONTAINERS_DB=true node --test --watch --watch-path build/tests\"",
-    "wait-and-test": "wait-on build/tests && cross-env TESTCONTAINERS_DB=true node --test --watch build/tests"
+    "copy:predicate-releases": "cp -r src/tests/mocks/predicate-release build/tests/mocks/"
   },
   "dependencies": {
     "@noble/curves": "1.3.0",

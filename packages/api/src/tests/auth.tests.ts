@@ -46,7 +46,7 @@ test('AuthController endpoints', async t => {
 
       const codeRes = await request(server).post('/auth/code').send({
         name: payload.name,
-        networkUrl: networks['LOCAL'],
+        networkUrl: networks['DEVNET'],
         origin: 'http://localhost',
       });
 
@@ -75,7 +75,7 @@ test('AuthController endpoints', async t => {
 
     const codeRes = await request(server).post('/auth/code').send({
       name: payload.name,
-      networkUrl: networks['LOCAL'],
+      networkUrl: networks['DEVNET'],
     });
 
     assert.strictEqual(codeRes.status, 200);
