@@ -4,7 +4,7 @@ import { Base } from './Base';
 import { User } from './User';
 import { Workspace } from './Workspace';
 import { Network } from 'fuels';
-import { networks } from '@src/mocks/networks';
+import { networks } from '@src/constants/networks';
 
 const { FUEL_PROVIDER, FUEL_PROVIDER_CHAIN_ID } = process.env;
 
