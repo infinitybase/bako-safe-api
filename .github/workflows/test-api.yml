@@ -1,8 +1,7 @@
 name: Run API Tests
 
 on:
-  push:
-    branches: [main, staging]
+  branches: ["**"]
 
 jobs:
   check-changes:
