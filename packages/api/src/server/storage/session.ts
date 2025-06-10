@@ -5,7 +5,6 @@ import { AuthService } from '@src/modules/auth/services';
 import { ISignInResponse } from '@src/modules/auth/types';
 import { RedisReadClient, RedisWriteClient } from '@src/utils';
 import { isPast } from 'date-fns';
-import * as redis from 'redis';
 
 export interface ISession {
   nome: string;
@@ -20,9 +19,6 @@ const PREFIX = 'session';
 export class SessionStorage {
   private static instance?: SessionStorage;
   private static intervalRef?: NodeJS.Timeout;
-
-  private redisClientWrite?: redis.RedisClientType;
-  private redisClientRead?: redis.RedisClientType;
 
   private constructor() {}
 
