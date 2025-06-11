@@ -70,10 +70,11 @@ export class DappController {
         data: {
           connected: true,
         },
-      });
+      }).then(() => {
+        socket.disconnect();
+      })
 
       await RedisWriteClient.set(`${PREFIX}${sessionId}`, JSON.stringify(dapp));
-
       return successful(true, Responses.Created);
     } catch (e) {
       return error(e.error, e.statusCode);
@@ -341,8 +342,10 @@ export class DappController {
         data: dapp.network,
       }
 
-      socketClient.emit(SocketEvents.SWITCH_NETWORK, socketData);
-
+      socketClient.emit(SocketEvents.SWITCH_NETWORK, socketData).then(() => {
+        socketClient.disconnect();
+      })
+      
       return successful(dapp.network, Responses.Ok);
     } catch (e) {
       console.log(e);

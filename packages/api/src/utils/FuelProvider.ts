@@ -6,14 +6,18 @@ const FUEL_PROVIDER =
 
 export class FuelProvider {
   private static instance?: FuelProvider;
-
   private providers: Record<string, Provider>;
+  private intervalRef?: NodeJS.Timeout;
 
   private constructor() {
     this.providers = {};
   }
 
   static async create(url: string, options?: ProviderOptions): Promise<Provider> {
+    if (!FuelProvider.instance) {
+      throw new Error('FuelProvider not started');
+    }
+
     if (FuelProvider.instance.providers[url]) {
       return FuelProvider.instance.providers[url];
     }
@@ -21,26 +25,30 @@ export class FuelProvider {
     const p = new Provider(url, options);
     FuelProvider.instance.providers[url] = p;
 
-    return FuelProvider.instance.providers[url];
+    return p;
   }
 
   async reset(): Promise<void> {
     const providers: Record<string, Provider> = {};
-
     providers[FUEL_PROVIDER] = new Provider(FUEL_PROVIDER);
-
-    FuelProvider.instance.providers = providers;
+    this.providers = providers;
   }
 
   static async start(): Promise<void> {
     if (!FuelProvider.instance) {
-      FuelProvider.instance = new FuelProvider();
-      FuelProvider.instance.reset();
+      const instance = new FuelProvider();
+      FuelProvider.instance = instance;
+      await instance.reset();
 
-      setInterval(() => {
-        console.log('[PROVIDER] Refreshing providers');
-        FuelProvider.instance.reset();
+      instance.intervalRef = setInterval(() => {
+        instance.reset();
       }, REFRESH_TIME);
+    }
+  }
+
+  static stop(): void {
+    if (FuelProvider.instance?.intervalRef) {
+      clearInterval(FuelProvider.instance.intervalRef);
     }
   }
 }

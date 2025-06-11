@@ -31,7 +31,7 @@ import {
   IUpdateRequest,
 } from './types';
 import { CoinQuantity, bn } from 'fuels';
-import { networks } from '@src/mocks/networks';
+import { networks } from '@src/constants/networks';
 
 export class WorkspaceController {
   async listByUser(req: IListByUserRequest) {
