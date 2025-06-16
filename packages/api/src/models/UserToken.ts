@@ -12,6 +12,7 @@ export enum Encoder {
   FUEL = 'FUEL',
   METAMASK = 'FUEL',
   WEB_AUTHN = 'WEB_AUTHN',
+  EVM = 'EVM',
 }
 
 export interface IFuelTokenPayload {

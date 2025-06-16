@@ -34,6 +34,7 @@
     "@passwordless-id/webauthn": "1.4.0",
     "@sentry/node": "8.32.0",
     "@sentry/profiling-node": "8.32.0",
+    "@ethereumjs/util": "9.0.3",
     "axios": "1.5.1",
     "bakosafe": "0.1.8",
     "body-parser": "1.20.2",
