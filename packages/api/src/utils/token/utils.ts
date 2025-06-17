@@ -41,7 +41,7 @@ export class TokenUtils {
         break;
       case Encoder.EVM:
         address = await recoverEvmSignature(digest, signature);
-        address = Address.fromString(address).toB256();
+        address = new Address(address).toB256();
         break;
       default:
         throw new Unauthorized({
