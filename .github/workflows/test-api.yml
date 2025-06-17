@@ -1,0 +1,39 @@
+name: Run API Tests
+
+on:
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: packages/api
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-forc
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Copy .env.test to .env
+        run: cp .env.test .env
+
+      - name: Build and run tests
+        run: pnpm test:build
+        env:
+          TESTCONTAINERS_DB: "true"

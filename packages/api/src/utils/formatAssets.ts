@@ -1,4 +1,10 @@
-import { Operation, OutputCoin, OutputType, TransactionRequestOutput } from 'fuels';
+import {
+  Operation,
+  OperationName,
+  OutputCoin,
+  OutputType,
+  TransactionRequestOutput,
+} from 'fuels';
 
 const { FUEL_PROVIDER_CHAIN_ID } = process.env;
 
@@ -36,6 +42,21 @@ const formatAssetFromOperations = (
   operations: Operation[],
   account: string,
 ): AssetFormat[] => {
+  const mainContractCallOperation = operations.find(
+    operation =>
+      operation.from.address === account &&
+      operation.name === OperationName.contractCall &&
+      !!operation.assetsSent,
+  );
+
+  if (mainContractCallOperation) {
+    return mainContractCallOperation.assetsSent.map(asset => ({
+      assetId: asset.assetId,
+      amount: asset.amount.toString(),
+      to: mainContractCallOperation.to.address,
+    }));
+  }
+
   const assets = operations
     .filter(operation => operation.from.address === account)
     .filter(operation => !!operation.assetsSent)
@@ -50,4 +71,4 @@ const formatAssetFromOperations = (
   return assets;
 };
 
-export { formatAssets, formatAssetFromOperations };
+export { formatAssetFromOperations, formatAssets };

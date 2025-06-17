@@ -13,7 +13,6 @@ import {
 } from './validation';
 
 const router = Router();
-
 const userService = new UserService();
 
 const userController = new UserController(userService);
