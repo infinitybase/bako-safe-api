@@ -111,6 +111,7 @@ export class UserController {
         avatar: user.avatar,
         address: user.address,
         webauthn: user.webauthn,
+        evm: user.evm,
         first_login: user.first_login,
         network,
         settings: user.settings,

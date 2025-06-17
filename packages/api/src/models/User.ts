@@ -14,6 +14,7 @@ export type WebAuthn = {
 export enum TypeUser {
   FUEL = 'FUEL',
   WEB_AUTHN = 'WEB_AUTHN',
+  EVM = 'EVM',
 }
 
 export type UserSettings = {
@@ -70,6 +71,8 @@ class User extends Base {
     default: { inactivesPredicates: [] },
   })
   settings: UserSettings;
+
+  evm?: Record<string, unknown>;
 }
 
 export { User };
