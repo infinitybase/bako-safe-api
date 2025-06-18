@@ -1,4 +1,5 @@
 version: "3.8"
+
 services:
   db:
     container_name: ${DATABASE_ENVIRONMENT}
@@ -19,6 +20,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - bako-network
 
   mongodb:
     container_name: mongodb-${MONGO_ENVIRONMENT}
@@ -38,3 +41,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - bako-network
+
+networks:
+  bako-network:
+    external: true
