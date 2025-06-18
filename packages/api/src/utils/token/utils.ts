@@ -1,25 +1,28 @@
 import { addMinutes, differenceInMinutes, isPast, parseISO } from 'date-fns';
+import { Address } from 'fuels';
+import { MoreThan } from 'typeorm';
 
 import { RecoverCode, RecoverCodeType, User, Workspace } from '@src/models';
 import { AuthService } from '@src/modules/auth/services';
 import { RecoverCodeService } from '@src/modules/recoverCode/services';
 import { UserService } from '@src/modules/user/service';
 import { WorkspaceService } from '@src/modules/workspace/services';
+import App from '@src/server/app';
+import { ISignInResponse } from '@src/modules/auth/types';
 
 import UserToken, { Encoder } from '@models/UserToken';
 
 import { ErrorTypes } from '@utils/error';
 import { Unauthorized, UnauthorizedErrorTitles } from '@utils/error/Unauthorized';
 
-import { recoverFuelSignature, recoverWebAuthnSignature } from './web3';
-import App from '@src/server/app';
-import { ISignInResponse } from '@src/modules/auth/types';
-
-import { MoreThan } from 'typeorm';
+import {
+  recoverEvmSignature,
+  recoverFuelSignature,
+  recoverWebAuthnSignature,
+} from './web3';
 import { FuelProvider } from '../FuelProvider';
 
 const { FUEL_PROVIDER } = process.env;
-
 const EXPIRES_IN = process.env.TOKEN_EXPIRATION_TIME ?? '360';
 const RENEWAL_EXPIRES_IN = process.env.RENEWAL_TOKEN_EXPIRATION_TIME ?? '180';
 const MINUTES_TO_RENEW = process.env.MINUTES_TO_RENEW_TOKEN ?? 40;
@@ -35,6 +38,10 @@ export class TokenUtils {
       case Encoder.WEB_AUTHN:
         address = await recoverWebAuthnSignature(digest, signature);
 
+        break;
+      case Encoder.EVM:
+        address = await recoverEvmSignature(digest, signature);
+        address = new Address(address).toB256();
         break;
       default:
         throw new Unauthorized({
@@ -182,6 +189,8 @@ export class TokenUtils {
       relations: ['owner'],
       order: { createdAt: 'DESC' },
     });
+
+    console.log('code1', code);
 
     if (!code) {
       throw new Unauthorized({

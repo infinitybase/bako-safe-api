@@ -1,4 +1,5 @@
 import { addMinutes } from 'date-fns';
+import { Address } from 'fuels';
 
 import { RecoverCodeType, User } from '@src/models';
 import GeneralError, { ErrorTypes } from '@src/utils/error/GeneralError';
@@ -25,8 +26,7 @@ export class AuthController {
   async signIn(req: ISignInRequest) {
     try {
       const { digest, encoder, signature, userAddress, name } = req.body;
-
-      const userFilter = userAddress ? { address: userAddress } : { name };
+      const userFilter = userAddress ? { address: new Address(userAddress).toB256() } : { name };
 
       const { userToken, signin } = await TokenUtils.createAuthToken(
         signature,
