@@ -6,10 +6,12 @@ database-down:
 
 database-wait:
 	@env_file=$${env_file:-.env.example}; \
-	source $$env_file; \
+	. $$env_file; \
 	for container in "$${DATABASE_ENVIRONMENT}" "mongodb-$${MONGO_ENVIRONMENT}"; do \
+		echo "⏳ Waiting for $$container to be healthy..."; \
 		until [ "$$(docker inspect -f '{{.State.Health.Status}}' $$container 2>/dev/null)" = "healthy" ]; do \
 			sleep 2; \
+			echo "Still waiting for $$container..."; \
 		done; \
 		echo "✅ $$container is healthy."; \
 	done
