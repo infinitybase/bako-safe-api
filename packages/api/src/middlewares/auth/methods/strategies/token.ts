@@ -21,7 +21,6 @@ export class TokenAuthStrategy implements AuthStrategy {
         address: token.address,
         type: token.type,
         webauthn: token.webauthn,
-        evm: token.type === TypeUser.EVM ? {} : null,
         email: token.email,
         first_login: token.first_login,
         notify: token.notify,

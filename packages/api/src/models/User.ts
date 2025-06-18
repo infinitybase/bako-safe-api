@@ -71,8 +71,6 @@ class User extends Base {
     default: { inactivesPredicates: [] },
   })
   settings: UserSettings;
-
-  evm?: Record<string, unknown>;
 }
 
 export { User };
