@@ -5,8 +5,7 @@ cache-down:
 	docker-compose -f docker-compose.yml --env-file .env.example down > /dev/null 2>&1
 
 cache-wait:
-	@. .env.example; \
-	container="$$REDIS_CONTAINER_NAME"; \
+	container="redis-bako-dev"; \
 	until [ "$$(docker inspect -f '{{.State.Health.Status}}' $$container 2>/dev/null)" = "healthy" ]; do \
 		sleep 2; \
 	done; \
