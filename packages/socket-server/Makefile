@@ -4,7 +4,7 @@ build:
 
 socket-init:
 	@echo "🚀 Building and starting Socket Server..."; \
-	docker-compose -f docker-compose.yml up --build -d > /dev/null 2>&1
+	docker-compose -f docker-compose.yml up --build -d
 
 socket-down:
 	@echo "🧹 Stopping Socket Server..."; \
