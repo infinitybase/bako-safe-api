@@ -3,8 +3,8 @@
   "version": "0.0.1",
   "license": "MIT",
   "scripts": {
-    "redis:dev:start": "make -C ./ cache-init env_file=.env.example && make -C ./ cache-wait env_file=.env.example",
-    "redis:dev:stop": "make -C ./ cache-down env_file=.env.example"
+    "redis:dev:start": "make -C ./ cache-init && make -C ./ cache-wait",
+    "redis:dev:stop": "make -C ./ cache-down"
   },
   "devDependencies": {
     "husky": "5.2.0"

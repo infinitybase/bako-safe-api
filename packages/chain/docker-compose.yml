@@ -9,6 +9,8 @@ services:
       FUEL_CORE_PORT: ${FUEL_CORE_PORT}
       NETWORK_NAME: "${PROJECT} local"
       MIN_GAS_PRICE: ${MIN_GAS_PRICE}
+      # This is the private key of the consensus.PoA.signing_key in the chainConfig.json
+      # this key is responsible for validating the transactions
       CONSENSUS_KEY_SECRET: ${WALLET_SECRET}
     build: ./fuel-core
     ports:
@@ -20,13 +22,13 @@ services:
       interval: 1s
       timeout: 5s
       retries: 20
-    networks:
-      - bako-network
 
   faucet:
     platform: linux/amd64
     container_name: "${PROJECT:-fuel-node}_faucet"
     environment:
+      # Other configurations can be found at;
+      # https://github.com/FuelLabs/faucet#configuration
       MIN_GAS_PRICE: ${MIN_GAS_PRICE}
       WALLET_SECRET_KEY: ${WALLET_SECRET}
       DISPENSE_AMOUNT: ${DISPENSE_AMOUNT}
@@ -39,13 +41,7 @@ services:
     depends_on:
       fuel-core:
         condition: service_healthy
-    networks:
-      - bako-network
 
 volumes:
   fuel-core-db:
     name: "${PROJECT:-fuel-node}_fuel-core-db"
-
-networks:
-  bako-network:
-    external: true
