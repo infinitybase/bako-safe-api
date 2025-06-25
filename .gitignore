@@ -29,3 +29,5 @@ dist/
 .log
 .local
 mongodbdevelopment/
+
+packages/database/mongodb

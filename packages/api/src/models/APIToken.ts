@@ -2,7 +2,7 @@ import { Base } from '@models/Base';
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { Predicate } from '@models/Predicate';
 import { Network } from 'fuels';
-import { networks } from '@src/mocks/networks';
+import { networks } from '@src/constants/networks';
 
 export const DEFAULT_TRANSACTION_TITLE = 'Contract deployment';
 const { FUEL_PROVIDER, FUEL_PROVIDER_CHAIN_ID } = process.env;

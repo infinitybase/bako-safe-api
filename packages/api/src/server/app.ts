@@ -27,6 +27,10 @@ class App {
     this.setupMonitoring();
     this.initErrorHandler();
 
+    // if (!(process.env.TESTCONTAINERS_DB === 'true')) {
+    //   this.sessionCache = SessionStorage.start();
+    //   this.quoteCache = QuoteStorage.start();
+    // }
     this.sessionCache = SessionStorage.start();
     this.quoteCache = QuoteStorage.start();
   }
@@ -67,15 +71,34 @@ class App {
     return this.quoteCache;
   }
 
+  static stop() {
+    return Bootstrap.stop()
+      .then(() => RedisWriteClient.stop())
+      .then(() => RedisReadClient.stop())
+      .then(() => FuelProvider.stop())
+      .then(() => SessionStorage.stop())
+      .then(() => QuoteStorage.stop())
+      .then(() => {
+        App.instance = undefined;
+      })
+      .catch(error => {
+        console.error('[APP] Error stopping application:', error);
+      });
+  }
+
   static async start() {
     if (!App.instance) {
       Monitoring.init();
 
       await Bootstrap.start();
+      // if (!(process.env.TESTCONTAINERS_DB === 'true')) {
+      //   await RedisWriteClient.start();
+      //   await RedisReadClient.start();
+      // }
+
       await RedisWriteClient.start();
       await RedisReadClient.start();
       await FuelProvider.start();
-
       App.instance = new App();
       Object.freeze(App.instance);
     }

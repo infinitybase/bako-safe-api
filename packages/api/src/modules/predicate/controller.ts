@@ -90,7 +90,7 @@ export class PredicateController {
 
     await new NotificationService().vaultUpdate(predicate.id);
 
-    return successful(predicate, Responses.Ok);
+    return successful(predicate, Responses.Created);
   }
 
   async delete({ params: { id } }: IDeletePredicateRequest) {

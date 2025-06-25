@@ -79,7 +79,7 @@ export class AddressBookController {
         owner: workspace,
       });
 
-      return successful(newContact, Responses.Ok);
+      return successful(newContact, Responses.Created);
     } catch (e) {
       return error(e.error, e.statusCode);
     }

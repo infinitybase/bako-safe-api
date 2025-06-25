@@ -25,6 +25,7 @@ import {
 } from './types';
 
 import App from '@src/server/app';
+
 import { Address, Network } from 'fuels';
 import { Vault } from 'bakosafe';
 import { PredicateService } from '../predicate/services';

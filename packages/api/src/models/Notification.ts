@@ -2,7 +2,7 @@ import { Column, Entity, JoinColumn, OneToOne } from 'typeorm';
 
 import { Base } from './Base';
 import { User } from './User';
-import { networks } from '@src/mocks/networks';
+import { networks } from '@src/constants/networks';
 import { Network } from 'fuels';
 
 export enum NotificationTitle {

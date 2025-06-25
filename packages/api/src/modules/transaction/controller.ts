@@ -284,7 +284,7 @@ export class TransactionController {
         });
       }
 
-      return successful(newTransaction, Responses.Ok);
+      return successful(newTransaction, Responses.Created);
     } catch (e) {
       return error(e.error, e.statusCode);
     }

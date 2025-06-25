@@ -1,13 +1,22 @@
 import { RedisClientType, createClient } from 'redis';
+import { RedisMockStore } from './redis-test-mock';
 
 const REDIS_URL_READ = process.env.REDIS_URL_WRITE || 'redis://127.0.0.1:6379';
+const TEST_MODE = process.env.TESTCONTAINERS_DB === 'true';
 
 export class RedisReadClient {
   private static client: RedisClientType;
+  private static isMock = TEST_MODE;
 
   private constructor() {}
 
   static async start() {
+    if (RedisReadClient.isMock) {
+      console.log('[RedisReadClient] Rodando com mock em memória');
+      RedisReadClient.client = (RedisMockStore as unknown) as RedisClientType;
+      return;
+    }
+
     if (!RedisReadClient.client) {
       RedisReadClient.client = createClient({ url: REDIS_URL_READ });
 
@@ -20,9 +29,24 @@ export class RedisReadClient {
     }
   }
 
+  static async stop() {
+    if (RedisReadClient.isMock) return;
+
+    if (RedisReadClient.client) {
+      try {
+        await RedisReadClient.client.disconnect();
+      } catch (e) {
+        console.error('[REDIS READ DISCONNECT ERROR]', e);
+        process.exit(1);
+      }
+    }
+  }
+
   static async get(key: string): Promise<string> {
     try {
-      return await RedisReadClient.client.get(key);
+      return RedisReadClient.isMock
+        ? await RedisMockStore.get(key)
+        : await RedisReadClient.client.get(key);
     } catch (e) {
       console.error('[CACHE_SESSIONS_GET_ERROR]', e, key);
     }
@@ -30,7 +54,9 @@ export class RedisReadClient {
 
   static async hGetAll(key: string): Promise<Record<string, string | number>> {
     try {
-      return await RedisReadClient.client.hGetAll(key);
+      return RedisReadClient.isMock
+        ? await RedisMockStore.hGetAll(key)
+        : await RedisReadClient.client.hGetAll(key);
     } catch (e) {
       console.error('[CACHE_SESSIONS_GET_ERROR]', e, key);
     }
@@ -40,6 +66,10 @@ export class RedisReadClient {
     MATCH: string,
     COUNT: number = 100,
   ): Promise<Map<string, string>> {
+    if (RedisReadClient.isMock) {
+      return RedisMockStore.scan(MATCH);
+    }
+
     const result = new Map<string, string>();
     const { keys } = await RedisReadClient.client.scan(0, {
       MATCH,

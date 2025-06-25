@@ -18,7 +18,7 @@ import { IconUtils } from '@utils/icons';
 import { UserService } from '../user/service';
 import { IFilterParams, IWorkspaceService } from './types';
 import { AddressValidator } from '@src/utils';
-import { networks } from '@src/mocks/networks';
+import { networks } from '@src/constants/networks';
 
 export class WorkspaceService implements IWorkspaceService {
   private _ordination: IOrdination<Workspace> = {
