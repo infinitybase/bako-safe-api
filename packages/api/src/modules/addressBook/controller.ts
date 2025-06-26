@@ -130,10 +130,12 @@ export class AddressBookController {
           duplicatedAddressFormat.length && duplicatedAddress[0].id !== params.id;
       }
 
+      const fieldError = hasDuplicateNickname ? 'nickname' : 'address';
+
       if (hasDuplicateNickname || hasDuplicateAddress) {
         throw new Internal({
           type: ErrorTypes.Internal,
-          title: 'Error on contact update',
+          title: `Error on contact update - ${fieldError} duplicated`,
           detail: `Duplicated ${hasDuplicateNickname ? 'nickname' : 'address'}`,
         });
       }
