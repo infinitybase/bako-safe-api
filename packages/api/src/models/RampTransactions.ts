@@ -9,6 +9,8 @@ export enum RampTransactionProvider {
   MELD = 'MELD',
 }
 
+export type ProviderData = IMeldProviderData;
+
 @Entity('ramp_transactions')
 export class RampTransaction extends Base {
   @Column({ name: 'provider', type: 'varchar' })
@@ -18,7 +20,7 @@ export class RampTransaction extends Base {
     type: 'jsonb',
     name: 'provider_data',
   })
-  providerData: IMeldProviderData;
+  providerData: ProviderData;
 
   @JoinColumn({ name: 'user_id' })
   @ManyToOne(() => User)

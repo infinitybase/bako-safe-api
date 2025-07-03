@@ -5,26 +5,34 @@ import {
   TransactionType,
 } from 'bakosafe';
 import {
-  TransactionRequest,
   TransactionType as FuelTransactionType,
   hexlify,
   Network,
+  TransactionRequest,
 } from 'fuels';
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 
 import { User } from '@models/User';
 
-import { Base } from './Base';
-import { Predicate } from './Predicate';
+import { networks } from '@src/constants/networks';
 import { ITransactionResponse } from '@src/modules/transaction/types';
 import {
   AssetFormat,
   formatAssetFromOperations,
   formatAssets,
 } from '@src/utils/formatAssets';
-import { networks } from '@src/constants/networks';
+import { Base } from './Base';
+import { Predicate } from './Predicate';
 
 const { FUEL_PROVIDER, FUEL_PROVIDER_CHAIN_ID } = process.env;
+
+export enum TransactionTypeWithRamp {
+  ON_RAMP_DEPOSIT = 'ON_RAMP_DEPOSIT',
+}
+
+export enum TransactionStatusWithRamp {
+  PENDING_PROVIDER = 'pending_provider',
+}
 
 export { TransactionStatus, TransactionType };
 
@@ -42,7 +50,7 @@ class Transaction extends Base {
     enum: TransactionType,
     default: TransactionType.TRANSACTION_SCRIPT,
   })
-  type: TransactionType;
+  type: TransactionType | TransactionTypeWithRamp;
 
   @Column({
     type: 'jsonb',
@@ -55,7 +63,7 @@ class Transaction extends Base {
     enum: TransactionStatus,
     default: TransactionStatus.AWAIT_REQUIREMENTS,
   })
-  status: TransactionStatus;
+  status: TransactionStatus | TransactionStatusWithRamp;
   @Column({
     type: 'jsonb',
     name: 'summary',
