@@ -2,6 +2,7 @@ import { ErrorTypes, Internal } from '@src/utils/error';
 import { AxiosError } from 'axios';
 import {
   IBuyCryptoRequest,
+  ICommonSearchParams,
   ICreateWidgetResponse,
   IFiatCurrencyResponse,
   IMeldService,
@@ -10,7 +11,6 @@ import {
   IPurchaseLimitsResponse,
   IQuoteParams,
   IQuoteResponse,
-  ISearchCountryParams,
   ISearchCountryResponse,
   ISearchCurrencyResponse,
   ISellCryptoRequest,
@@ -24,7 +24,7 @@ export default class MeldService implements IMeldService {
    * @description Returns a list of properties which meet the search criteria.
    */
   async getCountries(
-    params: ISearchCountryParams,
+    params: ICommonSearchParams,
   ): Promise<ISearchCountryResponse[]> {
     try {
       const { data } = await meldApi.get<ISearchCountryResponse[]>(
@@ -46,7 +46,7 @@ export default class MeldService implements IMeldService {
   /**
    * @description Returns a list of properties which meet the search criteria.
    */
-  async getFiatCurrencies(params: ISearchCountryParams) {
+  async getFiatCurrencies(params: ICommonSearchParams) {
     try {
       const { data } = await meldApi.get<IFiatCurrencyResponse[]>(
         '/service-providers/properties/fiat-currencies',
@@ -64,7 +64,7 @@ export default class MeldService implements IMeldService {
     }
   }
 
-  async getPaymentMethods(params: ISearchCountryParams) {
+  async getPaymentMethods(params: ICommonSearchParams) {
     try {
       const { data } = await meldApi.get<IPaymentMethodResponse[]>(
         '/service-providers/properties/payment-methods',
@@ -131,7 +131,7 @@ export default class MeldService implements IMeldService {
   /**
    * @description Returns a list of properties which meet the search criteria.
    */
-  async getCryptoCurrencies(params: ISearchCountryParams) {
+  async getCryptoCurrencies(params: ICommonSearchParams) {
     try {
       const { data } = await meldApi.get<ISearchCurrencyResponse[]>(
         '/service-providers/properties/crypto-currencies',

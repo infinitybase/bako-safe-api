@@ -58,7 +58,7 @@ export interface IPaymentMethodResponse {
   };
 }
 
-export interface ISearchCountryParams {
+export interface ICommonSearchParams {
   serviceProviders?: string;
   statuses?: 'LIVE' | 'RECENTLY_ADDED' | 'BUILDING';
   categories?: string;
@@ -295,12 +295,12 @@ export interface IMeldPayload {
 }
 
 export interface IMeldService {
-  getCountries: (params: ISearchCountryParams) => Promise<ISearchCountryResponse[]>;
+  getCountries: (params: ICommonSearchParams) => Promise<ISearchCountryResponse[]>;
   getFiatCurrencies: (
-    params: ISearchCountryParams,
+    params: ICommonSearchParams,
   ) => Promise<IFiatCurrencyResponse[]>;
   getPaymentMethods: (
-    params: ISearchCountryParams,
+    params: ICommonSearchParams,
   ) => Promise<IPaymentMethodResponse[]>;
   getOnRampPurchaseLimits: (
     params: IPurchaseLimitsParams,
@@ -309,7 +309,7 @@ export interface IMeldService {
     params: IPurchaseLimitsParams,
   ) => Promise<IPurchaseLimitsResponse[]>;
   getCryptoCurrencies: (
-    params: ISearchCountryParams,
+    params: ICommonSearchParams,
   ) => Promise<ISearchCurrencyResponse[]>;
   getServiceProviders: (
     params: IServiceProviderParams,
