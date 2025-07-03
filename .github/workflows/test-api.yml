@@ -2,7 +2,8 @@ name: Run API Tests
 
 on:
   pull_request:
-    branches: ["**"]
+    branches:
+      - "**"
 
 jobs:
   test:
