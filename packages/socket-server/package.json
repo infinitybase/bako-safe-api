@@ -8,7 +8,7 @@
 		"dev": "NODE_ENV=development ts-node-dev --respawn --transpile-only -r tsconfig-paths/register -r dotenv/config src/index.ts",
 		"start": "node ./build/index.js",
 		"build": "tsc --project . && tscpaths -p tsconfig.json -s ./src -o ./build",
-		"run:socket-server": "make -C ./ deploy env_file=.env"
+		"socket-server:dev:start": "make -C ./ socket-init && make -C ./ socket-wait"
 	},
 	"keywords": [],
 	"dependencies": {

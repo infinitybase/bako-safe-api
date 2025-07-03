@@ -3,10 +3,9 @@
   "version": "0.0.1",
   "license": "MIT",
   "scripts": {
-    "db:dev:start": "make -C ./ database-init env_file=.env.example",
-    "db:dev:stop": "make -C ./ database-down env_file=.env.example",
-    "db:dev:test": "pending",
-    "db:dev:reestart": "pending"
+    "db:dev:start": "make -C ./ database-init && make -C ./ database-wait",
+    "db:dev:stop": "make -C ./ database-down",
+    "db:dev:test": "pending"
   },
   "devDependencies": {
     "husky": "5.2.0"
