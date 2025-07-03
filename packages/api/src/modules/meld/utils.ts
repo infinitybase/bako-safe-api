@@ -6,7 +6,7 @@ dotenv.config();
 const { MELD_API_URL, MELD_API_KEY } = process.env;
 
 if (!MELD_API_URL || !MELD_API_KEY) {
-  throw new Error('MELD_API_URL and MELD_API_KEY must be defined in .env');
+  console.warn('MELD_API_URL and MELD_API_KEY must be defined in .env');
 }
 
 export const meldApi = axios.create({
