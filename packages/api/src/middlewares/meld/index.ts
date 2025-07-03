@@ -30,21 +30,19 @@ export function MeldAuthMiddleware(
   _res: Response,
   next: NextFunction,
 ) {
-  if (!MELD_WEBHOOK_SECRET) {
-    console.warn(
-      '[MELD] Skipping webhook verification - MELD_WEBHOOK_SECRET not configured',
-    );
-    return next();
-  }
-
   try {
+    if (!MELD_WEBHOOK_SECRET) {
+      throw new Unauthorized({
+        title: UnauthorizedErrorTitles.MISSING_CREDENTIALS,
+        detail: 'MELD_WEBHOOK_SECRET environment variable is not set',
+        type: ErrorTypes.Unauthorized,
+      });
+    }
+
     const signature = req.headers['meld-signature'] as string;
     const timestamp = req.headers['meld-signature-timestamp'] as string;
 
     if (!signature || !timestamp) {
-      console.error(
-        '[MELD] Missing required headers: Meld-Signature or Meld-Signature-Timestamp',
-      );
       throw new Unauthorized({
         title: UnauthorizedErrorTitles.MISSING_CREDENTIALS,
         detail: 'Meld-Signature and Meld-Signature-Timestamp headers are required',
@@ -59,8 +57,7 @@ export function MeldAuthMiddleware(
     const protocol = req.protocol;
     const host = req.get('host');
 
-    // const url = `${protocol}://${host}${req.originalUrl}`;
-    const url = 'https://lemon-forest-46.webhook.cool';
+    const url = `${protocol}://${host}${req.originalUrl}`;
 
     // Create the string to sign: TIMESTAMP.URL.BODY
     const stringToSign = `${timestamp}.${url}.${rawBody}`;
@@ -89,8 +86,6 @@ export function MeldAuthMiddleware(
         type: ErrorTypes.Unauthorized,
       });
     }
-
-    console.log('[MELD] Webhook signature verified successfully');
 
     next();
   } catch (error) {
