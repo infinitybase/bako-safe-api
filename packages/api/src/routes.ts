@@ -32,8 +32,8 @@ router.use('/address-book', addressBook);
 router.use('/transaction', transactions);
 router.use('/notifications', notifications);
 router.use('/external', externalRoute);
-router.use('/ramp-transactions', rampTransactions);
 router.use('/ramp-transactions/meld', meld);
+router.use('/ramp-transactions', rampTransactions);
 router.use('/webhooks', webhook);
 
 // ping route
