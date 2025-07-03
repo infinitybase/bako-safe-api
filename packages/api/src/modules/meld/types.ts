@@ -257,7 +257,7 @@ export type IMeldTransactionResponse = {
 export interface IMeldTransactionCryptoWeebhook {
   eventType: string;
   eventId: string;
-  timestemp: string;
+  timestamp: string;
   accountId: string;
   version: string;
   payload: {
