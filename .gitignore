@@ -9,6 +9,8 @@ postgresqldev/
 mongodbdev/
 mongodbdevelopment/
 postgresqlpostgres/
+mongodbdevelopment/
+packages/database/mongodb
 
 ## API
 # Build

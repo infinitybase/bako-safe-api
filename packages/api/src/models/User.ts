@@ -14,6 +14,7 @@ export type WebAuthn = {
 export enum TypeUser {
   FUEL = 'FUEL',
   WEB_AUTHN = 'WEB_AUTHN',
+  EVM = 'EVM',
 }
 
 export type UserSettings = {
