@@ -4,6 +4,7 @@ import { error } from '@src/utils/error';
 import { IRampTransactionService } from '../rampTransactions/types';
 import { IMeldService, IRequestCreateWidgetSession, IRequestQuote } from './types';
 import {
+  CRYPTO_CURRENCIES,
   FIAT_CURRENCIES,
   formatAmount,
   serviceProvidersWithFuelIntegration,
@@ -33,7 +34,7 @@ export default class MeldController {
     try {
       const currencies = await this._service.getFiatCurrencies({
         accountFilter: true,
-        fiatCurrencies: 'BRL,USD,EUR',
+        fiatCurrencies: FIAT_CURRENCIES.join(','),
       });
       return successful(currencies, Responses.Ok);
     } catch (err) {
@@ -46,7 +47,7 @@ export default class MeldController {
       const limits = await this._service.getOnRampPurchaseLimits({
         accountFilter: true,
         fiatCurrencies: FIAT_CURRENCIES.join(','),
-        cryptoCurrencies: 'ETH_FUEL',
+        cryptoCurrencies: CRYPTO_CURRENCIES.join(','),
       });
       return successful(limits, Responses.Ok);
     } catch (err) {
@@ -59,7 +60,7 @@ export default class MeldController {
       const limits = await this._service.getOffRampPurchaseLimits({
         accountFilter: true,
         fiatCurrencies: FIAT_CURRENCIES.join(','),
-        cryptoCurrencies: 'ETH_FUEL',
+        cryptoCurrencies: CRYPTO_CURRENCIES.join(','),
       });
       return successful(limits, Responses.Ok);
     } catch (err) {
@@ -71,7 +72,7 @@ export default class MeldController {
     try {
       const currencies = await this._service.getCryptoCurrencies({
         accountFilter: true,
-        cryptoCurrencies: 'ETH_FUEL',
+        cryptoCurrencies: CRYPTO_CURRENCIES.join(','),
       });
       return successful(currencies, Responses.Ok);
     } catch (err) {
