@@ -66,8 +66,8 @@ importers:
         specifier: 1.5.1
         version: 1.5.1
       bakosafe:
-        specifier: 0.1.10-beta.1
-        version: 0.1.10-beta.1(fuels@0.99.0(vitest@2.0.5(@types/node@20.6.0)))
+        specifier: 0.1.10-beta.6
+        version: 0.1.10-beta.6(fuels@0.99.0(vitest@2.0.5(@types/node@20.6.0)))
       body-parser:
         specifier: 1.20.2
         version: 1.20.2
@@ -2739,6 +2739,11 @@ packages:
     resolution: {integrity: sha512-s0gcMZ8FdCTB92WI9EOUmShkjCQrTaWoeUl3tE2oGqohjdiLBCcR+4ee95014njjtZb5lzlW2WDMAskps/W5Cg==}
     peerDependencies:
       fuels: '>=0.99.0'
+
+  bakosafe@0.1.10-beta.6:
+    resolution: {integrity: sha512-gEARZinHEX6aJmgw+4bKu0I88KtmxMrprc9Tv+WRT37mb1ICo8e5xo9bAP7U5twjFsecIOAo8aT9EsmuFd9TGw==}
+    peerDependencies:
+      fuels: ^0.101.0
 
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
@@ -9199,6 +9204,17 @@ snapshots:
       babel-preset-current-node-syntax: 1.1.0(@babel/core@7.27.3)
 
   bakosafe@0.1.10-beta.1(fuels@0.99.0(vitest@2.0.5(@types/node@20.6.0))):
+    dependencies:
+      '@ethereumjs/util': 9.0.3
+      '@ethersproject/bytes': 5.7.0
+      '@noble/curves': 1.9.1
+      axios: 1.5.1
+      fuels: 0.99.0(vitest@2.0.5(@types/node@20.6.0))
+      uuid: 9.0.1
+    transitivePeerDependencies:
+      - debug
+
+  bakosafe@0.1.10-beta.6(fuels@0.99.0(vitest@2.0.5(@types/node@20.6.0))):
     dependencies:
       '@ethereumjs/util': 9.0.3
       '@ethersproject/bytes': 5.7.0

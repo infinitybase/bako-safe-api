@@ -1,25 +1,20 @@
-import { Vault } from 'bakosafe';
+import { AddressUtils as BakoAddressUtils, DEFAULT_PREDICATE_VERSION, Vault } from 'bakosafe';
 import { Brackets, MoreThan } from 'typeorm';
 
 import { NotFound } from '@src/utils/error';
 import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination';
-import { DEFAULT_PREDICATE_VERSION } from 'bakosafe';
 
 import { Predicate, TypeUser, User, Workspace } from '@models/index';
 
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
 
-import {
-  IPredicateFilterParams,
-  IPredicatePayload,
-  IPredicateService,
-} from './types';
+import { IPredicateFilterParams, IPredicatePayload, IPredicateService, } from './types';
 import { IPredicateOrdination, setOrdination } from './ordination';
 import { Network, ZeroBytes32 } from 'fuels';
 import { UserService } from '../user/service';
 import { IconUtils } from '@src/utils/icons';
-import { FuelProvider, RedisReadClient, RedisWriteClient } from '@src/utils';
+import { FuelProvider } from '@src/utils';
 import App from '@src/server/app';
 
 export class PredicateService implements IPredicateService {
@@ -75,12 +70,16 @@ export class PredicateService implements IPredicateService {
 
       for await (const member of validUsers) {
         let user = await userService.findByAddress(member);
+        let type = TypeUser.FUEL;
+        if (BakoAddressUtils.isEvm(member)) {
+          type = TypeUser.EVM;
+        }
 
         if (!user) {
           user = await userService.create({
             address: member,
             avatar: IconUtils.user(),
-            type: TypeUser.FUEL,
+            type,
             name: member,
             provider: network.url,
           });
