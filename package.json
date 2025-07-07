@@ -12,7 +12,8 @@
     "dev": "turbo run dev",
     "debug": "turbo run debug",
     "dev:db:start": "turbo run db:dev:start",
-    "dev:chain:start": "turbo run chain:dev:start"
+    "dev:chain:start": "turbo run chain:dev:start",
+    "start:environment": "chmod +x script.sh && ./script.sh"
   },
   "devDependencies": {
     "turbo": "^1.13.3"
