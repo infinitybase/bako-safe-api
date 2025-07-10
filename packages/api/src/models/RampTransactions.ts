@@ -1,4 +1,4 @@
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
 
 import { IMeldProviderData } from '@src/modules/meld/types';
 import { Transaction } from '.';
@@ -26,7 +26,21 @@ export class RampTransaction extends Base {
   @ManyToOne(() => User)
   user: User;
 
+  @OneToOne(() => Transaction, transaction => transaction.rampTransaction, {
+    nullable: true,
+  })
   @JoinColumn({ name: 'transaction_id' })
-  @ManyToOne(() => Transaction, { nullable: true })
   transaction?: Transaction;
+
+  @Column({ name: 'source_currency', type: 'varchar', nullable: true })
+  sourceCurrency?: string;
+
+  @Column({ name: 'source_amount', type: 'varchar', nullable: true })
+  sourceAmount?: string;
+
+  @Column({ name: 'destination_currency', type: 'varchar', nullable: true })
+  destinationCurrency?: string;
+
+  @Column({ name: 'destination_amount', type: 'varchar', nullable: true })
+  destinationAmount?: string;
 }
