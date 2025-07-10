@@ -1,4 +1,7 @@
+import { ASSETS, FIAT_CURRENCIES } from '@src/constants/assets';
+import { Transaction } from '@src/models';
 import {
+  bn,
   Operation,
   OperationName,
   OutputCoin,
@@ -12,6 +15,7 @@ export type AssetFormat = {
   assetId: string;
   amount: string;
   to: string;
+  currency?: string;
 };
 
 const formatAssets = (
@@ -71,4 +75,35 @@ const formatAssetFromOperations = (
   return assets;
 };
 
-export { formatAssetFromOperations, formatAssets };
+const formatAssetFromRampTransaction = (
+  transaction: Transaction,
+): AssetFormat[] => {
+  if (!transaction.rampTransaction) return [];
+
+  const {
+    destinationAmount,
+    sourceAmount,
+    destinationCurrency,
+    sourceCurrency,
+    providerData,
+  } = transaction.rampTransaction;
+
+  const isOnRamp = destinationCurrency === 'ETH_FUEL';
+
+  return [
+    {
+      assetId: isOnRamp ? ASSETS.FUEL_ETH : '',
+      amount: bn.parseUnits(destinationAmount).toString(),
+      to: transaction.predicate.predicateAddress,
+      currency: destinationCurrency,
+    },
+    {
+      amount: bn.parseUnits(sourceAmount).toString(),
+      assetId: FIAT_CURRENCIES[sourceCurrency] || '',
+      to: providerData?.transactionData?.cryptoDetails.sourceWalletAddress || '',
+      currency: sourceCurrency,
+    },
+  ];
+};
+
+export { formatAssetFromOperations, formatAssetFromRampTransaction, formatAssets };
