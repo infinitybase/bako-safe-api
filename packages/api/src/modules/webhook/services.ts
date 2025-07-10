@@ -13,6 +13,7 @@ import { getTransactionSummary } from 'fuels';
 import { IMeldTransactionCryptoWeebhook, ITransaction } from '../meld/types';
 import { meldApi } from '../meld/utils';
 import { ICreateTransactionPayload } from '../transaction/types';
+import { getTransactionStatusByPaymentStatus } from './utils';
 
 export default class WebhookService {
   async handleMeldCryptoWebhook(data: IMeldTransactionCryptoWeebhook) {
@@ -24,6 +25,9 @@ export default class WebhookService {
           `ramp.provider_data::jsonb -> 'widgetSessionData' ->> 'externalSessionId' = :sessionId`,
           { sessionId: externalSessionId },
         )
+        .leftJoin('ramp.transaction', 'transaction')
+        .leftJoin('ramp.user', 'user')
+        .addSelect(['transaction.id', 'user.id'])
         .getOne();
 
       if (!meldData) {
@@ -61,14 +65,18 @@ export default class WebhookService {
         });
 
         const config = JSON.parse(predicate.configurable);
+        const meldTxData = meldTransactions.data.transactions[0];
+        const isOnRamp = meldTxData.destinationCurrencyCode === 'ETH_FUEL';
 
         const newTransaction: ICreateTransactionPayload = {
-          type: TransactionTypeWithRamp.ON_RAMP_DEPOSIT,
+          type: isOnRamp
+            ? TransactionTypeWithRamp.ON_RAMP_DEPOSIT
+            : TransactionTypeWithRamp.OFF_RAMP_WITHDRAW,
           status: TransactionStatusWithRamp.PENDING_PROVIDER,
           gasUsed: txSummary.gasUsed.format(),
           createdBy: meldData.user,
           hash: txSummary.id.slice(2),
-          name: 'On Ramp Deposit',
+          name: isOnRamp ? 'On Ramp' : 'Off Ramp',
           resume: {
             hash: txSummary.id,
             status: TransactionStatus.SUCCESS,
@@ -116,9 +124,10 @@ export default class WebhookService {
         await RampTransaction.update(meldData.id, {
           providerData: {
             ...meldData.providerData,
-            transactionData: meldTransactions.data.transactions[0],
+            transactionData: meldTxData,
             paymentStatus: data.payload.paymentTransactionStatus,
           },
+          destinationAmount: meldTxData.destinationAmount.toString(),
           transaction,
         }).catch(error => {
           throw new Internal({
@@ -129,6 +138,18 @@ export default class WebhookService {
         });
         return;
       }
+
+      await Transaction.update(meldData.transaction.id, {
+        status: getTransactionStatusByPaymentStatus(
+          data.payload.paymentTransactionStatus,
+        ),
+      }).catch(error => {
+        throw new Internal({
+          title: 'Error updating transaction status',
+          detail: error instanceof Error ? error.message : 'Unknown error',
+          type: ErrorTypes.Internal,
+        });
+      });
 
       await RampTransaction.update(meldData.id, {
         providerData: {
