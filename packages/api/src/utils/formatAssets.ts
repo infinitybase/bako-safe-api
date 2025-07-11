@@ -91,16 +91,25 @@ const formatAssetFromRampTransaction = (
   const isOnRamp = destinationCurrency === 'ETH_FUEL';
 
   return [
+    // destination currency
     {
-      assetId: isOnRamp ? ASSETS.FUEL_ETH : '',
+      assetId: isOnRamp
+        ? ASSETS.FUEL_ETH
+        : FIAT_CURRENCIES[destinationCurrency] || '',
       amount: bn.parseUnits(destinationAmount).toString(),
-      to: transaction.predicate.predicateAddress,
+      to: isOnRamp
+        ? transaction.predicate.predicateAddress
+        : providerData?.transactionData?.cryptoDetails.destinationWalletAddress ||
+          '',
       currency: destinationCurrency,
     },
+    // source currency
     {
       amount: bn.parseUnits(sourceAmount).toString(),
-      assetId: FIAT_CURRENCIES[sourceCurrency] || '',
-      to: providerData?.transactionData?.cryptoDetails.sourceWalletAddress || '',
+      assetId: isOnRamp ? FIAT_CURRENCIES[sourceCurrency] || '' : ASSETS.FUEL_ETH,
+      to: isOnRamp
+        ? providerData?.transactionData?.cryptoDetails.sourceWalletAddress || ''
+        : transaction.predicate.predicateAddress,
       currency: sourceCurrency,
     },
   ];
