@@ -24,6 +24,11 @@ export class UpdateRampTransactionsTable1752097335860
         type: 'varchar',
         isNullable: true,
       }),
+      new TableColumn({
+        name: 'payment_method',
+        type: 'varchar',
+        isNullable: true,
+      }),
     ]);
   }
 
@@ -33,6 +38,7 @@ export class UpdateRampTransactionsTable1752097335860
       'source_amount',
       'destination_currency',
       'destination_amount',
+      'payment_method',
     ]);
   }
 }

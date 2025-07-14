@@ -198,6 +198,8 @@ export class TransactionService implements ITransactionService {
         'ramp.sourceAmount',
         'ramp.destinationCurrency',
         'ramp.destinationAmount',
+        'ramp.paymentMethod',
+        'ramp.providerData',
       ])
       .andWhere(
         // TODO: On release to mainnet we need to remove this condition
@@ -359,6 +361,8 @@ export class TransactionService implements ITransactionService {
         'ramp.sourceAmount',
         'ramp.destinationCurrency',
         'ramp.destinationAmount',
+        'ramp.paymentMethod',
+        'ramp.providerData',
       ])
       .andWhere(
         `regexp_replace(t.network->>'url', '^https?://[^@]+@', 'https://') = :network`,

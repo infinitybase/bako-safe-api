@@ -241,6 +241,7 @@ export interface ITransaction {
   isImported: boolean;
   isPassthrough: boolean;
   key: string;
+  paymentMethodType?: string;
   serviceProvider: string;
   sessionId: string;
   status: string;
@@ -333,6 +334,7 @@ interface ICreateWidgetSessionRequestSchema extends ValidatedRequestSchema {
     sourceCurrencyCode: string;
     sourceAmount: string;
     walletAddress?: string;
+    paymentMethodType?: string;
   };
 }
 

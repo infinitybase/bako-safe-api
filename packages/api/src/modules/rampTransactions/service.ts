@@ -14,6 +14,7 @@ export default class RampTransactionsService implements IRampTransactionService 
         sourceAmount: payload.sourceAmount,
         destinationCurrency: payload.destinationCurrency,
         destinationAmount: payload.destinationAmount,
+        paymentMethod: payload.paymentMethod,
       }).save();
     } catch (error) {
       throw new Internal({
