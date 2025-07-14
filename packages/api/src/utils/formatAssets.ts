@@ -1,5 +1,5 @@
 import { ASSETS, FIAT_CURRENCIES } from '@src/constants/assets';
-import { Transaction } from '@src/models';
+import { Transaction, TransactionTypeWithRamp } from '@src/models';
 import {
   bn,
   Operation,
@@ -88,7 +88,7 @@ const formatAssetFromRampTransaction = (
     providerData,
   } = transaction.rampTransaction;
 
-  const isOnRamp = destinationCurrency === 'ETH_FUEL';
+  const isOnRamp = transaction.type === TransactionTypeWithRamp.ON_RAMP_DEPOSIT;
 
   return [
     // source currency
