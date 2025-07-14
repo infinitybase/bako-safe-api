@@ -16,6 +16,7 @@ export interface ICreatePayload {
   sourceAmount?: string;
   destinationCurrency?: string;
   destinationAmount?: string;
+  paymentMethod?: string;
 }
 
 export interface IRampTransactionService {
