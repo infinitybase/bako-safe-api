@@ -335,6 +335,7 @@ interface ICreateWidgetSessionRequestSchema extends ValidatedRequestSchema {
     sourceAmount: string;
     walletAddress?: string;
     paymentMethodType?: string;
+    destinationAmount?: string;
   };
 }
 

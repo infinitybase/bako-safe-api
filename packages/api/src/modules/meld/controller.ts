@@ -147,6 +147,7 @@ export default class MeldController {
         sourceAmount: request.body.sourceAmount,
         destinationCurrency: request.body.destinationCurrencyCode,
         paymentMethod: request.body.paymentMethodType,
+        destinationAmount: request.body.destinationAmount,
       });
 
       return successful(rampTransaction, Responses.Ok);
