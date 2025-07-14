@@ -147,6 +147,16 @@ class Transaction extends Base {
 
     const result = Object.assign(transaction, {
       assets,
+      rampTransaction: {
+        ...(transaction.rampTransaction || {}),
+        fiatAmountInUsd:
+          transaction.rampTransaction?.providerData?.transactionData
+            ?.fiatAmountInUsd,
+        providerTransaction:
+          transaction.rampTransaction?.providerData?.transactionData
+            ?.serviceProvider,
+        providerData: undefined, // Avoid sending providerData directly
+      },
     });
 
     return result;
