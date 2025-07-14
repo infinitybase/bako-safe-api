@@ -21,6 +21,7 @@ export const ValidatorCreateWidgetRequest = validator.body(
     type: Joi.string().valid('BUY', 'SELL').required(),
     countryCode: Joi.string().required(),
     destinationCurrencyCode: Joi.string().required(),
+    destinationAmount: Joi.string().optional(),
     serviceProvider: Joi.string()
       .valid(...serviceProvidersWithFuelIntegration)
       .required(),
