@@ -12,6 +12,7 @@ export enum RecoverCodeType {
   AUTH = 'AUTH',
   TX_CONNECTOR = 'TX_CONNECTOR',
   AUTH_ONCE = 'AUTH_ONCE',
+  AUTH_EXTERN_DAPP = 'AUTH_EXTERN_DAPP',
 }
 
 @Entity('recover_codes')
@@ -43,7 +44,7 @@ class RecoverCode extends Base {
   validAt: Date;
 
   @Column({ name: 'metadata', type: 'jsonb' })
-  metadata: { [key: string]: string | number | boolean };
+  metadata: { [key: string]: string | number | boolean | object };
 
   @Column()
   used: boolean;

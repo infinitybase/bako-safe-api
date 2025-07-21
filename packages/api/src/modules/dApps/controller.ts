@@ -1,6 +1,7 @@
 import { TransactionStatus } from 'bakosafe';
 import { addMinutes } from 'date-fns';
 
+// eslint-disable-next-line prettier/prettier
 import { type DApp, Predicate, RecoverCodeType, User } from '@src/models';
 import { SocketClient } from '@src/socket/client';
 
