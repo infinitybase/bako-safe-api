@@ -8,7 +8,13 @@ import {
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 import { Network, Receipt, TransactionRequest } from 'fuels';
 
-import { Predicate, Transaction, TransactionType, TypeUser } from '@models/index';
+import {
+  Predicate,
+  Transaction,
+  TransactionStatusWithRamp,
+  TransactionType,
+  TypeUser,
+} from '@models/index';
 
 import { AuthValidatedRequest } from '@middlewares/auth/types';
 
@@ -59,7 +65,7 @@ export interface ICreateTransactionPayload {
   name: string;
   hash: string;
   predicateAddress: string;
-  status: TransactionStatus;
+  status: TransactionStatus | TransactionStatusWithRamp;
   txData: TransactionRequest;
   assets: {
     assetId: string;

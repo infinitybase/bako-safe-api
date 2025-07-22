@@ -1,23 +1,21 @@
 import { Predicate, Transaction, TransactionType, User } from '@src/models';
-import { IPagination } from '@src/utils/pagination';
-import {
-  ITransactionResponse,
-  ITransactionsListParams,
-  TransactionHistory,
-} from './types';
-import { TransactionStatus } from 'bakosafe';
-import { Provider, TransactionResult } from 'fuels';
 import { formatAssets } from '@src/utils/formatAssets';
 import {
   IDefaultOrdination,
   IOrdination,
   Sort,
 } from '@src/utils/ordination/helper';
+import { IPagination } from '@src/utils/pagination';
+import { TransactionStatus } from 'bakosafe';
 import { isUUID } from 'class-validator';
-import { ITransactionCounter } from './types';
+import { Provider, TransactionResult } from 'fuels';
 import { ITransactionPagination } from './pagination';
-import { getAssetsMaps } from '@src/utils';
-import { PredicateService } from '../predicate/services';
+import {
+  ITransactionCounter,
+  ITransactionResponse,
+  ITransactionsListParams,
+  TransactionHistory,
+} from './types';
 
 export const formatTransactionsResponse = (
   transactions: IPagination<Transaction> | Transaction[],
