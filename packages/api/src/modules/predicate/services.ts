@@ -1,4 +1,8 @@
-import { AddressUtils as BakoAddressUtils, DEFAULT_PREDICATE_VERSION, Vault } from 'bakosafe';
+import {
+  AddressUtils as BakoAddressUtils,
+  DEFAULT_PREDICATE_VERSION,
+  Vault,
+} from 'bakosafe';
 import { Brackets, MoreThan } from 'typeorm';
 
 import { NotFound } from '@src/utils/error';
@@ -9,7 +13,11 @@ import { Predicate, TypeUser, User, Workspace } from '@models/index';
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
 
-import { IPredicateFilterParams, IPredicatePayload, IPredicateService, } from './types';
+import {
+  IPredicateFilterParams,
+  IPredicatePayload,
+  IPredicateService,
+} from './types';
 import { IPredicateOrdination, setOrdination } from './ordination';
 import { Network, ZeroBytes32 } from 'fuels';
 import { UserService } from '../user/service';
@@ -403,6 +411,9 @@ export class PredicateService implements IPredicateService {
     const _provider = await FuelProvider.create(
       provider.replace(/^https?:\/\/[^@]+@/, 'https://'),
     );
+
+    console.log(provider, configurable, version);
+
     return new Vault(_provider, conf, version);
   }
 

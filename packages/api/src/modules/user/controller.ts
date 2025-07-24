@@ -379,4 +379,77 @@ export class UserController {
       return error(e.error, e.statusCode);
     }
   }
+
+  async wallet(req: IMeRequest) {
+    try {
+      const { user } = req;
+
+      // Buscar o personal vault (predicate root) do usuário
+      const personalVault = await Predicate.findOne({
+        where: {
+          owner: { id: user.id },
+          root: true,
+        },
+        relations: ['owner', 'workspace', 'members'],
+      });
+
+      if (!personalVault) {
+        return successful(
+          {
+            message: 'Personal vault not found',
+            wallet: null,
+          },
+          Responses.Ok,
+        );
+      }
+
+      // Formatar os membros do vault
+      const members =
+        personalVault.members?.map(member => ({
+          id: member.id,
+          name: member.name,
+          address: member.address,
+          avatar: member.avatar,
+          type: member.type,
+        })) || [];
+
+      // Retornar informações do personal vault
+      const walletInfo = {
+        id: personalVault.id,
+        name: personalVault.name,
+        address: personalVault.predicateAddress,
+        description: personalVault.description,
+        configurable: personalVault.configurable,
+        version: personalVault.version,
+        root: personalVault.root,
+        createdAt: personalVault.createdAt,
+        updatedAt: personalVault.updatedAt,
+        owner: {
+          id: personalVault.owner.id,
+          name: personalVault.owner.name,
+          address: personalVault.owner.address,
+          avatar: personalVault.owner.avatar,
+        },
+        workspace: personalVault.workspace
+          ? {
+              id: personalVault.workspace.id,
+              name: personalVault.workspace.name,
+              avatar: personalVault.workspace.avatar,
+              description: personalVault.workspace.description,
+            }
+          : null,
+        members,
+        memberCount: members.length,
+      };
+
+      return successful(
+        {
+          wallet: walletInfo,
+        },
+        Responses.Ok,
+      );
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
 }

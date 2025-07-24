@@ -34,6 +34,9 @@ router.get(
   authMiddleware,
   handleResponse(userController.tokensUSDAmount),
 );
+
+router.get('/wallet', authMiddleware, handleResponse(userController.wallet));
+
 router.get(
   '/latest/transactions',
   authMiddleware,
