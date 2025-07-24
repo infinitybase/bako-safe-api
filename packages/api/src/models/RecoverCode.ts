@@ -12,7 +12,6 @@ export enum RecoverCodeType {
   AUTH = 'AUTH',
   TX_CONNECTOR = 'TX_CONNECTOR',
   AUTH_ONCE = 'AUTH_ONCE',
-  AUTH_EXTERN_DAPP = 'AUTH_EXTERN_DAPP',
 }
 
 @Entity('recover_codes')
