@@ -66,8 +66,8 @@ importers:
         specifier: 1.5.1
         version: 1.5.1
       bakosafe:
-        specifier: 0.1.10-beta.7
-        version: 0.1.10-beta.7(fuels@0.101.1(vitest@2.0.5(@types/node@20.6.0)))
+        specifier: 0.2.0
+        version: 0.2.0(fuels@0.101.1(vitest@2.0.5(@types/node@20.6.0)))
       body-parser:
         specifier: 1.20.2
         version: 1.20.2
@@ -270,8 +270,8 @@ importers:
         specifier: 1.5.1
         version: 1.5.1
       bakosafe:
-        specifier: 0.1.10-beta.7
-        version: 0.1.10-beta.7(fuels@0.101.1(vitest@2.0.5(@types/node@20.6.0)))
+        specifier: 0.2.0
+        version: 0.2.0(fuels@0.101.1(vitest@2.0.5(@types/node@20.6.0)))
       express:
         specifier: 4.17.1
         version: 4.17.1
@@ -2896,8 +2896,8 @@ packages:
     peerDependencies:
       '@babel/core': ^7.0.0
 
-  bakosafe@0.1.10-beta.7:
-    resolution: {integrity: sha512-Y9G08joBvEHqPS6xqR6sbk9u3kIjNNv8qCTg8jP2gMxF6w7BSMy68StSgXrrHQc0ZP8fquk+ZbmVqJgAq/K3SA==}
+  bakosafe@0.2.0:
+    resolution: {integrity: sha512-vvpyfnNzerJrmAx8i8kyDu2SVEXvdNKYXXTFxXNz23hEokUx3lVec3y3QeR8rExe4KSySgA2Co5nzwW/sbZWBg==}
     peerDependencies:
       fuels: ^0.101.0
 
@@ -9481,7 +9481,7 @@ snapshots:
       babel-plugin-jest-hoist: 29.6.3
       babel-preset-current-node-syntax: 1.1.0(@babel/core@7.25.7)
 
-  bakosafe@0.1.10-beta.7(fuels@0.101.1(vitest@2.0.5(@types/node@20.6.0))):
+  bakosafe@0.2.0(fuels@0.101.1(vitest@2.0.5(@types/node@20.6.0))):
     dependencies:
       '@ethereumjs/util': 9.0.3
       '@ethersproject/bytes': 5.7.0
