@@ -4,9 +4,13 @@ node_modules
 
 ##DB
 postgresql/
+postgresqldev/
 **/database/inserts/**
 mongodbdev/
 mongodbdevelopment/
+postgresqlpostgres/
+mongodbdevelopment/
+packages/database/mongodb
 
 ## API
 # Build
@@ -28,4 +32,3 @@ dist/
 # Logs
 .log
 .local
-mongodbdevelopment/
