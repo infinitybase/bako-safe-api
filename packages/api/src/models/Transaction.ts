@@ -124,16 +124,18 @@ class Transaction extends Base {
 
     const result = Object.assign(transaction, {
       assets,
-      summary: {
-        ...transaction.summary,
-        operations: transaction.summary?.operations?.map(o => ({
-          ...o,
-          assetsSent: o.assetsSent?.map(a => ({
-            ...a,
-            amount: parseAmount(a.amount),
-          })),
-        })),
-      },
+      summary: transaction.summary
+        ? {
+            ...transaction.summary,
+            operations: transaction.summary?.operations?.map(o => ({
+              ...o,
+              assetsSent: o.assetsSent?.map(a => ({
+                ...a,
+                amount: parseAmount(a.amount),
+              })),
+            })),
+          }
+        : undefined,
     });
 
     return result;
