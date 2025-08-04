@@ -1,4 +1,5 @@
 import {
+  BN,
   Operation,
   OperationName,
   OutputCoin,
@@ -38,6 +39,27 @@ const formatAssets = (
   return assets;
 };
 
+export function parseAmount(value: any) {
+  if (typeof value === 'string') return value;
+
+  const bn = new BN(0);
+
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  bn.words = [...value.words];
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  bn.length = value.length;
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  bn.negative = value.negative;
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  bn.red = value.red;
+
+  return bn.toHex();
+}
+
 const formatAssetFromOperations = (
   operations: Operation[],
   account: string,
@@ -52,7 +74,7 @@ const formatAssetFromOperations = (
   if (mainContractCallOperation) {
     return mainContractCallOperation.assetsSent.map(asset => ({
       assetId: asset.assetId,
-      amount: asset.amount.toString(),
+      amount: parseAmount(asset.amount),
       to: mainContractCallOperation.to.address,
     }));
   }
@@ -63,7 +85,7 @@ const formatAssetFromOperations = (
     .flatMap(operation =>
       operation.assetsSent.map(asset => ({
         assetId: asset.assetId,
-        amount: asset.amount.toString(),
+        amount: parseAmount(asset.amount),
         to: operation.to.address,
       })),
     );

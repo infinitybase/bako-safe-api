@@ -22,6 +22,7 @@ import {
 
 import {
   Address,
+  BN,
   getTransactionSummaryFromRequest,
   transactionRequestify,
 } from 'fuels';
@@ -240,7 +241,13 @@ export class TransactionController {
         createdBy: user,
         summary: summary ?? {
           type: 'cli',
-          operations,
+          operations: operations.map(o => ({
+            ...o,
+            assetsSent: o.assetsSent?.map(a => ({
+              ...a,
+              amount: new BN(a.amount).toHex(),
+            })),
+          })),
         },
         network,
       });
