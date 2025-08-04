@@ -7,7 +7,7 @@ export interface ICreateRecoverCodePayload {
   type: RecoverCodeType;
   origin: string;
   validAt: Date;
-  metadata?: { [key: string]: string | number | boolean | object };
+  metadata?: { [key: string]: string | number | boolean | Record<string, unknown> };
   network: Network;
 }
 
