@@ -24,7 +24,6 @@ router.use('/connections', dApp);
 router.use('/api-token', apiToken);
 router.use('/workspace', workspace);
 router.use('/predicate', predicates);
-// router.use('/debug-pprof', debugPprof);
 router.use('/address-book', addressBook);
 router.use('/transaction', transactions);
 router.use('/notifications', notifications);

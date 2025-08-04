@@ -26,7 +26,9 @@ export class AuthController {
   async signIn(req: ISignInRequest) {
     try {
       const { digest, encoder, signature, userAddress, name } = req.body;
-      const userFilter = userAddress ? { address: new Address(userAddress).toB256() } : { name };
+      const userFilter = userAddress
+        ? { address: new Address(userAddress).toB256() }
+        : { name };
 
       const { userToken, signin } = await TokenUtils.createAuthToken(
         signature,

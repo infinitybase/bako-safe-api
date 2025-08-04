@@ -379,4 +379,38 @@ export class UserController {
       return error(e.error, e.statusCode);
     }
   }
+
+  async wallet(req: IMeRequest) {
+    try {
+      const { user } = req;
+
+      const personalVault = await Predicate.findOne({
+        where: {
+          owner: { id: user.id },
+          root: true,
+        },
+      });
+
+      if (!personalVault) {
+        return successful(
+          {
+            message: 'Personal vault not found',
+            wallet: null,
+          },
+          Responses.Ok,
+        );
+      }
+
+      return successful(
+        {
+          address: personalVault.predicateAddress,
+          configurable: personalVault.configurable,
+          version: personalVault.version,
+        },
+        Responses.Ok,
+      );
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
 }
