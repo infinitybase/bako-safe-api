@@ -38,7 +38,7 @@
     "@testcontainers/postgresql": "11.0.0",
     "@ethereumjs/util": "9.0.3",
     "axios": "1.5.1",
-    "bakosafe": "/Users/guimroque/Infinity/bsafe/bako-safe/packages/sdk/bakosafe-0.1.10-beta.7daisb.tgz",
+    "bakosafe": "0.2.0",
     "body-parser": "1.20.2",
     "cheerio": "1.0.0-rc.12",
     "class-validator": "0.14.0",
