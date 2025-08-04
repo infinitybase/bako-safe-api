@@ -15,11 +15,8 @@ async function authMiddleware(
   next: NextFunction,
 ) {
   try {
-    console.log('authMiddleware');
     const signature = req?.headers?.authorization;
     const address = req?.headers?.signeraddress;
-
-    console.log(signature, address);
 
     if (!signature) {
       throw new Unauthorized({
@@ -49,7 +46,6 @@ async function authMiddleware(
     req.dapp = dapp;
     return next();
   } catch (e) {
-    console.log(e);
     return next(e);
   }
 }

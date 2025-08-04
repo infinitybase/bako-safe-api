@@ -5,12 +5,10 @@ import { AuthStrategy, IValidatePathParams } from './type';
 
 export class ConnectorAuthStrategy implements AuthStrategy {
   async authenticate(req: IAuthRequest) {
-    console.log('ConnectorAuthStrategy');
     const sessionId = req?.headers?.authorization;
     const predicateAddress = req?.headers?.signeraddress;
 
     if (!sessionId || !predicateAddress) {
-      console.log('SessionId and predicate address are required');
       throw new Unauthorized({
         type: ErrorTypes.Unauthorized,
         title: UnauthorizedErrorTitles.MISSING_CREDENTIALS,
@@ -28,7 +26,6 @@ export class ConnectorAuthStrategy implements AuthStrategy {
       .getOne();
 
     if (!dapp) {
-      console.log('Invalid sessionId');
       throw new Unauthorized({
         type: ErrorTypes.Unauthorized,
         title: UnauthorizedErrorTitles.INVALID_CREDENTIALS,
@@ -37,7 +34,6 @@ export class ConnectorAuthStrategy implements AuthStrategy {
     }
 
     if (dapp.user.address !== predicateAddress) {
-      console.log('Invalid predicate address for this session');
       throw new Unauthorized({
         type: ErrorTypes.Unauthorized,
         title: UnauthorizedErrorTitles.INVALID_ADDRESS,
