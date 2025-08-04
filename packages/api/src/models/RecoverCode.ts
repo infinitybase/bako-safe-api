@@ -43,7 +43,7 @@ class RecoverCode extends Base {
   validAt: Date;
 
   @Column({ name: 'metadata', type: 'jsonb' })
-  metadata: { [key: string]: string | number | boolean | object };
+  metadata: { [key: string]: string | number | boolean | Record<string, unknown> };
 
   @Column()
   used: boolean;
