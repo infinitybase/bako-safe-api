@@ -412,8 +412,6 @@ export class PredicateService implements IPredicateService {
       provider.replace(/^https?:\/\/[^@]+@/, 'https://'),
     );
 
-    console.log(provider, configurable, version);
-
     return new Vault(_provider, conf, version);
   }
 

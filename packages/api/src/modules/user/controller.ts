@@ -381,7 +381,6 @@ export class UserController {
   }
 
   async wallet(req: IMeRequest) {
-    console.log('wallet');
     try {
       const { user } = req;
 

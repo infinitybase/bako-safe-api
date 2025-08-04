@@ -136,7 +136,6 @@ export class UserService implements IUserService {
           provider.url,
         );
 
-        console.log('[CREATE_USER]: ', predicate.version);
         const network: Network = {
           url: provider.url,
           chainId: await provider.getChainId(),
