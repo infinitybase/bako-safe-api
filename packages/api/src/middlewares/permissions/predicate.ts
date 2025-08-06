@@ -85,7 +85,9 @@ export const predicatesPermissionMiddleware = (
     try {
       const predicateIds = options.predicatesSelector(req);
 
-      if (!predicateIds || predicateIds.length === 0) {
+      const validPredicateIds = predicateIds?.filter(id => id?.trim());
+
+      if (!validPredicateIds || validPredicateIds.length === 0) {
         return next();
       }
 
