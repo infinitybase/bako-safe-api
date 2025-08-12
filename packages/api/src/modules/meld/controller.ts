@@ -143,6 +143,11 @@ export default class MeldController {
           widgetSessionData: session,
           transactionData: null,
         },
+        sourceCurrency: request.body.sourceCurrencyCode,
+        sourceAmount: request.body.sourceAmount,
+        destinationCurrency: request.body.destinationCurrencyCode,
+        paymentMethod: request.body.paymentMethodType,
+        destinationAmount: request.body.destinationAmount,
       });
 
       return successful(rampTransaction, Responses.Ok);
