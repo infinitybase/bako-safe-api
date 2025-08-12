@@ -19,7 +19,6 @@ export const meldApi = axios.create({
   },
 });
 
-export const serviceProvidersWithFuelIntegration = ['BANXA', 'TRANSAK'];
 export const FIAT_CURRENCIES = ['BRL', 'USD', 'EUR'];
 export const CRYPTO_CURRENCIES = ['ETH_FUEL'];
 

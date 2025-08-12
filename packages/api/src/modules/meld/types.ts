@@ -98,6 +98,7 @@ export interface ISearchCurrencyResponse {
 
 export interface IServiceProviderParams {
   serviceProviders?: string;
+  cryptoCurrencies?: string;
   accountFilter: boolean;
 }
 

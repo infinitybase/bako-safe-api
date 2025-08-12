@@ -1,6 +1,5 @@
 import { validator } from '@src/utils';
 import Joi from 'joi';
-import { serviceProvidersWithFuelIntegration } from './utils';
 
 export const ValidatorRequestQuote = validator.body(
   Joi.object({
@@ -22,9 +21,7 @@ export const ValidatorCreateWidgetRequest = validator.body(
     countryCode: Joi.string().required(),
     destinationCurrencyCode: Joi.string().required(),
     destinationAmount: Joi.string().optional(),
-    serviceProvider: Joi.string()
-      .valid(...serviceProvidersWithFuelIntegration)
-      .required(),
+    serviceProvider: Joi.string().required(),
     sourceAmount: Joi.string().required(),
     sourceCurrencyCode: Joi.string().required(),
     paymentMethodType: Joi.string().required(),

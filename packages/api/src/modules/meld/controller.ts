@@ -3,12 +3,7 @@ import { bindMethods, Responses, successful } from '@src/utils';
 import { error } from '@src/utils/error';
 import { IRampTransactionService } from '../rampTransactions/types';
 import { IMeldService, IRequestCreateWidgetSession, IRequestQuote } from './types';
-import {
-  CRYPTO_CURRENCIES,
-  FIAT_CURRENCIES,
-  formatAmount,
-  serviceProvidersWithFuelIntegration,
-} from './utils';
+import { CRYPTO_CURRENCIES, FIAT_CURRENCIES, formatAmount } from './utils';
 
 export default class MeldController {
   constructor(
@@ -22,7 +17,7 @@ export default class MeldController {
     try {
       const countries = await this._service.getCountries({
         accountFilter: true,
-        serviceProviders: serviceProvidersWithFuelIntegration.join(','),
+        cryptoCurrencies: CRYPTO_CURRENCIES.join(','),
       });
       return successful(countries, Responses.Ok);
     } catch (err) {
@@ -84,7 +79,7 @@ export default class MeldController {
     try {
       const methods = await this._service.getPaymentMethods({
         accountFilter: true,
-        serviceProviders: serviceProvidersWithFuelIntegration.join(','),
+        cryptoCurrencies: CRYPTO_CURRENCIES.join(','),
       });
       return successful(methods, Responses.Ok);
     } catch (err) {
@@ -96,7 +91,7 @@ export default class MeldController {
     try {
       const serviceProviders = await this._service.getServiceProviders({
         accountFilter: true,
-        serviceProviders: serviceProvidersWithFuelIntegration.join(','),
+        cryptoCurrencies: CRYPTO_CURRENCIES.join(','),
       });
       return successful(serviceProviders, Responses.Ok);
     } catch (err) {
@@ -108,7 +103,6 @@ export default class MeldController {
     try {
       const quote = await this._service.getQuotes({
         ...request.body,
-        serviceProviders: serviceProvidersWithFuelIntegration,
       });
       return successful(quote, Responses.Ok);
     } catch (err) {
