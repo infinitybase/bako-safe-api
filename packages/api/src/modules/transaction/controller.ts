@@ -22,6 +22,7 @@ import {
 
 import {
   Address,
+  BN,
   getTransactionSummaryFromRequest,
   transactionRequestify,
 } from 'fuels';
@@ -189,22 +190,22 @@ export class TransactionController {
 
       // if possible move this next part to a middleware, but we dont have access to body of request
       // ========================================================================================================
-      const hasPermission = validatePermissionGeneral(workspace, user.id, [
-        PermissionRoles.OWNER,
-        PermissionRoles.ADMIN,
-        PermissionRoles.MANAGER,
-      ]);
-      const isMemberOfPredicate = predicate.members.find(
-        member => member.id === user.id,
-      );
+      // const hasPermission = validatePermissionGeneral(workspace, user.id, [
+      //   PermissionRoles.OWNER,
+      //   PermissionRoles.ADMIN,
+      //   PermissionRoles.MANAGER,
+      // ]);
+      // const isMemberOfPredicate = predicate.members.find(
+      //   member => member.id === user.id,
+      // );
 
-      if (!isMemberOfPredicate && !hasPermission) {
-        throw new Unauthorized({
-          type: ErrorTypes.Unauthorized,
-          title: UnauthorizedErrorTitles.MISSING_PERMISSION,
-          detail: 'You do not have permission to access this resource',
-        });
-      }
+      // if (!isMemberOfPredicate && !hasPermission) {
+      //   throw new Unauthorized({
+      //     type: ErrorTypes.Unauthorized,
+      //     title: UnauthorizedErrorTitles.MISSING_PERMISSION,
+      //     detail: 'You do not have permission to access this resource',
+      //   });
+      // }
       // ========================================================================================================
 
       const witnesses = predicate.members.map(member => ({
@@ -240,7 +241,13 @@ export class TransactionController {
         createdBy: user,
         summary: summary ?? {
           type: 'cli',
-          operations,
+          operations: operations.map(o => ({
+            ...o,
+            assetsSent: o.assetsSent?.map(a => ({
+              ...a,
+              amount: new BN(a.amount).toHex(),
+            })),
+          })),
         },
         network,
       });
@@ -762,7 +769,6 @@ export class TransactionController {
       await this.transactionService.sendToChain(hash.slice(2), params.network); // not wait for this
       return successful(true, Responses.Ok);
     } catch (e) {
-      console.log('[TX_ERROR]');
       return error(e.error, e.statusCode);
     }
   }

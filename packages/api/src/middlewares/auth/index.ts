@@ -27,9 +27,12 @@ async function authMiddleware(
     }
 
     const authStrategy = AuthStrategyFactory.createStrategy(signature);
-    const { user, workspace, network } = await authStrategy.authenticate(req);
+    const { user, workspace, network, dapp } = await authStrategy.authenticate(req);
 
-    if (address !== user.address) {
+    const isValidAddress = address === user.address;
+    const isValidPredicateAddress = address === dapp?.currentVault.predicateAddress;
+
+    if (!isValidAddress && !isValidPredicateAddress) {
       throw new Unauthorized({
         type: ErrorTypes.Unauthorized,
         title: UnauthorizedErrorTitles.INVALID_ADDRESS,
@@ -40,6 +43,7 @@ async function authMiddleware(
     req.user = user;
     req.workspace = workspace;
     req.network = network;
+    req.dapp = dapp;
     return next();
   } catch (e) {
     return next(e);

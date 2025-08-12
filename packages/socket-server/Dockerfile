@@ -7,6 +7,9 @@ ADD . /socket
 # Install pnpm
 RUN npm install -g pnpm
 
+# Install system dependencies
+RUN apk add --no-cache wget
+
 # Install app dependencies
 RUN pnpm install
 

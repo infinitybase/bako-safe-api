@@ -21,6 +21,7 @@ import {
   formatAssetFromOperations,
   formatAssetFromRampTransaction,
   formatAssets,
+  parseAmount,
 } from '@src/utils/formatAssets';
 import { Base } from './Base';
 import { Predicate } from './Predicate';
@@ -157,6 +158,18 @@ class Transaction extends Base {
               transaction.rampTransaction?.providerData?.transactionData
                 ?.serviceProvider,
             providerData: undefined, // Avoid sending providerData directly
+          }
+        : undefined,
+      summary: transaction.summary
+        ? {
+            ...transaction.summary,
+            operations: transaction.summary?.operations?.map(o => ({
+              ...o,
+              assetsSent: o.assetsSent?.map(a => ({
+                ...a,
+                amount: parseAmount(a.amount),
+              })),
+            })),
           }
         : undefined,
     });

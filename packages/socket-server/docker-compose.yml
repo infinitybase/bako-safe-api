@@ -1,26 +1,45 @@
-version: '3'
+version: '3.8'
+
 services:
- api:
-  container_name: ${SOCKET_NAME}
-  ports:
-   - '${PORT}:${PORT}'
+ socket-server:
+  container_name: bako-socket-server
   build:
-   dockerfile: Dockerfile
    context: .
+   dockerfile: Dockerfile
   working_dir: /socket
+  ports:
+   - '3001:3001'
   environment:
    # DATABASE
-   - DATABASE_HOST=${DATABASE_HOST}
-   - DATABASE_PORT=${DATABASE_PORT}
-   - DATABASE_USERNAME=${DATABASE_USERNAME}
-   - DATABASE_PASSWORD=${DATABASE_PASSWORD}
-   - DATABASE_NAME=${DATABASE_NAME}
+   - DATABASE_HOST=db
+   - DATABASE_PORT=5432
+   - DATABASE_USERNAME=postgres
+   - DATABASE_PASSWORD=postgres
+   - DATABASE_NAME=postgres
+
    # ASSETS
-   - UI_URL=${UI_URL}
-   - API_URL=${API_URL}
-   # APP
-   - SOCKET_PORT=${SOCKET_PORT}
-   - SOCKET_NAME=${SOCKET_NAME}
-   - SOCKET_TIMEOUT_DICONNECT=${SOCKET_TIMEOUT_DICONNECT}
-   - REDIS_URL_READ=${REDIS_URL_READ}
-   - REDIS_URL_WRITE=${REDIS_URL_WRITE}
+   - UI_URL=http://localhost:5173
+   - API_URL=http://localhost:3333
+
+   # SOCKET
+   - SOCKET_PORT=3001
+   - SOCKET_NAME=bako-socket-server
+   - SOCKET_TIMEOUT_DICONNECT=3600000
+
+   # REDIS
+   - REDIS_URL_READ=redis://localhost:6379
+   - REDIS_URL_WRITE=redis://localhost:6379
+
+  restart: always
+  healthcheck:
+   test: ['CMD', 'wget', '--spider', '--quiet', 'http://localhost:3001/health']
+   interval: 10s
+   timeout: 5s
+   retries: 5
+
+  networks:
+   - bako-network
+
+networks:
+ bako-network:
+  external: true
