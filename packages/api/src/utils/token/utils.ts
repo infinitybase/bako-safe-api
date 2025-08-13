@@ -190,8 +190,6 @@ export class TokenUtils {
       order: { createdAt: 'DESC' },
     });
 
-    console.log('code1', code);
-
     if (!code) {
       throw new Unauthorized({
         type: ErrorTypes.Unauthorized,

@@ -1,6 +1,6 @@
 import { Request } from 'express';
 
-import { User, Workspace } from '@src/models';
+import { User, Workspace, DApp } from '@src/models';
 import { Network } from 'fuels';
 
 export type IValidatePathParams = { method: string; path: string };
@@ -8,5 +8,5 @@ export type IValidatePathParams = { method: string; path: string };
 export interface AuthStrategy {
   authenticate(
     req: Request,
-  ): Promise<{ user: User; workspace: Workspace; network: Network }>;
+  ): Promise<{ user: User; workspace: Workspace; network: Network; dapp?: DApp }>;
 }
