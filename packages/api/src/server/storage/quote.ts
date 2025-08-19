@@ -6,7 +6,9 @@ import {
   getAssetsMaps,
   isDevMode,
 } from '@src/utils';
+import { tokensIDS } from '@src/utils/assets-token/addresses';
 import axios from 'axios';
+import App from '../app';
 
 const { COIN_MARKET_CAP_API_KEY } = process.env;
 
@@ -40,9 +42,27 @@ export class QuoteStorage {
     await this.setQuotes(QuotesMock);
   }
 
+  private async getStFUELQuote(QuotesMock: IQuote[]): Promise<number> {
+    const DECIMALS = 10 ** 9;
+    const priceFUEL = QuotesMock.find(quote => quote.assetId === tokensIDS.FUEL)
+      .price;
+    const rigInstance = await App.getInstance()._rigCache;
+    const ratioStFuelToFuel = (await rigInstance.getRatio()) / DECIMALS;
+    return priceFUEL / ratioStFuelToFuel;
+  }
+
+  private updateStFUELQuote(quotes: IQuote[], priceStFuel: number) {
+    const stFuelIndex = quotes.findIndex(q => q.assetId === tokensIDS.stFUEL);
+    if (stFuelIndex >= 0) quotes[stFuelIndex].price = priceStFuel;
+  }
+
   private async addQuotes(): Promise<void> {
     const { assets, assetsMapById, QuotesMock } = await getAssetsMaps();
+
     if (isDevMode) {
+      const priceStFuel = await this.getStFUELQuote(QuotesMock);
+      this.updateStFUELQuote(QuotesMock, priceStFuel);
+
       await this.addMockQuotes(QuotesMock);
       return;
     }
@@ -52,6 +72,10 @@ export class QuoteStorage {
 
     if (params) {
       const quotes = await this.fetchQuotes(_assets, params);
+
+      const priceStFuel = await this.getStFUELQuote(quotes);
+      this.updateStFUELQuote(quotes, priceStFuel);
+
       await this.setQuotes(quotes);
     }
   }
