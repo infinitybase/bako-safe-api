@@ -66,8 +66,8 @@ importers:
         specifier: 1.5.1
         version: 1.5.1
       bakosafe:
-        specifier: /Users/guimroque/Infinity/bsafe/bako-safe/packages/sdk/bakosafe-0.2.0-beta.1-dev.tgz
-        version: file:../bako-safe/packages/sdk/bakosafe-0.2.0-beta.1-dev.tgz(fuels@0.101.1(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.1)))
+        specifier: /Users/guimroque/Infinity/bsafe/bako-safe/packages/sdk/bakosafe-0.2.0-beta.1-devdmaspda.tgz
+        version: file:../bako-safe/packages/sdk/bakosafe-0.2.0-beta.1-devdmaspda.tgz(fuels@0.101.1(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.1)))
       body-parser:
         specifier: 1.20.2
         version: 1.20.2
@@ -2831,8 +2831,8 @@ packages:
     peerDependencies:
       fuels: ^0.101.0
 
-  bakosafe@file:../bako-safe/packages/sdk/bakosafe-0.2.0-beta.1-dev.tgz:
-    resolution: {integrity: sha512-ZdLZSIEVIwF/OZqX6+3JMjCyhTxIckbdBWMj1D2Aa14+3xdLWonpq0O8mqYhuXZx4EPLMi/KfmZgp+l0p66n/Q==, tarball: file:../bako-safe/packages/sdk/bakosafe-0.2.0-beta.1-dev.tgz}
+  bakosafe@file:../bako-safe/packages/sdk/bakosafe-0.2.0-beta.1-devdmaspda.tgz:
+    resolution: {integrity: sha512-lpLSNLApa0hH/hgv785YQzl7fswkm/89tvcHYlSMo54sCv10hX/b3zkSeAnc+1EW47wKjXfi57F1ABWBIN1j9Q==, tarball: file:../bako-safe/packages/sdk/bakosafe-0.2.0-beta.1-devdmaspda.tgz}
     version: 0.2.0-beta.1-dev
     peerDependencies:
       fuels: ^0.101.0
@@ -9600,7 +9600,7 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  bakosafe@file:../bako-safe/packages/sdk/bakosafe-0.2.0-beta.1-dev.tgz(fuels@0.101.1(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.1))):
+  bakosafe@file:../bako-safe/packages/sdk/bakosafe-0.2.0-beta.1-devdmaspda.tgz(fuels@0.101.1(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.1))):
     dependencies:
       '@ethereumjs/util': 9.0.3
       '@ethersproject/bytes': 5.7.0

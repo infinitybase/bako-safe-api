@@ -19,7 +19,7 @@ export const transactionPermissionMiddleware = (
 
       const transaction = await Transaction.createQueryBuilder('t')
         .select('t.resume')
-        .where('t.hash := hash', {
+        .where('t.hash = :hash', {
           hash: transactionHash.startsWith(`0x`)
             ? transactionHash.slice(2)
             : transactionHash,
@@ -47,6 +47,7 @@ export const transactionPermissionMiddleware = (
 
       return next();
     } catch (error) {
+      console.log(error);
       return next(error);
     }
   };
