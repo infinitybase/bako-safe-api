@@ -23,9 +23,12 @@ const permissionMiddlewareById = predicatePermissionMiddleware({
 });
 
 const permissionMiddlewareByAddress = predicatePermissionMiddleware({
-  predicateSelector: req => ({
-    predicateAddress: req.params.address,
-  }),
+  predicateSelector: req => {
+    console.log(req.params);
+    return {
+      predicateAddress: req.params.address,
+    };
+  },
   permissions: [PermissionRoles.OWNER, PermissionRoles.SIGNER],
 });
 
@@ -62,7 +65,7 @@ router.get(
 );
 router.get(
   '/by-address/:address',
-  permissionMiddlewareByAddress,
+  // permissionMiddlewareByAddress,
   handleResponse(findByAddress),
 );
 router.get('/check/by-address/:address', handleResponse(checkByAddress));

@@ -431,7 +431,6 @@ export class TransactionService implements ITransactionService {
       where: { id },
       relations: { predicate: true },
     });
-
     if (!transaction) {
       throw new NotFound({
         type: ErrorTypes.NotFound,
@@ -577,15 +576,23 @@ export class TransactionService implements ITransactionService {
       predicate.version,
     );
 
+    const w = transaction.getWitnesses();
+
+    console.log('[ADDRESS]: ', {
+      w,
+      provider: provider.url,
+      address: vault.address.toB256(),
+    });
+
     const tx = transactionRequestify({
       ...txData,
-      witnesses: transaction.getWitnesses(),
+      witnesses: w,
     });
 
     try {
       const transactionResponse = await vault.send(tx);
       const { gasUsed } = await transactionResponse.waitForResult();
-
+      console.log(tx.witnesses);
       const _api_transaction: IUpdateTransactionPayload = {
         status: TransactionStatus.SUCCESS,
         sendTime: new Date(),
@@ -601,6 +608,7 @@ export class TransactionService implements ITransactionService {
 
       return await this.update(id, _api_transaction);
     } catch (e) {
+      console.log(e);
       const error = 'toObject' in e ? e.toObject() : e;
       const _api_transaction: IUpdateTransactionPayload = {
         status: TransactionStatus.FAILED,
@@ -654,7 +662,6 @@ export class TransactionService implements ITransactionService {
 
       return _transactions;
     } catch (e) {
-      console.log('[ERROR] fetchFuelTransactions', e);
       return [];
     }
   }

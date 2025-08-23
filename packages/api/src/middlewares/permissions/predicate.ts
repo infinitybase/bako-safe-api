@@ -30,7 +30,8 @@ const hasPermission = (
     : false;
 
   const isSigner = permissions.includes(PermissionRoles.SIGNER)
-    ? JSON.parse(predicate.configurable).SIGNERS.includes(user.address)
+    ? JSON.parse(predicate.configurable).SIGNERS?.includes(user.address) ??
+      JSON.parse(predicate.configurable).SIGNER === user.address
     : false;
 
   return isOwner || isSigner;
@@ -42,16 +43,20 @@ export const predicatePermissionMiddleware = (
   return async (req: Request, _: Response, next: NextFunction) => {
     try {
       const predicateFilter = options.predicateSelector(req);
+      console.log(predicateFilter);
 
       if (!predicateFilter || !Object.values(predicateFilter)[0]) return next();
 
       const { user }: IAuthRequest = req;
 
+      console.log(predicateFilter);
       const predicate = await Predicate.createQueryBuilder('p')
         .leftJoin('p.owner', 'owner')
         .select(['p.configurable', 'owner.id'])
         .where(predicateFilter)
         .getOne();
+
+      console.log(predicate);
 
       const [key, value] = Object.entries(predicateFilter)[0];
 
@@ -63,6 +68,8 @@ export const predicatePermissionMiddleware = (
         });
       }
 
+      console.log(user, predicate, options.permissions);
+
       if (!hasPermission(user, predicate, options.permissions)) {
         throw new Unauthorized({
           type: ErrorTypes.Unauthorized,
@@ -73,6 +80,7 @@ export const predicatePermissionMiddleware = (
 
       return next();
     } catch (error) {
+      console.log(error);
       return next(error);
     }
   };

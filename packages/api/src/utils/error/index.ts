@@ -23,6 +23,7 @@ const error = <ResponsePayload extends GeneralError>(
   payload: ResponsePayload,
   statusCode: Responses,
 ): ErrorResponse<ResponsePayload> => {
+  // console.log(`[ERROR]`, payload.type, payload.title, payload.detail);
   console.log(`[ERROR]`, payload);
   if (payload && 'detail' in payload && process.env.NODE_ENV !== 'development') {
     payload.detail = null;

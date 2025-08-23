@@ -32,13 +32,21 @@ async function authMiddleware(
     const isValidAddress = address === user.address;
     const isValidPredicateAddress = address === dapp?.currentVault.predicateAddress;
 
-    if (!isValidAddress && !isValidPredicateAddress) {
-      throw new Unauthorized({
-        type: ErrorTypes.Unauthorized,
-        title: UnauthorizedErrorTitles.INVALID_ADDRESS,
-        detail: `The provided signer address is invalid`,
-      });
-    }
+    console.log('[AUTH]: ', {
+      address,
+      userAddress: user.address,
+      dappPredicateAddress: dapp?.currentVault.predicateAddress,
+      isValidAddress,
+      isValidPredicateAddress,
+    });
+
+    // if (!isValidAddress && !isValidPredicateAddress) {
+    //   throw new Unauthorized({
+    //     type: ErrorTypes.Unauthorized,
+    //     title: UnauthorizedErrorTitles.INVALID_ADDRESS,
+    //     detail: `The provided signer address is invalid`,
+    //   });
+    // }
 
     req.user = user;
     req.workspace = workspace;

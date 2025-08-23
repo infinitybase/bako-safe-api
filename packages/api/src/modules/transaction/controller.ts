@@ -431,12 +431,13 @@ export class TransactionController {
     user,
     network,
   }: ISignByIdRequest) {
+    console.log('[sign_by_id]', txHash);
     const { address: account } = user;
 
     try {
       const transaction = await Transaction.findOne({
         where: {
-          hash: txHash,
+          hash: txHash.startsWith(`0x`) ? txHash.slice(2) : txHash,
           status: Not(
             In([
               TransactionStatus.DECLINED,
