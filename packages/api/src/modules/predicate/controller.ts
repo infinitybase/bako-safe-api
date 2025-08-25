@@ -115,7 +115,6 @@ export class PredicateController {
 
   async findByAddress({ params: { address } }: IFindByHashRequest) {
     try {
-      console.log('[ADDRESS_FIND]');
       const predicate = await this.predicateService.findByAddress(address);
 
       return successful(predicate, Responses.Ok);

@@ -6,6 +6,7 @@ import { AuthStrategy, IValidatePathParams } from './type';
 export class ConnectorAuthStrategy implements AuthStrategy {
   async authenticate(req: IAuthRequest) {
     const sessionId = req?.headers?.authorization;
+    const predicateAddress = req?.headers?.signeraddress;
 
     if (!sessionId) {
       throw new Unauthorized({
@@ -29,6 +30,14 @@ export class ConnectorAuthStrategy implements AuthStrategy {
         type: ErrorTypes.Unauthorized,
         title: UnauthorizedErrorTitles.INVALID_CREDENTIALS,
         detail: 'Invalid sessionId',
+      });
+    }
+
+    if (dapp.user.address !== predicateAddress) {
+      throw new Unauthorized({
+        type: ErrorTypes.Unauthorized,
+        title: UnauthorizedErrorTitles.INVALID_ADDRESS,
+        detail: 'Invalid predicate address for this session',
       });
     }
 

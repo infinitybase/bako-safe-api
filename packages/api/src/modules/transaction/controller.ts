@@ -431,7 +431,6 @@ export class TransactionController {
     user,
     network,
   }: ISignByIdRequest) {
-    console.log('[sign_by_id]', txHash);
     const { address: account } = user;
 
     try {
@@ -507,7 +506,6 @@ export class TransactionController {
 
       return successful(true, Responses.Ok);
     } catch (e) {
-      console.log(e);
       return error(e.error, e.statusCode);
     }
   }
@@ -669,7 +667,6 @@ export class TransactionController {
 
       return successful(response, Responses.Ok);
     } catch (e) {
-      console.log(`[INCOMING_ERROR]`, e);
       return error(e.error, e.statusCode);
     }
   }

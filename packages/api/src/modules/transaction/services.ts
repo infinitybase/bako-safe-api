@@ -578,12 +578,6 @@ export class TransactionService implements ITransactionService {
 
     const w = transaction.getWitnesses();
 
-    console.log('[ADDRESS]: ', {
-      w,
-      provider: provider.url,
-      address: vault.address.toB256(),
-    });
-
     const tx = transactionRequestify({
       ...txData,
       witnesses: w,
@@ -592,7 +586,7 @@ export class TransactionService implements ITransactionService {
     try {
       const transactionResponse = await vault.send(tx);
       const { gasUsed } = await transactionResponse.waitForResult();
-      console.log(tx.witnesses);
+
       const _api_transaction: IUpdateTransactionPayload = {
         status: TransactionStatus.SUCCESS,
         sendTime: new Date(),

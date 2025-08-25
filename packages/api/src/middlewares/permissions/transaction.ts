@@ -1,6 +1,11 @@
 import { NextFunction, Request, Response } from 'express';
 import { IAuthRequest } from '../auth/types';
-import { ErrorTypes, NotFound } from '@src/utils/error';
+import {
+  ErrorTypes,
+  NotFound,
+  Unauthorized,
+  UnauthorizedErrorTitles,
+} from '@src/utils/error';
 import { Transaction } from '@src/models';
 
 export interface ITransactionPermissionMiddlewareOptions {
@@ -38,11 +43,11 @@ export const transactionPermissionMiddleware = (
           witness => witness.account !== user.address,
         )
       ) {
-        // throw new Unauthorized({
-        //   type: ErrorTypes.Unauthorized,
-        //   title: UnauthorizedErrorTitles.INVALID_PERMISSION,
-        //   detail: 'You do not have permission to access this resource',
-        // });
+        throw new Unauthorized({
+          type: ErrorTypes.Unauthorized,
+          title: UnauthorizedErrorTitles.INVALID_PERMISSION,
+          detail: 'You do not have permission to access this resource',
+        });
       }
 
       return next();

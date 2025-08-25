@@ -33,7 +33,6 @@ const wkPermissionMiddleware = workspacePermissionMiddleware({
 
 const txPermissionMiddleware = transactionPermissionMiddleware({
   transactionSelector: req => {
-    console.log(req.params);
     return req.params.hash;
   },
 });
