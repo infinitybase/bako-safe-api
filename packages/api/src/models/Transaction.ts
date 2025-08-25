@@ -142,27 +142,32 @@ class Transaction extends Base {
   }
 
   getWitnesses() {
-    const witnesses = this.resume.witnesses
-      .filter(w => !!w.signature)
-      .map(w => w.signature);
+    try {
+      const witnesses = this.resume.witnesses
+        .filter(w => !!w.signature)
+        .map(w => w.signature);
 
-    const { witnesses: txWitnesses } = this.txData;
+      const { witnesses: txWitnesses } = this.txData;
 
-    if ('bytecodeWitnessIndex' in this.txData) {
-      const { bytecodeWitnessIndex } = this.txData;
-      const bytecode = txWitnesses[bytecodeWitnessIndex];
+      if ('bytecodeWitnessIndex' in this.txData) {
+        const { bytecodeWitnessIndex } = this.txData;
+        const bytecode = txWitnesses[bytecodeWitnessIndex];
 
-      bytecode && witnesses.splice(bytecodeWitnessIndex, 0, hexlify(bytecode));
+        bytecode && witnesses.splice(bytecodeWitnessIndex, 0, hexlify(bytecode));
+      }
+
+      if ('witnessIndex' in this.txData) {
+        const { witnessIndex } = this.txData;
+        const bytecode = txWitnesses[witnessIndex];
+
+        bytecode && witnesses.splice(witnessIndex, 0, hexlify(bytecode));
+      }
+
+      return witnesses;
+    } catch (e) {
+      console.log('[GET_SIGN_ERROR]');
+      console.log(e);
     }
-
-    if ('witnessIndex' in this.txData) {
-      const { witnessIndex } = this.txData;
-      const bytecode = txWitnesses[witnessIndex];
-
-      bytecode && witnesses.splice(witnessIndex, 0, hexlify(bytecode));
-    }
-
-    return witnesses;
   }
 }
 

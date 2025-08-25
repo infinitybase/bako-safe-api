@@ -32,7 +32,9 @@ const wkPermissionMiddleware = workspacePermissionMiddleware({
 });
 
 const txPermissionMiddleware = transactionPermissionMiddleware({
-  transactionSelector: req => req.params.hash,
+  transactionSelector: req => {
+    return req.params.hash;
+  },
 });
 
 const router = Router();
@@ -85,7 +87,7 @@ router.put('/close/:id', validateCloseTransactionPayload, handleResponse(close))
 router.post('/send/:hash', handleResponse(send));
 router.put(
   '/sign/:hash',
-  validateSignerByIdPayload,
+  // validateSignerByIdPayload,
   txPermissionMiddleware,
   handleResponse(signByID),
 );

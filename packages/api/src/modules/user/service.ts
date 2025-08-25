@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Brackets } from 'typeorm';
 
-import { User } from '@src/models';
+import { Predicate, User } from '@src/models';
 import {
   PermissionRoles,
   Workspace,
@@ -123,16 +123,9 @@ export class UserService implements IUserService {
 
         // insert a root wallet predicate
         const provider = await FuelProvider.create(payload.provider);
-        const configurable = {
-          SIGNATURES_COUNT: 1,
-          SIGNERS: [user.address],
-          network: provider.url,
-          chainId: provider.getChainId(),
-        };
 
-        // on creation, we dont need send the predicate version
-        const predicate = await new PredicateService().instancePredicate(
-          JSON.stringify(configurable),
+        const wallets = await new PredicateService().checkOlderPredicateVersions(
+          user.address,
           provider.url,
         );
 
@@ -141,29 +134,27 @@ export class UserService implements IUserService {
           chainId: await provider.getChainId(),
         };
 
-        await new PredicateService().create(
-          {
-            name: 'Personal Vault',
-            description:
-              'This is your first vault. It requires a single signer (you) to execute transactions; a pattern called 1-of-1',
-            predicateAddress: Address.fromString(
-              predicate.address.toString(),
-            ).toB256(),
-            configurable: JSON.stringify(predicate.configurable),
+        for (const [i, wallet] of wallets.entries()) {
+          const isFirst = i === 0;
+          await Predicate.create({
+            name: `${isFirst ? 'Personal Vault' : `Vault ${i + 1}`}`,
+            description: `${
+              isFirst &&
+              'This is your first vault. It requires a single signer (you) to execute transactions; a pattern called 1-of-1'
+            }`,
+            predicateAddress: new Address(wallet.address).toB256(),
+            configurable: JSON.stringify(wallet.configurable),
+            root: isFirst,
+            version: wallet.version,
             owner: user,
-            version: predicate.version,
-            members: [user],
             workspace,
-            root: true,
-          },
-          network,
-          user,
-          workspace,
-        );
-
+            members: [user],
+          }).save();
+        }
         return user;
       })
       .catch(error => {
+        console.log(`Error on user create: ${JSON.stringify(error)}`);
         if (error instanceof GeneralError) throw error;
 
         throw new Internal({

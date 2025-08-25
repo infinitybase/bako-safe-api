@@ -18,15 +18,16 @@ export const transactionPermissionMiddleware = (
   return async (req: Request, _: Response, next: NextFunction) => {
     try {
       const transactionHash = options.transactionSelector(req);
-
       if (!transactionHash) return next();
 
       const { user }: IAuthRequest = req;
 
       const transaction = await Transaction.createQueryBuilder('t')
         .select('t.resume')
-        .where('t.hash IN (:...hashes)', {
-          hashes: [transactionHash, transactionHash.slice(2)],
+        .where('t.hash = :hash', {
+          hash: transactionHash.startsWith(`0x`)
+            ? transactionHash.slice(2)
+            : transactionHash,
         })
         .getOne();
 
@@ -37,7 +38,6 @@ export const transactionPermissionMiddleware = (
           detail: `Transaction with hash ${transactionHash} not found`,
         });
       }
-
       if (
         transaction.resume.witnesses.every(
           witness => witness.account !== user.address,
@@ -52,6 +52,7 @@ export const transactionPermissionMiddleware = (
 
       return next();
     } catch (error) {
+      console.log(error);
       return next(error);
     }
   };

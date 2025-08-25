@@ -436,7 +436,7 @@ export class TransactionController {
     try {
       const transaction = await Transaction.findOne({
         where: {
-          hash: txHash,
+          hash: txHash.startsWith(`0x`) ? txHash.slice(2) : txHash,
           status: Not(
             In([
               TransactionStatus.DECLINED,
@@ -506,7 +506,6 @@ export class TransactionController {
 
       return successful(true, Responses.Ok);
     } catch (e) {
-      console.log(e);
       return error(e.error, e.statusCode);
     }
   }
@@ -668,7 +667,6 @@ export class TransactionController {
 
       return successful(response, Responses.Ok);
     } catch (e) {
-      console.log(`[INCOMING_ERROR]`, e);
       return error(e.error, e.statusCode);
     }
   }

@@ -105,23 +105,12 @@ export class UserController {
     const { user, workspace, network } = req;
     return successful(
       {
-        id: user.id,
-        name: user.name,
-        type: user.type,
-        avatar: user.avatar,
-        address: user.address,
-        webauthn: user.webauthn,
-        first_login: user.first_login,
+        ...user,
         network,
-        settings: user.settings,
         onSingleWorkspace:
           workspace.single && workspace.name.includes(`[${user.id}]`),
         workspace: {
-          id: workspace.id,
-          name: workspace.name,
-          avatar: workspace.avatar,
-          single: workspace.single,
-          description: workspace.description,
+          ...workspace,
           permission: workspace.permissions[user.id],
         },
       },
