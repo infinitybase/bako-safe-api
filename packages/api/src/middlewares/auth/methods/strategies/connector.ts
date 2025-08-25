@@ -8,7 +8,7 @@ export class ConnectorAuthStrategy implements AuthStrategy {
     const sessionId = req?.headers?.authorization;
     const predicateAddress = req?.headers?.signeraddress;
 
-    if (!sessionId) {
+    if (!sessionId || !predicateAddress) {
       throw new Unauthorized({
         type: ErrorTypes.Unauthorized,
         title: UnauthorizedErrorTitles.MISSING_CREDENTIALS,
