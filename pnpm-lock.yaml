@@ -66,8 +66,8 @@ importers:
         specifier: 1.5.1
         version: 1.5.1
       bakosafe:
-        specifier: /Users/guimroque/Infinity/bsafe/bako-safe/packages/sdk/bakosafe-0.2.0-beta.1-devdmaspda.tgz
-        version: file:../bako-safe/packages/sdk/bakosafe-0.2.0-beta.1-devdmaspda.tgz(fuels@0.101.1(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.1)))
+        specifier: 0.2.0-beta.2
+        version: 0.2.0-beta.2(fuels@0.101.1(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.1)))(typescript@5.4.5)
       body-parser:
         specifier: 1.20.2
         version: 1.20.2
@@ -270,8 +270,8 @@ importers:
         specifier: 1.5.1
         version: 1.5.1
       bakosafe:
-        specifier: 0.2.0
-        version: 0.2.0(fuels@0.101.1(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.1)))
+        specifier: 0.2.0-beta.1
+        version: 0.2.0-beta.1(fuels@0.101.1(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.1)))
       express:
         specifier: 4.17.1
         version: 4.17.1
@@ -483,6 +483,9 @@ importers:
         version: 0.0.9
 
 packages:
+
+  '@adraffy/ens-normalize@1.11.0':
+    resolution: {integrity: sha512-/3DDPKHqqIqxUULp8yP4zODUY1i+2xvVWsv8A79xGWdCAG+8sb0hRh0Rk2QyOJUnnbyPUAZYcpBuRe3nS2OIUg==}
 
   '@ampproject/remapping@2.3.0':
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
@@ -1606,6 +1609,10 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@noble/ciphers@1.3.0':
+    resolution: {integrity: sha512-2I0gnIVPtfnMw9ee9h1dJG7tp81+8Ob3OJb3Mv37rx5L40/b0i7djjCVvGOVqc9AEIQyvyu1i6ypKdFw8R8gQw==}
+    engines: {node: ^14.21.3 || >=16}
+
   '@noble/curves@1.3.0':
     resolution: {integrity: sha512-t01iSXPuN+Eqzb4eBX0S5oubSqXbK/xXa1Ne18Hj8f9pStxztHCE2gfboSp/dZRLSqfuLpRK2nDXDK+W9puocA==}
 
@@ -2215,11 +2222,20 @@ packages:
   '@scure/base@1.1.9':
     resolution: {integrity: sha512-8YKhl8GHiNI/pU2VMaofa2Tor7PJRAjwQLBBuilkJ9L5+13yVbC7JO/wS7piioAvPSwR3JKM1IJ/u4xQzbcXKg==}
 
+  '@scure/base@1.2.6':
+    resolution: {integrity: sha512-g/nm5FgUa//MCj1gV09zTJTaM6KBAHqLN907YVQqf7zC49+DcO4B1so4ZX07Ef10Twr6nuqYEH9GEggFXA4Fmg==}
+
   '@scure/bip32@1.4.0':
     resolution: {integrity: sha512-sVUpc0Vq3tXCkDGYVWGIZTRfnvu8LoTDaev7vbwh0omSvVORONr960MQWdKqJDCReIEmTj3PAr73O3aoxz7OPg==}
 
+  '@scure/bip32@1.7.0':
+    resolution: {integrity: sha512-E4FFX/N3f4B80AKWp5dP6ow+flD1LQZo/w8UnLGYZO674jS6YnYeepycOOksv+vLPSpgN35wgKgy+ybfTb2SMw==}
+
   '@scure/bip39@1.3.0':
     resolution: {integrity: sha512-disdg7gHuTDZtY+ZdkmLpPCk7fxZSu3gBiEGuoC1XYxv9cGx3Z6cpTggCgW6odSOOIXCiDjuGejW+aJKCY/pIQ==}
+
+  '@scure/bip39@1.6.0':
+    resolution: {integrity: sha512-+lF0BbLiJNwVlev4eKelw1WWLaiKXw7sSl8T6FvBlWkdX+94aGJ4o8XjUdlyhTCjd8c+B3KT3JfS8P0bLRNU6A==}
 
   '@sentry/core@8.32.0':
     resolution: {integrity: sha512-+xidTr0lZ0c755tq4k75dXPEb8PA+qvIefW3U9+dQMORLokBrYoKYMf5zZTG2k/OfSJS6OSxatUj36NFuCs3aA==}
@@ -2599,6 +2615,17 @@ packages:
     resolution: {integrity: sha512-E+iruNOY8VV9s4JEbe1aNEm6MiszPRr/UfcHMz0TQh1BXSxHK+ASV1R6W4HpjBhSeS+54PIsAMCBmwD06LLsqQ==}
     hasBin: true
 
+  abitype@1.0.8:
+    resolution: {integrity: sha512-ZeiI6h3GnW06uYDLx0etQtX/p8E24UaHHBj57RSjK7YBFe7iuVn07EDpOeP451D06sF27VOz9JJPlIKJmXgkEg==}
+    peerDependencies:
+      typescript: '>=5.0.4'
+      zod: ^3 >=3.22.0
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+      zod:
+        optional: true
+
   abort-controller@3.0.0:
     resolution: {integrity: sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==}
     engines: {node: '>=6.5'}
@@ -2826,14 +2853,13 @@ packages:
     peerDependencies:
       '@babel/core': ^7.0.0
 
-  bakosafe@0.2.0:
-    resolution: {integrity: sha512-vvpyfnNzerJrmAx8i8kyDu2SVEXvdNKYXXTFxXNz23hEokUx3lVec3y3QeR8rExe4KSySgA2Co5nzwW/sbZWBg==}
+  bakosafe@0.2.0-beta.1:
+    resolution: {integrity: sha512-tKTJhyq/XzvFIiBJEax78h01OWXWHKjwplbN5cc0EGgbERI2hCW4C21hv1M4UCaDmswKQGQGTb4ltKH0YaIM9w==}
     peerDependencies:
       fuels: ^0.101.0
 
-  bakosafe@file:../bako-safe/packages/sdk/bakosafe-0.2.0-beta.1-devdmaspda.tgz:
-    resolution: {integrity: sha512-lpLSNLApa0hH/hgv785YQzl7fswkm/89tvcHYlSMo54sCv10hX/b3zkSeAnc+1EW47wKjXfi57F1ABWBIN1j9Q==, tarball: file:../bako-safe/packages/sdk/bakosafe-0.2.0-beta.1-devdmaspda.tgz}
-    version: 0.2.0-beta.1-dev
+  bakosafe@0.2.0-beta.2:
+    resolution: {integrity: sha512-dpumaBRaQjD/miWbv8hZlEnWzVZVchQu+MuTs9HHY21H0/FnJljCHrbcrNqRkbDzzSyjuD6U3ntXnRsd+uk8Aw==}
     peerDependencies:
       fuels: ^0.101.0
 
@@ -3734,6 +3760,9 @@ packages:
     resolution: {integrity: sha512-i/2XbnSz/uxRCU6+NdVJgKWDTM427+MqYbkQzD321DuCQJUqOuJKIA0IM2+W2xtYHdKOmZ4dR6fExsd4SXL+WQ==}
     engines: {node: '>=6'}
 
+  eventemitter3@5.0.1:
+    resolution: {integrity: sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA==}
+
   events@3.3.0:
     resolution: {integrity: sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==}
     engines: {node: '>=0.8.x'}
@@ -4407,6 +4436,11 @@ packages:
   isobject@3.0.1:
     resolution: {integrity: sha512-WhB9zCku7EGTj/HQQRz5aUQEUeoQZH2bWcltRErOpymJ4boYE6wL9Tbr23krRPSZ+C5zqNSrSw+Cc7sZZ4b7vg==}
     engines: {node: '>=0.10.0'}
+
+  isows@1.0.7:
+    resolution: {integrity: sha512-I1fSfDCZL5P0v33sVqeTDSpcstAg/N+wF5HS033mogOVIp4B+oHC7oOCsA3axAbBSGTJ8QubbNmnIRN/h8U7hg==}
+    peerDependencies:
+      ws: '*'
 
   istanbul-lib-coverage@3.2.2:
     resolution: {integrity: sha512-O8dpsF+r0WV/8MNRKfnmrtCWhuKjxrq2w+jpzBL5UZKTi2LeVWnWOmWRxFlesJONmc+wLAGvKQZEOanko0LFTg==}
@@ -5234,6 +5268,14 @@ packages:
   os-tmpdir@1.0.2:
     resolution: {integrity: sha512-D2FR03Vir7FIu45XBY20mTb+/ZSWB00sjU9jdQXt83gDrI4Ztz5Fs7/yy74g2N5SVQY4xY1qDr4rNddwYRVX0g==}
     engines: {node: '>=0.10.0'}
+
+  ox@0.8.7:
+    resolution: {integrity: sha512-W1f0FiMf9NZqtHPEDEAEkyzZDwbIKfmH2qmQx8NNiQ/9JhxrSblmtLJsSfTtQG5YKowLOnBlLVguCyxm/7ztxw==}
+    peerDependencies:
+      typescript: '>=5.4.0'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
 
   p-limit@2.3.0:
     resolution: {integrity: sha512-//88mFWSJx8lxCzwdAABTJL2MyWB12+eIY7MDL2SqLmAkeKU9qxRvWuSyTjm3FUmpBEMuFfckAIqEaVGUDxb6w==}
@@ -6618,6 +6660,14 @@ packages:
     resolution: {integrity: sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg==}
     engines: {node: '>= 0.8'}
 
+  viem@2.35.1:
+    resolution: {integrity: sha512-BVGrI2xzMa+cWaUhhMuq+RV6t/8aHN08QAPG07OMFb3PBWc0AYubRMyIuxMKncFe8lJdxfRWNRYv1agoM/xSlQ==}
+    peerDependencies:
+      typescript: '>=5.0.4'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
   vite-node@3.0.9:
     resolution: {integrity: sha512-w3Gdx7jDcuT9cNn9jExXgOyKmf5UOTb6WMHz8LGAm54eS1Elf5OuBhCxl6zJxGhEeIkgsE1WbHuoL0mj/UXqXg==}
     engines: {node: ^18.0.0 || ^20.0.0 || >=22.0.0}
@@ -6783,6 +6833,18 @@ packages:
       utf-8-validate:
         optional: true
 
+  ws@8.18.3:
+    resolution: {integrity: sha512-PEIGCY5tSlUt50cqyMXfCzX+oOPqN0vuGqWzbcJ2xvnkzkq46oOpz7dQaTDBdfICb4N14+GARUDw2XV2N4tvzg==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
   xmlhttprequest-ssl@2.0.0:
     resolution: {integrity: sha512-QKxVRxiRACQcVuQEYFsI1hhkrMlrXHPegbbd1yn9UHOmRxY+si12nQYzri3vbzt8VdTTRviqcKxcyllFas5z2A==}
     engines: {node: '>=0.4.0'}
@@ -6850,6 +6912,8 @@ packages:
     engines: {node: '>= 14'}
 
 snapshots:
+
+  '@adraffy/ens-normalize@1.11.0': {}
 
   '@ampproject/remapping@2.3.0':
     dependencies:
@@ -8153,6 +8217,8 @@ snapshots:
   '@msgpackr-extract/msgpackr-extract-win32-x64@3.0.3':
     optional: true
 
+  '@noble/ciphers@1.3.0': {}
+
   '@noble/curves@1.3.0':
     dependencies:
       '@noble/hashes': 1.3.3
@@ -8838,16 +8904,29 @@ snapshots:
 
   '@scure/base@1.1.9': {}
 
+  '@scure/base@1.2.6': {}
+
   '@scure/bip32@1.4.0':
     dependencies:
       '@noble/curves': 1.4.2
       '@noble/hashes': 1.4.0
       '@scure/base': 1.1.9
 
+  '@scure/bip32@1.7.0':
+    dependencies:
+      '@noble/curves': 1.9.6
+      '@noble/hashes': 1.8.0
+      '@scure/base': 1.2.6
+
   '@scure/bip39@1.3.0':
     dependencies:
       '@noble/hashes': 1.4.0
       '@scure/base': 1.1.9
+
+  '@scure/bip39@1.6.0':
+    dependencies:
+      '@noble/hashes': 1.8.0
+      '@scure/base': 1.2.6
 
   '@sentry/core@8.32.0':
     dependencies:
@@ -9354,6 +9433,10 @@ snapshots:
       jsonparse: 1.3.1
       through: 2.3.8
 
+  abitype@1.0.8(typescript@5.4.5):
+    optionalDependencies:
+      typescript: 5.4.5
+
   abort-controller@3.0.0:
     dependencies:
       event-target-shim: 5.0.1
@@ -9589,18 +9672,20 @@ snapshots:
       babel-plugin-jest-hoist: 29.6.3
       babel-preset-current-node-syntax: 1.2.0(@babel/core@7.28.0)
 
-  bakosafe@0.2.0(fuels@0.101.1(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.1))):
+  bakosafe@0.2.0-beta.1(fuels@0.101.1(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.1))):
     dependencies:
       '@ethereumjs/util': 9.0.3
       '@ethersproject/bytes': 5.7.0
       '@noble/curves': 1.9.6
       axios: 1.5.1
+      build: 0.1.4
       fuels: 0.101.1(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.1))
+      pnpm: 10.14.0
       uuid: 9.0.1
     transitivePeerDependencies:
       - debug
 
-  bakosafe@file:../bako-safe/packages/sdk/bakosafe-0.2.0-beta.1-devdmaspda.tgz(fuels@0.101.1(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.1))):
+  bakosafe@0.2.0-beta.2(fuels@0.101.1(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.1)))(typescript@5.4.5):
     dependencies:
       '@ethereumjs/util': 9.0.3
       '@ethersproject/bytes': 5.7.0
@@ -9611,8 +9696,13 @@ snapshots:
       fuels: 0.101.1(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.1))
       pnpm: 10.14.0
       uuid: 9.0.1
+      viem: 2.35.1(typescript@5.4.5)
     transitivePeerDependencies:
+      - bufferutil
       - debug
+      - typescript
+      - utf-8-validate
+      - zod
 
   balanced-match@1.0.2: {}
 
@@ -10670,6 +10760,8 @@ snapshots:
 
   event-target-shim@5.0.1: {}
 
+  eventemitter3@5.0.1: {}
+
   events@3.3.0: {}
 
   execa@4.1.0:
@@ -11502,6 +11594,10 @@ snapshots:
       isarray: 1.0.0
 
   isobject@3.0.1: {}
+
+  isows@1.0.7(ws@8.18.3):
+    dependencies:
+      ws: 8.18.3
 
   istanbul-lib-coverage@3.2.2: {}
 
@@ -12467,6 +12563,21 @@ snapshots:
       word-wrap: 1.2.5
 
   os-tmpdir@1.0.2: {}
+
+  ox@0.8.7(typescript@5.4.5):
+    dependencies:
+      '@adraffy/ens-normalize': 1.11.0
+      '@noble/ciphers': 1.3.0
+      '@noble/curves': 1.9.6
+      '@noble/hashes': 1.8.0
+      '@scure/bip32': 1.7.0
+      '@scure/bip39': 1.6.0
+      abitype: 1.0.8(typescript@5.4.5)
+      eventemitter3: 5.0.1
+    optionalDependencies:
+      typescript: 5.4.5
+    transitivePeerDependencies:
+      - zod
 
   p-limit@2.3.0:
     dependencies:
@@ -13893,6 +14004,23 @@ snapshots:
 
   vary@1.1.2: {}
 
+  viem@2.35.1(typescript@5.4.5):
+    dependencies:
+      '@noble/curves': 1.9.6
+      '@noble/hashes': 1.8.0
+      '@scure/bip32': 1.7.0
+      '@scure/bip39': 1.6.0
+      abitype: 1.0.8(typescript@5.4.5)
+      isows: 1.0.7(ws@8.18.3)
+      ox: 0.8.7(typescript@5.4.5)
+      ws: 8.18.3
+    optionalDependencies:
+      typescript: 5.4.5
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+      - zod
+
   vite-node@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.1):
     dependencies:
       cac: 6.7.14
@@ -14067,6 +14195,8 @@ snapshots:
       signal-exit: 3.0.7
 
   ws@8.17.1: {}
+
+  ws@8.18.3: {}
 
   xmlhttprequest-ssl@2.0.0: {}
 

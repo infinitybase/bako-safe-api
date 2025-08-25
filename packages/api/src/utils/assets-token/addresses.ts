@@ -5,6 +5,8 @@ enum AssetId {
   UNI = 'UNI',
   DAI = 'DAI',
   sETH = 'sETH',
+  FUEL = 'FUEL',
+  stFUEL = 'stFUEL',
 }
 
 const tokensIDS = {
@@ -20,6 +22,10 @@ const tokensIDS = {
     '0x0d9be25f6bef5c945ce44db64b33da9235fbf1a9f690298698d899ad550abae1',
   [AssetId.sETH]:
     '0x1bdeed96ee1e5eca0bd1d7eeeb51d03b0202c1faf764fec1b276ba27d5d61d89',
+  [AssetId.FUEL]:
+    '0x1d5d97005e41cae2187a895fd8eab0506111e0e2f3331cd3912c15c24e3c1d82',
+  [AssetId.stFUEL]:
+    '0x5505d0f58bea82a052bc51d2f67ab82e9735f0a98ca5d064ecb964b8fd30c474',
 };
 
 export { AssetId, tokensIDS };
