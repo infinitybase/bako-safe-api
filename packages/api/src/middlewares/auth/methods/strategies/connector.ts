@@ -44,6 +44,7 @@ export class ConnectorAuthStrategy implements AuthStrategy {
       });
     }
 
+    // console.log()
     return {
       user: dapp.user,
       workspace: null,
