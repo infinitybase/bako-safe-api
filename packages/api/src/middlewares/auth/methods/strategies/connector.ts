@@ -33,7 +33,10 @@ export class ConnectorAuthStrategy implements AuthStrategy {
       });
     }
 
-    if (dapp.user.address !== predicateAddress) {
+    if (
+      dapp.user.address !== predicateAddress &&
+      dapp.currentVault.predicateAddress !== predicateAddress
+    ) {
       throw new Unauthorized({
         type: ErrorTypes.Unauthorized,
         title: UnauthorizedErrorTitles.INVALID_ADDRESS,
