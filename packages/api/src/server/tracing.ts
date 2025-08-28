@@ -17,7 +17,7 @@ const traceExporter = new OTLPTraceExporter({
 const sdk = new NodeSDK({
   resource: resourceFromAttributes({
     'service.name': 'api',
-    'service.environment': process.env.NODE_ENV || 'development',
+    'service.environment': process.env.API_ENVIRONMENT || 'development',
   }),
   spanProcessors: [new BatchSpanProcessor(traceExporter)],
   instrumentations: [
@@ -27,7 +27,7 @@ const sdk = new NodeSDK({
   ],
 });
 
-if (process.env.NODE_ENV != 'development') {
+if (process.env.API_ENVIRONMENT != 'development') {
   console.log('[TELEMETRY] Starting');
   sdk.start();
 }
