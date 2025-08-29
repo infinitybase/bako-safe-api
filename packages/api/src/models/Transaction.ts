@@ -5,27 +5,38 @@ import {
   TransactionType,
 } from 'bakosafe';
 import {
-  TransactionRequest,
   TransactionType as FuelTransactionType,
   hexlify,
   Network,
+  TransactionRequest,
 } from 'fuels';
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
 
 import { User } from '@models/User';
 
-import { Base } from './Base';
-import { Predicate } from './Predicate';
+import { networks } from '@src/constants/networks';
 import { ITransactionResponse } from '@src/modules/transaction/types';
 import {
   AssetFormat,
   formatAssetFromOperations,
+  formatAssetFromRampTransaction,
   formatAssets,
   parseAmount,
 } from '@src/utils/formatAssets';
-import { networks } from '@src/constants/networks';
+import { Base } from './Base';
+import { Predicate } from './Predicate';
+import { RampTransaction } from './RampTransactions';
 
 const { FUEL_PROVIDER, FUEL_PROVIDER_CHAIN_ID } = process.env;
+
+export enum TransactionTypeWithRamp {
+  ON_RAMP_DEPOSIT = 'ON_RAMP_DEPOSIT',
+  OFF_RAMP_WITHDRAW = 'OFF_RAMP_WITHDRAW',
+}
+
+export enum TransactionStatusWithRamp {
+  PENDING_PROVIDER = 'pending_provider',
+}
 
 export { TransactionStatus, TransactionType };
 
@@ -43,7 +54,7 @@ class Transaction extends Base {
     enum: TransactionType,
     default: TransactionType.TRANSACTION_SCRIPT,
   })
-  type: TransactionType;
+  type: TransactionType | TransactionTypeWithRamp;
 
   @Column({
     type: 'jsonb',
@@ -56,7 +67,7 @@ class Transaction extends Base {
     enum: TransactionStatus,
     default: TransactionStatus.AWAIT_REQUIREMENTS,
   })
-  status: TransactionStatus;
+  status: TransactionStatus | TransactionStatusWithRamp;
   @Column({
     type: 'jsonb',
     name: 'summary',
@@ -96,6 +107,11 @@ class Transaction extends Base {
   @ManyToOne(() => Predicate)
   predicate: Predicate;
 
+  @OneToOne(() => RampTransaction, rampTransaction => rampTransaction.transaction, {
+    nullable: true,
+  })
+  rampTransaction?: RampTransaction;
+
   static getTypeFromTransactionRequest(transactionRequest: TransactionRequest) {
     const { type } = transactionRequest;
     const transactionType = {
@@ -112,8 +128,16 @@ class Transaction extends Base {
 
   static formatTransactionResponse(transaction: Transaction): ITransactionResponse {
     let assets: AssetFormat[] = [];
+    const RAMP_OPERATIONS: string[] = [
+      TransactionTypeWithRamp.ON_RAMP_DEPOSIT,
+      TransactionTypeWithRamp.OFF_RAMP_WITHDRAW,
+    ];
 
-    if (transaction.summary?.operations && transaction?.predicate) {
+    const isOnOffRamp = RAMP_OPERATIONS.includes(transaction.type);
+
+    if (isOnOffRamp) {
+      assets = formatAssetFromRampTransaction(transaction);
+    } else if (transaction.summary?.operations && transaction?.predicate) {
       assets = formatAssetFromOperations(
         transaction.summary.operations,
         transaction.predicate.predicateAddress,
@@ -124,6 +148,18 @@ class Transaction extends Base {
 
     const result = Object.assign(transaction, {
       assets,
+      rampTransaction: transaction.rampTransaction
+        ? {
+            ...transaction.rampTransaction,
+            fiatAmountInUsd:
+              transaction.rampTransaction?.providerData?.transactionData
+                ?.fiatAmountInUsd,
+            providerTransaction:
+              transaction.rampTransaction?.providerData?.transactionData
+                ?.serviceProvider,
+            providerData: undefined, // Avoid sending providerData directly
+          }
+        : undefined,
       summary: transaction.summary
         ? {
             ...transaction.summary,

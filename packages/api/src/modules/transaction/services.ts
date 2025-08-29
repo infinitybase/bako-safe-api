@@ -132,6 +132,7 @@ export class TransactionService implements ITransactionService {
         'predicate.members',
         'predicate.workspace',
         'createdBy',
+        'rampTransaction',
       ],
     })
       .then(transaction => {
@@ -180,6 +181,7 @@ export class TransactionService implements ITransactionService {
       .leftJoin('t.predicate', 'predicate')
       .leftJoin('predicate.members', 'members')
       .leftJoin('predicate.workspace', 'workspace')
+      .leftJoin('t.rampTransaction', 'ramp')
       .addSelect([
         'predicate.name',
         'predicate.id',
@@ -190,6 +192,14 @@ export class TransactionService implements ITransactionService {
         'workspace.id',
         'workspace.name',
         'workspace.single',
+        'ramp.id',
+        'ramp.provider',
+        'ramp.sourceCurrency',
+        'ramp.sourceAmount',
+        'ramp.destinationCurrency',
+        'ramp.destinationAmount',
+        'ramp.paymentMethod',
+        'ramp.providerData',
       ])
       .andWhere(
         // TODO: On release to mainnet we need to remove this condition
@@ -334,6 +344,7 @@ export class TransactionService implements ITransactionService {
       .leftJoin('t.predicate', 'predicate')
       .leftJoin('predicate.members', 'members')
       .leftJoin('predicate.workspace', 'workspace')
+      .leftJoin('t.rampTransaction', 'ramp')
       .addSelect([
         'predicate.name',
         'predicate.id',
@@ -344,6 +355,14 @@ export class TransactionService implements ITransactionService {
         'workspace.id',
         'workspace.name',
         'workspace.single',
+        'ramp.id',
+        'ramp.provider',
+        'ramp.sourceCurrency',
+        'ramp.sourceAmount',
+        'ramp.destinationCurrency',
+        'ramp.destinationAmount',
+        'ramp.paymentMethod',
+        'ramp.providerData',
       ])
       .andWhere(
         `regexp_replace(t.network->>'url', '^https?://[^@]+@', 'https://') = :network`,
