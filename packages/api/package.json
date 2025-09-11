@@ -38,7 +38,7 @@
     "@sentry/profiling-node": "8.32.0",
     "@testcontainers/postgresql": "11.0.0",
     "axios": "1.5.1",
-    "bakosafe": "0.2.1-beta.1",
+    "bakosafe": "0.2.2",
     "body-parser": "1.20.2",
     "cheerio": "1.0.0-rc.12",
     "class-validator": "0.14.0",
