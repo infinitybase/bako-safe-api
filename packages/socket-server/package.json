@@ -14,10 +14,10 @@
 	"dependencies": {
 		"@socket.io/redis-adapter": "^8.3.0",
 		"axios": "1.5.1",
-		"bakosafe": "0.2.1",
+		"bakosafe": "0.2.2",
 		"express": "4.17.1",
 		"express-joi-validation": "5.0.0",
-		"fuels": "0.101.1",
+		"fuels": "0.101.3",
 		"ioredis": "^5.7.0",
 		"pg": "8.5.1",
 		"socket.io": "4.7.2",
