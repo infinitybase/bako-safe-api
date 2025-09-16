@@ -46,4 +46,7 @@ export class RampTransaction extends Base {
 
   @Column({ name: 'payment_method', type: 'varchar', nullable: true })
   paymentMethod?: string;
+
+  @Column({ name: 'user_wallet_address', type: 'varchar', nullable: true })
+  userWalletAddress?: string;
 }
