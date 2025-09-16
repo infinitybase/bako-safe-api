@@ -17,7 +17,7 @@ import {
   IServiceProviderParams,
   IServiceProviderResponse,
 } from './types';
-import { meldApi } from './utils';
+import { MeldApi, meldApi } from './utils';
 
 export default class MeldService implements IMeldService {
   /**
@@ -172,18 +172,13 @@ export default class MeldService implements IMeldService {
    */
   async getQuotes(payload: IQuoteParams): Promise<IQuoteResponse> {
     try {
-      const { data } = await meldApi.post<IQuoteResponse>(
-        '/payments/crypto/quote',
-        payload,
-      );
-      return data;
+      return await MeldApi.getMeldQuotes(payload);
     } catch (error) {
-      console.error(error.response.data);
       throw new Internal({
         title: 'Error fetching quotes from Meld API',
         detail:
           error instanceof AxiosError
-            ? error.response.data.message
+            ? error.response?.data?.message
             : error instanceof Error
             ? error.message
             : 'Unknown error',
@@ -199,18 +194,13 @@ export default class MeldService implements IMeldService {
     request: IBuyCryptoRequest | ISellCryptoRequest,
   ): Promise<ICreateWidgetResponse> {
     try {
-      const { data } = await meldApi.post<ICreateWidgetResponse>(
-        '/crypto/session/widget',
-        request,
-      );
-      return data;
+      return await MeldApi.createMeldWidgetSession(request);
     } catch (error) {
-      console.error('Error creating widget session:', error.response.data);
       throw new Internal({
         title: 'Error creating widget session from Meld API',
         detail:
           error instanceof AxiosError
-            ? error.response.data.message
+            ? error.response?.data?.message
             : error instanceof Error
             ? error.message
             : 'Unknown error',
