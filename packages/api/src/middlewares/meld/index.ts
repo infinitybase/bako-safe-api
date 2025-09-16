@@ -55,7 +55,7 @@ export function MeldAuthMiddleware(
     const rawBody = JSON.stringify(req.body);
 
     // Construct the full URL
-    const protocol = req.protocol;
+    const protocol = 'https';
     const host = req.get('host');
 
     const url = `${protocol}://${host}${req.originalUrl}`;
