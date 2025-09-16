@@ -16,7 +16,7 @@ import { generateNode } from './mocks/Networks';
 import { saveMockPredicate } from './mocks/Predicate';
 import { TestEnvironment } from './utils/Setup';
 
-process.env.MELD_ENVIROMENT = 'sandbox';
+process.env.MELD_ENVIRONMENT = 'sandbox';
 process.env.MELD_API_URL = 'https://meld.mock';
 process.env.MELD_API_KEY = 'key';
 

@@ -11,13 +11,13 @@ import {
 
 dotenv.config();
 
-const { MELD_API_URL, MELD_API_KEY, MELD_ENVIROMENT } = process.env;
+const { MELD_API_URL, MELD_API_KEY, MELD_ENVIRONMENT } = process.env;
 
 if (!MELD_API_URL || !MELD_API_KEY) {
   console.warn('MELD_API_URL and MELD_API_KEY must be defined in .env');
 }
 
-export const isSandbox = MELD_ENVIROMENT !== 'production';
+export const isSandbox = MELD_ENVIRONMENT !== 'production';
 
 export const meldApi = axios.create({
   baseURL: MELD_API_URL,
