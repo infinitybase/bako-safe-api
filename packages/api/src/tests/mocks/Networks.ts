@@ -21,7 +21,6 @@ export const generateNode = async () => {
   });
 
   const wallet = node.wallets[0];
-  console.log('####WALLET', wallet);
   await deployPredicate(wallet);
 
   return {
