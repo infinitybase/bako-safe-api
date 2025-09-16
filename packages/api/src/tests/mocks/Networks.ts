@@ -9,7 +9,7 @@ export const networks = {
 };
 
 export const generateNode = async () => {
-  let node = await launchTestNode({
+  const node = await launchTestNode({
     walletsConfig: {
       assets: assets(),
       coinsPerAsset: 1,
@@ -20,7 +20,9 @@ export const generateNode = async () => {
     },
   });
 
-  await deployPredicate(node.wallets[0]);
+  const wallet = node.wallets[0];
+  console.log('####WALLET', wallet);
+  await deployPredicate(wallet);
 
   return {
     node,
