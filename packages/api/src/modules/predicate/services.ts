@@ -1,7 +1,6 @@
 import {
   AddressUtils as BakoAddressUtils,
   DEFAULT_PREDICATE_VERSION,
-  UsedPredicateVersions,
   Vault,
   WalletType,
   getLatestPredicateVersion,
