@@ -7,12 +7,23 @@ import {
   TransactionTypeWithRamp,
 } from '@src/models';
 import { RampTransaction } from '@src/models/RampTransactions';
+import { emitTransaction } from '@src/socket/events';
+import { SocketEvents, SocketUsernames } from '@src/socket/types';
 import { FuelProvider } from '@src/utils';
 import { ErrorTypes, Internal, NotFound } from '@src/utils/error';
 import { getTransactionSummary } from 'fuels';
-import { IMeldTransactionCryptoWeebhook, ITransaction } from '../meld/types';
-import { meldApi } from '../meld/utils';
-import { ICreateTransactionPayload } from '../transaction/types';
+import { IMeldTransactionCryptoWeebhook } from '../meld/types';
+import {
+  isSandbox,
+  MeldApi,
+  meldEthValue,
+  MOCK_DEPOSIT_TX_ID,
+} from '../meld/utils';
+import { TransactionController } from '../transaction/controller';
+import {
+  ICreateTransactionPayload,
+  ITransactionHistory,
+} from '../transaction/types';
 import { getTransactionStatusByPaymentStatus } from './utils';
 
 export default class WebhookService {
@@ -37,24 +48,21 @@ export default class WebhookService {
           type: ErrorTypes.NotFound,
         });
       }
-      const meldTransactions = await meldApi.get<{
-        transactions: ITransaction[];
-      }>('/payments/transactions', {
-        params: { externalSessionIds: externalSessionId },
+      const meldTransactions = await MeldApi.getMeldTransactions({
+        externalSessionIds: externalSessionId,
       });
-      const blockchainTransactionId =
-        meldTransactions?.data.transactions?.[0]?.cryptoDetails
-          ?.blockchainTransactionId;
+      const blockchainTransactionId = isSandbox
+        ? MOCK_DEPOSIT_TX_ID
+        : meldTransactions?.transactions?.[0]?.cryptoDetails
+            ?.blockchainTransactionId;
 
       if (!meldData.transaction && blockchainTransactionId) {
-        const destinationAddress =
-          meldTransactions?.data.transactions?.[0]?.cryptoDetails
-            ?.destinationWalletAddress;
-        const chainId =
-          meldTransactions?.data.transactions?.[0]?.cryptoDetails?.chainId;
-        const networkUrl = networksByChainId[chainId] || networksByChainId['9889'];
+        const destinationAddress = meldData.userWalletAddress;
+        const chainId = meldTransactions?.transactions?.[0]?.cryptoDetails?.chainId;
+        const networkUrl = isSandbox
+          ? networksByChainId[0]
+          : networksByChainId[chainId] || networksByChainId['9889'];
         const provider = await FuelProvider.create(networkUrl);
-
         const txSummary = await getTransactionSummary({
           provider,
           id: blockchainTransactionId,
@@ -65,8 +73,8 @@ export default class WebhookService {
         });
 
         const config = JSON.parse(predicate.configurable);
-        const meldTxData = meldTransactions.data.transactions[0];
-        const isOnRamp = meldTxData.destinationCurrencyCode === 'ETH_FUEL';
+        const meldTxData = meldTransactions.transactions[0];
+        const isOnRamp = meldTxData.destinationCurrencyCode === meldEthValue;
 
         const newTransaction: ICreateTransactionPayload = {
           type: isOnRamp
@@ -121,6 +129,21 @@ export default class WebhookService {
             });
           });
 
+        const transactionHistory = await TransactionController.formatTransactionsHistory(
+          transaction,
+        );
+
+        emitTransaction(meldData.user.id, {
+          transaction: Transaction.formatTransactionResponse({
+            ...transaction,
+            rampTransaction: meldData,
+          } as Transaction),
+          to: SocketUsernames.UI,
+          history: transactionHistory as ITransactionHistory[],
+          sessionId: meldData.user.id,
+          type: SocketEvents.TRANSACTION_CREATED,
+        });
+
         await RampTransaction.update(meldData.id, {
           providerData: {
             ...meldData.providerData,
@@ -149,6 +172,23 @@ export default class WebhookService {
           detail: error instanceof Error ? error.message : 'Unknown error',
           type: ErrorTypes.Internal,
         });
+      });
+
+      const updatedTx = await Transaction.findOneOrFail({
+        where: { id: meldData.transaction.id },
+        relations: { predicate: true, createdBy: true, rampTransaction: true },
+      });
+
+      const transactionHistory = (await TransactionController.formatTransactionsHistory(
+        updatedTx,
+      )) as ITransactionHistory[];
+
+      emitTransaction(meldData.user.id, {
+        transaction: Transaction.formatTransactionResponse(updatedTx),
+        to: SocketUsernames.UI,
+        history: transactionHistory,
+        sessionId: meldData.user.id,
+        type: SocketEvents.TRANSACTION_UPDATED,
       });
 
       await RampTransaction.update(meldData.id, {
