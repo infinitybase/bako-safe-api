@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { Provider } from 'fuels';
 import { MigrationInterface, QueryRunner, TableColumn } from 'typeorm';
 
