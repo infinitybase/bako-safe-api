@@ -13,4 +13,9 @@ interface IMeldWebhookRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Body]: IMeldTransactionCryptoWeebhook;
 }
 
+interface ILayersSwapWebhookRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Body]: Buffer;
+}
+
 export type IMeldWebhookRequest = ValidatedRequest<IMeldWebhookRequestSchema>;
+export type ILayersSwapWebhookRequest = ValidatedRequest<ILayersSwapWebhookRequestSchema>;

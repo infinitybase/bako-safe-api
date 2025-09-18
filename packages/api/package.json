@@ -64,6 +64,7 @@
     "reflect-metadata": "0.1.13",
     "socket.io": "4.7.2",
     "socket.io-client": "4.7.5",
+    "svix": "1.76.1",
     "ts-node": "10.9.2",
     "tsconfig-paths": "3.15.0",
     "typeorm": "0.3.20",
