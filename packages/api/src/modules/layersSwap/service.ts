@@ -89,7 +89,7 @@ export class LayersSwapService implements ILayersSwapService {
 
     try {
       const { data } = await this.api.get<IGetLimitsApiResponse>(
-        this.withVersion(`/limits?${params.toString()}&version=sandbox`),
+        this.withVersion(`/limits?${params.toString()}`),
       );
 
       return data.data;
@@ -118,7 +118,7 @@ export class LayersSwapService implements ILayersSwapService {
 
     try {
       const { data } = await this.api.get<IGetQuotesApiResponse>(
-        this.withVersion(`/quote?${params.toString()}&version=sandbox`),
+        this.withVersion(`/quote?${params.toString()}`),
       );
 
       return data.data;
@@ -139,7 +139,7 @@ export class LayersSwapService implements ILayersSwapService {
   async createSwap(payload: ICreateSwapPayload): Promise<ICreateSwapResponse> {
     try {
       const { data } = await this.api.post<ICreateSwapApiResponse>(
-        this.withVersion(`/swaps?version=sandbox`),
+        this.withVersion(`/swaps`),
         payload,
       );
 

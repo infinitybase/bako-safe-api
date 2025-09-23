@@ -1,7 +1,7 @@
 import { authMiddleware } from '@src/middlewares';
 import { handleResponse } from '@src/utils';
 import { Router } from 'express';
-import { LayersSwapService, LayersSwapServiceFactory } from './service';
+import { LayersSwapServiceFactory } from './service';
 import LayersSwapController from './controller';
 import {
   ValidatorCreateSwapRequest,

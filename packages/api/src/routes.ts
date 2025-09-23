@@ -34,7 +34,7 @@ router.use('/notifications', notifications);
 router.use('/external', externalRoute);
 router.use('/ramp-transactions/meld', meld);
 router.use('/ramp-transactions', rampTransactions);
-router.use('/layers-swap', layersSwap);
+router.use('/layer-swap', layersSwap);
 router.use('/webhooks', webhookRouters);
 
 // ping route

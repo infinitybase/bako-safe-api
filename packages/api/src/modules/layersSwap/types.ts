@@ -46,7 +46,7 @@ export interface INetworkLayersSwap {
   destination_rank: 0;
   token: TokenLayersSwap;
   metadata: MetadataDestination;
-  deposit_methods: ['string'];
+  deposit_methods: string[];
 }
 
 export interface IGetDestinationPayload {
@@ -55,11 +55,11 @@ export interface IGetDestinationPayload {
 }
 
 export interface ICreateSwapPayload {
-  destination_address: string; //'0x0b9554fC251Be0E3eb2B61266e827824Ac49f66347629c4dc9C440de5752a992';
-  source_network: string; //'ETHEREUM_MAINNET';
-  source_token: string; //'ETH';
-  destination_network: string; //'FUEL_MAINNET';
-  destination_token: string; //'ETH';
+  destination_address: string;
+  source_network: string;
+  source_token: string;
+  destination_network: string;
+  destination_token: string;
   amount?: number;
   refuel?: boolean;
   use_deposit_address?: boolean;
@@ -96,7 +96,7 @@ export interface IGetDestinationsApiResponse {
       destination_rank: number;
       token: TokenLayersSwap;
       metadata: MetadataDestination;
-      deposit_methods: ['string'];
+      deposit_methods: string[];
       tokens: [
         {
           symbol: string;
