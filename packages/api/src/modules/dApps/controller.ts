@@ -13,6 +13,7 @@ import { RecoverCodeService } from '../recoverCode/services';
 import { TransactionService } from '../transaction/services';
 import { DAppsService } from './service';
 import type {
+  IChangeAccountRequest,
   IChangeNetworkRequest,
   ICreateRecoverCodeRequest,
   ICreateRequest,
@@ -32,6 +33,24 @@ export class DappController {
     this._dappService = dappService;
     bindMethods(this);
   }
+
+
+  async changeAccount({ params, headers }: IChangeAccountRequest) {
+    try {
+      const { vault, sessionId } = params
+      const { origin } = headers;
+
+      const isAddress = vault.startsWith('0x');
+      const predicate = await Predicate.findOne({ where: (isAddress) ? { predicateAddress: vault } : { id: vault } });
+      const dapp = await new DAppsService().findBySessionID(sessionId, origin);
+      dapp.currentVault = predicate;
+      await dapp.save();
+      return successful(dapp.currentVault, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
 
   async connect({ body }: ICreateRequest) {
     try {
@@ -86,7 +105,7 @@ export class DappController {
     try {
       const dappCache = await RedisReadClient.get(`${PREFIX}${params.sessionId}`);
       const dapp = dappCache ? JSON.parse(dappCache) : null;
-      if(dapp) {
+      if (dapp) {
         return successful(
           dapp.currentVault.predicateAddress,
           Responses.Ok,
@@ -193,7 +212,7 @@ export class DappController {
     try {
       const dappCache = await RedisReadClient.get(`${PREFIX}${params.sessionId}`);
       const dapp = dappCache ? JSON.parse(dappCache) : null;
-      if(dapp) {
+      if (dapp) {
         return successful(
           dapp.currentVault.predicateAddress,
           Responses.Ok,
@@ -210,7 +229,7 @@ export class DappController {
     try {
       const dappCache = await RedisReadClient.get(`${PREFIX}${params.sessionId}`);
       const _dapp = dappCache ? JSON.parse(dappCache) : null;
-      if(_dapp) {
+      if (_dapp) {
         return successful(
           _dapp.network.url,
           Responses.Ok,
@@ -239,7 +258,7 @@ export class DappController {
     try {
       const dappCache = await RedisReadClient.get(`${PREFIX}${params.sessionId}`);
       const dapp = dappCache ? JSON.parse(dappCache) : null;
-      if(dapp) {
+      if (dapp) {
         return successful(
           dapp.vaults.map(vault => vault.predicateAddress),
           Responses.Ok,
@@ -256,26 +275,26 @@ export class DappController {
       return error(e.error, e.statusCode);
     }
   }
-  
+
   async state({ params, headers }: IDappRequest) {
     try {
       const dappCache = await RedisReadClient.get(`${PREFIX}${params.sessionId}`);
       const dapp = dappCache ? JSON.parse(dappCache) : null;
 
-      if(!dapp) {
+      if (!dapp) {
         const _dapp = await this._dappService
           .findBySessionID(params.sessionId, headers.origin || headers.Origin)
           .then((data: DApp) => {
             return data;
           });
 
-          if(!_dapp) {
-            return successful(false, Responses.Ok);
-          }
-          await RedisWriteClient.set(`${PREFIX}${params.sessionId}`, JSON.stringify(_dapp));
-          return successful(true, Responses.Ok);
+        if (!_dapp) {
+          return successful(false, Responses.Ok);
+        }
+        await RedisWriteClient.set(`${PREFIX}${params.sessionId}`, JSON.stringify(_dapp));
+        return successful(true, Responses.Ok);
       }
-      
+
       return successful(
         true,
         Responses.Ok,
@@ -346,7 +365,7 @@ export class DappController {
       socketClient.emit(SocketEvents.SWITCH_NETWORK, socketData).then(() => {
         socketClient.disconnect();
       })
-      
+
       return successful(dapp.network, Responses.Ok);
     } catch (e) {
       console.log(e);
