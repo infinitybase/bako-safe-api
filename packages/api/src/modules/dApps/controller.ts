@@ -37,7 +37,7 @@ export class DappController {
 
   async changeAccount({ params, headers }: IChangeAccountRequest) {
     try {
-      const { vault, sessionId } = params as { sessionId: string; vault: string };
+      const { vault, sessionId } = params
       const { origin } = headers;
 
       const isAddress = vault.startsWith('0x');
