@@ -89,10 +89,10 @@ interface IDappRequestSchema extends ValidatedRequestSchema {
 }
 
 interface IChangeAccountRequestSchema extends ValidatedRequestSchema {
-  [ContainerTypes.Body]: {
+  [ContainerTypes.Params]: {
+    sessionId: string;
     vault: string; // predicateAddress or id
   };
-  [ContainerTypes.Params]: { sessionId: string };
   [ContainerTypes.Headers]: { origin: string };
 }
 

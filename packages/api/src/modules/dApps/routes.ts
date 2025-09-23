@@ -30,7 +30,7 @@ router.get(
 );
 
 router.put('/:sessionId/network', handleResponse(changeNetwork));
-router.put('/:sessionId/account', handleResponse(changeAccount));
+router.put('/:sessionId/:vault', handleResponse(changeAccount));
 
 router.get('/:sessionId/state', handleResponse(state));
 router.get('/:sessionId/accounts', handleResponse(accounts));
