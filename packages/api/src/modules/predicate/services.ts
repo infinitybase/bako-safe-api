@@ -421,8 +421,8 @@ export class PredicateService implements IPredicateService {
 
     const bakoLatestVersion = getLatestPredicateVersion(WalletType.BAKO).version;
     const result: Vault[] = [];
-    // add the bako latest version
-    versions.push({
+    // add the bako 1st version
+    versions.unshift({
       version: bakoLatestVersion,
       hasBalance: true,
       predicateAddress: 'fake-address',
