@@ -16,6 +16,7 @@ import { createLayersSwapApi, LayersSwapEnv } from './utils';
 import axios, { AxiosInstance } from 'axios';
 import { Network } from 'fuels';
 import { networksByChainId } from '@src/constants/networks';
+import { keysToCamel } from '@src/utils/toCamelCase';
 
 export class LayersSwapServiceFactory {
   static create(env: LayersSwapEnv): LayersSwapService {
@@ -52,17 +53,17 @@ export class LayersSwapService implements ILayersSwapService {
   async getDestinations(
     payload: IGetDestinationPayload,
   ): Promise<IGetDestinationsResponse[]> {
-    const { from_network, from_token } = payload;
+    const { fromNetwork, fromToken } = payload;
     try {
       const { data: response } = await this.api.get<IGetDestinationsApiResponse>(
         this.withVersion(
-          `/destinations?source_network=${from_network}&source_token=${from_token}`,
+          `/destinations?source_network=${fromNetwork}&source_token=${fromToken}`,
         ),
       );
 
       return response.data.map(network => ({
         name: network.name,
-        display_name: network.display_name,
+        displayName: network.display_name,
         logo: network.logo,
         tokens: network.tokens.map(token => ({
           symbol: token.symbol,
@@ -81,10 +82,10 @@ export class LayersSwapService implements ILayersSwapService {
 
   async getLimits(payload: ICreateSwapPayload): Promise<IGetLimitsResponse> {
     const params = new URLSearchParams({
-      source_network: payload.source_network,
-      source_token: payload.source_token,
-      destination_network: payload.destination_network,
-      destination_token: payload.destination_token,
+      source_network: payload.sourceNetwork,
+      source_token: payload.sourceToken,
+      destination_network: payload.destinationNetwork,
+      destination_token: payload.destinationToken,
     });
 
     try {
@@ -92,7 +93,12 @@ export class LayersSwapService implements ILayersSwapService {
         this.withVersion(`/limits?${params.toString()}`),
       );
 
-      return data.data;
+      return {
+        minAmountInUsd: data.data.min_amount_in_usd,
+        minAmount: data.data.min_amount,
+        maxAmountInUsd: data.data.max_amount_in_usd,
+        maxAmount: data.data.max_amount,
+      };
     } catch (error) {
       const isAxiosErr = axios.isAxiosError(error);
       const detail =
@@ -109,10 +115,10 @@ export class LayersSwapService implements ILayersSwapService {
 
   async getQuotes(payload: ICreateSwapPayload): Promise<IGetQuotesResponse> {
     const params = new URLSearchParams({
-      source_network: payload.source_network,
-      source_token: payload.source_token,
-      destination_network: payload.destination_network,
-      destination_token: payload.destination_token,
+      source_network: payload.sourceNetwork,
+      source_token: payload.sourceToken,
+      destination_network: payload.destinationNetwork,
+      destination_token: payload.destinationToken,
       amount: payload.amount.toString(),
     });
 
@@ -121,7 +127,7 @@ export class LayersSwapService implements ILayersSwapService {
         this.withVersion(`/quote?${params.toString()}`),
       );
 
-      return data.data;
+      return keysToCamel<IGetQuotesResponse>(data.data);
     } catch (error) {
       const isAxiosErr = axios.isAxiosError(error);
       const detail =
@@ -138,12 +144,26 @@ export class LayersSwapService implements ILayersSwapService {
 
   async createSwap(payload: ICreateSwapPayload): Promise<ICreateSwapResponse> {
     try {
+      const payloadToApi = {
+        destination_address: payload.destinationAddress,
+        source_network: payload.sourceNetwork,
+        source_token: payload.sourceToken,
+        destination_network: payload.destinationNetwork,
+        destination_token: payload.destinationToken,
+        amount: payload.amount,
+        refuel: payload.refuel,
+        use_deposit_address: payload.useDepositAddress,
+        use_new_deposit_address: payload.useNewDepositAddress,
+        reference_id: payload.referenceId,
+        slippage: payload.slippage,
+      };
+
       const { data } = await this.api.post<ICreateSwapApiResponse>(
         this.withVersion(`/swaps`),
-        payload,
+        payloadToApi,
       );
 
-      return data.data;
+      return keysToCamel<ICreateSwapResponse>(data.data);
     } catch (error) {
       const isAxiosErr = axios.isAxiosError(error);
       const detail =

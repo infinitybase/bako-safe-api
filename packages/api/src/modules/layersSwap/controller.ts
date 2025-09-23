@@ -16,14 +16,14 @@ export default class LayersSwapController {
 
   async getDestinations(request: IRequestDestination) {
     try {
-      const { from_network, from_token } = request.query;
+      const { fromNetwork, fromToken } = request.query;
       const net = request.network;
 
       const service = this._factory.fromNetwork(net);
 
       const destinations = await service.getDestinations({
-        from_network,
-        from_token,
+        fromNetwork,
+        fromToken,
       });
       return successful(destinations, Responses.Ok);
     } catch (err) {
