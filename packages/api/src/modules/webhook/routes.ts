@@ -18,7 +18,7 @@ webhookRouters.post(
 );
 
 webhookRawRouters.post(
-  '/layers-swap',
+  '/layer-swap',
   bodyParser.raw({ type: 'application/json' }),
   handleResponse(controller.handleLayersSwapWebhook),
 );
