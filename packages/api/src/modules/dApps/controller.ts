@@ -13,6 +13,7 @@ import { RecoverCodeService } from '../recoverCode/services';
 import { TransactionService } from '../transaction/services';
 import { DAppsService } from './service';
 import type {
+  IChangeAccountRequest,
   IChangeNetworkRequest,
   ICreateRecoverCodeRequest,
   ICreateRequest,
@@ -32,6 +33,25 @@ export class DappController {
     this._dappService = dappService;
     bindMethods(this);
   }
+
+
+  async changeAccount({ body, params, headers }: IChangeAccountRequest) {
+    try {
+      const { vault } = body;
+      const { sessionId } = params;
+      const { origin } = headers;
+
+      const isAddress = vault.startsWith('0x');
+      const predicate = await Predicate.findOne({ where: (isAddress) ? { predicateAddress: vault } : { id: vault } });
+      const dapp = await new DAppsService().findBySessionID(sessionId, origin);
+      dapp.currentVault = predicate;
+      await dapp.save();
+      return successful(dapp.currentVault, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
 
   async connect({ body }: ICreateRequest) {
     try {
