@@ -23,7 +23,7 @@ const {
 } = new DappController(dAppService);
 
 router.post('/', authMiddleware, handleResponse(connect));
-router.post('/:sessionId/connect', handleResponse(changeAccount));
+router.put('/:sessionId/account', handleResponse(changeAccount));
 
 router.get(
   '/:sessionId/transaction/:vaultAddress/:txId',
