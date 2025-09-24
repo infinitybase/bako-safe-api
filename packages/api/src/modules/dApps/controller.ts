@@ -34,14 +34,20 @@ export class DappController {
     bindMethods(this);
   }
 
-
   async changeAccount({ params, headers }: IChangeAccountRequest) {
     try {
-      const { vault, sessionId } = params
+      const { sessionId, vault } = params;
       const { origin } = headers;
 
       const isAddress = vault.startsWith('0x');
       const predicate = await Predicate.findOne({ where: (isAddress) ? { predicateAddress: vault } : { id: vault } });
+      if (!predicate) {
+        throw new NotFound({
+          type: ErrorTypes.NotFound,
+          title: 'Predicate not found',
+          detail: 'Predicate not found',
+        });
+      }
       const dapp = await new DAppsService().findBySessionID(sessionId, origin);
       dapp.currentVault = predicate;
       await dapp.save();
