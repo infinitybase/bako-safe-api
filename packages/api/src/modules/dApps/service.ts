@@ -21,14 +21,37 @@ export class DAppsService implements IDAppsService {
   }
 
   async findBySessionID(sessionID: string, origin: string) {
-    return await DApp.createQueryBuilder('d')
-      .innerJoin('d.vaults', 'vaults')
-      .addSelect(['vaults.predicateAddress', 'vaults.id'])
-      .innerJoin('d.currentVault', 'currentVault')
-      .addSelect(['currentVault.predicateAddress', 'currentVault.id'])
-      .innerJoinAndSelect('d.user', 'user')
-      .where('d.session_id = :sessionID', { sessionID })
-      .andWhere('d.origin = :origin', { origin })
+    const sessionOnlyQuery = DApp.createQueryBuilder(
+      'd',
+    ).where('d.session_id = :sessionID', { sessionID });
+
+    const sessionOnlyResult = await sessionOnlyQuery.getOne();
+
+    if (!sessionOnlyResult) {
+      return null;
+    }
+
+    let query;
+    if (sessionOnlyResult.origin === 'NOT FOUND') {
+      query = DApp.createQueryBuilder('d')
+        .innerJoin('d.vaults', 'vaults')
+        .addSelect(['vaults.predicateAddress', 'vaults.id'])
+        .innerJoin('d.currentVault', 'currentVault')
+        .addSelect(['currentVault.predicateAddress', 'currentVault.id'])
+        .innerJoinAndSelect('d.user', 'user')
+        .where('d.session_id = :sessionID', { sessionID });
+    } else {
+      query = DApp.createQueryBuilder('d')
+        .innerJoin('d.vaults', 'vaults')
+        .addSelect(['vaults.predicateAddress', 'vaults.id'])
+        .innerJoin('d.currentVault', 'currentVault')
+        .addSelect(['currentVault.predicateAddress', 'currentVault.id'])
+        .innerJoinAndSelect('d.user', 'user')
+        .where('d.session_id = :sessionID', { sessionID })
+        .andWhere('d.origin = :origin', { origin });
+    }
+
+    return await query
       .getOne()
       .then(data => data)
       .catch(e => {

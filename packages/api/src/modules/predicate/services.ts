@@ -2,7 +2,7 @@ import {
   AddressUtils as BakoAddressUtils,
   DEFAULT_PREDICATE_VERSION,
   Vault,
-  WalletType,
+  Wallet as WalletType,
   getLatestPredicateVersion,
   legacyConnectorVersion,
 } from 'bakosafe';
@@ -414,37 +414,53 @@ export class PredicateService implements IPredicateService {
   async checkOlderPredicateVersions(
     address: string, // user address
     provider: string,
-  ): Promise<Vault[]> {
+  ): Promise<{ invisibleAccounts: string[], accounts: Vault[] }> {
     const _versions = await legacyConnectorVersion(address, provider);
-    const versions = _versions?.filter(v => v.hasBalance);
+    const versions = _versions.filter(v => !v.hasBalance).map(v => v.predicateAddress);
 
-    const bakoLatestVersion = getLatestPredicateVersion(WalletType.BAKO).version;
+    const bakoLatestVersion = getLatestPredicateVersion(WalletType.FUEL).version;
     const result: Vault[] = [];
     // add the bako 1st version
-    versions.unshift({
+    _versions.unshift({
       version: bakoLatestVersion,
       hasBalance: true,
       predicateAddress: 'fake-address',
-      origin: WalletType.BAKO,
+      details: {
+        origin: WalletType.FUEL,
+        toolchain: {
+          fuelsVersion: '0.101.1',
+          forcVersion: '0.101.1',
+          fuelCoreVersion: '0.101.1',
+        },
+        versionTime: 0,
+        description: 'Bako latest version',
+      },
+      ethBalance: {
+        assetId: 'fake-asset-id',
+        amount: '0',
+        symbol: 'fake-symbol',
+      },
+      balances: [],
     });
 
-    for (const v of versions) {
+
+    for (const v of _versions) {
       const isFromConnector =
-        v.origin === WalletType.EVM || v.origin === WalletType.SVM;
+        v.details.origin === WalletType.EVM || v.details.origin === WalletType.SVM;
 
       const c = isFromConnector
         ? () => {
-            return {
-              SIGNER: address,
-            };
-          }
-        : () => {
-            // bako version
-            return {
-              SIGNERS: [address],
-              SIGNATURES_COUNT: 1,
-            };
+          return {
+            SIGNER: address,
           };
+        }
+        : () => {
+          // bako version
+          return {
+            SIGNERS: [address],
+            SIGNATURES_COUNT: 1,
+          };
+        };
 
       const vault = await this.instancePredicate(
         JSON.stringify(c()),
@@ -455,7 +471,10 @@ export class PredicateService implements IPredicateService {
       result.push(vault);
     }
 
-    return result;
+    return {
+      invisibleAccounts: versions,
+      accounts: result,
+    };
   }
 
   async instancePredicate(
