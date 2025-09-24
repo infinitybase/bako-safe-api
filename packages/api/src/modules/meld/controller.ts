@@ -3,7 +3,13 @@ import { bindMethods, Responses, successful } from '@src/utils';
 import { error } from '@src/utils/error';
 import { IRampTransactionService } from '../rampTransactions/types';
 import { IMeldService, IRequestCreateWidgetSession, IRequestQuote } from './types';
-import { CRYPTO_CURRENCIES, FIAT_CURRENCIES, formatAmount } from './utils';
+import {
+  CRYPTO_CURRENCIES,
+  FIAT_CURRENCIES,
+  formatAmount,
+  isSandbox,
+  meldEthValue,
+} from './utils';
 
 export default class MeldController {
   constructor(
@@ -101,8 +107,16 @@ export default class MeldController {
 
   async getQuotes(request: IRequestQuote) {
     try {
+      const isOnRamp = FIAT_CURRENCIES.includes(request.body.sourceCurrencyCode);
       const quote = await this._service.getQuotes({
         ...request.body,
+        walletAddress: undefined,
+        sourceCurrencyCode: isOnRamp
+          ? request.body.sourceCurrencyCode
+          : meldEthValue,
+        destinationCurrencyCode: isOnRamp
+          ? meldEthValue
+          : request.body.destinationCurrencyCode,
       });
       return successful(quote, Responses.Ok);
     } catch (err) {
@@ -113,19 +127,33 @@ export default class MeldController {
   async createWidgetSession(request: IRequestCreateWidgetSession) {
     try {
       const externalSessionId = `${request.user.id}-${Date.now()}`;
+      const isOnRamp = request.body.type === 'BUY';
       const session = await this._service.createWidgetSession({
         sessionType: request.body.type,
         externalSessionId,
         sessionData: {
+          lockFields: [
+            'cryptoCurrency',
+            'destinationCurrencyCode',
+            'sourceCurrencyCode',
+            'walletAddress',
+          ],
           countryCode: request.body.countryCode,
-          destinationCurrencyCode: request.body.destinationCurrencyCode,
+          destinationCurrencyCode: isOnRamp
+            ? meldEthValue
+            : request.body.destinationCurrencyCode,
           serviceProvider: request.body.serviceProvider,
-          sourceCurrencyCode: request.body.sourceCurrencyCode,
+          sourceCurrencyCode: isOnRamp
+            ? request.body.sourceCurrencyCode
+            : meldEthValue,
+          paymentMethodType: request.body.paymentMethodType,
           sourceAmount: formatAmount(
             request.body.sourceAmount,
             request.body.sourceCurrencyCode,
           ),
-          walletAddress: request.body.walletAddress,
+          walletAddress: isSandbox
+            ? '0xB30fbe035ec95F6106646f77513546e318c7C2DE'
+            : request.body.walletAddress,
         },
       });
 
@@ -142,9 +170,10 @@ export default class MeldController {
         destinationCurrency: request.body.destinationCurrencyCode,
         paymentMethod: request.body.paymentMethodType,
         destinationAmount: request.body.destinationAmount,
+        userWalletAddress: request.body.walletAddress,
       });
 
-      return successful(rampTransaction, Responses.Ok);
+      return successful(rampTransaction, Responses.Created);
     } catch (err) {
       return error(err.error, err.statusCode);
     }

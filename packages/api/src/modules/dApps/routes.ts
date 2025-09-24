@@ -19,6 +19,7 @@ const {
   connect,
   createConnectorCode,
   changeNetwork,
+  changeAccount,
 } = new DappController(dAppService);
 
 router.post('/', authMiddleware, handleResponse(connect));
@@ -29,6 +30,7 @@ router.get(
 );
 
 router.put('/:sessionId/network', handleResponse(changeNetwork));
+router.put('/:sessionId/:vault', handleResponse(changeAccount));
 
 router.get('/:sessionId/state', handleResponse(state));
 router.get('/:sessionId/accounts', handleResponse(accounts));

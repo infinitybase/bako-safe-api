@@ -7,9 +7,8 @@ import crypto from 'crypto';
 import { NextFunction, Response } from 'express';
 import { IAuthRequest } from '../auth/types';
 
-const MELD_WEBHOOK_SECRET = process.env.MELD_WEBHOOK_SECRET;
-
-if (!MELD_WEBHOOK_SECRET) {
+// Check if MELD_WEBHOOK_SECRET is set at startup
+if (!process.env.MELD_WEBHOOK_SECRET) {
   console.warn(
     '[MELD] Warning: MELD_WEBHOOK_SECRET environment variable is not set',
   );
@@ -31,6 +30,8 @@ export function MeldAuthMiddleware(
   next: NextFunction,
 ) {
   try {
+    const MELD_WEBHOOK_SECRET = process.env.MELD_WEBHOOK_SECRET;
+
     if (!MELD_WEBHOOK_SECRET) {
       throw new Unauthorized({
         title: UnauthorizedErrorTitles.MISSING_CREDENTIALS,
