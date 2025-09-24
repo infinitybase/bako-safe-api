@@ -8,6 +8,7 @@ export const formatRampTransactionWithMeldProvider = (data: RampTransaction) => 
     id: data.id,
     provider: data.provider,
     widgetUrl: data.providerData.widgetSessionData.widgetUrl,
+    status: data.providerData.paymentStatus,
     createdAt: data.createdAt,
     updatedAt: data.updatedAt,
   };

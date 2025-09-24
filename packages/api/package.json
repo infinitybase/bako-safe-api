@@ -15,7 +15,7 @@
     "run:prod": "make -C ./ deploy-prod env_file=.env.prod",
     "run:stg": "make -C ./ deploy-stg env_file=.env.staging",
     "run:test": "make -C ./ deploy-test env_file=.env.test",
-    "test:build": "pnpm build > /dev/null 2>&1 && pnpm copy:predicate-releases && cross-env TESTCONTAINERS_DB=true node --test build/tests/*.tests.js",
+    "test:build": "pnpm build > /dev/null 2>&1 && pnpm copy:predicate-releases && cross-env TESTCONTAINERS_DB=true node --test-force-exit --test build/tests/*.tests.js",
     "database:populate": "chmod +x ./src/scripts/db-populate.sh && ./src/scripts/db-populate.sh",
     "database:clear": "chmod +x ./src/scripts/db-clear.sh && ./src/scripts/db-clear.sh",
     "copy:predicate-releases": "cp -r src/tests/mocks/predicate-release build/tests/mocks/"

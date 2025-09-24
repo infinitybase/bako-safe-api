@@ -112,10 +112,22 @@ const formatAssetFromRampTransaction = (
 
   const isOnRamp = transaction.type === TransactionTypeWithRamp.ON_RAMP_DEPOSIT;
 
+  // BRL amounts from Meld come with comma as decimal separator
+  // We need to replace it with a dot to parse it correctly
+  const formattedSourceAmount =
+    isOnRamp && sourceCurrency === 'BRL'
+      ? sourceAmount.replace(',', '.')
+      : sourceAmount;
+
+  const formattedDestinationAmount =
+    !isOnRamp && destinationCurrency === 'BRL'
+      ? destinationAmount.replace(',', '.')
+      : destinationAmount;
+
   return [
     // source currency
     {
-      amount: bn.parseUnits(sourceAmount).toString(),
+      amount: bn.parseUnits(formattedSourceAmount).toString('hex'),
       assetId: isOnRamp ? FIAT_CURRENCIES[sourceCurrency] || '' : ASSETS.FUEL_ETH,
       to: isOnRamp
         ? providerData?.transactionData?.cryptoDetails.sourceWalletAddress || ''
@@ -127,7 +139,7 @@ const formatAssetFromRampTransaction = (
       assetId: isOnRamp
         ? ASSETS.FUEL_ETH
         : FIAT_CURRENCIES[destinationCurrency] || '',
-      amount: bn.parseUnits(destinationAmount).toString(),
+      amount: bn.parseUnits(formattedDestinationAmount).toString('hex'),
       to: isOnRamp
         ? transaction.predicate.predicateAddress
         : providerData?.transactionData?.cryptoDetails.destinationWalletAddress ||

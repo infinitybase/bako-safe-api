@@ -380,10 +380,10 @@ importers:
     dependencies:
       '@bull-board/api':
         specifier: ^6.12.0
-        version: 6.13.0(@bull-board/ui@6.13.0)
+        version: 6.12.7(@bull-board/ui@6.12.7)
       '@bull-board/express':
         specifier: ^6.12.0
-        version: 6.13.0
+        version: 6.12.7
       '@envio-dev/hypersync-client':
         specifier: 0.6.2
         version: 0.6.2
@@ -407,7 +407,7 @@ importers:
         version: 5.7.0
       mongodb:
         specifier: ^6.18.0
-        version: 6.20.0
+        version: 6.19.0
       node-cron:
         specifier: 3.0.3
         version: 3.0.3
@@ -484,8 +484,8 @@ importers:
 
 packages:
 
-  '@adraffy/ens-normalize@1.11.1':
-    resolution: {integrity: sha512-nhCBV3quEgesuf7c7KYfperqSS14T8bYuvJ8PcLJp6znkZpFc0AuW4qBtr8eKVyPPe/8RSr7sglCWPU5eaxwKQ==}
+  '@adraffy/ens-normalize@1.11.0':
+    resolution: {integrity: sha512-/3DDPKHqqIqxUULp8yP4zODUY1i+2xvVWsv8A79xGWdCAG+8sb0hRh0Rk2QyOJUnnbyPUAZYcpBuRe3nS2OIUg==}
 
   '@ampproject/remapping@2.3.0':
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
@@ -696,16 +696,16 @@ packages:
   '@bcoe/v8-coverage@0.2.3':
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
 
-  '@bull-board/api@6.13.0':
-    resolution: {integrity: sha512-GZ0On0VeL5uZVS1x7UdU90F9GV1kdmHa1955hW3Ow1PmslCY/2YwmvnapVdbvCUSVBqluTfbVZsE9X3h79r1kw==}
+  '@bull-board/api@6.12.7':
+    resolution: {integrity: sha512-mI/akvhI937/IPB9+l2NN18Vd+RivCoNLIJ3h3ZxNrp3xetjX5R90l/wuHt5SG837sLkChgMhRVA2mJAiGypJA==}
     peerDependencies:
-      '@bull-board/ui': 6.13.0
+      '@bull-board/ui': 6.12.7
 
-  '@bull-board/express@6.13.0':
-    resolution: {integrity: sha512-PAbzD3dplV2NtN8ETs00bp++pBOD+cVb1BEYltXrjyViA2WluDBVKdlh/2wM+sHbYO2TAMNg8bUtKxGNCmxG7w==}
+  '@bull-board/express@6.12.7':
+    resolution: {integrity: sha512-KPzOQSk8HRg5sTO2zuAl8b55YBy4ljxZDs+vMBEE8J2yhER0Kx09sZwWfj8DfIK58+qSriEzgfNWn7loFTawTg==}
 
-  '@bull-board/ui@6.13.0':
-    resolution: {integrity: sha512-63I6b3nZnKWI5ok6mw/Tk2rIObuzMTY/tLGyO51p0GW4rAImdXxrK6mT7j4SgEuP2B+tt/8L1jU7sLu8MMcCNw==}
+  '@bull-board/ui@6.12.7':
+    resolution: {integrity: sha512-EJvS84Ob661ASIjGH58RpKLb7upPM+kS9I7PdezS67Dtab1V8cq10E+Sb2WIvXVLaGgQU8eITiLBjgWze2uWsg==}
 
   '@colors/colors@1.6.0':
     resolution: {integrity: sha512-Ir+AOibqzrIsL6ajt3Rz3LskB7OiMVHqltZmspbW/TJuTVuyOMirVqAkjfY6JISiLHgyNqicAC8AyHHGzNd/dA==}
@@ -1701,8 +1701,8 @@ packages:
   '@js-sdsl/ordered-map@4.4.2':
     resolution: {integrity: sha512-iUKgm52T8HOE/makSxjqoWhe95ZJA1/G1sYsGev2JDKUSS14KAgg1LHb+Ba+IPow0xflbnSkOsZcO08C7w1gYw==}
 
-  '@mongodb-js/saslprep@1.3.0':
-    resolution: {integrity: sha512-zlayKCsIjYb7/IdfqxorK5+xUMyi4vOKcFy10wKJYc63NSdKI8mNME+uJqfatkPmOSMMUiojrL58IePKBm3gvQ==}
+  '@mongodb-js/saslprep@1.1.9':
+    resolution: {integrity: sha512-tVkljjeEaAhCqTzajSdgbQ6gE6f3oneVwa3iXR6csiEwXXOFsiC6Uh9iAjAhXPtqa/XMDHWjjeNH/77m/Yq2dw==}
 
   '@mrmlnc/readdir-enhanced@2.2.1':
     resolution: {integrity: sha512-bPHp6Ji8b41szTOcaP63VlnbbO5Ny6dwAATtY6JTjh5N2OLrb5Qk/Th5cRkRQhkWCt+EJsYrNB0MiL+Gpn6e3g==}
@@ -5010,11 +5010,11 @@ packages:
   module-details-from-path@1.0.3:
     resolution: {integrity: sha512-ySViT69/76t8VhE1xXHK6Ch4NcDd26gx0MzKXLO+F7NOtnqH68d9zF94nT8ZWSxXh8ELOERsnJO/sWt1xZYw5A==}
 
-  mongodb-connection-string-url@3.0.2:
-    resolution: {integrity: sha512-rMO7CGo/9BFwyZABcKAWL8UJwH/Kc2x0g72uhDWzG48URRax5TCIcJ7Rc3RZqffZzO/Gwff/jyKwCU9TN8gehA==}
+  mongodb-connection-string-url@3.0.1:
+    resolution: {integrity: sha512-XqMGwRX0Lgn05TDB4PyG2h2kKO/FfWJyCzYQbIhXUxz7ETt0I/FqHjUeqj37irJ+Dl1ZtU82uYyj14u2XsZKfg==}
 
-  mongodb@6.20.0:
-    resolution: {integrity: sha512-Tl6MEIU3K4Rq3TSHd+sZQqRBoGlFsOgNrH5ltAcFBV62Re3Fd+FcaVf8uSEQFOJ51SDowDVttBTONMfoYWrWlQ==}
+  mongodb@6.19.0:
+    resolution: {integrity: sha512-H3GtYujOJdeKIMLKBT9PwlDhGrQfplABNF1G904w6r5ZXKWyv77aB0X9B+rhmaAwjtllHzaEkvi9mkGVZxs2Bw==}
     engines: {node: '>=16.20.1'}
     peerDependencies:
       '@aws-sdk/credential-providers': ^3.188.0
@@ -5292,8 +5292,8 @@ packages:
     resolution: {integrity: sha512-D2FR03Vir7FIu45XBY20mTb+/ZSWB00sjU9jdQXt83gDrI4Ztz5Fs7/yy74g2N5SVQY4xY1qDr4rNddwYRVX0g==}
     engines: {node: '>=0.10.0'}
 
-  ox@0.9.6:
-    resolution: {integrity: sha512-8SuCbHPvv2eZLYXrNmC0EC12rdzXQLdhnOMlHDW2wiCPLxBrOOJwX5L5E61by+UjTPOryqQiRSnjIKCI+GykKg==}
+  ox@0.9.3:
+    resolution: {integrity: sha512-KzyJP+fPV4uhuuqrTZyok4DC7vFzi7HLUFiUNEmpbyh59htKWkOC98IONC1zgXJPbHAhQgqs6B0Z6StCGhmQvg==}
     peerDependencies:
       typescript: '>=5.4.0'
     peerDependenciesMeta:
@@ -5497,8 +5497,8 @@ packages:
   please-upgrade-node@3.2.0:
     resolution: {integrity: sha512-gQR3WpIgNIKwBMVLkpMUeR3e1/E1y42bqDQZfql+kDeXd8COYfM8PQA4X6y7a8u9Ua9FHmsrrmirW2vHs45hWg==}
 
-  pnpm@10.17.1:
-    resolution: {integrity: sha512-F8Vg/KSGeulHOjiZrYSogzSRTzeb5G1FXL+S5c9LOdNJhdRS0lg7rxmWf6dstcF7yeJFUp0LmHRXIapyAOyveg==}
+  pnpm@10.16.1:
+    resolution: {integrity: sha512-DhVaomKduGcrSehHXaYiaqS96oX9zf3BU1CHSUbU88kfqvZMvcSl0auAAvRz1cP87c0ZeYnPA5D5ut08BGeHBg==}
     engines: {node: '>=18.12'}
     hasBin: true
 
@@ -6649,8 +6649,8 @@ packages:
     resolution: {integrity: sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg==}
     engines: {node: '>= 0.8'}
 
-  viem@2.37.8:
-    resolution: {integrity: sha512-mL+5yvCQbRIR6QvngDQMfEiZTfNWfd+/QL5yFaOoYbpH3b1Q2ddwF7YG2eI2AcYSh9LE1gtUkbzZLFUAVyj4oQ==}
+  viem@2.37.6:
+    resolution: {integrity: sha512-b+1IozQ8TciVQNdQUkOH5xtFR0z7ZxR8pyloENi/a+RA408lv4LoX12ofwoiT3ip0VRhO5ni1em//X0jn/eW0g==}
     peerDependencies:
       typescript: '>=5.0.4'
     peerDependenciesMeta:
@@ -6886,7 +6886,7 @@ packages:
 
 snapshots:
 
-  '@adraffy/ens-normalize@1.11.1': {}
+  '@adraffy/ens-normalize@1.11.0': {}
 
   '@ampproject/remapping@2.3.0':
     dependencies:
@@ -7153,7 +7153,7 @@ snapshots:
       '@babel/parser': 7.25.7
       '@babel/template': 7.25.7
       '@babel/types': 7.25.7
-      debug: 4.4.1
+      debug: 4.3.7
       globals: 11.12.0
     transitivePeerDependencies:
       - supports-color
@@ -7174,23 +7174,23 @@ snapshots:
 
   '@bcoe/v8-coverage@0.2.3': {}
 
-  '@bull-board/api@6.13.0(@bull-board/ui@6.13.0)':
+  '@bull-board/api@6.12.7(@bull-board/ui@6.12.7)':
     dependencies:
-      '@bull-board/ui': 6.13.0
+      '@bull-board/ui': 6.12.7
       redis-info: 3.1.0
 
-  '@bull-board/express@6.13.0':
+  '@bull-board/express@6.12.7':
     dependencies:
-      '@bull-board/api': 6.13.0(@bull-board/ui@6.13.0)
-      '@bull-board/ui': 6.13.0
+      '@bull-board/api': 6.12.7(@bull-board/ui@6.12.7)
+      '@bull-board/ui': 6.12.7
       ejs: 3.1.10
       express: 4.21.1
     transitivePeerDependencies:
       - supports-color
 
-  '@bull-board/ui@6.13.0':
+  '@bull-board/ui@6.12.7':
     dependencies:
-      '@bull-board/api': 6.13.0(@bull-board/ui@6.13.0)
+      '@bull-board/api': 6.12.7(@bull-board/ui@6.12.7)
 
   '@colors/colors@1.6.0': {}
 
@@ -8234,7 +8234,7 @@ snapshots:
 
   '@js-sdsl/ordered-map@4.4.2': {}
 
-  '@mongodb-js/saslprep@1.3.0':
+  '@mongodb-js/saslprep@1.1.9':
     dependencies:
       sparse-bitfield: 3.0.3
 
@@ -9690,14 +9690,14 @@ snapshots:
     dependencies:
       '@ethereumjs/util': 9.0.3
       '@ethersproject/bytes': 5.7.0
-      '@noble/curves': 1.8.1
+      '@noble/curves': 1.9.1
       '@noble/secp256k1': 2.3.0
       axios: 1.5.1
       build: 0.1.4
       fuels: 0.101.1(vitest@2.0.5(@types/node@20.6.0))
-      pnpm: 10.17.1
+      pnpm: 10.16.1
       uuid: 9.0.1
-      viem: 2.37.8(typescript@5.4.5)
+      viem: 2.37.6(typescript@5.4.5)
     transitivePeerDependencies:
       - bufferutil
       - debug
@@ -12332,16 +12332,16 @@ snapshots:
 
   module-details-from-path@1.0.3: {}
 
-  mongodb-connection-string-url@3.0.2:
+  mongodb-connection-string-url@3.0.1:
     dependencies:
       '@types/whatwg-url': 11.0.5
       whatwg-url: 13.0.0
 
-  mongodb@6.20.0:
+  mongodb@6.19.0:
     dependencies:
-      '@mongodb-js/saslprep': 1.3.0
+      '@mongodb-js/saslprep': 1.1.9
       bson: 6.10.4
-      mongodb-connection-string-url: 3.0.2
+      mongodb-connection-string-url: 3.0.1
 
   moo-server@1.3.0: {}
 
@@ -12542,9 +12542,9 @@ snapshots:
 
   os-tmpdir@1.0.2: {}
 
-  ox@0.9.6(typescript@5.4.5):
+  ox@0.9.3(typescript@5.4.5):
     dependencies:
-      '@adraffy/ens-normalize': 1.11.1
+      '@adraffy/ens-normalize': 1.11.0
       '@noble/ciphers': 1.3.0
       '@noble/curves': 1.9.1
       '@noble/hashes': 1.8.0
@@ -12738,7 +12738,7 @@ snapshots:
     dependencies:
       semver-compare: 1.0.0
 
-  pnpm@10.17.1: {}
+  pnpm@10.16.1: {}
 
   portfinder@1.0.32:
     dependencies:
@@ -13927,7 +13927,7 @@ snapshots:
 
   vary@1.1.2: {}
 
-  viem@2.37.8(typescript@5.4.5):
+  viem@2.37.6(typescript@5.4.5):
     dependencies:
       '@noble/curves': 1.9.1
       '@noble/hashes': 1.8.0
@@ -13935,7 +13935,7 @@ snapshots:
       '@scure/bip39': 1.6.0
       abitype: 1.1.0(typescript@5.4.5)
       isows: 1.0.7(ws@8.18.3)
-      ox: 0.9.6(typescript@5.4.5)
+      ox: 0.9.3(typescript@5.4.5)
       ws: 8.18.3
     optionalDependencies:
       typescript: 5.4.5

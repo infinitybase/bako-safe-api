@@ -17,7 +17,7 @@ export class AddNetworkOnApiTokens1727717621119 implements MigrationInterface {
     const provider = new Provider(FUEL_PROVIDER);
     const network = {
       url: provider.url,
-      chainId: await provider.getChainId(),
+      chainId: await provider.getChainId().catch(() => 0),
     };
 
     const networkString = JSON.stringify(network);
