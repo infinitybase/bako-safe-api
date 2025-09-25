@@ -442,6 +442,7 @@ export class TransactionController {
               TransactionStatus.DECLINED,
               TransactionStatus.FAILED,
               TransactionStatus.CANCELED,
+              TransactionStatus.SUCCESS,
             ]),
           ),
         },
@@ -539,11 +540,11 @@ export class TransactionController {
 
       const _wk = hasSingle
         ? await new WorkspaceService()
-            .filter({
-              user: user.id,
-            })
-            .list()
-            .then((response: Workspace[]) => response.map(wk => wk.id))
+          .filter({
+            user: user.id,
+          })
+          .list()
+          .then((response: Workspace[]) => response.map(wk => wk.id))
         : [workspace.id];
 
       const response = await new TransactionService()
@@ -600,11 +601,11 @@ export class TransactionController {
 
       const _wk = hasSingle
         ? await new WorkspaceService()
-            .filter({
-              user: user.id,
-            })
-            .list()
-            .then((response: Workspace[]) => response.map(wk => wk.id))
+          .filter({
+            user: user.id,
+          })
+          .list()
+          .then((response: Workspace[]) => response.map(wk => wk.id))
         : [workspace.id];
 
       const _status = status ?? undefined;
