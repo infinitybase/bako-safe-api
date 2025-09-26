@@ -40,7 +40,7 @@ export class DappController {
       const { origin } = headers;
 
       const isAddress = vault.startsWith('0x');
-      const predicate = await Predicate.findOne({ where: (isAddress) ? { predicateAddress: vault } : { id: vault } });
+      const predicate = await Predicate.findOne({ where: (isAddress) ? { predicateAddress: vault } : { id: vault }, relations: ['owner', 'members'] });
       if (!predicate) {
         throw new NotFound({
           type: ErrorTypes.NotFound,
@@ -49,6 +49,16 @@ export class DappController {
         });
       }
       const dapp = await new DAppsService().findBySessionID(sessionId, origin);
+      const isOwnerOrMember = predicate.owner.id === dapp.user.id || predicate.members.some(member => member.id === dapp.user.id);
+
+      if (!isOwnerOrMember) {
+        throw new NotFound({
+          type: ErrorTypes.NotFound,
+          title: 'Unauthorized',
+          detail: 'You are not authorized to use this vault',
+        });
+      }
+
       dapp.currentVault = predicate;
       await dapp.save();
       return successful(dapp.currentVault, Responses.Ok);
