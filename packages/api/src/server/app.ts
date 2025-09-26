@@ -13,6 +13,7 @@ import Monitoring from './monitoring';
 import Bootstrap from './bootstrap';
 import { RedisWriteClient, RedisReadClient, FuelProvider } from '@src/utils';
 import { RigInstance } from './storage/rig';
+import { webhookRawRouters } from '@src/modules/webhook/routes';
 
 class App {
   private static instance?: App;
@@ -24,6 +25,7 @@ class App {
 
   protected constructor() {
     this.app = Express();
+    this.app.use('/webhooks', webhookRawRouters);
     this.initMiddlewares();
     this.initRoutes();
     this.setupMonitoring();
