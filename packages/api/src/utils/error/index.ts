@@ -24,21 +24,14 @@ const error = <ResponsePayload extends GeneralError | Error>(
   payload: ResponsePayload,
   statusCode: Responses = Responses.Internal,
 ): ErrorResponse<ResponsePayload> => {
-  if (payload instanceof GeneralError) {
-    console.log(`[ERROR]`, payload);
-    if (payload && 'detail' in payload && process.env.NODE_ENV !== 'development') {
-      payload.detail = null;
-    }
-
-    return {
-      payload,
-      statusCode,
-    };
+  console.log(`[ERROR]`, payload);
+  if (payload && 'detail' in payload && process.env.NODE_ENV !== 'development') {
+    payload.detail = null;
   }
 
   return {
     payload,
-    statusCode: Responses.Internal,
+    statusCode,
   };
 };
 
