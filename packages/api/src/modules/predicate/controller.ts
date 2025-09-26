@@ -32,8 +32,8 @@ import {
   PredicateWithHidden,
 } from './types';
 
-import { PredicateService } from './services';
 import { NotificationService } from '../notification/services';
+import { PredicateService } from './services';
 const { FUEL_PROVIDER } = process.env;
 
 export class PredicateController {
@@ -207,7 +207,7 @@ export class PredicateController {
       );
     } catch (e) {
       console.log(`[RESERVED_COINS_ERROR]`, e);
-      return error(e.error, e.statusCode);
+      return error(e.error || e, e.statusCode);
     }
   }
 
