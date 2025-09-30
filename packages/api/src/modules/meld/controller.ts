@@ -33,7 +33,6 @@ export default class MeldController {
 
   async getFiatCurrencies(req: IAuthRequest) {
     try {
-      console.log('NETWORK', req.network);
       const currencies = await this._service.getFiatCurrencies(
         {
           accountFilter: true,
