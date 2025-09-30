@@ -15,22 +15,22 @@ export enum Responses {
   Internal = 500,
 }
 
-export interface ErrorResponse<T> {
-  payload: T;
+export interface ErrorResponse {
+  error: Error | GeneralError;
   statusCode: Responses;
 }
 
-const error = <ResponsePayload extends GeneralError | Error>(
-  payload: ResponsePayload,
+const error = (
+  payload: Error | GeneralError,
   statusCode: Responses = Responses.Internal,
-): ErrorResponse<ResponsePayload> => {
+): ErrorResponse => {
   console.log(`[ERROR]`, payload);
   if (payload && 'detail' in payload && process.env.NODE_ENV !== 'development') {
     payload.detail = null;
   }
 
   return {
-    payload,
+    error: payload,
     statusCode,
   };
 };

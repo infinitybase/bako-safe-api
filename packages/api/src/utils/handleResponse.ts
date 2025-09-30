@@ -7,7 +7,7 @@ type ControllerEndpoint = (
   req: Express.Request,
   res: Express.Response,
   next: Express.NextFunction,
-) => Promise<ErrorResponse<unknown> | SuccessResponse<unknown>>;
+) => Promise<ErrorResponse | SuccessResponse<unknown>>;
 
 type ExpressRequest = (
   req: Express.Request,
@@ -20,16 +20,20 @@ const handleResponse = (controllerEndpoint: ControllerEndpoint) => {
     try {
       const result = await controllerEndpoint(req, res, next);
 
-      if (result.payload instanceof Error) {
-        return next(result.payload);
-      }
-
       /**
        * Check if we fired a "successful()" interface
        * Must have statusCode and payload properties.
        */
-      if (result && result.statusCode) {
+      if (result && result.statusCode && 'payload' in result) {
         return res.status(result.statusCode).json(result.payload);
+      }
+
+      /**
+       * Check if we fired an "error()" interface
+       * Must have statusCode and error properties.
+       */
+      if ('error' in result) {
+        return next(result.error);
       }
 
       /**
