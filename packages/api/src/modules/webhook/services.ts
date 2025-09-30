@@ -13,12 +13,7 @@ import { FuelProvider } from '@src/utils';
 import { ErrorTypes, Internal, NotFound } from '@src/utils/error';
 import { getTransactionSummary } from 'fuels';
 import { IMeldTransactionCryptoWeebhook } from '../meld/types';
-import {
-  isSandbox,
-  MeldApi,
-  meldEthValue,
-  MOCK_DEPOSIT_TX_ID,
-} from '../meld/utils';
+import { MeldApi, MeldApiFactory, MOCK_DEPOSIT_TX_ID } from '../meld/utils';
 import { TransactionController } from '../transaction/controller';
 import {
   ICreateTransactionPayload,
@@ -48,7 +43,12 @@ export default class WebhookService {
           type: ErrorTypes.NotFound,
         });
       }
-      const meldTransactions = await MeldApi.getMeldTransactions({
+      const isSandbox = meldData.isSandbox;
+      const meldEnviroment = MeldApiFactory.getMeldEnviroment(
+        isSandbox ? 'sandbox' : 'production',
+      );
+      const meldApi = new MeldApi(meldEnviroment.baseUrl, meldEnviroment.apiKey);
+      const meldTransactions = await meldApi.getMeldTransactions({
         externalSessionIds: externalSessionId,
       });
       const blockchainTransactionId = isSandbox
@@ -71,6 +71,7 @@ export default class WebhookService {
           where: { predicateAddress: destinationAddress },
           relations: { members: true },
         });
+        const meldEthValue = isSandbox ? 'ETH' : 'ETH_FUEL';
 
         const config = JSON.parse(predicate.configurable);
         const meldTxData = meldTransactions.transactions[0];
