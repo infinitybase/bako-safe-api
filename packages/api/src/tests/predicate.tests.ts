@@ -250,13 +250,11 @@ test('Predicate Endpoints', async t => {
       const mock = t.mock.method(Vault.prototype, 'getBalances', () => {
         throw new Error('Test error');
       });
-      // .throws(new Error('Test error'));
+
       const res = await request(app)
         .get(`/predicate/reserved-coins/${predicate.id}`)
         .set('Authorization', users[0].token)
         .set('signeraddress', users[0].payload.address);
-
-      console.log('###BODY', res.body);
 
       assert.ok(mock.mock.calls.length > 0);
       assert.equal(res.status, 500);
