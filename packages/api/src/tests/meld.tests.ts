@@ -134,6 +134,11 @@ test('On Ramp endpoints', async t => {
       timestamp,
       webhookPayload,
     );
+    console.log(
+      'DEBUG: Generated meldSignature:',
+      meldSignature,
+      process.env.MELD_SANDBOX_WEBHOOK_SECRET,
+    );
 
     const webhookRes = await request(app)
       .post('/webhooks/meld/crypto')

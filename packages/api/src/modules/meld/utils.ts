@@ -105,7 +105,7 @@ export class MeldApiFactory {
     return new MeldApi(baseUrl, apiKey);
   };
 
-  static getMeldEnviroment = (mode: 'production' | 'sandbox') => {
+  static getMeldEnvironment = (mode: 'production' | 'sandbox') => {
     if (mode === 'sandbox') {
       if (!MELD_SANDBOX_API_URL || !MELD_SANDBOX_API_KEY) {
         throw new Error(

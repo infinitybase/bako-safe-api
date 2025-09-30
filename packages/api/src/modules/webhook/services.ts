@@ -44,7 +44,7 @@ export default class WebhookService {
         });
       }
       const isSandbox = meldData.isSandbox;
-      const meldEnviroment = MeldApiFactory.getMeldEnviroment(
+      const meldEnviroment = MeldApiFactory.getMeldEnvironment(
         isSandbox ? 'sandbox' : 'production',
       );
       const meldApi = new MeldApi(meldEnviroment.baseUrl, meldEnviroment.apiKey);
