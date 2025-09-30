@@ -9,16 +9,12 @@ import {
   widgetSessionMock,
 } from './mocks/Meld';
 
-// Now import the rest
 import { RampTransactionProvider } from '@src/models/RampTransactions';
 import { UnauthorizedErrorTitles } from '@src/utils/error';
 import axios from 'axios';
 import { generateNode } from './mocks/Networks';
 import { saveMockPredicate } from './mocks/Predicate';
 import { TestEnvironment } from './utils/Setup';
-
-process.env.MELD_SANDBOX_API_URL = 'https://meld.mock';
-process.env.MELD_SANDBOX_API_KEY = 'key';
 
 test('On Ramp endpoints', async t => {
   const { node } = await generateNode();
@@ -29,7 +25,6 @@ test('On Ramp endpoints', async t => {
   let widgetResponse: request.Response;
 
   t.before(async () => {
-    // Set a known webhook secret for testing
     await saveMockPredicate(vault, user, app);
   });
 
