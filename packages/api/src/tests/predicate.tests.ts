@@ -1,11 +1,11 @@
-import test from 'node:test';
 import assert from 'node:assert/strict';
+import test from 'node:test';
 import request from 'supertest';
 
-import { TestEnvironment } from './utils/Setup';
-import { ZeroBytes32 } from 'fuels';
-import { saveMockPredicate } from './mocks/Predicate';
+import { Vault } from 'bakosafe';
 import { generateNode } from './mocks/Networks';
+import { saveMockPredicate } from './mocks/Predicate';
+import { TestEnvironment } from './utils/Setup';
 
 test('Predicate Endpoints', async t => {
   const { node } = await generateNode();
@@ -238,6 +238,31 @@ test('Predicate Endpoints', async t => {
       assert.ok('currentBalance' in res.body);
       assert.ok('totalBalance' in res.body);
       assert.ok('reservedCoins' in res.body);
+    },
+  );
+
+  await t.test(
+    'GET /predicate/reserved-coins/:id should return unknown error',
+    async () => {
+      const vault = predicates[0];
+      const { predicate } = await saveMockPredicate(vault, users[0], app);
+
+      const mock = t.mock.method(Vault.prototype, 'getBalances', () => {
+        throw new Error('Test error');
+      });
+      // .throws(new Error('Test error'));
+      const res = await request(app)
+        .get(`/predicate/reserved-coins/${predicate.id}`)
+        .set('Authorization', users[0].token)
+        .set('signeraddress', users[0].payload.address);
+
+      console.log('###BODY', res.body);
+
+      assert.ok(mock.mock.calls.length > 0);
+      assert.equal(res.status, 500);
+      assert.equal(res.body.origin, 'unknown');
+      assert.ok(Array.isArray(res.body.errors));
+      t.mock.reset();
     },
   );
 

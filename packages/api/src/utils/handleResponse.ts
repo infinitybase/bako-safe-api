@@ -19,6 +19,11 @@ const handleResponse = (controllerEndpoint: ControllerEndpoint) => {
   const response: ExpressRequest = async function _handleResponse(req, res, next) {
     try {
       const result = await controllerEndpoint(req, res, next);
+
+      if (result.payload instanceof Error) {
+        return next(result.payload);
+      }
+
       /**
        * Check if we fired a "successful()" interface
        * Must have statusCode and payload properties.
