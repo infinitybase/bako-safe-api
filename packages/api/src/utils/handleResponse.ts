@@ -32,7 +32,7 @@ const handleResponse = (controllerEndpoint: ControllerEndpoint) => {
        * Check if we fired an "error()" interface
        * Must have statusCode and error properties.
        */
-      if ('error' in result) {
+      if (result && 'error' in result) {
         return next(result.error);
       }
 
