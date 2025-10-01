@@ -24,12 +24,14 @@ test('On Ramp endpoints', async t => {
 
   let widgetResponse: request.Response;
   const sandboxSecret = process.env.MELD_SANDBOX_WEBHOOK_SECRET;
-  const productionSecret = process.env.MELD_PRODUCTION_WEBHOOK_SECRET;
+  const sandboxUrl = process.env.MELD_SANDBOX_API_URL;
+  const sandboxKey = process.env.MELD_SANDBOX_API_KEY;
 
   t.before(async () => {
     await saveMockPredicate(vault, user, app);
     process.env.MELD_SANDBOX_WEBHOOK_SECRET = 'test_secret';
-    process.env.MELD_PRODUCTION_WEBHOOK_SECRET = 'test_secret';
+    process.env.MELD_SANDBOX_API_URL = 'https://sandbox.com/api';
+    process.env.MELD_SANDBOX_API_KEY = 'asd';
   });
 
   t.after(async () => {
@@ -37,7 +39,8 @@ test('On Ramp endpoints', async t => {
     // Restore all mocks after tests complete
     test.mock.restoreAll();
     process.env.MELD_SANDBOX_WEBHOOK = sandboxSecret;
-    process.env.MELD_PRODUCTION_WEBHOOK = productionSecret;
+    process.env.MELD_SANDBOX_API_URL = sandboxUrl;
+    process.env.MELD_SANDBOX_API_KEY = sandboxKey;
   });
 
   await t.test('should get meld quotes', async () => {
