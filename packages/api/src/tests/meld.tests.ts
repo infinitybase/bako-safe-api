@@ -24,14 +24,12 @@ test('On Ramp endpoints', async t => {
 
   let widgetResponse: request.Response;
   const sandboxSecret = process.env.MELD_SANDBOX_WEBHOOK_SECRET;
-  const sandboxUrl = process.env.MELD_SANDBOX_API_URL;
-  const sandboxKey = process.env.MELD_SANDBOX_API_KEY;
+  const productionSecret = process.env.MELD_PRODUCTION_WEBHOOK_SECRET;
 
   t.before(async () => {
     await saveMockPredicate(vault, user, app);
     process.env.MELD_SANDBOX_WEBHOOK_SECRET = 'test_secret';
-    process.env.MELD_SANDBOX_API_URL = 'https://sandbox.com/api';
-    process.env.MELD_SANDBOX_API_KEY = 'asd';
+    process.env.MELD_PRODUCTION_WEBHOOK_SECRET = 'test_secret';
   });
 
   t.after(async () => {
@@ -39,8 +37,7 @@ test('On Ramp endpoints', async t => {
     // Restore all mocks after tests complete
     test.mock.restoreAll();
     process.env.MELD_SANDBOX_WEBHOOK = sandboxSecret;
-    process.env.MELD_SANDBOX_API_URL = sandboxUrl;
-    process.env.MELD_SANDBOX_API_KEY = sandboxKey;
+    process.env.MELD_PRODUCTION_WEBHOOK = productionSecret;
   });
 
   await t.test('should get meld quotes', async () => {
@@ -143,11 +140,6 @@ test('On Ramp endpoints', async t => {
       timestamp,
       webhookPayload,
     );
-    console.log(
-      'DEBUG: Generated meldSignature:',
-      meldSignature,
-      process.env.MELD_SANDBOX_WEBHOOK_SECRET,
-    );
 
     const webhookRes = await request(app)
       .post('/webhooks/meld/crypto')
@@ -156,7 +148,7 @@ test('On Ramp endpoints', async t => {
       .set('meld-signature-timestamp', timestamp)
       .send(webhookPayload);
 
-    // assert.equal(mock.mock.calls.length, 1);
+    assert.equal(mock.mock.calls.length, 1);
     assert.equal(webhookRes.status, 200);
     assert.equal(webhookRes.body.message, 'Webhook processed successfully');
   });
