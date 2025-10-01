@@ -23,15 +23,21 @@ test('On Ramp endpoints', async t => {
   const vault = predicates?.[0];
 
   let widgetResponse: request.Response;
+  const sandboxSecret = process.env.MELD_SANDBOX_WEBHOOK_SECRET;
+  const productionSecret = process.env.MELD_PRODUCTION_WEBHOOK_SECRET;
 
   t.before(async () => {
     await saveMockPredicate(vault, user, app);
+    process.env.MELD_SANDBOX_WEBHOOK_SECRET = 'test_secret';
+    process.env.MELD_PRODUCTION_WEBHOOK_SECRET = 'test_secret';
   });
 
   t.after(async () => {
     await close();
     // Restore all mocks after tests complete
     test.mock.restoreAll();
+    process.env.MELD_SANDBOX_WEBHOOK = sandboxSecret;
+    process.env.MELD_PRODUCTION_WEBHOOK = productionSecret;
   });
 
   await t.test('should get meld quotes', async () => {
