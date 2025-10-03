@@ -49,4 +49,7 @@ export class RampTransaction extends Base {
 
   @Column({ name: 'user_wallet_address', type: 'varchar', nullable: true })
   userWalletAddress?: string;
+
+  @Column({ name: 'is_sandbox', type: 'boolean', default: false })
+  isSandbox: boolean;
 }

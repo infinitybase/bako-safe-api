@@ -1,17 +1,18 @@
 import GeneralError from '@utils/error/GeneralError';
 
 export { default as BadRequest } from './BadRequest';
-export * from './GeneralError';
-export { default as NotFound } from './NotFound';
 export * from './Forbidden';
-export * from './Unauthorized';
+export * from './GeneralError';
 export { default as Internal } from './Internal';
+export { default as NotFound } from './NotFound';
+export * from './Unauthorized';
 
 export enum Responses {
   BadRequest = 400,
   Unauthorized = 401,
   Forbidden = 403,
   NotFound = 404,
+  Internal = 500,
 }
 
 export interface ErrorResponse<T> {
@@ -19,11 +20,10 @@ export interface ErrorResponse<T> {
   statusCode: Responses;
 }
 
-const error = <ResponsePayload extends GeneralError>(
+const error = <ResponsePayload extends GeneralError | Error>(
   payload: ResponsePayload,
-  statusCode: Responses,
+  statusCode: Responses = Responses.Internal,
 ): ErrorResponse<ResponsePayload> => {
-  // console.log(`[ERROR]`, payload.type, payload.title, payload.detail);
   console.log(`[ERROR]`, payload);
   if (payload && 'detail' in payload && process.env.NODE_ENV !== 'development') {
     payload.detail = null;

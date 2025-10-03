@@ -7,13 +7,6 @@ import crypto from 'crypto';
 import { NextFunction, Response } from 'express';
 import { IAuthRequest } from '../auth/types';
 
-// Check if MELD_WEBHOOK_SECRET is set at startup
-if (!process.env.MELD_WEBHOOK_SECRET) {
-  console.warn(
-    '[MELD] Warning: MELD_WEBHOOK_SECRET environment variable is not set',
-  );
-}
-
 /**
  * Middleware to verify Meld webhook signatures
  *
@@ -30,12 +23,15 @@ export function MeldAuthMiddleware(
   next: NextFunction,
 ) {
   try {
-    const MELD_WEBHOOK_SECRET = process.env.MELD_WEBHOOK_SECRET;
+    const MELD_PRODUCTION_WEBHOOK_SECRET =
+      process.env.MELD_PRODUCTION_WEBHOOK_SECRET;
+    const MELD_SANDBOX_WEBHOOK_SECRET = process.env.MELD_SANDBOX_WEBHOOK_SECRET;
 
-    if (!MELD_WEBHOOK_SECRET) {
+    if (!MELD_PRODUCTION_WEBHOOK_SECRET || !MELD_SANDBOX_WEBHOOK_SECRET) {
       throw new Unauthorized({
         title: UnauthorizedErrorTitles.MISSING_CREDENTIALS,
-        detail: 'MELD_WEBHOOK_SECRET environment variable is not set',
+        detail:
+          'MELD_PRODUCTION_WEBHOOK_SECRET or MELD_SANDBOX_WEBHOOK_SECRET environment variable is not set',
         type: ErrorTypes.Unauthorized,
       });
     }
@@ -55,7 +51,7 @@ export function MeldAuthMiddleware(
     const rawBody = JSON.stringify(req.body);
 
     // Construct the full URL
-    const protocol = req.protocol;
+    const protocol = 'https';
     const host = req.get('host');
 
     const url = `${protocol}://${host}${req.originalUrl}`;
@@ -64,17 +60,26 @@ export function MeldAuthMiddleware(
     const stringToSign = `${timestamp}.${url}.${rawBody}`;
 
     // Create HMAC signature
-    const expectedSignature = crypto
-      .createHmac('sha256', MELD_WEBHOOK_SECRET)
+    const expectedProductionSignature = crypto
+      .createHmac('sha256', MELD_PRODUCTION_WEBHOOK_SECRET)
+      .update(stringToSign)
+      .digest('base64url')
+      .replace(/=/g, ''); // Base64 URL encoded without padding
+    const expectedSandboxSignature = crypto
+      .createHmac('sha256', MELD_SANDBOX_WEBHOOK_SECRET)
       .update(stringToSign)
       .digest('base64url')
       .replace(/=/g, ''); // Base64 URL encoded without padding
     const sanitizedReceived = signature.replace(/=+$/, '');
 
     // Compare signatures using timing-safe comparison
-    if (sanitizedReceived !== expectedSignature) {
+    if (
+      sanitizedReceived !== expectedProductionSignature &&
+      sanitizedReceived !== expectedSandboxSignature
+    ) {
       console.error('[MELD] Webhook signature verification failed', {
-        expected: expectedSignature,
+        expectedProductionSignature: expectedProductionSignature,
+        expectedSandboxSignature: expectedSandboxSignature,
         received: sanitizedReceived,
         stringToSign,
         url,
