@@ -27,7 +27,7 @@ const sdk = new NodeSDK({
   ],
 });
 
-if (process.env.API_ENVIRONMENT != 'development') {
+if (process.env.API_ENVIRONMENT === 'production') {
   console.log('[TELEMETRY] Starting');
   sdk.start();
 }
