@@ -1,11 +1,10 @@
-import test from 'node:test';
 import assert from 'node:assert/strict';
+import test from 'node:test';
 import request from 'supertest';
 
-import { TestEnvironment } from './utils/Setup';
-import { ZeroBytes32 } from 'fuels';
-import { saveMockPredicate } from './mocks/Predicate';
 import { generateNode } from './mocks/Networks';
+import { saveMockPredicate } from './mocks/Predicate';
+import { TestEnvironment } from './utils/Setup';
 
 test('Predicate Endpoints', async t => {
   const { node } = await generateNode();
@@ -274,4 +273,26 @@ test('Predicate Endpoints', async t => {
       assert.ok(res.body.includes(predicate.predicateAddress));
     },
   );
+
+  await t.test('PUT /predicate/:id should update predicate', async () => {
+    const vault = predicates[0];
+
+    const { predicate } = await saveMockPredicate(vault, users[0], app);
+
+    const payload = {
+      name: `Updated Name ${Date.now()}`,
+      description: 'Updated description',
+    };
+
+    const res = await request(app)
+      .put(`/predicate/${predicate.id}`)
+      .set('Authorization', users[0].token)
+      .set('signeraddress', users[0].payload.address)
+      .send(payload);
+
+    assert.equal(res.status, 200);
+    assert.strictEqual(res.body.id, predicate.id);
+    assert.strictEqual(res.body.name, payload.name);
+    assert.strictEqual(res.body.description, payload.description);
+  });
 });
