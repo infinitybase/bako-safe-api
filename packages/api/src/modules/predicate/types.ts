@@ -6,8 +6,8 @@ import { IDefaultOrdination } from '@src/utils/ordination';
 import { IPagination, PaginationParams } from '@src/utils/pagination';
 
 import { Predicate, User } from '@models/index';
-import { IPredicateOrdination } from './ordination';
 import { Network } from 'fuels';
+import { IPredicateOrdination } from './ordination';
 
 export enum OrderBy {
   name = 'name',
@@ -79,8 +79,8 @@ interface ITooglePredicateRequestSchema extends ValidatedRequestSchema {
 }
 
 interface IUpdatePredicateRequestSchema extends ValidatedRequestSchema {
-  [ContainerTypes.Body]: IPredicatePayload;
-  [ContainerTypes.Params]: { id: string };
+  [ContainerTypes.Body]: Pick<IPredicatePayload, 'name' | 'description'>;
+  [ContainerTypes.Params]: { predicateId: string };
 }
 
 interface IDeletePredicateRequestSchema extends ValidatedRequestSchema {
@@ -97,6 +97,9 @@ interface IFindByHashRequestSchema extends ValidatedRequestSchema {
 interface IFindByNameRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Params]: {
     name: string;
+  };
+  [ContainerTypes.Query]: {
+    ignoreId?: string;
   };
 }
 
@@ -151,7 +154,11 @@ export interface IPredicateService {
     user: User,
     workspace: Workspace,
   ) => Promise<Predicate>;
-  update: (id: string, payload: IPredicatePayload) => Promise<Predicate>;
+  update: (
+    id: string,
+    payload: Partial<IPredicatePayload>,
+    workspace: Workspace,
+  ) => Promise<Predicate>;
   delete: (id: string) => Promise<boolean>;
   findById: (id: string, signer?: string) => Promise<Predicate>;
   list: () => Promise<IPagination<Predicate> | Predicate[]>;
