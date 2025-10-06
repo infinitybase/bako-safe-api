@@ -352,8 +352,7 @@ export class PredicateService implements IPredicateService {
 
   async update(
     id: string,
-    payload: Partial<IPredicatePayload>,
-    workspace: Workspace,
+    payload?: Partial<IPredicatePayload>,
   ): Promise<Predicate> {
     try {
       await Predicate.update(

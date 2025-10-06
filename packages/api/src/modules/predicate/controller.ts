@@ -348,14 +348,10 @@ export class PredicateController {
       const { predicateId } = req.params;
       const { description, name } = req.body;
 
-      const updatedPredicate = await this.predicateService.update(
-        predicateId,
-        {
-          name,
-          description,
-        },
-        req.workspace,
-      );
+      const updatedPredicate = await this.predicateService.update(predicateId, {
+        name,
+        description,
+      });
 
       return successful(updatedPredicate, Responses.Ok);
     } catch (e) {

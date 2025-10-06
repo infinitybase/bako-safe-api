@@ -154,11 +154,7 @@ export interface IPredicateService {
     user: User,
     workspace: Workspace,
   ) => Promise<Predicate>;
-  update: (
-    id: string,
-    payload: Partial<IPredicatePayload>,
-    workspace: Workspace,
-  ) => Promise<Predicate>;
+  update: (id: string, payload?: Partial<IPredicatePayload>) => Promise<Predicate>;
   delete: (id: string) => Promise<boolean>;
   findById: (id: string, signer?: string) => Promise<Predicate>;
   list: () => Promise<IPagination<Predicate> | Predicate[]>;
