@@ -1,4 +1,3 @@
-import { meldEthValue } from '@src/modules/meld/utils';
 import crypto from 'crypto';
 
 export const mockQuotesResponse = (overrides: Partial<any> = {}) => ({
@@ -8,7 +7,7 @@ export const mockQuotesResponse = (overrides: Partial<any> = {}) => ({
       customerScore: 1,
       destinationAmount: 0.02,
       destinationAmountWithoutFees: 0.021,
-      destinationCurrencyCode: meldEthValue,
+      destinationCurrencyCode: 'ETH',
       exchangeRate: 10000,
       fiatAmountWithoutFees: 100,
       institutionName: 'TEST BANK',
@@ -42,7 +41,7 @@ export const meldTransactionListMock = {
     {
       id: 'tr-1',
       destinationAmount: 0.02,
-      destinationCurrencyCode: meldEthValue,
+      destinationCurrencyCode: 'ETH',
       serviceProvider: 'TEST',
       status: 'SETTLED',
       countryCode: 'BR',
@@ -72,7 +71,7 @@ export const getValidMeldSignature = (
   body: unknown,
 ) => {
   // Generate valid signature that matches what the middleware expects
-  const protocol = 'http';
+  const protocol = 'https';
   const host = '127.0.0.1';
   const originalUrl = '/webhooks/meld/crypto';
   const url = `${protocol}://${host}${originalUrl}`;

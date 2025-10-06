@@ -18,6 +18,7 @@ export interface ICreatePayload {
   destinationAmount?: string;
   paymentMethod?: string;
   userWalletAddress?: string;
+  isSandbox: boolean;
 }
 
 export interface IRampTransactionService {

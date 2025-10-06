@@ -40,11 +40,8 @@ export const deployPredicate = async (wallet: WalletUnlocked) => {
     bytecode,
     provider: wallet.provider,
   });
-  console.log('Instancing new predicate...');
 
   const predicate = await _predicate.deploy(wallet);
-
-  console.log('Predicate deployed');
 
   const p = await predicate.waitForResult().catch(e => {
     return null;
