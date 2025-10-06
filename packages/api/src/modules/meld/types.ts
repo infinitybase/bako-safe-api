@@ -269,7 +269,13 @@ export interface IMeldTransactionCryptoWeebhook {
     customerId?: string;
     externalCustomerId?: string;
     externalSessionId?: string;
-    paymentTransactionStatus: 'PENDING' | 'SETTLING' | 'SETTLED' | 'ERROR';
+    paymentTransactionStatus:
+      | 'PENDING'
+      | 'SETTLING'
+      | 'SETTLED'
+      | 'ERROR'
+      | 'FAILED'
+      | 'PENDING_CREATED';
   };
 }
 
