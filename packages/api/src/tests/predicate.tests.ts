@@ -274,7 +274,7 @@ test('Predicate Endpoints', async t => {
     },
   );
 
-  await t.test('PUT /predicate/:id should update predicate', async () => {
+  await t.test('PUT /predicate/:predicateId should update predicate', async () => {
     const vault = predicates[0];
 
     const { predicate } = await saveMockPredicate(vault, users[0], app);
@@ -295,4 +295,27 @@ test('Predicate Endpoints', async t => {
     assert.strictEqual(res.body.name, payload.name);
     assert.strictEqual(res.body.description, payload.description);
   });
+
+  await t.test(
+    'PUT /predicate/:predicateId should not update predicate when dont pass name',
+    async () => {
+      const vault = predicates[0];
+
+      const { predicate } = await saveMockPredicate(vault, users[0], app);
+
+      const payload = {};
+
+      const res = await request(app)
+        .put(`/predicate/${predicate.id}`)
+        .set('Authorization', users[0].token)
+        .set('signeraddress', users[0].payload.address)
+        .send(payload);
+
+      assert.equal(res.status, 400);
+      assert.ok('errors' in res.body);
+      assert.ok('detail' in res.body.errors[0]);
+      assert.ok('title' in res.body.errors[0]);
+      assert.strictEqual(res.body.errors[0].title, '"name" is required');
+    },
+  );
 });
