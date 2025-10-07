@@ -3,7 +3,6 @@ import {
   Predicate,
   Transaction,
   TransactionStatus,
-  TransactionStatusWithRamp,
   TransactionTypeWithRamp,
 } from '@src/models';
 import { RampTransaction } from '@src/models/RampTransactions';
@@ -33,7 +32,7 @@ export default class WebhookService {
         )
         .leftJoin('ramp.transaction', 'transaction')
         .leftJoin('ramp.user', 'user')
-        .addSelect(['transaction.id', 'user.id'])
+        .addSelect(['transaction.id', 'user.id', 'transaction.status'])
         .getOne();
 
       if (!meldData) {
@@ -81,7 +80,9 @@ export default class WebhookService {
           type: isOnRamp
             ? TransactionTypeWithRamp.ON_RAMP_DEPOSIT
             : TransactionTypeWithRamp.OFF_RAMP_WITHDRAW,
-          status: TransactionStatusWithRamp.PENDING_PROVIDER,
+          status: getTransactionStatusByPaymentStatus(
+            data.payload.paymentTransactionStatus,
+          ),
           gasUsed: txSummary.gasUsed.format(),
           createdBy: meldData.user,
           hash: txSummary.id.slice(2),
@@ -163,10 +164,15 @@ export default class WebhookService {
         return;
       }
 
+      const newTxStatus = getTransactionStatusByPaymentStatus(
+        data.payload.paymentTransactionStatus,
+      );
+
       await Transaction.update(meldData.transaction.id, {
-        status: getTransactionStatusByPaymentStatus(
-          data.payload.paymentTransactionStatus,
-        ),
+        status:
+          isSandbox && meldData?.transaction?.status === TransactionStatus.FAILED
+            ? TransactionStatus.FAILED
+            : newTxStatus,
       }).catch(error => {
         throw new Internal({
           title: 'Error updating transaction status',
