@@ -29,6 +29,7 @@ import {
   IListRequest,
   IPredicateService,
   ITooglePredicateRequest,
+  IUpdatePredicateRequest,
   PredicateWithHidden,
 } from './types';
 
@@ -125,8 +126,10 @@ export class PredicateController {
   }
 
   async findByName(req: IFindByNameRequest) {
+    const { ignoreId } = req.query;
     const { params, workspace } = req;
     const { name } = params;
+
     try {
       if (!name || name.length === 0) return successful(false, Responses.Ok);
 
@@ -136,6 +139,10 @@ export class PredicateController {
         .where('LOWER(p.name) = LOWER(:name)', { name: name })
         .andWhere('w.id = :workspace', { workspace: workspace.id })
         .getOne();
+
+      if (ignoreId && response?.id === ignoreId) {
+        return successful(false, Responses.Ok);
+      }
 
       return successful(!!response, Responses.Ok);
     } catch (e) {
@@ -331,6 +338,22 @@ export class PredicateController {
         .listDateMoreThan(d ? new Date(d) : undefined);
 
       return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async update(req: IUpdatePredicateRequest) {
+    try {
+      const { predicateId } = req.params;
+      const { description, name } = req.body;
+
+      const updatedPredicate = await this.predicateService.update(predicateId, {
+        name,
+        description,
+      });
+
+      return successful(updatedPredicate, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
     }

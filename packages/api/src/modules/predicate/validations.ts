@@ -1,5 +1,5 @@
-import Joi from 'joi';
 import { AddressValidator, validator } from '@utils/index';
+import Joi from 'joi';
 
 export const validateAddPredicatePayload = validator.body(
   Joi.object({
@@ -8,6 +8,13 @@ export const validateAddPredicatePayload = validator.body(
     predicateAddress: Joi.string().required().custom(AddressValidator.validate),
     configurable: Joi.string().required(),
     version: Joi.string().optional(),
+  }),
+);
+
+export const validateUpdatePredicatePayload = validator.body(
+  Joi.object({
+    name: Joi.string().required(),
+    description: Joi.string().allow('').optional(),
   }),
 );
 

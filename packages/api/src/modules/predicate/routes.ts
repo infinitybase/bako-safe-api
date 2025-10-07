@@ -13,6 +13,7 @@ import {
   validateAddPredicatePayload,
   validatePredicateIdParams,
   validateTooglePredicatePayload,
+  validateUpdatePredicatePayload,
 } from './validations';
 
 const permissionMiddlewareById = predicatePermissionMiddleware({
@@ -44,12 +45,19 @@ const {
   hasReservedCoins,
   checkByAddress,
   tooglePredicateVisibility,
+  update,
 } = new PredicateController(predicateService, notificationsService);
 
 router.use(authMiddleware);
 
 router.post('/', validateAddPredicatePayload, handleResponse(create));
 router.get('/', handleResponse(list));
+router.put(
+  '/:predicateId',
+  validatePredicateIdParams,
+  validateUpdatePredicatePayload,
+  handleResponse(update),
+);
 router.get(
   '/:predicateId',
   validatePredicateIdParams,

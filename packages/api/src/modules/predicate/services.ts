@@ -16,17 +16,17 @@ import { Predicate, TypeUser, User, Workspace } from '@models/index';
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
 
+import App from '@src/server/app';
+import { FuelProvider } from '@src/utils';
+import { IconUtils } from '@src/utils/icons';
+import { Network, ZeroBytes32 } from 'fuels';
+import { UserService } from '../user/service';
+import { IPredicateOrdination, setOrdination } from './ordination';
 import {
   IPredicateFilterParams,
   IPredicatePayload,
   IPredicateService,
 } from './types';
-import { IPredicateOrdination, setOrdination } from './ordination';
-import { Network, ZeroBytes32 } from 'fuels';
-import { UserService } from '../user/service';
-import { IconUtils } from '@src/utils/icons';
-import { FuelProvider } from '@src/utils';
-import App from '@src/server/app';
 
 export class PredicateService implements IPredicateService {
   private _ordination: IPredicateOrdination = {
@@ -350,25 +350,26 @@ export class PredicateService implements IPredicateService {
     }
   }
 
-  async update(id: string, payload?: IPredicatePayload): Promise<Predicate> {
+  async update(
+    id: string,
+    payload?: Partial<IPredicatePayload>,
+  ): Promise<Predicate> {
     try {
-      await Predicate.update(
-        { id },
-        {
-          ...payload,
-          updatedAt: new Date(),
-        },
-      );
+      const currentPredicate = await this.findById(id);
 
-      const updatedPredicate = await this.findById(id);
-
-      if (!updatedPredicate) {
+      if (!currentPredicate) {
         throw new NotFound({
           type: ErrorTypes.NotFound,
           title: 'Predicate not found',
           detail: `Predicate with id ${id} not found after update`,
         });
       }
+
+      const updatedPredicate = await Predicate.merge(currentPredicate, {
+        name: payload?.name,
+        description: payload?.description,
+        updatedAt: new Date(),
+      }).save();
 
       return updatedPredicate;
     } catch (e) {
@@ -414,9 +415,11 @@ export class PredicateService implements IPredicateService {
   async checkOlderPredicateVersions(
     address: string, // user address
     provider: string,
-  ): Promise<{ invisibleAccounts: string[], accounts: Vault[] }> {
+  ): Promise<{ invisibleAccounts: string[]; accounts: Vault[] }> {
     const _versions = await legacyConnectorVersion(address, provider);
-    const versions = _versions.filter(v => !v.hasBalance).map(v => v.predicateAddress);
+    const versions = _versions
+      .filter(v => !v.hasBalance)
+      .map(v => v.predicateAddress);
 
     const bakoLatestVersion = getLatestPredicateVersion(WalletType.FUEL).version;
     const result: Vault[] = [];
@@ -443,24 +446,23 @@ export class PredicateService implements IPredicateService {
       balances: [],
     });
 
-
     for (const v of _versions) {
       const isFromConnector =
         v.details.origin === WalletType.EVM || v.details.origin === WalletType.SVM;
 
       const c = isFromConnector
         ? () => {
-          return {
-            SIGNER: address,
-          };
-        }
+            return {
+              SIGNER: address,
+            };
+          }
         : () => {
-          // bako version
-          return {
-            SIGNERS: [address],
-            SIGNATURES_COUNT: 1,
+            // bako version
+            return {
+              SIGNERS: [address],
+              SIGNATURES_COUNT: 1,
+            };
           };
-        };
 
       const vault = await this.instancePredicate(
         JSON.stringify(c()),
