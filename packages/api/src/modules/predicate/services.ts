@@ -355,23 +355,21 @@ export class PredicateService implements IPredicateService {
     payload?: Partial<IPredicatePayload>,
   ): Promise<Predicate> {
     try {
-      await Predicate.update(
-        { id },
-        {
-          ...payload,
-          updatedAt: new Date(),
-        },
-      );
+      const currentPredicate = await this.findById(id);
 
-      const updatedPredicate = await this.findById(id);
-
-      if (!updatedPredicate) {
+      if (!currentPredicate) {
         throw new NotFound({
           type: ErrorTypes.NotFound,
           title: 'Predicate not found',
           detail: `Predicate with id ${id} not found after update`,
         });
       }
+
+      const updatedPredicate = await Predicate.merge(currentPredicate, {
+        name: payload?.name,
+        description: payload?.description,
+        updatedAt: new Date(),
+      }).save();
 
       return updatedPredicate;
     } catch (e) {
