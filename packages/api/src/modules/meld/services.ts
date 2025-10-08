@@ -1,5 +1,6 @@
 import { ErrorTypes, Internal } from '@src/utils/error';
 import { AxiosError } from 'axios';
+import { Network } from 'fuels';
 import {
   IBuyCryptoRequest,
   ICommonSearchParams,
@@ -17,7 +18,7 @@ import {
   IServiceProviderParams,
   IServiceProviderResponse,
 } from './types';
-import { MeldApi, meldApi } from './utils';
+import { MeldApiFactory } from './utils';
 
 export default class MeldService implements IMeldService {
   /**
@@ -25,8 +26,10 @@ export default class MeldService implements IMeldService {
    */
   async getCountries(
     params: ICommonSearchParams,
+    network: Network,
   ): Promise<ISearchCountryResponse[]> {
     try {
+      const meldApi = MeldApiFactory.getMeldApiByNetwork(network).api;
       const { data } = await meldApi.get<ISearchCountryResponse[]>(
         '/service-providers/properties/countries',
         {
@@ -46,8 +49,9 @@ export default class MeldService implements IMeldService {
   /**
    * @description Returns a list of properties which meet the search criteria.
    */
-  async getFiatCurrencies(params: ICommonSearchParams) {
+  async getFiatCurrencies(params: ICommonSearchParams, network: Network) {
     try {
+      const meldApi = MeldApiFactory.getMeldApiByNetwork(network).api;
       const { data } = await meldApi.get<IFiatCurrencyResponse[]>(
         '/service-providers/properties/fiat-currencies',
         {
@@ -64,8 +68,9 @@ export default class MeldService implements IMeldService {
     }
   }
 
-  async getPaymentMethods(params: ICommonSearchParams) {
+  async getPaymentMethods(params: ICommonSearchParams, network: Network) {
     try {
+      const meldApi = MeldApiFactory.getMeldApiByNetwork(network).api;
       const { data } = await meldApi.get<IPaymentMethodResponse[]>(
         '/service-providers/properties/payment-methods',
         {
@@ -87,8 +92,10 @@ export default class MeldService implements IMeldService {
    */
   async getOnRampPurchaseLimits(
     params: IPurchaseLimitsParams,
+    network: Network,
   ): Promise<IPurchaseLimitsResponse[]> {
     try {
+      const meldApi = MeldApiFactory.getMeldApiByNetwork(network).api;
       const { data } = await meldApi.get<IPurchaseLimitsResponse[]>(
         '/service-providers/limits/fiat-currency-purchases',
         {
@@ -110,8 +117,10 @@ export default class MeldService implements IMeldService {
    */
   async getOffRampPurchaseLimits(
     params: IPurchaseLimitsParams,
+    network: Network,
   ): Promise<IPurchaseLimitsResponse[]> {
     try {
+      const meldApi = MeldApiFactory.getMeldApiByNetwork(network).api;
       const { data } = await meldApi.get<IPurchaseLimitsResponse[]>(
         '/service-providers/limits/crypto-currency-sells',
         {
@@ -131,8 +140,9 @@ export default class MeldService implements IMeldService {
   /**
    * @description Returns a list of properties which meet the search criteria.
    */
-  async getCryptoCurrencies(params: ICommonSearchParams) {
+  async getCryptoCurrencies(params: ICommonSearchParams, network: Network) {
     try {
+      const meldApi = MeldApiFactory.getMeldApiByNetwork(network).api;
       const { data } = await meldApi.get<ISearchCurrencyResponse[]>(
         '/service-providers/properties/crypto-currencies',
         {
@@ -149,8 +159,9 @@ export default class MeldService implements IMeldService {
     }
   }
 
-  async getServiceProviders(params: IServiceProviderParams) {
+  async getServiceProviders(params: IServiceProviderParams, network: Network) {
     try {
+      const meldApi = MeldApiFactory.getMeldApiByNetwork(network).api;
       const { data } = await meldApi.get<IServiceProviderResponse[]>(
         '/service-providers',
         {
@@ -170,9 +181,13 @@ export default class MeldService implements IMeldService {
   /**
    * @description Use this endpoint to request the current exchange rate of the selected fiat currency-cryptocurrency pair, and the required fees. Enter a fiat currency as the sourceCurrencyCode to buy crypto and enter a crypto currency in that field to sell crypto.
    */
-  async getQuotes(payload: IQuoteParams): Promise<IQuoteResponse> {
+  async getQuotes(
+    payload: IQuoteParams,
+    network: Network,
+  ): Promise<IQuoteResponse> {
     try {
-      return await MeldApi.getMeldQuotes(payload);
+      const meldApi = MeldApiFactory.getMeldApiByNetwork(network);
+      return await meldApi.getMeldQuotes(payload);
     } catch (error) {
       throw new Internal({
         title: 'Error fetching quotes from Meld API',
@@ -192,9 +207,11 @@ export default class MeldService implements IMeldService {
    */
   async createWidgetSession(
     request: IBuyCryptoRequest | ISellCryptoRequest,
+    network: Network,
   ): Promise<ICreateWidgetResponse> {
     try {
-      return await MeldApi.createMeldWidgetSession(request);
+      const meldApi = MeldApiFactory.getMeldApiByNetwork(network);
+      return await meldApi.createMeldWidgetSession(request);
     } catch (error) {
       throw new Internal({
         title: 'Error creating widget session from Meld API',

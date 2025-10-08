@@ -9,12 +9,16 @@ export const getTransactionStatusByPaymentStatus = (
   status: Status,
 ): TransactionStatusWithRamp | TransactionStatus => {
   switch (status) {
+    case 'PENDING_CREATED':
+      return TransactionStatusWithRamp.PENDING_PROVIDER;
     case 'PENDING':
       return TransactionStatusWithRamp.PENDING_PROVIDER;
     case 'SETTLING':
       return TransactionStatusWithRamp.PENDING_PROVIDER;
     case 'SETTLED':
       return TransactionStatus.SUCCESS;
+    case 'FAILED':
+      return TransactionStatus.FAILED;
     case 'ERROR':
       return TransactionStatus.FAILED;
     default:

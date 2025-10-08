@@ -1,6 +1,7 @@
 import { AuthValidatedRequest } from '@src/middlewares/auth/types';
 import { User } from '@src/models';
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
+import { Network } from 'fuels';
 
 export interface IBuyCryptoRequest {
   sessionData: {
@@ -268,7 +269,13 @@ export interface IMeldTransactionCryptoWeebhook {
     customerId?: string;
     externalCustomerId?: string;
     externalSessionId?: string;
-    paymentTransactionStatus: 'PENDING' | 'SETTLING' | 'SETTLED' | 'ERROR';
+    paymentTransactionStatus:
+      | 'PENDING'
+      | 'SETTLING'
+      | 'SETTLED'
+      | 'ERROR'
+      | 'FAILED'
+      | 'PENDING_CREATED';
   };
 }
 
@@ -297,28 +304,38 @@ export interface IMeldPayload {
 }
 
 export interface IMeldService {
-  getCountries: (params: ICommonSearchParams) => Promise<ISearchCountryResponse[]>;
+  getCountries: (
+    params: ICommonSearchParams,
+    network: Network,
+  ) => Promise<ISearchCountryResponse[]>;
   getFiatCurrencies: (
     params: ICommonSearchParams,
+    network: Network,
   ) => Promise<IFiatCurrencyResponse[]>;
   getPaymentMethods: (
     params: ICommonSearchParams,
+    network: Network,
   ) => Promise<IPaymentMethodResponse[]>;
   getOnRampPurchaseLimits: (
     params: IPurchaseLimitsParams,
+    network: Network,
   ) => Promise<IPurchaseLimitsResponse[]>;
   getOffRampPurchaseLimits: (
     params: IPurchaseLimitsParams,
+    network: Network,
   ) => Promise<IPurchaseLimitsResponse[]>;
   getCryptoCurrencies: (
     params: ICommonSearchParams,
+    network: Network,
   ) => Promise<ISearchCurrencyResponse[]>;
   getServiceProviders: (
     params: IServiceProviderParams,
+    network: Network,
   ) => Promise<IServiceProviderResponse[]>;
-  getQuotes: (params: IQuoteParams) => Promise<IQuoteResponse>;
+  getQuotes: (params: IQuoteParams, network: Network) => Promise<IQuoteResponse>;
   createWidgetSession: (
     request: IBuyCryptoRequest | ISellCryptoRequest,
+    network: Network,
   ) => Promise<ICreateWidgetResponse>;
 }
 

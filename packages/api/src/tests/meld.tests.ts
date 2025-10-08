@@ -1,4 +1,4 @@
-import { MeldApi } from '@src/modules/meld/utils';
+import { MeldApiFactory } from '@src/modules/meld/utils';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import request from 'supertest';
@@ -9,16 +9,12 @@ import {
   widgetSessionMock,
 } from './mocks/Meld';
 
-// Now import the rest
 import { RampTransactionProvider } from '@src/models/RampTransactions';
 import { UnauthorizedErrorTitles } from '@src/utils/error';
+import axios from 'axios';
 import { generateNode } from './mocks/Networks';
 import { saveMockPredicate } from './mocks/Predicate';
 import { TestEnvironment } from './utils/Setup';
-
-process.env.MELD_ENVIRONMENT = 'sandbox';
-process.env.MELD_API_URL = 'https://meld.mock';
-process.env.MELD_API_KEY = 'key';
 
 test('On Ramp endpoints', async t => {
   const { node } = await generateNode();
@@ -27,26 +23,29 @@ test('On Ramp endpoints', async t => {
   const vault = predicates?.[0];
 
   let widgetResponse: request.Response;
-  const originalSecret = process.env.MELD_WEBHOOK_SECRET;
+  const sandboxSecret = process.env.MELD_SANDBOX_WEBHOOK_SECRET;
+  const productionSecret = process.env.MELD_PRODUCTION_WEBHOOK_SECRET;
 
   t.before(async () => {
-    // Set a known webhook secret for testing
-    process.env.MELD_WEBHOOK_SECRET = 'test-secret-key';
     await saveMockPredicate(vault, user, app);
+    process.env.MELD_SANDBOX_WEBHOOK_SECRET = 'test_secret';
+    process.env.MELD_PRODUCTION_WEBHOOK_SECRET = 'test_secret';
   });
 
   t.after(async () => {
     await close();
     // Restore all mocks after tests complete
     test.mock.restoreAll();
-    // Restore original secret
-    process.env.MELD_WEBHOOK_SECRET = originalSecret;
+    process.env.MELD_SANDBOX_WEBHOOK = sandboxSecret;
+    process.env.MELD_PRODUCTION_WEBHOOK = productionSecret;
   });
 
-  await t.test('should get meld quotes', async ({ mock }) => {
-    mock.method(MeldApi, 'getMeldQuotes', () => {
+  await t.test('should get meld quotes', async () => {
+    const mock = t.mock.method(MeldApiFactory, 'getMeldApiByNetwork', () => {
       console.log('🚀 getMeldQuotes MOCK CALLED');
-      return mockQuotesResponse();
+      return {
+        getMeldQuotes: async () => mockQuotesResponse(),
+      };
     });
     const quoteRes = await request(app)
       .post('/ramp-transactions/meld/quotes')
@@ -60,15 +59,16 @@ test('On Ramp endpoints', async t => {
         paymentMethodType: 'PIX',
       });
 
+    assert.equal(mock.mock.calls.length, 1);
     assert.equal(quoteRes.status, 200);
     assert.ok(Array.isArray(quoteRes.body.quotes));
     assert.equal(quoteRes.body.quotes[0].destinationCurrencyCode, 'ETH');
   });
 
   await t.test('should create meld widget session', async () => {
-    t.mock.method(MeldApi, 'createMeldWidgetSession', async () => {
+    const mock = t.mock.method(MeldApiFactory, 'getMeldApiByNetwork', () => {
       console.log('🎯 createMeldWidgetSession MOCK CALLED');
-      return widgetSessionMock;
+      return { createMeldWidgetSession: async () => widgetSessionMock };
     });
 
     const widgetRes = await request(app)
@@ -87,6 +87,7 @@ test('On Ramp endpoints', async t => {
         walletAddress: vault.address.b256Address,
       });
 
+    assert.equal(mock.mock.calls.length, 1);
     assert.equal(widgetRes.status, 201);
     assert.equal(widgetRes.body.provider, RampTransactionProvider.MELD);
     assert.equal(
@@ -111,9 +112,9 @@ test('On Ramp endpoints', async t => {
   });
 
   await t.test("should process meld's webhook and validate signature", async () => {
-    t.mock.method(MeldApi, 'getMeldTransactions', async () => {
+    const mock = t.mock.method(axios, 'create', () => {
       console.log('🎯 getMeldTransactions MOCK CALLED');
-      return meldTransactionListMock;
+      return { get: async () => ({ data: meldTransactionListMock }) };
     });
 
     // Use a fixed timestamp for both payload and signature
@@ -133,10 +134,9 @@ test('On Ramp endpoints', async t => {
         paymentTransactionStatus: 'SETTLED',
       },
     };
-    console.log('test env', process.env.MELD_WEBHOOK_SECRET);
 
     const meldSignature = getValidMeldSignature(
-      process.env.MELD_WEBHOOK_SECRET!,
+      process.env.MELD_SANDBOX_WEBHOOK_SECRET!,
       timestamp,
       webhookPayload,
     );
@@ -148,6 +148,7 @@ test('On Ramp endpoints', async t => {
       .set('meld-signature-timestamp', timestamp)
       .send(webhookPayload);
 
+    assert.equal(mock.mock.calls.length, 1);
     assert.equal(webhookRes.status, 200);
     assert.equal(webhookRes.body.message, 'Webhook processed successfully');
   });

@@ -3,7 +3,6 @@ import {
   Predicate,
   Transaction,
   TransactionStatus,
-  TransactionStatusWithRamp,
   TransactionTypeWithRamp,
 } from '@src/models';
 import { RampTransaction } from '@src/models/RampTransactions';
@@ -13,12 +12,7 @@ import { FuelProvider } from '@src/utils';
 import { ErrorTypes, Internal, NotFound } from '@src/utils/error';
 import { getTransactionSummary } from 'fuels';
 import { IMeldTransactionCryptoWeebhook } from '../meld/types';
-import {
-  isSandbox,
-  MeldApi,
-  meldEthValue,
-  MOCK_DEPOSIT_TX_ID,
-} from '../meld/utils';
+import { MeldApi, MeldApiFactory, MOCK_DEPOSIT_TX_ID } from '../meld/utils';
 import { TransactionController } from '../transaction/controller';
 import {
   ICreateTransactionPayload,
@@ -38,7 +32,7 @@ export default class WebhookService {
         )
         .leftJoin('ramp.transaction', 'transaction')
         .leftJoin('ramp.user', 'user')
-        .addSelect(['transaction.id', 'user.id'])
+        .addSelect(['transaction.id', 'user.id', 'transaction.status'])
         .getOne();
 
       if (!meldData) {
@@ -48,7 +42,12 @@ export default class WebhookService {
           type: ErrorTypes.NotFound,
         });
       }
-      const meldTransactions = await MeldApi.getMeldTransactions({
+      const isSandbox = meldData.isSandbox;
+      const meldEnviroment = MeldApiFactory.getMeldEnvironment(
+        isSandbox ? 'sandbox' : 'production',
+      );
+      const meldApi = new MeldApi(meldEnviroment.baseUrl, meldEnviroment.apiKey);
+      const meldTransactions = await meldApi.getMeldTransactions({
         externalSessionIds: externalSessionId,
       });
       const blockchainTransactionId = isSandbox
@@ -71,6 +70,7 @@ export default class WebhookService {
           where: { predicateAddress: destinationAddress },
           relations: { members: true },
         });
+        const meldEthValue = isSandbox ? 'ETH' : 'ETH_FUEL';
 
         const config = JSON.parse(predicate.configurable);
         const meldTxData = meldTransactions.transactions[0];
@@ -80,7 +80,9 @@ export default class WebhookService {
           type: isOnRamp
             ? TransactionTypeWithRamp.ON_RAMP_DEPOSIT
             : TransactionTypeWithRamp.OFF_RAMP_WITHDRAW,
-          status: TransactionStatusWithRamp.PENDING_PROVIDER,
+          status: getTransactionStatusByPaymentStatus(
+            data.payload.paymentTransactionStatus,
+          ),
           gasUsed: txSummary.gasUsed.format(),
           createdBy: meldData.user,
           hash: txSummary.id.slice(2),
@@ -162,10 +164,15 @@ export default class WebhookService {
         return;
       }
 
+      const newTxStatus = getTransactionStatusByPaymentStatus(
+        data.payload.paymentTransactionStatus,
+      );
+
       await Transaction.update(meldData.transaction.id, {
-        status: getTransactionStatusByPaymentStatus(
-          data.payload.paymentTransactionStatus,
-        ),
+        status:
+          isSandbox && meldData?.transaction?.status === TransactionStatus.FAILED
+            ? TransactionStatus.FAILED
+            : newTxStatus,
       }).catch(error => {
         throw new Internal({
           title: 'Error updating transaction status',
