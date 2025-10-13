@@ -10,13 +10,17 @@ import {
   IGetLimitsResponse,
   IGetQuotesApiResponse,
   IGetQuotesResponse,
+  IInfoBridgeSwap,
   ILayersSwapService,
+  ISwapResponse,
 } from './types';
 import { createLayersSwapApi, LayersSwapEnv } from './utils';
 import axios, { AxiosInstance } from 'axios';
 import { Network } from 'fuels';
 import { networksByChainId } from '@src/constants/networks';
 import { keysToCamel } from '@src/utils/toCamelCase';
+import { ITransaction } from '../meld/types';
+import { Transaction } from '@src/models';
 
 export class LayersSwapServiceFactory {
   static create(env: LayersSwapEnv): LayersSwapService {
@@ -57,19 +61,25 @@ export class LayersSwapService implements ILayersSwapService {
     try {
       const { data: response } = await this.api.get<IGetDestinationsApiResponse>(
         this.withVersion(
-          `/destinations?source_network=${fromNetwork}&source_token=${fromToken}`,
+          `/destinations?source_network=${fromNetwork}&source_token=${fromToken}&include_swaps=${true}&include_unmatched=${true}`,
         ),
+      );
+
+      const optimisNet = response.data.find(
+        network => network.name === 'OPTIMISM_MAINNET',
       );
 
       return response.data.map(network => ({
         name: network.name,
         displayName: network.display_name,
         logo: network.logo,
-        tokens: network.tokens.map(token => ({
-          symbol: token.symbol,
-          logo: token.logo,
-          decimals: token.decimals,
-        })),
+        tokens: network.tokens
+          .filter(token => token.status === 'active')
+          .map(token => ({
+            symbol: token.symbol,
+            logo: token.logo,
+            decimals: token.decimals,
+          })),
       }));
     } catch (error) {
       throw new Internal({
@@ -156,6 +166,7 @@ export class LayersSwapService implements ILayersSwapService {
         use_new_deposit_address: payload.useNewDepositAddress,
         reference_id: payload.referenceId,
         slippage: payload.slippage,
+        refund_address: payload.sourceAddress,
       };
 
       const { data } = await this.api.post<ICreateSwapApiResponse>(
@@ -172,6 +183,37 @@ export class LayersSwapService implements ILayersSwapService {
 
       throw new Internal({
         title: 'Error create swap LayersSwap API',
+        detail,
+        type: ErrorTypes.Internal,
+      });
+    }
+  }
+
+  async updateSwapTransaction(
+    hash: string,
+    payload: IInfoBridgeSwap,
+  ): Promise<Transaction> {
+    try {
+      const tx = await Transaction.findOneOrFail({
+        where: { hash },
+      });
+
+      tx.resume = {
+        ...tx.resume,
+        bridge: payload,
+      };
+
+      await Transaction.update(tx.id, tx);
+
+      return tx;
+    } catch (error) {
+      const isAxiosErr = axios.isAxiosError(error);
+      const detail =
+        (isAxiosErr ? error.response?.data?.error?.message : null) ||
+        (error instanceof Error ? error.message : 'Unknown error');
+
+      throw new Internal({
+        title: 'Error update swap LayersSwap API',
         detail,
         type: ErrorTypes.Internal,
       });

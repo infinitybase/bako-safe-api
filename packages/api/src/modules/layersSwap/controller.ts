@@ -6,6 +6,7 @@ import {
   IRequestDestination,
   IRequestLimits,
   IRequestQuote,
+  IRequestUpdateSwap,
 } from './types';
 import { LayersSwapServiceFactory } from './service';
 
@@ -63,6 +64,19 @@ export default class LayersSwapController {
 
       const service = this._factory.fromNetwork(net);
       const swap = await service.createSwap(request.body);
+      return successful(swap, Responses.Ok);
+    } catch (err) {
+      return error(err.error, err.statusCode);
+    }
+  }
+
+  async updateSwapTransaction(request: IRequestUpdateSwap) {
+    try {
+      const net = request.network;
+      const { hash } = request.params;
+
+      const service = this._factory.fromNetwork(net);
+      const swap = await service.updateSwapTransaction(hash, request.body);
       return successful(swap, Responses.Ok);
     } catch (err) {
       return error(err.error, err.statusCode);

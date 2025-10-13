@@ -5,6 +5,7 @@ import { LayersSwapServiceFactory } from './service';
 import LayersSwapController from './controller';
 import {
   ValidatorCreateSwapRequest,
+  ValidatorUpdateSwapRequest,
   ValidatorDestinationParams,
   ValidatorLimitsParams,
   ValidatorQuotesParams,
@@ -27,6 +28,11 @@ router.post(
   '/swap',
   ValidatorCreateSwapRequest,
   handleResponse(controller.createSwap),
+);
+router.put(
+  '/swap/:hash',
+  ValidatorUpdateSwapRequest,
+  handleResponse(controller.updateSwapTransaction),
 );
 
 export default router;
