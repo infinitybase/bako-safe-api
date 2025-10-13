@@ -45,3 +45,9 @@ export const ValidatorCreateSwapRequest = validator.body(
     slippage: Joi.string().optional().allow(null),
   }),
 );
+
+export const ValidatorUpdateSwapRequest = validator.body(
+  Joi.object({
+    id: Joi.string().required(),
+  }).unknown(true),
+);
