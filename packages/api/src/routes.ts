@@ -10,7 +10,7 @@ import meld from '@modules/meld/routes';
 import notifications from '@modules/notification/routes';
 import predicates from '@modules/predicate/routes';
 import rampTransactions from '@modules/rampTransactions/routes';
-import layersSwap from '@modules/layersSwap/routes';
+import bridge from '@src/modules/bridge/routes';
 import transactions from '@modules/transaction/routes';
 import { webhookRouters } from './modules/webhook/routes';
 import workspace from '@modules/workspace/routes';
@@ -34,7 +34,7 @@ router.use('/notifications', notifications);
 router.use('/external', externalRoute);
 router.use('/ramp-transactions/meld', meld);
 router.use('/ramp-transactions', rampTransactions);
-router.use('/layer-swap', layersSwap);
+router.use('/bridge', bridge);
 router.use('/webhooks', webhookRouters);
 
 // ping route
