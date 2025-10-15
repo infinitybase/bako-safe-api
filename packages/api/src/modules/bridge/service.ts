@@ -293,8 +293,6 @@ export class LayersSwapService implements ILayersSwapService {
         predicate,
       };
 
-      console.log('>>> txPayload', txPayload);
-
       const transaction = await Transaction.create(txPayload)
         .save()
         .then(res => res)
