@@ -2,11 +2,11 @@ import { bindMethods, Responses, successful } from '@src/utils';
 import { error } from '@src/utils/error';
 
 import {
+  IRequestCreateBridgeTransaction,
   IRequestCreateSwap,
   IRequestDestination,
   IRequestLimits,
   IRequestQuote,
-  IRequestUpdateSwap,
 } from './types';
 import { LayersSwapServiceFactory } from './service';
 
@@ -70,13 +70,15 @@ export default class LayersSwapController {
     }
   }
 
-  async updateSwapTransaction(request: IRequestUpdateSwap) {
+  async createBridgeTransaction(request: IRequestCreateBridgeTransaction) {
     try {
       const net = request.network;
-      const { hash } = request.params;
 
       const service = this._factory.fromNetwork(net);
-      const swap = await service.updateSwapTransaction(hash, request.body);
+      const swap = await service.createBridgeTransaction({
+        ...request.body,
+        network: net,
+      });
       return successful(swap, Responses.Ok);
     } catch (err) {
       return error(err.error, err.statusCode);

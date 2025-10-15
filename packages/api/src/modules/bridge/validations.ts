@@ -46,8 +46,10 @@ export const ValidatorCreateSwapRequest = validator.body(
   }),
 );
 
-export const ValidatorUpdateSwapRequest = validator.body(
+export const ValidatorCreateBridgeTransactionRequest = validator.body(
   Joi.object({
-    id: Joi.string().required(),
-  }).unknown(true),
+    txData: Joi.object().required(),
+    swap: Joi.object().required(),
+    name: Joi.string().optional().allow(null),
+  }),
 );

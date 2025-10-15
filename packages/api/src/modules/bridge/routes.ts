@@ -5,10 +5,10 @@ import { LayersSwapServiceFactory } from './service';
 import LayersSwapController from './controller';
 import {
   ValidatorCreateSwapRequest,
-  ValidatorUpdateSwapRequest,
   ValidatorDestinationParams,
   ValidatorLimitsParams,
   ValidatorQuotesParams,
+  ValidatorCreateBridgeTransactionRequest,
 } from './validations';
 
 const controller = new LayersSwapController(LayersSwapServiceFactory);
@@ -29,10 +29,11 @@ router.post(
   ValidatorCreateSwapRequest,
   handleResponse(controller.createSwap),
 );
-router.put(
-  '/swap/:hash',
-  ValidatorUpdateSwapRequest,
-  handleResponse(controller.updateSwapTransaction),
+
+router.post(
+  '/',
+  ValidatorCreateBridgeTransactionRequest,
+  handleResponse(controller.createBridgeTransaction),
 );
 
 export default router;
