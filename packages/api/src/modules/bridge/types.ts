@@ -1,7 +1,6 @@
 import { AuthValidatedRequest } from '@src/middlewares/auth/types';
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
-import { ITransaction } from '../meld/types';
-import { Transaction } from '@src/models';
+import { Transaction, User } from '@src/models';
 import { Network, TransactionRequest } from 'fuels';
 
 export interface ErrorResponse {
@@ -170,6 +169,7 @@ export interface ICreateBridgeTransactionPayloadRequest {
 export interface ICreateBridgeTransactionPayload
   extends ICreateBridgeTransactionPayloadRequest {
   network: Network;
+  user: User;
 }
 
 export interface ISwapResponse {

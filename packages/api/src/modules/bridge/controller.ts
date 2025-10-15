@@ -78,6 +78,7 @@ export default class LayersSwapController {
       const swap = await service.createBridgeTransaction({
         ...request.body,
         network: net,
+        user: request.user,
       });
       return successful(swap, Responses.Ok);
     } catch (err) {
