@@ -302,6 +302,7 @@ export class LayersSwapService implements ILayersSwapService {
             address: predicate.predicateAddress,
           },
           id: txSummary.id,
+          // @ts-expect-error not defined in resume type
           bridge: swapInfo,
         },
         type: TransactionTypeBridge.BRIDGE,
