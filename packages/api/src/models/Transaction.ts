@@ -29,6 +29,10 @@ import { RampTransaction } from './RampTransactions';
 
 const { FUEL_PROVIDER, FUEL_PROVIDER_CHAIN_ID } = process.env;
 
+export enum TransactionTypeBridge {
+  BRIDGE = 'BRIDGE',
+}
+
 export enum TransactionTypeWithRamp {
   ON_RAMP_DEPOSIT = 'ON_RAMP_DEPOSIT',
   OFF_RAMP_WITHDRAW = 'OFF_RAMP_WITHDRAW',
@@ -54,7 +58,7 @@ class Transaction extends Base {
     enum: TransactionType,
     default: TransactionType.TRANSACTION_SCRIPT,
   })
-  type: TransactionType | TransactionTypeWithRamp;
+  type: TransactionType | TransactionTypeWithRamp | TransactionTypeBridge;
 
   @Column({
     type: 'jsonb',

@@ -45,3 +45,11 @@ export const ValidatorCreateSwapRequest = validator.body(
     slippage: Joi.string().optional().allow(null),
   }),
 );
+
+export const ValidatorCreateBridgeTransactionRequest = validator.body(
+  Joi.object({
+    txData: Joi.object().required(),
+    swap: Joi.object().required(),
+    name: Joi.string().optional().allow(null),
+  }),
+);
