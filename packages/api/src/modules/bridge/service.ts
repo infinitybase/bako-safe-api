@@ -1,5 +1,6 @@
 import { ErrorTypes, Internal } from '@src/utils/error';
 import {
+  ICreateBridgeTransactionPayload,
   ICreateSwapApiResponse,
   ICreateSwapPayload,
   ICreateSwapResponse,
@@ -16,11 +17,27 @@ import {
 } from './types';
 import { createLayersSwapApi, LayersSwapEnv } from './utils';
 import axios, { AxiosInstance } from 'axios';
-import { Network } from 'fuels';
+import {
+  getTransactionSummaryFromRequest,
+  Network,
+  transactionRequestify,
+} from 'fuels';
 import { networksByChainId } from '@src/constants/networks';
 import { keysToCamel } from '@src/utils/toCamelCase';
 import { ITransaction } from '../meld/types';
-import { Transaction } from '@src/models';
+import {
+  Predicate,
+  Transaction,
+  TransactionStatus,
+  TransactionType,
+  TransactionTypeBridge,
+} from '@src/models';
+import { FuelProvider, generateWitnessesUpdatedAt } from '@src/utils';
+import { ICreateTransactionPayload } from '../transaction/types';
+import { randomUUID } from 'crypto';
+import { WitnessStatus } from 'bakosafe';
+import { TransactionService } from '../transaction/services';
+import { tokensIDS } from '@src/utils/assets-token/addresses';
 
 export class LayersSwapServiceFactory {
   static create(env: LayersSwapEnv): LayersSwapService {
@@ -181,31 +198,115 @@ export class LayersSwapService implements ILayersSwapService {
         (isAxiosErr ? error.response?.data?.error?.message : null) ||
         (error instanceof Error ? error.message : 'Unknown error');
 
+      const errorTitle = 'Error create swap LayersSwap API';
+      const title = detail.includes('Invalid address')
+        ? `${errorTitle} - Invalid address`
+        : errorTitle;
+
       throw new Internal({
-        title: 'Error create swap LayersSwap API',
+        title,
         detail,
         type: ErrorTypes.Internal,
       });
     }
   }
 
-  async updateSwapTransaction(
-    hash: string,
-    payload: IInfoBridgeSwap,
+  async createBridgeTransaction(
+    payload: ICreateBridgeTransactionPayload,
   ): Promise<Transaction> {
     try {
-      const tx = await Transaction.findOneOrFail({
-        where: { hash },
+      const { swap, txData, name, network } = payload;
+
+      const swapData = swap.swap;
+
+      const predicate = await Predicate.findOneOrFail({
+        where: { predicateAddress: swap.sourceAddress },
+        relations: { members: true, owner: true },
       });
 
-      tx.resume = {
-        ...tx.resume,
-        bridge: payload,
+      const config = JSON.parse(predicate.configurable);
+
+      const txSummary = await getTransactionSummaryFromRequest({
+        transactionRequest: transactionRequestify(txData),
+        provider: await FuelProvider.create(network.url),
+      });
+
+      const witnesses = predicate.members.map(member => ({
+        account: member.address,
+        status: WitnessStatus.PENDING,
+        signature: null,
+        updatedAt: generateWitnessesUpdatedAt(),
+      }));
+
+      const depositActions = swapData.depositActions[0];
+      const quote = swapData.quote;
+      const defaultDecimals = 9;
+      const isAssetToEth = swap.destinationAsset === tokensIDS.ETH;
+
+      const swapInfo: IInfoBridgeSwap = {
+        id: swapData.swap.id,
+        createdDate: swapData.swap.createdDate,
+        sourceNetwork: swapData.swap.sourceNetwork,
+        sourceAddress: swap.sourceAddress,
+        sourceToken: {
+          assetId: swap.sourceAsset,
+          amount: swapData.swap.requestedAmount,
+          to: depositActions.toAddress,
+          decimals: swapData?.swap?.sourceToken?.decimals ?? defaultDecimals,
+        },
+        destinationNetwork: swapData.swap.destinationNetwork,
+        destinationToken: {
+          assetId: swap.destinationAsset,
+          amount: quote.receiveAmount,
+          to: swapData.swap.destinationAddress,
+          decimals: isAssetToEth
+            ? defaultDecimals
+            : swapData?.swap?.destinationToken?.decimals ?? defaultDecimals,
+        },
+        status: swapData.swap.status,
       };
 
-      await Transaction.update(tx.id, tx);
+      const txPayload: ICreateTransactionPayload = {
+        name: name ?? `bridge ${randomUUID()}`,
+        predicateAddress: swap.sourceAddress,
+        hash: txSummary.id.slice(2),
+        txData,
+        status: TransactionStatus.AWAIT_REQUIREMENTS,
+        resume: {
+          hash: txSummary.id,
+          status: TransactionStatus.AWAIT_REQUIREMENTS,
+          witnesses,
+          requiredSigners: config.SIGNATURES_COUNT ?? 1,
+          totalSigners: predicate.members.length,
+          predicate: {
+            id: predicate.id,
+            address: predicate.predicateAddress,
+          },
+          id: txSummary.id,
+          bridge: swapInfo,
+        },
+        type: TransactionTypeBridge.BRIDGE,
+        createdBy: predicate.owner,
+        // @ts-expect-error - no summary.type for this transaction
+        summary: { operations: txSummary.operations },
+        network,
+        predicate,
+      };
 
-      return tx;
+      console.log('>>> txPayload', txPayload);
+
+      const transaction = await Transaction.create(txPayload)
+        .save()
+        .then(res => res)
+        .catch(err => {
+          throw new Internal({
+            title: 'Error creating transaction',
+            detail: err instanceof Error ? err.message : 'Unknown error',
+            type: ErrorTypes.Internal,
+          });
+        });
+
+      return transaction;
     } catch (error) {
       const isAxiosErr = axios.isAxiosError(error);
       const detail =
@@ -213,7 +314,7 @@ export class LayersSwapService implements ILayersSwapService {
         (error instanceof Error ? error.message : 'Unknown error');
 
       throw new Internal({
-        title: 'Error update swap LayersSwap API',
+        title: 'Error create bridge transaction LayersSwap API',
         detail,
         type: ErrorTypes.Internal,
       });
