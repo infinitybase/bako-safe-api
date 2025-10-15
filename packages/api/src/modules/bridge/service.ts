@@ -1,4 +1,9 @@
-import { ErrorTypes, Internal } from '@src/utils/error';
+import {
+  ErrorTypes,
+  Internal,
+  Unauthorized,
+  UnauthorizedErrorTitles,
+} from '@src/utils/error';
 import {
   ICreateBridgeTransactionPayload,
   ICreateSwapApiResponse,
@@ -215,7 +220,7 @@ export class LayersSwapService implements ILayersSwapService {
     payload: ICreateBridgeTransactionPayload,
   ): Promise<Transaction> {
     try {
-      const { swap, txData, name, network } = payload;
+      const { swap, txData, name, network, user } = payload;
 
       const swapData = swap.swap;
 
@@ -223,6 +228,18 @@ export class LayersSwapService implements ILayersSwapService {
         where: { predicateAddress: swap.sourceAddress },
         relations: { members: true, owner: true },
       });
+
+      const validUser =
+        user.id === predicate.owner.id ||
+        predicate.members.some(m => m.id === user.id);
+
+      if (!validUser) {
+        throw new Unauthorized({
+          type: ErrorTypes.Unauthorized,
+          title: UnauthorizedErrorTitles.UNAUTHORIZED_RESOURCE,
+          detail: 'The provided resource is unauthorized',
+        });
+      }
 
       const config = JSON.parse(predicate.configurable);
 
@@ -267,7 +284,9 @@ export class LayersSwapService implements ILayersSwapService {
       };
 
       const txPayload: ICreateTransactionPayload = {
-        name: name ?? `bridge ${randomUUID()}`,
+        name:
+          name ??
+          `Bridge ${swapData.swap.sourceNetwork.name} to ${swapData.swap.destinationNetwork.name}`,
         predicateAddress: swap.sourceAddress,
         hash: txSummary.id.slice(2),
         txData,
@@ -286,7 +305,7 @@ export class LayersSwapService implements ILayersSwapService {
           bridge: swapInfo,
         },
         type: TransactionTypeBridge.BRIDGE,
-        createdBy: predicate.owner,
+        createdBy: user,
         // @ts-expect-error - no summary.type for this transaction
         summary: { operations: txSummary.operations },
         network,
@@ -306,10 +325,15 @@ export class LayersSwapService implements ILayersSwapService {
 
       return transaction;
     } catch (error) {
+      console.log('>>> error >>>', error);
       const isAxiosErr = axios.isAxiosError(error);
       const detail =
         (isAxiosErr ? error.response?.data?.error?.message : null) ||
         (error instanceof Error ? error.message : 'Unknown error');
+
+      if (error instanceof Unauthorized) {
+        throw error;
+      }
 
       throw new Internal({
         title: 'Error create bridge transaction LayersSwap API',
