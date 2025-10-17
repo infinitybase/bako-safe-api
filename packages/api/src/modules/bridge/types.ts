@@ -1,5 +1,7 @@
 import { AuthValidatedRequest } from '@src/middlewares/auth/types';
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
+import { Transaction, User } from '@src/models';
+import { Network, TransactionRequest } from 'fuels';
 
 export interface ErrorResponse {
   code: string;
@@ -158,6 +160,106 @@ export interface IGetDestinationsApiResponse {
   ];
 }
 
+export interface ICreateBridgeTransactionPayloadRequest {
+  txData: TransactionRequest;
+  swap: IInfoBridgeSwapPayload;
+  name?: string;
+}
+
+export interface ICreateBridgeTransactionPayload
+  extends ICreateBridgeTransactionPayloadRequest {
+  network: Network;
+  user: User;
+}
+
+export interface ISwapResponse {
+  id: string;
+  createdDate: Date;
+  sourceNetwork: INetworkLayersSwap;
+  sourceToken: TokenLayersSwap;
+  sourceExchange: {
+    name: string;
+    displayName: string;
+    logo: string;
+    metadata: {
+      oauth: {
+        authorizeUrl: string;
+        connectUrl: string;
+      };
+      listingDate: Date;
+    };
+  };
+  destinationNetwork: INetworkLayersSwap;
+  destinationToken: TokenLayersSwap;
+  destinationExchange: {
+    name: string;
+    displayName: string;
+    logo: string;
+    metadata: {
+      oauth: {
+        authorizeUrl: string;
+        connectUrl: string;
+      };
+      listingDate: Date;
+    };
+  };
+  requestedAmount: number;
+  destinationAddress: string;
+  status: string;
+  failReason: string;
+  useDepositAddress: boolean;
+  metadata: {
+    sequenceNumber: number;
+    referenceId: string;
+    exchangeAccount: string;
+  };
+  transactions: [
+    {
+      from: string;
+      to: string;
+      timestamp: Date;
+      transactionHash: string;
+      confirmations: number;
+      maxConfirmations: number;
+      amount: number;
+      type: string;
+      status: string;
+      token: TokenLayersSwap;
+      network: INetworkLayersSwap;
+      feeAmount: number;
+      feeToken: TokenLayersSwap;
+    },
+  ];
+}
+
+export interface IInfoBridgeSwap {
+  id: string;
+  createdDate: Date;
+  sourceNetwork: INetworkLayersSwap;
+  sourceAddress: string;
+  sourceToken: {
+    assetId: string;
+    amount: number;
+    to: string;
+    decimals: number;
+  };
+  destinationNetwork: INetworkLayersSwap;
+  destinationToken: {
+    assetId: string;
+    amount: number;
+    to: string;
+    decimals: number;
+  };
+  status: string;
+}
+
+export interface IInfoBridgeSwapPayload {
+  swap: ICreateSwapResponse;
+  sourceAddress: string;
+  sourceAsset: string;
+  destinationAsset: string;
+}
+
 export interface ICreateSwapResponse {
   quote: {
     totalFee: number;
@@ -190,65 +292,7 @@ export interface ICreateSwapResponse {
     campaignType: string;
     nftContractAddress: string;
   };
-  swap: {
-    id: string;
-    createdDate: Date;
-    sourceNetwork: INetworkLayersSwap;
-    sourceToken: TokenLayersSwap;
-    sourceExchange: {
-      name: string;
-      displayName: string;
-      logo: string;
-      metadata: {
-        oauth: {
-          authorizeUrl: string;
-          connectUrl: string;
-        };
-        listingDate: Date;
-      };
-    };
-    destinationNetwork: INetworkLayersSwap;
-    destinationToken: TokenLayersSwap;
-    destinationExchange: {
-      name: string;
-      displayName: string;
-      logo: string;
-      metadata: {
-        oauth: {
-          authorizeUrl: string;
-          connectUrl: string;
-        };
-        listingDate: Date;
-      };
-    };
-    requestedAmount: number;
-    destinationAddress: string;
-    status: string;
-    failReason: string;
-    useDepositAddress: boolean;
-    metadata: {
-      sequenceNumber: number;
-      referenceId: string;
-      exchangeAccount: string;
-    };
-    transactions: [
-      {
-        from: string;
-        to: string;
-        timestamp: Date;
-        transactionHash: string;
-        confirmations: number;
-        maxConfirmations: number;
-        amount: number;
-        type: string;
-        status: string;
-        token: TokenLayersSwap;
-        network: INetworkLayersSwap;
-        feeAmount: number;
-        feeToken: TokenLayersSwap;
-      },
-    ];
-  };
+  swap: ISwapResponse;
   depositActions: [
     {
       type: string;
@@ -298,65 +342,7 @@ export interface ICreateSwapApiResponse {
       campaign_type: string;
       nft_contract_address: string;
     };
-    swap: {
-      id: string;
-      created_date: Date;
-      source_network: INetworkLayersSwapApi;
-      source_token: TokenLayersSwapApi;
-      source_exchange: {
-        name: string;
-        display_name: string;
-        logo: string;
-        metadata: {
-          oauth: {
-            authorize_url: string;
-            connect_url: string;
-          };
-          listing_date: Date;
-        };
-      };
-      destination_network: INetworkLayersSwapApi;
-      destination_token: TokenLayersSwapApi;
-      destination_exchange: {
-        name: string;
-        display_name: string;
-        logo: string;
-        metadata: {
-          oauth: {
-            authorize_url: string;
-            connect_url: string;
-          };
-          listing_date: Date;
-        };
-      };
-      requested_amount: number;
-      destination_address: string;
-      status: string;
-      fail_reason: string;
-      use_deposit_address: boolean;
-      metadata: {
-        sequence_number: number;
-        reference_id: string;
-        exchange_account: string;
-      };
-      transactions: [
-        {
-          from: string;
-          to: string;
-          timestamp: Date;
-          transaction_hash: string;
-          confirmations: number;
-          max_confirmations: number;
-          amount: number;
-          type: string;
-          status: string;
-          token: TokenLayersSwapApi;
-          network: INetworkLayersSwapApi;
-          fee_amount: number;
-          fee_token: TokenLayersSwapApi;
-        },
-      ];
-    };
+    swap: ISwapResponse;
     deposit_actions: [
       {
         type: string;
@@ -468,6 +454,9 @@ export interface ILayersSwapService {
   getLimits(payload: ICreateSwapPayload): Promise<IGetLimitsResponse>;
   getQuotes(payload: ICreateSwapPayload): Promise<IGetQuotesResponse>;
   createSwap(payload: ICreateSwapPayload): Promise<ICreateSwapResponse>;
+  createBridgeTransaction(
+    payload: ICreateBridgeTransactionPayload,
+  ): Promise<Transaction>;
 }
 
 interface IGetDestinationRequestSchema extends ValidatedRequestSchema {
@@ -486,7 +475,12 @@ interface ICreateSwapRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Body]: ICreateSwapPayload;
 }
 
+interface ICreateBridgeTransactionRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Body]: ICreateBridgeTransactionPayloadRequest;
+}
+
 export type IRequestDestination = AuthValidatedRequest<IGetDestinationRequestSchema>;
 export type IRequestLimits = AuthValidatedRequest<IGetLimitsRequestSchema>;
 export type IRequestQuote = AuthValidatedRequest<IGetQuoteRequestSchema>;
 export type IRequestCreateSwap = AuthValidatedRequest<ICreateSwapRequestSchema>;
+export type IRequestCreateBridgeTransaction = AuthValidatedRequest<ICreateBridgeTransactionRequestSchema>;

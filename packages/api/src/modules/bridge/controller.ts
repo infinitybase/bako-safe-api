@@ -2,6 +2,7 @@ import { bindMethods, Responses, successful } from '@src/utils';
 import { error } from '@src/utils/error';
 
 import {
+  IRequestCreateBridgeTransaction,
   IRequestCreateSwap,
   IRequestDestination,
   IRequestLimits,
@@ -63,6 +64,22 @@ export default class LayersSwapController {
 
       const service = this._factory.fromNetwork(net);
       const swap = await service.createSwap(request.body);
+      return successful(swap, Responses.Ok);
+    } catch (err) {
+      return error(err.error, err.statusCode);
+    }
+  }
+
+  async createBridgeTransaction(request: IRequestCreateBridgeTransaction) {
+    try {
+      const net = request.network;
+
+      const service = this._factory.fromNetwork(net);
+      const swap = await service.createBridgeTransaction({
+        ...request.body,
+        network: net,
+        user: request.user,
+      });
       return successful(swap, Responses.Ok);
     } catch (err) {
       return error(err.error, err.statusCode);

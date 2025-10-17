@@ -8,6 +8,7 @@ import {
   ValidatorDestinationParams,
   ValidatorLimitsParams,
   ValidatorQuotesParams,
+  ValidatorCreateBridgeTransactionRequest,
 } from './validations';
 
 const controller = new LayersSwapController(LayersSwapServiceFactory);
@@ -27,6 +28,12 @@ router.post(
   '/swap',
   ValidatorCreateSwapRequest,
   handleResponse(controller.createSwap),
+);
+
+router.post(
+  '/',
+  ValidatorCreateBridgeTransactionRequest,
+  handleResponse(controller.createBridgeTransaction),
 );
 
 export default router;
