@@ -201,6 +201,7 @@ export class TransactionEventHandler {
 					hash: _tx.hashTxId,
 					status: IEventTX_STATUS.SUCCESS,
 					sign,
+					predicateVersion: vault.predicateVersion,
 				},
 			})
 
