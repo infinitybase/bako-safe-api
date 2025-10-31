@@ -66,8 +66,8 @@ importers:
         specifier: 1.5.1
         version: 1.5.1
       bakosafe:
-        specifier: 0.2.0-beta.8
-        version: 0.2.0-beta.8(fuels@0.101.3(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.0)))(typescript@5.4.5)
+        specifier: 0.5.0
+        version: 0.5.0(fuels@0.101.3(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.0)))(typescript@5.4.5)
       body-parser:
         specifier: 1.20.2
         version: 1.20.2
@@ -273,8 +273,8 @@ importers:
         specifier: 1.5.1
         version: 1.5.1
       bakosafe:
-        specifier: 0.2.0-beta.2
-        version: 0.2.0-beta.2(fuels@0.101.1(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.0)))(typescript@5.4.5)
+        specifier: 0.5.0
+        version: 0.5.0(fuels@0.101.1(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.0)))(typescript@5.4.5)
       express:
         specifier: 4.17.1
         version: 4.17.1
@@ -3084,13 +3084,8 @@ packages:
     peerDependencies:
       '@babel/core': ^7.0.0
 
-  bakosafe@0.2.0-beta.2:
-    resolution: {integrity: sha512-dpumaBRaQjD/miWbv8hZlEnWzVZVchQu+MuTs9HHY21H0/FnJljCHrbcrNqRkbDzzSyjuD6U3ntXnRsd+uk8Aw==}
-    peerDependencies:
-      fuels: ^0.101.0
-
-  bakosafe@0.2.0-beta.8:
-    resolution: {integrity: sha512-/c1EAsIwZp2fn/Wzo3zx/m11XuOrt9SIi7+jiJXdqKVlBIiycMaMymrq7STUwh2Ms4d6nHSaBujYP2iA7sLs2A==}
+  bakosafe@0.5.0:
+    resolution: {integrity: sha512-Q8mAUNYRSQopaOk39Rl7RSqCH/bG9zo1v2lZYsVsxdFR6lEibidZ15+W54tZRGRzLhimkt31Wh2K/DBcasoznQ==}
     peerDependencies:
       fuels: ^0.101.0
 
@@ -5028,6 +5023,9 @@ packages:
 
   lodash.memoize@4.1.2:
     resolution: {integrity: sha512-t7j+NzmgnQzTAYXcsHYLgimltOV1MXHtlOWf6GjL9Kj8GK5FInw5JotxvbOs+IvV1/Dzo04/fCGfLVs7aXb4Ag==}
+
+  lodash.partition@4.6.0:
+    resolution: {integrity: sha512-35L3dSF3Q6V1w5j6V3NhNlQjzsRDC/pYKCTdYTmwqSib+Q8ponkAmt/PwEOq3EmI38DSCl+SkIVwLd+uSlVdrg==}
 
   lodash.truncate@4.4.2:
     resolution: {integrity: sha512-jttmRe7bRse52OsWIMDLaXxWqRAmtIUccAQ3garviCqJjafXOfNMO0yMfNpdD6zbGaTU0P5Nz7e7gAT6cKmJRw==}
@@ -10192,7 +10190,7 @@ snapshots:
       babel-plugin-jest-hoist: 29.6.3
       babel-preset-current-node-syntax: 1.1.0(@babel/core@7.28.0)
 
-  bakosafe@0.2.0-beta.2(fuels@0.101.1(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.0)))(typescript@5.4.5):
+  bakosafe@0.5.0(fuels@0.101.1(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.0)))(typescript@5.4.5):
     dependencies:
       '@ethereumjs/util': 9.0.3
       '@ethersproject/bytes': 5.7.0
@@ -10201,6 +10199,7 @@ snapshots:
       axios: 1.5.1
       build: 0.1.4
       fuels: 0.101.1(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.0))
+      lodash.partition: 4.6.0
       pnpm: 10.15.1
       uuid: 9.0.1
       viem: 2.37.3(typescript@5.4.5)
@@ -10211,7 +10210,7 @@ snapshots:
       - utf-8-validate
       - zod
 
-  bakosafe@0.2.0-beta.8(fuels@0.101.3(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.0)))(typescript@5.4.5):
+  bakosafe@0.5.0(fuels@0.101.3(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.0)))(typescript@5.4.5):
     dependencies:
       '@ethereumjs/util': 9.0.3
       '@ethersproject/bytes': 5.7.0
@@ -10220,6 +10219,7 @@ snapshots:
       axios: 1.5.1
       build: 0.1.4
       fuels: 0.101.3(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.0))
+      lodash.partition: 4.6.0
       pnpm: 10.15.1
       uuid: 9.0.1
       viem: 2.37.3(typescript@5.4.5)
@@ -12755,6 +12755,8 @@ snapshots:
   lodash.isarguments@3.1.0: {}
 
   lodash.memoize@4.1.2: {}
+
+  lodash.partition@4.6.0: {}
 
   lodash.truncate@4.4.2: {}
 
