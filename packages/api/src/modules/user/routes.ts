@@ -4,6 +4,7 @@ import { authMiddleware } from '@middlewares/index';
 
 import { handleResponse } from '@utils/index';
 
+import { TransactionService } from '../transaction/services';
 import { UserController } from './controller';
 import { UserService } from './service';
 import {
@@ -14,8 +15,9 @@ import {
 
 const router = Router();
 const userService = new UserService();
+const transactionService = new TransactionService();
 
-const userController = new UserController(userService);
+const userController = new UserController(userService, transactionService);
 
 router.get('/nickname/:nickname', handleResponse(userController.validateName));
 router.post('/', PayloadCreateUserSchema, handleResponse(userController.create));

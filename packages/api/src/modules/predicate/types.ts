@@ -116,7 +116,8 @@ interface IListRequestSchema extends ValidatedRequestSchema {
     sort: Sort;
     page: string;
     perPage: string;
-    hidden?: boolean;
+    hidden?: string;
+    d?: string;
   };
 }
 
