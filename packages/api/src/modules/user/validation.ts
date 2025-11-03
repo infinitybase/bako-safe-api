@@ -1,7 +1,6 @@
 import Joi from 'joi';
 
 import { AddressValidator, validator } from '@utils/index';
-import { Address } from 'fuels';
 
 export const PayloadCreateUserSchema = validator.body(
   Joi.object({
@@ -28,5 +27,13 @@ export const PayloadUpdateUserSchema = validator.body(
 export const FindUserByIDParams = validator.params(
   Joi.object({
     id: Joi.string().uuid(),
+  }),
+);
+
+export const ListUserTransactionsQuerySchema = validator.query(
+  Joi.object({
+    offsetDb: Joi.string().optional().default('0'),
+    offsetFuel: Joi.string().optional().default('0'),
+    perPage: Joi.string().optional().default('5'),
   }),
 );

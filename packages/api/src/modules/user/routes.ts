@@ -9,6 +9,7 @@ import { UserController } from './controller';
 import { UserService } from './service';
 import {
   FindUserByIDParams,
+  ListUserTransactionsQuerySchema,
   PayloadCreateUserSchema,
   PayloadUpdateUserSchema,
 } from './validation';
@@ -42,6 +43,7 @@ router.get('/wallet', authMiddleware, handleResponse(userController.wallet));
 router.get(
   '/latest/transactions',
   authMiddleware,
+  ListUserTransactionsQuerySchema,
   handleResponse(userController.meTransactions),
 );
 router.get(
