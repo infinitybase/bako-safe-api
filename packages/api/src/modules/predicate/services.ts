@@ -1,6 +1,7 @@
 import {
   AddressUtils as BakoAddressUtils,
   DEFAULT_PREDICATE_VERSION,
+  UsedPredicateVersions,
   Vault,
   Wallet as WalletType,
   getLatestPredicateVersion,
@@ -27,6 +28,7 @@ import {
   IPredicatePayload,
   IPredicateService,
 } from './types';
+import { networks } from '@src/constants/networks';
 
 export class PredicateService implements IPredicateService {
   private _ordination: IPredicateOrdination = {
@@ -408,56 +410,57 @@ export class PredicateService implements IPredicateService {
     }
   }
 
-  /**
-   * Checks and instantiates older predicate versions associated with a user address.
-   *
-   * This function retrieves legacy predicate versions linked to a given `address` and `provider`.
-   * It sorts and filters these versions based on whether they have a balance, instantiates
-   * relevant versions as `Vault` objects, and identifies "invisible" accounts (those without balance).
-   *
-   * ### Behavior:
-   * - Fetches legacy versions using `legacyConnectorVersion`.
-   * - Filters versions that have a balance (`hasBalance`) and sorts them by `versionTime` (newest first).
-   * - Identifies versions without balance and collects their `predicateAddress`.
-   * - If no versions have a balance:
-   *   - Gets the latest predicate version (`getLatestPredicateVersion`).
-   *   - Creates a default predicate instance using `instancePredicate`.
-   * - Otherwise:
-   *   - Instantiates all predicates with balance.
-   *   - Detects whether the origin is `EVM` or `SVM` to set the correct configuration.
-   *
-   * @async
-   * @param {string} address - The user's wallet address.
-   * @param {string} provider - The blockchain provider.
-   *
-   * @returns {Promise<{ invisibleAccounts: string[]; accounts: Vault[] }>}
-   * An object containing:
-   * - `invisibleAccounts`: List of predicate addresses without balance.
-   * - `accounts`: List of active `Vault` instances (with balance).
-   *
-   * @example
-   * ```ts
-   * const { invisibleAccounts, accounts } = await checkOlderPredicateVersions(
-   *   "0x1234abcd...",
-   *   "https://testnet.fuel.network/v1/graphql"
-   * );
-   *
-   * console.log(invisibleAccounts); // ["0xabc123...", "0xdef456..."]
-   * console.log(accounts); // [Vault {...}, Vault {...}]
-   * ```
-   */
   async checkOlderPredicateVersions(
     address: string,
     provider: string,
-  ): Promise<{ invisibleAccounts: string[]; accounts: Vault[] }> {
-    const legacyVersions = await legacyConnectorVersion(address, provider);
+  ): Promise<{ accounts: Vault[] }> {
+    const providers = [networks['mainnet'], networks['devnet']];
 
-    const withBalance = legacyVersions
+    const versionsPromises = await Promise.allSettled(
+      providers.map(p => legacyConnectorVersion(address, p)),
+    );
+    const [mainnetVersions, devnetVersions] = versionsPromises.map(r =>
+      r.status === 'fulfilled' ? r.value : [],
+    );
+
+    const allVersions = [
+      ...mainnetVersions.map(v => ({ ...v, provider: networks['mainnet'] })),
+      ...devnetVersions.map(v => ({ ...v, provider: networks['devnet'] })),
+    ];
+    const versionsMap = new Map<
+      string,
+      UsedPredicateVersions & {
+        provider: string;
+      }
+    >();
+
+    allVersions.forEach(v => {
+      const existing = versionsMap.get(v.predicateAddress);
+
+      if (!existing) {
+        // First found, add directly
+        versionsMap.set(v.predicateAddress, v);
+        return;
+      }
+
+      // If one of the two has a balance, prioritize the version with the balance
+      if (v.hasBalance && !existing.hasBalance) {
+        versionsMap.set(v.predicateAddress, v);
+        return;
+      }
+
+      // If both have a balance or both do not have a balance, prioritize the provider passed as a parameter
+      const preferCurrent = v.provider === provider;
+      const preferExisting = existing.provider === provider;
+
+      if (preferCurrent && !preferExisting) {
+        versionsMap.set(v.predicateAddress, v);
+      }
+    });
+
+    const withBalance = Array.from(versionsMap.values())
       .filter(v => v.hasBalance)
       .sort((a, b) => b.details.versionTime - a.details.versionTime);
-    const invisibleAccounts = legacyVersions
-      .filter(v => !v.hasBalance)
-      .map(v => v.predicateAddress);
 
     if (withBalance.length === 0) {
       const latest = getLatestPredicateVersion(WalletType.FUEL);
@@ -470,7 +473,6 @@ export class PredicateService implements IPredicateService {
       );
 
       return {
-        invisibleAccounts,
         accounts: [latestVault],
       };
     }
@@ -489,7 +491,7 @@ export class PredicateService implements IPredicateService {
       }),
     );
 
-    return { invisibleAccounts, accounts };
+    return { accounts };
   }
 
   async instancePredicate(
