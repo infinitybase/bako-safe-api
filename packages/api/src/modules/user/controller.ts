@@ -1,22 +1,34 @@
 import { addMinutes } from 'date-fns';
 
-import { Predicate, RecoverCode, RecoverCodeType } from '@src/models';
+import {
+  Predicate,
+  RecoverCode,
+  RecoverCodeType,
+  TransactionStatus,
+  TransactionType,
+} from '@src/models';
 import { User } from '@src/models/User';
 import { bindMethods } from '@src/utils/bindMethods';
 
 import {
   BadRequest,
+  error,
   ErrorTypes,
   Unauthorized,
   UnauthorizedErrorTitles,
-  error,
 } from '@utils/error';
 import { IconUtils } from '@utils/icons';
 import { Responses, successful, TokenUtils } from '@utils/index';
 
+import App from '@src/server/app';
+import { FuelProvider } from '@src/utils/FuelProvider';
+import { Not } from 'typeorm';
+import { IChangenetworkRequest } from '../auth/types';
 import { PredicateService } from '../predicate/services';
+import { PredicateWithHidden } from '../predicate/types';
 import { RecoverCodeService } from '../recoverCode/services';
 import { TransactionService } from '../transaction/services';
+import { mergeTransactionLists } from '../transaction/utils';
 import { UserService } from './service';
 import {
   ICheckHardwareRequest,
@@ -26,22 +38,18 @@ import {
   IFindByNameRequest,
   IFindOneRequest,
   IListRequest,
+  IListUserTransactionsRequest,
   IMeInfoRequest,
   IMeRequest,
   IUpdateRequest,
   IUserService,
 } from './types';
-import { Not } from 'typeorm';
-import App from '@src/server/app';
-import { IChangenetworkRequest } from '../auth/types';
-import { FuelProvider } from '@src/utils/FuelProvider';
-import { PredicateWithHidden } from '../predicate/types';
 
 export class UserController {
-  private userService: IUserService;
-
-  constructor(userService: IUserService) {
-    this.userService = userService;
+  constructor(
+    private userService: IUserService,
+    private transactionService: TransactionService,
+  ) {
     bindMethods(this);
   }
 
@@ -76,28 +84,61 @@ export class UserController {
     );
   }
 
-  async meTransactions(req: IMeRequest) {
+  async meTransactions(req: IListUserTransactionsRequest) {
     try {
-      const { type } = req.query;
+      const { type, status, offsetDb, offsetFuel, perPage } = req.query;
       const { user, network } = req;
 
-      const transactions = await new TransactionService()
+      const ordination = { orderBy: 'createdAt', sort: 'DESC' } as const;
+
+      const transactions = await this.transactionService
         .filter({
           type,
           signer: user.address,
           network: network.url,
+          status,
         })
-        .paginate({ page: '0', perPage: '6' })
-        .ordination({ orderBy: 'createdAt', sort: 'DESC' })
-        .list();
+        .transactionPaginate({ offsetDb, offsetFuel, perPage })
+        .ordination(ordination)
+        .listWithIncomings();
 
-      return successful(
-        transactions,
+      const shouldFetchFuelTxs =
+        (type === TransactionType.DEPOSIT || !type) &&
+        (status
+          ? !status.find(item => item === TransactionStatus.AWAIT_REQUIREMENTS) // dont fetch fuel txs if filtering by AWAIT_REQUIREMENTS status
+          : true);
 
-        Responses.Ok,
-      );
+      let fuelTxs = [];
+      if (shouldFetchFuelTxs) {
+        const predicates = await new PredicateService()
+          .filter({
+            owner: user.id,
+          })
+          // get the lastest used predicates
+          .paginate({ page: '0', perPage: '6' })
+          .ordination({ orderBy: 'updatedAt', sort: 'DESC' })
+          .list()
+          .then(res => (Array.isArray(res) ? res : res.data));
+
+        fuelTxs = await this.transactionService
+          .transactionPaginate({
+            perPage,
+            offsetDb: offsetDb,
+            offsetFuel: offsetFuel,
+          })
+          .fetchFuelTransactions(predicates, network.url);
+      }
+
+      const response = mergeTransactionLists(transactions, fuelTxs, {
+        offsetDb,
+        offsetFuel,
+        ordination,
+        perPage,
+      });
+
+      return successful(response, Responses.Ok);
     } catch (e) {
-      return error(e.error, e.statusCode);
+      return error(e.error ?? e, e.statusCode);
     }
   }
 
@@ -361,7 +402,7 @@ export class UserController {
     try {
       const { page, perPage } = req.query;
       const response = await this.userService
-        .paginate({ page: page || 0, perPage: perPage || 30 })
+        .paginate({ page: page || '0', perPage: perPage || '30' })
         .listAll();
       return successful(response, Responses.Ok);
     } catch (e) {
