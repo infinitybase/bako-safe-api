@@ -83,6 +83,6 @@ router.put(
   validateTooglePredicatePayload,
   handleResponse(tooglePredicateVisibility),
 );
-router.get('/allocation/:predicateId', handleResponse(allocation));
+router.get('/:predicateId/allocation', handleResponse(allocation));
 
 export default router;
