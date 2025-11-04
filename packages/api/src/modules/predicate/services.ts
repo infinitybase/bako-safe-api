@@ -449,34 +449,11 @@ export class PredicateService implements IPredicateService {
   async checkOlderPredicateVersions(
     address: string,
     provider: string,
-  ): Promise<{ invisibleAccounts: string[]; accounts: Vault[] }> {
+  ): Promise<Vault[]> {
     const legacyVersions = await legacyConnectorVersion(address, provider);
 
-    const withBalance = legacyVersions
-      .filter(v => v.hasBalance)
-      .sort((a, b) => b.details.versionTime - a.details.versionTime);
-    const invisibleAccounts = legacyVersions
-      .filter(v => !v.hasBalance)
-      .map(v => v.predicateAddress);
-
-    if (withBalance.length === 0) {
-      const latest = getLatestPredicateVersion(WalletType.FUEL);
-      const config = { SIGNERS: [address], SIGNATURES_COUNT: 1 };
-
-      const latestVault = await this.instancePredicate(
-        JSON.stringify(config),
-        provider,
-        latest.version,
-      );
-
-      return {
-        invisibleAccounts,
-        accounts: [latestVault],
-      };
-    }
-
     const accounts = await Promise.all(
-      withBalance.map(async v => {
+      legacyVersions.map(async v => {
         const isFromConnector =
           v.details.origin === WalletType.EVM ||
           v.details.origin === WalletType.SVM;
@@ -489,7 +466,7 @@ export class PredicateService implements IPredicateService {
       }),
     );
 
-    return { invisibleAccounts, accounts };
+    return accounts;
   }
 
   async instancePredicate(
