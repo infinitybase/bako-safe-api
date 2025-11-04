@@ -114,7 +114,7 @@ export class UserController {
           .filter({
             owner: user.id,
           })
-          // get the lastest used predicates
+          // get the latest used predicates
           .paginate({ page: '0', perPage: '6' })
           .ordination({ orderBy: 'updatedAt', sort: 'DESC' })
           .list()
@@ -123,8 +123,8 @@ export class UserController {
         fuelTxs = await this.transactionService
           .transactionPaginate({
             perPage,
-            offsetDb: offsetDb,
-            offsetFuel: offsetFuel,
+            offsetDb,
+            offsetFuel,
           })
           .fetchFuelTransactions(predicates, network.url);
       }
