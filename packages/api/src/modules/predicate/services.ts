@@ -555,7 +555,6 @@ export class PredicateService implements IPredicateService {
         version: predicate.version,
         coins: calculateReservedCoins(predicate.transactions),
       }));
-      console.log('reservedCoins', reservedCoins);
 
       const allocationMap = new Map<string, AssetAllocation>();
       let totalAmountInUSD = 0;
@@ -570,7 +569,6 @@ export class PredicateService implements IPredicateService {
         const balances = (await instance.getBalances()).balances.filter(a =>
           a.amount.gt(0),
         );
-        console.log('balances', balances);
         const assets =
           reservedCoins.length > 0 ? subCoins(balances, coins) : balances;
 
@@ -589,7 +587,6 @@ export class PredicateService implements IPredicateService {
         );
         const totalInNumber = parseFloat(totalBalance.replace(/,/g, ''));
         totalAmountInUSD += totalInNumber;
-        console.log('totalInNumber', totalInNumber, totalBalance, assetsWithoutNFT);
 
         // Calculate allocation
         for (const { assetId, amount } of assetsWithoutNFT) {
