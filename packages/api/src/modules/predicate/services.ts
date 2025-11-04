@@ -449,47 +449,43 @@ export class PredicateService implements IPredicateService {
   async checkOlderPredicateVersions(
     address: string,
     provider: string,
-  ): Promise<{ invisibleAccounts: string[]; accounts: Vault[] }> {
-    const legacyVersions = await legacyConnectorVersion(address, provider);
+  ): Promise<Vault[]> {
+    const isEvm = BakoAddressUtils.isEvm(address);
 
-    const withBalance = legacyVersions
-      .filter(v => v.hasBalance)
-      .sort((a, b) => b.details.versionTime - a.details.versionTime);
-    const invisibleAccounts = legacyVersions
-      .filter(v => !v.hasBalance)
-      .map(v => v.predicateAddress);
+    if (isEvm) {
+      const legacyVersions = await legacyConnectorVersion(address, provider);
 
-    if (withBalance.length === 0) {
-      const latest = getLatestPredicateVersion(WalletType.FUEL);
-      const config = { SIGNERS: [address], SIGNATURES_COUNT: 1 };
+      const vaults = await Promise.all(
+        legacyVersions.map(async v => {
+          const isFromConnector =
+            v.details.origin === WalletType.EVM ||
+            v.details.origin === WalletType.SVM;
 
-      const latestVault = await this.instancePredicate(
-        JSON.stringify(config),
-        provider,
-        latest.version,
+          const config = isFromConnector
+            ? { SIGNER: address }
+            : { SIGNERS: [address], SIGNATURES_COUNT: 1 };
+
+          return this.instancePredicate(
+            JSON.stringify(config),
+            provider,
+            v.version,
+          );
+        }),
       );
 
-      return {
-        invisibleAccounts,
-        accounts: [latestVault],
-      };
+      return vaults;
     }
 
-    const accounts = await Promise.all(
-      withBalance.map(async v => {
-        const isFromConnector =
-          v.details.origin === WalletType.EVM ||
-          v.details.origin === WalletType.SVM;
+    const latest = getLatestPredicateVersion(WalletType.FUEL);
+    const config = { SIGNERS: [address], SIGNATURES_COUNT: 1 };
 
-        const config = isFromConnector
-          ? { SIGNER: address }
-          : { SIGNERS: [address], SIGNATURES_COUNT: 1 };
-
-        return this.instancePredicate(JSON.stringify(config), provider, v.version);
-      }),
+    const vault = await this.instancePredicate(
+      JSON.stringify(config),
+      provider,
+      latest.version,
     );
 
-    return { invisibleAccounts, accounts };
+    return [vault];
   }
 
   async instancePredicate(
