@@ -2,6 +2,7 @@ import {
   AddressUtils as BakoAddressUtils,
   DEFAULT_PREDICATE_VERSION,
   Vault,
+  VaultConfigurationFactory,
   Wallet as WalletType,
   getLatestPredicateVersion,
   legacyConnectorVersion,
@@ -408,44 +409,6 @@ export class PredicateService implements IPredicateService {
     }
   }
 
-  /**
-   * Checks and instantiates older predicate versions associated with a user address.
-   *
-   * This function retrieves legacy predicate versions linked to a given `address` and `provider`.
-   * It sorts and filters these versions based on whether they have a balance, instantiates
-   * relevant versions as `Vault` objects, and identifies "invisible" accounts (those without balance).
-   *
-   * ### Behavior:
-   * - Fetches legacy versions using `legacyConnectorVersion`.
-   * - Filters versions that have a balance (`hasBalance`) and sorts them by `versionTime` (newest first).
-   * - Identifies versions without balance and collects their `predicateAddress`.
-   * - If no versions have a balance:
-   *   - Gets the latest predicate version (`getLatestPredicateVersion`).
-   *   - Creates a default predicate instance using `instancePredicate`.
-   * - Otherwise:
-   *   - Instantiates all predicates with balance.
-   *   - Detects whether the origin is `EVM` or `SVM` to set the correct configuration.
-   *
-   * @async
-   * @param {string} address - The user's wallet address.
-   * @param {string} provider - The blockchain provider.
-   *
-   * @returns {Promise<{ invisibleAccounts: string[]; accounts: Vault[] }>}
-   * An object containing:
-   * - `invisibleAccounts`: List of predicate addresses without balance.
-   * - `accounts`: List of active `Vault` instances (with balance).
-   *
-   * @example
-   * ```ts
-   * const { invisibleAccounts, accounts } = await checkOlderPredicateVersions(
-   *   "0x1234abcd...",
-   *   "https://testnet.fuel.network/v1/graphql"
-   * );
-   *
-   * console.log(invisibleAccounts); // ["0xabc123...", "0xdef456..."]
-   * console.log(accounts); // [Vault {...}, Vault {...}]
-   * ```
-   */
   async checkOlderPredicateVersions(
     address: string,
     provider: string,
@@ -461,9 +424,14 @@ export class PredicateService implements IPredicateService {
             v.details.origin === WalletType.EVM ||
             v.details.origin === WalletType.SVM;
 
-          const config = isFromConnector
+          const configParams = isFromConnector
             ? { SIGNER: address }
             : { SIGNERS: [address], SIGNATURES_COUNT: 1 };
+
+          const { config } = VaultConfigurationFactory.createConfiguration(
+            configParams,
+            v.version,
+          );
 
           return this.instancePredicate(
             JSON.stringify(config),
@@ -477,8 +445,11 @@ export class PredicateService implements IPredicateService {
     }
 
     const latest = getLatestPredicateVersion(WalletType.FUEL);
-    const config = { SIGNERS: [address], SIGNATURES_COUNT: 1 };
-
+    const configParams = { SIGNERS: [address], SIGNATURES_COUNT: 1 };
+    const { config } = VaultConfigurationFactory.createConfiguration(
+      configParams,
+      latest.version,
+    );
     const vault = await this.instancePredicate(
       JSON.stringify(config),
       provider,
