@@ -1,10 +1,10 @@
 import {
   AddressUtils as BakoAddressUtils,
   DEFAULT_PREDICATE_VERSION,
-  Vault,
-  Wallet as WalletType,
   getLatestPredicateVersion,
   legacyConnectorVersion,
+  Vault,
+  Wallet as WalletType,
 } from 'bakosafe';
 import { Brackets, MoreThan } from 'typeorm';
 
@@ -17,12 +17,20 @@ import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
 
 import App from '@src/server/app';
-import { FuelProvider } from '@src/utils';
+import {
+  calculateBalanceUSD,
+  calculateReservedCoins,
+  FuelProvider,
+  subCoins,
+} from '@src/utils';
 import { IconUtils } from '@src/utils/icons';
 import { Network, ZeroBytes32 } from 'fuels';
 import { UserService } from '../user/service';
 import { IPredicateOrdination, setOrdination } from './ordination';
 import {
+  AssetAllocation,
+  IPredicateAllocation,
+  IPredicateAllocationParams,
   IPredicateFilterParams,
   IPredicatePayload,
   IPredicateService,
@@ -522,5 +530,102 @@ export class PredicateService implements IPredicateService {
     }
 
     return await Pagination.create(queryBuilder).paginate(this._pagination);
+  }
+
+  async allocation({
+    predicateId,
+    user,
+    network,
+    assetsMap,
+  }: IPredicateAllocationParams): Promise<IPredicateAllocation> {
+    try {
+      const query = Predicate.createQueryBuilder('p')
+        .leftJoin('p.owner', 'owner')
+        .leftJoin('p.transactions', 't')
+        .where('owner.id = :userId', { userId: user.id })
+        .addSelect(['p.id', 'p.configurable', 't.txData']);
+
+      if (predicateId) {
+        query.andWhere('p.id = :predicateId', { predicateId });
+      }
+
+      const predicates = await query.getMany();
+      const reservedCoins = predicates.map(predicate => ({
+        configurable: predicate.configurable,
+        version: predicate.version,
+        coins: calculateReservedCoins(predicate.transactions),
+      }));
+      console.log('reservedCoins', reservedCoins);
+
+      const allocationMap = new Map<string, AssetAllocation>();
+      let totalAmountInUSD = 0;
+
+      for (const { coins, configurable, version } of reservedCoins) {
+        const instance = await this.instancePredicate(
+          configurable,
+          network.url,
+          version,
+        );
+
+        const balances = (await instance.getBalances()).balances.filter(a =>
+          a.amount.gt(0),
+        );
+        console.log('balances', balances);
+        const assets =
+          reservedCoins.length > 0 ? subCoins(balances, coins) : balances;
+
+        const assetsWithoutNFT = assets.filter(({ amount, assetId }) => {
+          const hasFuelMapped = assetsMap[assetId];
+          const isOneUnit = amount.eq(1);
+          const isNFT = !hasFuelMapped && isOneUnit;
+
+          return !isNFT;
+        });
+
+        // Calculate total balance
+        const totalBalance = await calculateBalanceUSD(
+          assetsWithoutNFT,
+          network.chainId,
+        );
+        const totalInNumber = parseFloat(totalBalance.replace(/,/g, ''));
+        totalAmountInUSD += totalInNumber;
+        console.log('totalInNumber', totalInNumber, totalBalance, assetsWithoutNFT);
+
+        // Calculate allocation
+        for (const { assetId, amount } of assetsWithoutNFT) {
+          const usdBalance = await calculateBalanceUSD(
+            [{ assetId, amount }],
+            network.chainId,
+          );
+          const usdInNumber = parseFloat(usdBalance.replace(/,/g, ''));
+
+          const existingAllocation = allocationMap.get(assetId);
+
+          const assetAllocation: AssetAllocation = {
+            assetId,
+            amountInUSD: usdInNumber,
+            amount: existingAllocation
+              ? existingAllocation.amount.add(amount)
+              : amount,
+            percentage:
+              (usdInNumber / totalInNumber) * 100 +
+              (existingAllocation ? existingAllocation.percentage : 0),
+          };
+
+          allocationMap.set(assetId, assetAllocation);
+        }
+      }
+
+      return {
+        data: Array.from(allocationMap.values()),
+        totalAmountInUSD,
+      };
+    } catch (error) {
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on get predicate allocation',
+        detail: error,
+      });
+    }
   }
 }
