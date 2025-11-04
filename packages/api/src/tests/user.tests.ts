@@ -1,9 +1,8 @@
-import test from 'node:test';
 import assert from 'node:assert/strict';
+import test from 'node:test';
 import request from 'supertest';
 
 import { TestEnvironment } from './utils/Setup';
-import { generateNode } from './mocks/Networks';
 
 test('User Endpoints', async t => {
   const { app, users, close } = await TestEnvironment.init(2, 0);
@@ -41,10 +40,10 @@ test('User Endpoints', async t => {
   );
 
   await t.test(
-    'GET /user/latest/transactions should list home user transactions',
+    'GET /user/transactions should list home user transactions',
     async () => {
       const res = await request(app)
-        .get('/user/latest/transactions')
+        .get('/user/transactions')
         .set('Authorization', users[0].token)
         .set('signeraddress', users[0].payload.address);
 

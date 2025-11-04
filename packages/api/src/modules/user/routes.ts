@@ -41,7 +41,7 @@ router.get(
 router.get('/wallet', authMiddleware, handleResponse(userController.wallet));
 
 router.get(
-  '/latest/transactions',
+  '/transactions',
   authMiddleware,
   ListUserTransactionsQuerySchema,
   handleResponse(userController.meTransactions),
