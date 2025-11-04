@@ -124,12 +124,12 @@ export class UserService implements IUserService {
         // insert a root wallet predicate
         const provider = await FuelProvider.create(payload.provider);
 
-        const accounts = await new PredicateService().checkOlderPredicateVersions(
+        const vaults = await new PredicateService().checkOlderPredicateVersions(
           user.address,
           provider.url,
         );
 
-        for (const [i, account] of accounts.entries()) {
+        for (const [i, vault] of vaults.entries()) {
           const isFirst = i === 0;
           await Predicate.create({
             name: `${isFirst ? 'Personal Vault' : `Vault ${i + 1}`}`,
@@ -137,10 +137,10 @@ export class UserService implements IUserService {
               isFirst &&
               'This is your first vault. It requires a single signer (you) to execute transactions; a pattern called 1-of-1'
             }`,
-            predicateAddress: new Address(account.address).toB256(),
-            configurable: JSON.stringify(account.configurable),
+            predicateAddress: new Address(vault.address).toB256(),
+            configurable: JSON.stringify(vault.configurable),
             root: isFirst,
-            version: account.version,
+            version: vault.version,
             owner: user,
             workspace,
             members: [user],

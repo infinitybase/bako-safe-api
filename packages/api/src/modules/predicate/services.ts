@@ -450,23 +450,42 @@ export class PredicateService implements IPredicateService {
     address: string,
     provider: string,
   ): Promise<Vault[]> {
-    const legacyVersions = await legacyConnectorVersion(address, provider);
+    const isEvm = BakoAddressUtils.isEvm(address);
 
-    const accounts = await Promise.all(
-      legacyVersions.map(async v => {
-        const isFromConnector =
-          v.details.origin === WalletType.EVM ||
-          v.details.origin === WalletType.SVM;
+    if (isEvm) {
+      const legacyVersions = await legacyConnectorVersion(address, provider);
 
-        const config = isFromConnector
-          ? { SIGNER: address }
-          : { SIGNERS: [address], SIGNATURES_COUNT: 1 };
+      const vaults = await Promise.all(
+        legacyVersions.map(async v => {
+          const isFromConnector =
+            v.details.origin === WalletType.EVM ||
+            v.details.origin === WalletType.SVM;
 
-        return this.instancePredicate(JSON.stringify(config), provider, v.version);
-      }),
+          const config = isFromConnector
+            ? { SIGNER: address }
+            : { SIGNERS: [address], SIGNATURES_COUNT: 1 };
+
+          return this.instancePredicate(
+            JSON.stringify(config),
+            provider,
+            v.version,
+          );
+        }),
+      );
+
+      return vaults;
+    }
+
+    const latest = getLatestPredicateVersion(WalletType.FUEL);
+    const config = { SIGNERS: [address], SIGNATURES_COUNT: 1 };
+
+    const vault = await this.instancePredicate(
+      JSON.stringify(config),
+      provider,
+      latest.version,
     );
 
-    return accounts;
+    return [vault];
   }
 
   async instancePredicate(
