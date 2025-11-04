@@ -52,6 +52,11 @@ router.get(
   authMiddleware,
   handleResponse(userController.predicates),
 );
+router.get(
+  '/allocation',
+  authMiddleware,
+  handleResponse(userController.allocation),
+);
 router.get('/', authMiddleware, handleResponse(userController.find));
 router.get(
   '/:id',
