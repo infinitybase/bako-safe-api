@@ -3,6 +3,7 @@ import {
   DEFAULT_PREDICATE_VERSION,
   getLatestPredicateVersion,
   legacyConnectorVersion,
+  TransactionStatus,
   Vault,
   Wallet as WalletType,
 } from 'bakosafe';
@@ -541,7 +542,18 @@ export class PredicateService implements IPredicateService {
     try {
       const query = Predicate.createQueryBuilder('p')
         .leftJoin('p.owner', 'owner')
-        .leftJoin('p.transactions', 't')
+        .leftJoin(
+          'p.transactions',
+          't',
+          "t.status IN (:...status) AND regexp_replace(t.network->>'url', '^https?://[^@]+@', 'https://') = :network",
+          {
+            status: [
+              TransactionStatus.AWAIT_REQUIREMENTS,
+              TransactionStatus.PENDING_SENDER,
+            ],
+            network: network.url.replace(/^https?:\/\/[^@]+@/, 'https://'),
+          },
+        )
         .where('owner.id = :userId', { userId: user.id })
         .addSelect(['p.id', 'p.configurable', 't.txData']);
 
