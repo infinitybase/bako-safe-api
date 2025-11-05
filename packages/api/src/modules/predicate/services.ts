@@ -606,17 +606,25 @@ export class PredicateService implements IPredicateService {
             amount: existingAllocation
               ? existingAllocation.amount.add(amount)
               : amount,
-            percentage:
-              (usdInNumber / totalInNumber) * 100 +
-              (existingAllocation ? existingAllocation.percentage : 0),
+            percentage: 0,
           };
 
           allocationMap.set(assetId, assetAllocation);
         }
       }
 
+      const allocationArray = Array.from(allocationMap.values()).map(
+        allocation => ({
+          ...allocation,
+          percentage:
+            totalAmountInUSD > 0
+              ? (allocation.amountInUSD / totalAmountInUSD) * 100
+              : 0,
+        }),
+      );
+
       return {
-        data: Array.from(allocationMap.values()),
+        data: allocationArray,
         totalAmountInUSD,
       };
     } catch (error) {
