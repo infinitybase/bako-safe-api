@@ -600,7 +600,9 @@ export class PredicateService implements IPredicateService {
 
           const assetAllocation: AssetAllocation = {
             assetId,
-            amountInUSD: usdInNumber,
+            amountInUSD: existingAllocation
+              ? existingAllocation.amountInUSD + usdInNumber
+              : usdInNumber,
             amount: existingAllocation
               ? existingAllocation.amount.add(amount)
               : amount,
