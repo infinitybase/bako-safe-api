@@ -25,7 +25,7 @@ import {
   subCoins,
 } from '@src/utils';
 import { IconUtils } from '@src/utils/icons';
-import { Network, ZeroBytes32 } from 'fuels';
+import { bn, Network, ZeroBytes32 } from 'fuels';
 import { UserService } from '../user/service';
 import { IPredicateOrdination, setOrdination } from './ordination';
 import {
@@ -625,18 +625,48 @@ export class PredicateService implements IPredicateService {
         }
       }
 
-      const allocationArray = Array.from(allocationMap.values()).map(
-        allocation => ({
+      const allocationArray = Array.from(allocationMap.values())
+        .filter(allocation => allocation.amountInUSD > 0)
+        .map(allocation => ({
           ...allocation,
           percentage:
             totalAmountInUSD > 0
               ? (allocation.amountInUSD / totalAmountInUSD) * 100
               : 0,
-        }),
-      );
+        }));
+
+      allocationArray.sort((a, b) => b.percentage - a.percentage);
+
+      const top3 = allocationArray.slice(0, 3);
+
+      const remaining = allocationArray.slice(3);
+
+      const finalData = [...top3];
+
+      if (remaining.length > 0) {
+        const othersAmountInUSD = remaining.reduce(
+          (sum, item) => sum + item.amountInUSD,
+          0,
+        );
+        const othersPercentage = remaining.reduce(
+          (sum, item) => sum + item.percentage,
+          0,
+        );
+        const othersAmount = remaining.reduce(
+          (sum, item) => sum.add(item.amount),
+          bn(0),
+        );
+
+        finalData.push({
+          assetId: null,
+          amountInUSD: othersAmountInUSD,
+          amount: othersAmount,
+          percentage: othersPercentage,
+        });
+      }
 
       return {
-        data: allocationArray,
+        data: finalData,
         totalAmountInUSD,
       };
     } catch (error) {

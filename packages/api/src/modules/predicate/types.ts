@@ -71,7 +71,7 @@ export interface IEndCursorPayload {
   };
 }
 export interface AssetAllocation {
-  assetId: string;
+  assetId: string | null; // null for "others"
   amount: BN;
   amountInUSD: number;
   percentage: number;
