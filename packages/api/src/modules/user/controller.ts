@@ -411,7 +411,6 @@ export class UserController {
         assetsMap: (await getAssetsMaps()).assetsMapById,
       });
 
-      console.log({ allocation, user, network });
 
       return successful(allocation, Responses.Ok);
     } catch (e) {
