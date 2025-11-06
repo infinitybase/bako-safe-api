@@ -126,6 +126,7 @@ export class UserService implements IUserService {
 
         const vaults = await new PredicateService().checkOlderPredicateVersions(
           user.address,
+          user.type,
           provider.url,
         );
 

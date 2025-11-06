@@ -449,11 +449,12 @@ export class PredicateService implements IPredicateService {
    */
   async checkOlderPredicateVersions(
     address: string,
+    userType: TypeUser,
     provider: string,
   ): Promise<Vault[]> {
     const isEvm = BakoAddressUtils.isEvm(address);
 
-    if (isEvm) {
+    if (isEvm && userType === TypeUser.EVM) {
       const legacyVersions = await legacyConnectorVersion(address, provider);
 
       const vaults = await Promise.all(
