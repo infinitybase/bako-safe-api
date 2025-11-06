@@ -1,10 +1,11 @@
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 
 import { AuthValidatedRequest, UnloggedRequest } from '@src/middlewares/auth/types';
-import { UserSettings, TransactionType, TypeUser, User } from '@src/models';
+import { UserSettings, TransactionType, User } from '@src/models';
 import { IDefaultOrdination, IOrdination } from '@src/utils/ordination';
 import { IPagination, PaginationParams } from '@src/utils/pagination';
 import { Maybe } from '@src/utils/types/maybe';
+import { TypeUser } from 'bakosafe';
 
 export interface IWebAuthnSignUp {
   id: string;

@@ -1,6 +1,7 @@
 import {
   AddressUtils as BakoAddressUtils,
   DEFAULT_PREDICATE_VERSION,
+  TypeUser,
   Vault,
   Wallet as WalletType,
   getLatestPredicateVersion,
@@ -11,7 +12,7 @@ import { Brackets, MoreThan } from 'typeorm';
 import { NotFound } from '@src/utils/error';
 import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination';
 
-import { Predicate, TypeUser, User, Workspace } from '@models/index';
+import { Predicate, User, Workspace } from '@models/index';
 
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';

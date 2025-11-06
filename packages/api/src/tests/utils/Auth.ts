@@ -1,7 +1,7 @@
 import request from 'supertest';
 import { Wallet } from 'fuels';
 import App from '@src/server/app';
-import { TypeUser } from '@src/models';
+import { TypeUser } from 'bakosafe';
 import { Provider as FuelProvider } from 'fuels';
 
 export class TestSession {
