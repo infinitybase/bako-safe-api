@@ -247,6 +247,12 @@ export class PredicateService implements IPredicateService {
         });
       }
 
+      if (this._filter.owner) {
+        queryBuilder.andWhere('owner.id = :owner', {
+          owner: this._filter.owner,
+        });
+      }
+
       if (this._filter.address) {
         queryBuilder.andWhere('p.predicateAddress = :predicateAddress', {
           predicateAddress: this._filter.address,

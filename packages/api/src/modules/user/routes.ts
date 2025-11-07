@@ -4,18 +4,21 @@ import { authMiddleware } from '@middlewares/index';
 
 import { handleResponse } from '@utils/index';
 
+import { TransactionService } from '../transaction/services';
 import { UserController } from './controller';
 import { UserService } from './service';
 import {
   FindUserByIDParams,
+  ListUserTransactionsQuerySchema,
   PayloadCreateUserSchema,
   PayloadUpdateUserSchema,
 } from './validation';
 
 const router = Router();
 const userService = new UserService();
+const transactionService = new TransactionService();
 
-const userController = new UserController(userService);
+const userController = new UserController(userService, transactionService);
 
 router.get('/nickname/:nickname', handleResponse(userController.validateName));
 router.post('/', PayloadCreateUserSchema, handleResponse(userController.create));
@@ -38,8 +41,9 @@ router.get(
 router.get('/wallet', authMiddleware, handleResponse(userController.wallet));
 
 router.get(
-  '/latest/transactions',
+  '/transactions',
   authMiddleware,
+  ListUserTransactionsQuerySchema,
   handleResponse(userController.meTransactions),
 );
 router.get(

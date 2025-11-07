@@ -43,10 +43,10 @@ test('User Endpoints', async t => {
   );
 
   await t.test(
-    'GET /user/latest/transactions should list home user transactions',
+    'GET /user/transactions should list home user transactions',
     async () => {
       const res = await request(app)
-        .get('/user/latest/transactions')
+        .get('/user/transactions')
         .set('Authorization', users[0].token)
         .set('signeraddress', users[0].payload.address);
 
