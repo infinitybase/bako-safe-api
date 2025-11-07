@@ -6,7 +6,8 @@ import { IDefaultOrdination } from '@src/utils/ordination';
 import { IPagination, PaginationParams } from '@src/utils/pagination';
 
 import { Predicate, User } from '@models/index';
-import { Network } from 'fuels';
+import { IAssetMapById } from '@src/utils';
+import { BN, Network } from 'fuels';
 import { IPredicateOrdination } from './ordination';
 
 export enum OrderBy {
@@ -69,6 +70,23 @@ export interface IEndCursorPayload {
     };
   };
 }
+export interface AssetAllocation {
+  assetId: string | null; // null for "others"
+  amount: BN;
+  amountInUSD: number;
+  percentage: number;
+}
+export interface IPredicateAllocation {
+  data: AssetAllocation[];
+  totalAmountInUSD: number;
+}
+
+export interface IPredicateAllocationParams {
+  user: User;
+  predicateId?: string;
+  network: Network;
+  assetsMap: IAssetMapById;
+}
 
 interface ICreatePredicateRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Body]: IPredicatePayload;
@@ -120,6 +138,12 @@ interface IListRequestSchema extends ValidatedRequestSchema {
   };
 }
 
+interface IGetAllocationRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Params]: {
+    predicateId: string;
+  };
+}
+
 export type ICreatePredicateRequest = AuthValidatedRequest<ICreatePredicateRequestSchema>;
 export type ITooglePredicateRequest = AuthValidatedRequest<ITooglePredicateRequestSchema>;
 export type IUpdatePredicateRequest = AuthValidatedRequest<IUpdatePredicateRequestSchema>;
@@ -142,6 +166,7 @@ export type PredicateWithHidden = Omit<
 > & {
   isHidden: boolean;
 };
+export type IGetAllocationRequest = AuthValidatedRequest<IGetAllocationRequestSchema>;
 
 export interface IPredicateService {
   ordination(ordination?: IPredicateOrdination): this;
@@ -170,4 +195,5 @@ export interface IPredicateService {
     address: string,
     authorization: string,
   ) => Promise<string[]>;
+  allocation: (params: IPredicateAllocationParams) => Promise<IPredicateAllocation>;
 }

@@ -241,6 +241,23 @@ test('Predicate Endpoints', async t => {
   );
 
   await t.test(
+    "GET /predicate/:predicateId/allocation should get predicate's allocation",
+    async () => {
+      const vault = predicates[0];
+
+      const { predicate } = await saveMockPredicate(vault, users[0], app);
+
+      const res = await request(app)
+        .get(`/predicate/${predicate.id}/allocation`)
+        .set('Authorization', users[0].token)
+        .set('signeraddress', users[0].payload.address);
+      assert.equal(res.status, 200);
+      assert.ok(Array.isArray(res.body.data));
+      assert.ok('totalAmountInUSD' in res.body);
+    },
+  );
+
+  await t.test(
     'GET /check/by-address/:address should check if predicate exists by addr',
     async () => {
       const vault = predicates[0];

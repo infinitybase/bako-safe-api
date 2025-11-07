@@ -26,6 +26,7 @@ import {
   IFindByHashRequest,
   IFindByIdRequest,
   IFindByNameRequest,
+  IGetAllocationRequest,
   IListRequest,
   IPredicateService,
   ITooglePredicateRequest,
@@ -356,6 +357,22 @@ export class PredicateController {
       return successful(updatedPredicate, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
+    }
+  }
+
+  async allocation({ params, user, network }: IGetAllocationRequest) {
+    const { predicateId } = params;
+    try {
+      const allocation = await this.predicateService.allocation({
+        user,
+        predicateId,
+        network,
+        assetsMap: (await getAssetsMaps()).assetsMapById,
+      });
+
+      return successful(allocation, Responses.Ok);
+    } catch (e) {
+      return error(e.error || e, e.statusCode);
     }
   }
 }
