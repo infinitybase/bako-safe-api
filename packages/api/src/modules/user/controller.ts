@@ -18,7 +18,7 @@ import {
   UnauthorizedErrorTitles,
 } from '@utils/error';
 import { IconUtils } from '@utils/icons';
-import { Responses, successful, TokenUtils } from '@utils/index';
+import { getAssetsMaps, Responses, successful, TokenUtils } from '@utils/index';
 
 import App from '@src/server/app';
 import { FuelProvider } from '@src/utils/FuelProvider';
@@ -441,6 +441,21 @@ export class UserController {
       );
     } catch (e) {
       return error(e.error, e.statusCode);
+    }
+  }
+
+  async allocation({ user, network }: IMeRequest) {
+    try {
+      const allocation = await new PredicateService().allocation({
+        user,
+        network,
+        assetsMap: (await getAssetsMaps()).assetsMapById,
+      });
+
+
+      return successful(allocation, Responses.Ok);
+    } catch (e) {
+      return error(e.error ?? e, e.statusCode);
     }
   }
 }
