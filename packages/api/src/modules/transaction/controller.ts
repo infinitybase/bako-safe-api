@@ -1,9 +1,4 @@
-import { PermissionRoles, Workspace } from '@src/models/Workspace';
-import {
-  Unauthorized,
-  UnauthorizedErrorTitles,
-} from '@src/utils/error/Unauthorized';
-import { validatePermissionGeneral } from '@src/utils/permissionValidate';
+import { Workspace } from '@src/models/Workspace';
 import { TransactionStatus, TransactionType, WitnessStatus } from 'bakosafe';
 import { isUUID } from 'class-validator';
 
@@ -540,11 +535,11 @@ export class TransactionController {
 
       const _wk = hasSingle
         ? await new WorkspaceService()
-          .filter({
-            user: user.id,
-          })
-          .list()
-          .then((response: Workspace[]) => response.map(wk => wk.id))
+            .filter({
+              user: user.id,
+            })
+            .list()
+            .then((response: Workspace[]) => response.map(wk => wk.id))
         : [workspace.id];
 
       const response = await new TransactionService()
@@ -601,11 +596,11 @@ export class TransactionController {
 
       const _wk = hasSingle
         ? await new WorkspaceService()
-          .filter({
-            user: user.id,
-          })
-          .list()
-          .then((response: Workspace[]) => response.map(wk => wk.id))
+            .filter({
+              user: user.id,
+            })
+            .list()
+            .then((response: Workspace[]) => response.map(wk => wk.id))
         : [workspace.id];
 
       const _status = status ?? undefined;
@@ -776,7 +771,7 @@ export class TransactionController {
     try {
       const { page, perPage } = req.query;
       const response = await this.transactionService
-        .paginate({ page: page || 0, perPage: perPage || 30 })
+        .paginate({ page: page || '0', perPage: perPage || '30' })
         .listAll();
       return successful(response, Responses.Ok);
     } catch (e) {

@@ -1,12 +1,14 @@
-import test from 'node:test';
 import assert from 'node:assert/strict';
+import test from 'node:test';
 import request from 'supertest';
 
-import { TestEnvironment } from './utils/Setup';
 import { generateNode } from './mocks/Networks';
+import { saveMockPredicate } from './mocks/Predicate';
+import { TestEnvironment } from './utils/Setup';
 
 test('User Endpoints', async t => {
-  const { app, users, close } = await TestEnvironment.init(2, 0);
+  const { node } = await generateNode();
+  const { app, users, close, predicates } = await TestEnvironment.init(2, 1, node);
 
   t.after(async () => {
     await close();
@@ -41,10 +43,10 @@ test('User Endpoints', async t => {
   );
 
   await t.test(
-    'GET /user/latest/transactions should list home user transactions',
+    'GET /user/transactions should list home user transactions',
     async () => {
       const res = await request(app)
-        .get('/user/latest/transactions')
+        .get('/user/transactions')
         .set('Authorization', users[0].token)
         .set('signeraddress', users[0].payload.address);
 
@@ -63,4 +65,21 @@ test('User Endpoints', async t => {
     assert.equal(res.status, 200);
     assert.ok(Array.isArray(res.body));
   });
+
+  await t.test(
+    "GET /user/allocation should get user's asset allocation",
+    async () => {
+      const vault = predicates[0];
+      await saveMockPredicate(vault, users[0], app);
+
+      const res = await request(app)
+        .get('/user/allocation')
+        .set('Authorization', users[0].token)
+        .set('signeraddress', users[0].payload.address);
+
+      assert.equal(res.status, 200);
+      assert.ok(Array.isArray(res.body.data));
+      assert.ok('totalAmountInUSD' in res.body);
+    },
+  );
 });

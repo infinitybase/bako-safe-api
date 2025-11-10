@@ -1,11 +1,12 @@
 import {
   AddressUtils as BakoAddressUtils,
   DEFAULT_PREDICATE_VERSION,
+  getLatestPredicateVersion,
+  legacyConnectorVersion,
+  TransactionStatus,
   TypeUser,
   Vault,
   Wallet as WalletType,
-  getLatestPredicateVersion,
-  legacyConnectorVersion,
 } from 'bakosafe';
 import { Brackets, MoreThan } from 'typeorm';
 
@@ -18,12 +19,20 @@ import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
 
 import App from '@src/server/app';
-import { FuelProvider } from '@src/utils';
+import {
+  calculateBalanceUSD,
+  calculateReservedCoins,
+  FuelProvider,
+  subCoins,
+} from '@src/utils';
 import { IconUtils } from '@src/utils/icons';
-import { Network, ZeroBytes32 } from 'fuels';
+import { bn, Network, ZeroBytes32 } from 'fuels';
 import { UserService } from '../user/service';
 import { IPredicateOrdination, setOrdination } from './ordination';
 import {
+  AssetAllocation,
+  IPredicateAllocation,
+  IPredicateAllocationParams,
   IPredicateFilterParams,
   IPredicatePayload,
   IPredicateService,
@@ -236,6 +245,12 @@ export class PredicateService implements IPredicateService {
       if (this._filter.ids) {
         queryBuilder.andWhere('p.id IN (:...ids)', {
           ids: this._filter.ids,
+        });
+      }
+
+      if (this._filter.owner) {
+        queryBuilder.andWhere('owner.id = :owner', {
+          owner: this._filter.owner,
         });
       }
 
@@ -520,5 +535,150 @@ export class PredicateService implements IPredicateService {
     }
 
     return await Pagination.create(queryBuilder).paginate(this._pagination);
+  }
+
+  async allocation({
+    predicateId,
+    user,
+    network,
+    assetsMap,
+  }: IPredicateAllocationParams): Promise<IPredicateAllocation> {
+    try {
+      const query = Predicate.createQueryBuilder('p')
+        .leftJoin('p.owner', 'owner')
+        .leftJoin(
+          'p.transactions',
+          't',
+          "t.status IN (:...status) AND regexp_replace(t.network->>'url', '^https?://[^@]+@', 'https://') = :network",
+          {
+            status: [
+              TransactionStatus.AWAIT_REQUIREMENTS,
+              TransactionStatus.PENDING_SENDER,
+            ],
+            network: network.url.replace(/^https?:\/\/[^@]+@/, 'https://'),
+          },
+        )
+        .where('owner.id = :userId', { userId: user.id })
+        .addSelect(['p.id', 'p.configurable', 't.txData']);
+
+      if (predicateId) {
+        query.andWhere('p.id = :predicateId', { predicateId });
+      }
+
+      const predicates = await query.getMany();
+      const reservedCoins = predicates.map(predicate => ({
+        configurable: predicate.configurable,
+        version: predicate.version,
+        coins: calculateReservedCoins(predicate.transactions),
+      }));
+
+      const allocationMap = new Map<string, AssetAllocation>();
+      let totalAmountInUSD = 0;
+
+      for (const { coins, configurable, version } of reservedCoins) {
+        const instance = await this.instancePredicate(
+          configurable,
+          network.url,
+          version,
+        );
+
+        const balances = (await instance.getBalances()).balances.filter(a =>
+          a.amount.gt(0),
+        );
+        const assets =
+          reservedCoins.length > 0 ? subCoins(balances, coins) : balances;
+
+        const assetsWithoutNFT = assets.filter(({ amount, assetId }) => {
+          const hasFuelMapped = assetsMap[assetId];
+          const isOneUnit = amount.eq(1);
+          const isNFT = !hasFuelMapped && isOneUnit;
+
+          return !isNFT;
+        });
+
+        // Calculate total balance
+        const totalBalance = await calculateBalanceUSD(
+          assetsWithoutNFT,
+          network.chainId,
+        );
+        const totalInNumber = parseFloat(totalBalance.replace(/,/g, ''));
+        totalAmountInUSD += totalInNumber;
+
+        // Calculate allocation
+        for (const { assetId, amount } of assetsWithoutNFT) {
+          const usdBalance = await calculateBalanceUSD(
+            [{ assetId, amount }],
+            network.chainId,
+          );
+          const usdInNumber = parseFloat(usdBalance.replace(/,/g, ''));
+
+          const existingAllocation = allocationMap.get(assetId);
+
+          const assetAllocation: AssetAllocation = {
+            assetId,
+            amountInUSD: existingAllocation
+              ? existingAllocation.amountInUSD + usdInNumber
+              : usdInNumber,
+            amount: existingAllocation
+              ? existingAllocation.amount.add(amount)
+              : amount,
+            percentage: 0,
+          };
+
+          allocationMap.set(assetId, assetAllocation);
+        }
+      }
+
+      const allocationArray = Array.from(allocationMap.values())
+        .filter(allocation => allocation.amountInUSD > 0)
+        .map(allocation => ({
+          ...allocation,
+          percentage:
+            totalAmountInUSD > 0
+              ? (allocation.amountInUSD / totalAmountInUSD) * 100
+              : 0,
+        }));
+
+      allocationArray.sort((a, b) => b.percentage - a.percentage);
+
+      const top3 = allocationArray.slice(0, 3);
+
+      const remaining = allocationArray.slice(3);
+
+      const finalData = [...top3];
+
+      if (remaining.length > 0) {
+        const othersAmountInUSD = remaining.reduce(
+          (sum, item) => sum + item.amountInUSD,
+          0,
+        );
+        const othersPercentage = remaining.reduce(
+          (sum, item) => sum + item.percentage,
+          0,
+        );
+        const othersAmount = remaining.reduce(
+          (sum, item) => sum.add(item.amount),
+          bn(0),
+        );
+
+        finalData.push({
+          assetId: null,
+          amountInUSD: othersAmountInUSD,
+          amount: othersAmount,
+          percentage: othersPercentage,
+        });
+      }
+
+      return {
+        data: finalData,
+        totalAmountInUSD,
+      };
+    } catch (error) {
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on get predicate allocation',
+        detail: error,
+      });
+    }
   }
 }
