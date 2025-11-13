@@ -56,6 +56,7 @@ export class PredicateService implements IPredicateService {
     'p.owner',
     'p.configurable',
     'p.root',
+    'p.version',
   ];
 
   filter(filter: IPredicateFilterParams) {
