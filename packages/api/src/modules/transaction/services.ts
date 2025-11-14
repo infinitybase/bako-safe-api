@@ -8,7 +8,7 @@ import {
   OutputType,
   transactionRequestify,
 } from 'fuels';
-import { Brackets, In, Not } from 'typeorm';
+import { Brackets, EntityNotFoundError, In, Not } from 'typeorm';
 
 import { Predicate, Transaction } from '@models/index';
 
@@ -443,6 +443,34 @@ export class TransactionService implements ITransactionService {
           detail: e,
         });
       });
+  }
+
+  async deleteLatestByHash(hash: string): Promise<boolean> {
+    try {
+      const lastTx = await Transaction.findOneOrFail({
+        where: { hash },
+        order: { createdAt: 'DESC' },
+      });
+
+      lastTx.deletedAt = new Date();
+      await lastTx.save();
+
+      return true;
+    } catch (e) {
+      if (e instanceof EntityNotFoundError) {
+        throw new NotFound({
+          type: ErrorTypes.NotFound,
+          title: 'Transaction not found',
+          detail: `Transaction with hash ${hash} not found`,
+        });
+      }
+
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on transaction delete',
+        detail: e,
+      });
+    }
   }
 
   async findAdvancedDetailById(id: string): Promise<ITransactionAdvancedDetail> {

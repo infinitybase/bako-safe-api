@@ -34,6 +34,7 @@ import {
   ICloseTransactionRequest,
   ICreateTransactionHistoryRequest,
   ICreateTransactionRequest,
+  IDeleteTransactionByHashRequest,
   IFindTransactionByHashRequest,
   IFindTransactionByIdRequest,
   IListRequest,
@@ -783,6 +784,16 @@ export class TransactionController {
     try {
       const { id } = req.params;
       const response = await this.transactionService.findAdvancedDetailById(id);
+      return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async deleteLatestByHash(req: IDeleteTransactionByHashRequest) {
+    try {
+      const { hash } = req.params;
+      const response = await this.transactionService.deleteLatestByHash(hash);
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
