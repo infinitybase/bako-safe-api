@@ -4,6 +4,7 @@ import {
   getLatestPredicateVersion,
   legacyConnectorVersion,
   TransactionStatus,
+  TypeUser,
   Vault,
   Wallet as WalletType,
 } from 'bakosafe';
@@ -12,7 +13,7 @@ import { Brackets, MoreThan } from 'typeorm';
 import { NotFound } from '@src/utils/error';
 import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination';
 
-import { Predicate, TypeUser, User, Workspace } from '@models/index';
+import { Predicate, User, Workspace } from '@models/index';
 
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
@@ -463,11 +464,12 @@ export class PredicateService implements IPredicateService {
    */
   async checkOlderPredicateVersions(
     address: string,
+    userType: TypeUser,
     provider: string,
   ): Promise<Vault[]> {
     const isEvm = BakoAddressUtils.isEvm(address);
 
-    if (isEvm) {
+    if (isEvm && userType === TypeUser.EVM) {
       const legacyVersions = await legacyConnectorVersion(address, provider);
 
       const vaults = await Promise.all(

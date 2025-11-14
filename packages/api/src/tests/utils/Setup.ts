@@ -1,10 +1,9 @@
 import { Application } from 'express';
 import request from 'supertest';
 import { newUser } from '@src/tests/mocks/User';
-import { WalletUnlocked, Wallet, Provider } from 'fuels';
-import { TypeUser } from '@src/models';
+import { WalletUnlocked, Provider } from 'fuels';
 import App from '@src/server/app';
-import { Vault } from 'bakosafe';
+import { Vault, TypeUser } from 'bakosafe';
 import { getPredicateVersion } from '../mocks/Predicate';
 import { DeployContractConfig, LaunchTestNodeReturn } from 'fuels/test-utils';
 import { networks } from '../mocks/Networks';

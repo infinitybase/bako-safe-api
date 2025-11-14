@@ -4,6 +4,7 @@ import {
   ITransferAsset,
   IWitnesses,
   TransactionStatus,
+  TypeUser,
 } from 'bakosafe';
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 import { Network, Receipt, TransactionRequest } from 'fuels';
@@ -13,7 +14,6 @@ import {
   Transaction,
   TransactionStatusWithRamp,
   TransactionType,
-  TypeUser,
 } from '@models/index';
 
 import { AuthValidatedRequest } from '@middlewares/auth/types';
