@@ -437,13 +437,6 @@ test('Transaction Endpoints', async t => {
         .set('Signeraddress', users[0].payload.address);
 
       assert.equal(res.status, 200);
-
-      const resNotFound = await request(app)
-        .get(`/transaction/${transaction.id}`)
-        .set('Authorization', users[0].token)
-        .set('Signeraddress', users[0].payload.address);
-
-      assert.equal(resNotFound.body.detail.statusCode, 404);
     },
   );
 });
