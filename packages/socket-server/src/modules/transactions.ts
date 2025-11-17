@@ -150,7 +150,7 @@ export class TransactionEventHandler {
 
 		const { tx, operations, sign, connectorType } = data
 
-		const isNotEvmOrSocialConnector = connectorType !== EFuelConnectorsTypes.EVM && connectorType !== EFuelConnectorsTypes.SOCIAL
+		const isEvmOrSocialConnector = connectorType === EFuelConnectorsTypes.EVM || connectorType === EFuelConnectorsTypes.SOCIAL
 
 		const uiRoom = `${sessionId}:${SocketUsernames.UI}:${request_id}`
 		const connectorRoom = `${sessionId}:${SocketUsernames.CONNECTOR}:${request_id}`
@@ -214,7 +214,7 @@ export class TransactionEventHandler {
 				},
 			})
 
-			if (isNotEvmOrSocialConnector) {
+			if (!isEvmOrSocialConnector) {
 				// Confirm tx creation to CONNECTOR
 				socket.to(connectorRoom).emit(SocketEvents.DEFAULT, {
 					username,
