@@ -1,6 +1,7 @@
 import { io, Socket } from 'socket.io-client';
 import { IMessage, SocketEvents, SocketUsernames } from './types';
 
+const TIMEOUT = 8 * 1000; // 8 seconds
 export class SocketClient {
   _socket: Socket = null;
 
@@ -19,16 +20,32 @@ export class SocketClient {
   }
 
   private async _emitWhenConnected(event: string, data: any) {
-    if (this._socket.connected) {
-      this._socket.emit(event, data);
-    } else {
-      await new Promise<void>(resolve => {
-        this._socket.once('connect', () => {
+    await new Promise<void>(resolve => {
+      let resolved = false;
+
+      const resolveOnce = () => {
+        if (!resolved) {
+          resolved = true;
+          clearTimeout(timeout);
           resolve();
-        });
-      });
-      this._socket.emit(event, data);
-    }
+        }
+      };
+
+      const timeout = setTimeout(() => {
+        console.warn(`Socket emit timeout for event "${event}"`);
+        resolveOnce();
+      }, TIMEOUT);
+
+      const send = () => {
+        this._socket.emit(event, data, () => resolveOnce());
+      };
+
+      if (this._socket.connected) {
+        send();
+      } else {
+        this._socket.once('connect', send);
+      }
+    });
   }
 
   // Método para enviar uma mensagem para o servidor
