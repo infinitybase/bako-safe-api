@@ -445,15 +445,14 @@ export class TransactionService implements ITransactionService {
       });
   }
 
-  async deleteLatestByHash(hash: string): Promise<boolean> {
+  async deleteByHash(hash: string): Promise<boolean> {
     try {
-      const lastTx = await Transaction.findOneOrFail({
-        where: { hash },
-        order: { createdAt: 'DESC' },
+      const tx = await Transaction.findOneOrFail({
+        where: { hash, status: TransactionStatus.AWAIT_REQUIREMENTS },
       });
 
-      lastTx.deletedAt = new Date();
-      await lastTx.save();
+      tx.deletedAt = new Date();
+      await tx.save();
 
       return true;
     } catch (e) {
@@ -461,7 +460,7 @@ export class TransactionService implements ITransactionService {
         throw new NotFound({
           type: ErrorTypes.NotFound,
           title: 'Transaction not found',
-          detail: `Transaction with hash ${hash} not found`,
+          detail: `Transaction with hash ${hash} and status ${TransactionStatus.AWAIT_REQUIREMENTS} not found`,
         });
       }
 

@@ -420,7 +420,7 @@ test('Transaction Endpoints', async t => {
   );
 
   await t.test(
-    'DELETE /transaction/latest-by-hash/:hash should delete latest transaction by hash',
+    'DELETE /transaction/by-hash/:hash should delete latest transaction by hash',
     async () => {
       const vault = predicates[3];
 
@@ -432,7 +432,7 @@ test('Transaction Endpoints', async t => {
       assert.equal(status, 201);
 
       const res = await request(app)
-        .delete(`/transaction/latest-by-hash/${transaction.hash}`)
+        .delete(`/transaction/by-hash/${transaction.hash}`)
         .set('Authorization', users[0].token)
         .set('Signeraddress', users[0].payload.address);
 

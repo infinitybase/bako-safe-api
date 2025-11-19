@@ -269,7 +269,7 @@ export interface ITransactionService {
   findById: (id: string) => Promise<ITransactionResponse>;
   findByHash: (hash: string) => Promise<ITransactionResponse>;
   delete: (id: string) => Promise<boolean>;
-  deleteLatestByHash: (hash: string) => Promise<boolean>;
+  deleteByHash: (hash: string) => Promise<boolean>;
   findAdvancedDetailById(id: string): Promise<ITransactionAdvancedDetail>;
 
   // graphql

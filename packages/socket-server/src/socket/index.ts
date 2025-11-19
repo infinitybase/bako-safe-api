@@ -67,7 +67,7 @@ export const setupSocket = (io: SocketIOServer, database: DatabaseClass, api: Ax
 					    - verifica se o evento veio da origem correta -> BAKO-UI [http://localhost:5174, https://safe.bako.global]
 							- recupera as infos do dapp que está tentando criar a tx pelo sessionId
 							- usa uma credencial temporária (code) que é utilizada para criar, assinar e excluir a tx com o pacote bakosafe
-							- consome o endpoint DELETE - /transaction/latest-by-hash/:hash para excluir a tx
+							- consome o endpoint DELETE - /transaction/by-hash/:hash para excluir a tx
 							- invalida credencial temporária (code) que foi utilizada para criar, assinar e excluir a tx
 		*/
 		socket.on(SocketEvents.TX_DELETE, data => transactionEventHandler.delete({ data, socket }))

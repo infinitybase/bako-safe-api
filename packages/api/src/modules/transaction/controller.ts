@@ -790,10 +790,12 @@ export class TransactionController {
     }
   }
 
-  async deleteLatestByHash(req: IDeleteTransactionByHashRequest) {
+  async deleteByHash(req: IDeleteTransactionByHashRequest) {
     try {
       const { hash } = req.params;
-      const response = await this.transactionService.deleteLatestByHash(hash);
+      const response = await this.transactionService.deleteByHash(
+        hash.startsWith(`0x`) ? hash.slice(2) : hash,
+      );
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);

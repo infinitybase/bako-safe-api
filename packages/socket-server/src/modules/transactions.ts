@@ -348,7 +348,7 @@ export class TransactionEventHandler {
 			if (!code.code) throw new Error('Recover code not found')
 
 			// ---------------------[VALIDATE SIGNATURE] --------------------------
-			await api.delete(`/transaction/latest-by-hash/${hash}`, {
+			await api.delete(`/transaction/by-hash/${hash}`, {
 				headers: {
 					authorization: code.code,
 					signeraddress: dapp.user_address,

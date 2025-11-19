@@ -56,7 +56,7 @@ const {
   createHistory,
   cancel,
   findAdvancedDetails,
-  deleteLatestByHash,
+  deleteByHash,
 } = new TransactionController(
   transactionService,
   predicateService,
@@ -95,9 +95,9 @@ router.put(
 router.put('/cancel/:hash', txPermissionMiddleware, handleResponse(cancel));
 router.get('/history/:id/:predicateId', handleResponse(createHistory));
 router.delete(
-  '/latest-by-hash/:hash',
+  '/by-hash/:hash',
   txPermissionMiddleware,
-  handleResponse(deleteLatestByHash),
+  handleResponse(deleteByHash),
 );
 
 export default router;
