@@ -1,4 +1,4 @@
-import { SocketEvents, SocketUsernames } from '@src/types'
+import { EFuelConnectorsTypes, SocketEvents, SocketUsernames } from '@src/types'
 import { BakoProvider, ITransactionSummary, Vault } from 'bakosafe'
 import crypto from 'crypto'
 import { Provider, TransactionRequestLike } from 'fuels'
@@ -6,6 +6,7 @@ import { Socket } from 'socket.io'
 import { DatabaseClass } from '@utils/database'
 import { io, api } from '..'
 import { DappService, PredicateService, RecoverCodeService, TransactionService } from '@src/services'
+import { subMinutes } from 'date-fns'
 
 export interface IEventTX_REQUEST {
 	_transaction: TransactionRequestLike
@@ -16,11 +17,17 @@ export interface IEventTX_CREATE {
 	tx: TransactionRequestLike
 	operations: any
 	sign?: boolean
+	connectorType?: EFuelConnectorsTypes
 }
 
 export interface IEventTX_SIGN {
 	hash: string
 	signedMessage: string
+	connectorType?: EFuelConnectorsTypes
+}
+
+export interface IEventTX_DELETE {
+	hash: string
 }
 
 enum IEventTX_STATUS {
@@ -129,7 +136,7 @@ export class TransactionEventHandler {
 						version: vault.version,
 					},
 					tx,
-					validAt: code.valid_at,
+					validAt: subMinutes(new Date(code.valid_at), 1), // Subtracts 1 minute to allow delete tx before expiration
 				},
 			})
 		} catch (e) {
@@ -141,7 +148,9 @@ export class TransactionEventHandler {
 		const { sessionId, username, request_id } = socket.handshake.auth
 		const { origin, host } = socket.handshake.headers
 
-		const { tx, operations, sign } = data
+		const { tx, operations, sign, connectorType } = data
+
+		const isEvmOrSocialConnector = connectorType === EFuelConnectorsTypes.EVM || connectorType === EFuelConnectorsTypes.SOCIAL
 
 		const uiRoom = `${sessionId}:${SocketUsernames.UI}:${request_id}`
 		const connectorRoom = `${sessionId}:${SocketUsernames.CONNECTOR}:${request_id}`
@@ -205,18 +214,20 @@ export class TransactionEventHandler {
 				},
 			})
 
-			// Confirm tx creation to CONNECTOR
-			socket.to(connectorRoom).emit(SocketEvents.DEFAULT, {
-				username,
-				room: sessionId,
-				request_id,
-				to: SocketUsernames.CONNECTOR,
-				type: SocketEvents.TX_CONFIRM,
-				data: {
-					id: _tx.hashTxId,
-					status: IEventTX_STATUS.SUCCESS,
-				},
-			})
+			if (!isEvmOrSocialConnector) {
+				// Confirm tx creation to CONNECTOR
+				socket.to(connectorRoom).emit(SocketEvents.DEFAULT, {
+					username,
+					room: sessionId,
+					request_id,
+					to: SocketUsernames.CONNECTOR,
+					type: SocketEvents.TX_CONFIRM,
+					data: {
+						id: _tx.hashTxId,
+						status: IEventTX_STATUS.SUCCESS,
+					},
+				})
+			}
 		} catch (e) {
 			io.to(uiRoom).emit(SocketEvents.DEFAULT, {
 				username,
@@ -235,8 +246,12 @@ export class TransactionEventHandler {
 		const { sessionId, username, request_id } = socket.handshake.auth
 		const { origin, host } = socket.handshake.headers
 
-		const { hash, signedMessage } = data
-		const room = `${sessionId}:${SocketUsernames.UI}:${request_id}`
+		const { hash, signedMessage, connectorType } = data
+
+		const isEvmOrSocialConnector = connectorType === EFuelConnectorsTypes.EVM || connectorType === EFuelConnectorsTypes.SOCIAL
+
+		const uiRoom = `${sessionId}:${SocketUsernames.UI}:${request_id}`
+		const connectorRoom = `${sessionId}:${SocketUsernames.CONNECTOR}:${request_id}`
 
 		const { auth } = socket.handshake
 
@@ -273,7 +288,7 @@ export class TransactionEventHandler {
 			await this.recoverCodeService.delete(code.id).catch(error => console.error(error))
 
 			// ------------------------------ [EMIT] ------------------------------
-			io.to(room).emit(SocketEvents.DEFAULT, {
+			io.to(uiRoom).emit(SocketEvents.DEFAULT, {
 				username,
 				room: sessionId,
 				request_id,
@@ -283,8 +298,23 @@ export class TransactionEventHandler {
 					status: IEventTX_STATUS.SUCCESS,
 				},
 			})
+
+			if (isEvmOrSocialConnector) {
+				// Confirm tx creation and sign to CONNECTOR
+				socket.to(connectorRoom).emit(SocketEvents.DEFAULT, {
+					username,
+					room: sessionId,
+					request_id,
+					to: SocketUsernames.CONNECTOR,
+					type: SocketEvents.TX_CONFIRM,
+					data: {
+						id: hash,
+						status: IEventTX_STATUS.SUCCESS,
+					},
+				})
+			}
 		} catch (e) {
-			io.to(room).emit(SocketEvents.DEFAULT, {
+			io.to(uiRoom).emit(SocketEvents.DEFAULT, {
 				username,
 				room: sessionId,
 				request_id,
@@ -294,6 +324,41 @@ export class TransactionEventHandler {
 					status: IEventTX_STATUS.ERROR,
 				},
 			})
+		}
+	}
+
+	async delete({ data, socket }: IEvent<IEventTX_DELETE>) {
+		const { origin, host } = socket.handshake.headers
+
+		const { hash } = data
+
+		const { auth } = socket.handshake
+
+		try {
+			if (origin != UI_URL) throw new Error('Invalid origin')
+
+			// ------------------------------ [DAPP] ------------------------------
+			const dapp = await this.dappService.getBySessionIdWithPredicate(auth.sessionId)
+
+			if (!dapp) throw new Error('Dapp not found')
+
+			// ------------------------------ [CODE] ------------------------------
+			const code = await this.recoverCodeService.getValid({ origin: host, userId: dapp.user_id })
+
+			if (!code.code) throw new Error('Recover code not found')
+
+			// ---------------------[VALIDATE SIGNATURE] --------------------------
+			await api.delete(`/transaction/by-hash/${hash}`, {
+				headers: {
+					authorization: code.code,
+					signeraddress: dapp.user_address,
+				},
+			})
+
+			// ------------------------- [INVALIDATION] ---------------------------
+			await this.recoverCodeService.delete(code.id).catch(error => console.error(error))
+		} catch (e) {
+			console.log(e)
 		}
 	}
 }

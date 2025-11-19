@@ -418,4 +418,25 @@ test('Transaction Endpoints', async t => {
       });
     },
   );
+
+  await t.test(
+    'DELETE /transaction/by-hash/:hash should delete latest transaction by hash',
+    async () => {
+      const vault = predicates[3];
+
+      const { tx: transaction, status } = await saveMockTransaction(
+        { vault: vault, user: users[3] },
+        app,
+      );
+
+      assert.equal(status, 201);
+
+      const res = await request(app)
+        .delete(`/transaction/by-hash/${transaction.hash}`)
+        .set('Authorization', users[0].token)
+        .set('Signeraddress', users[0].payload.address);
+
+      assert.equal(res.status, 200);
+    },
+  );
 });

@@ -20,6 +20,7 @@ export enum SocketEvents {
 	TX_SIGN = '[TX_EVENT_SIGNED]',
 	TX_CONFIRM = '[TX_EVENT_CONFIRMED]',
 	TX_REQUEST = '[TX_EVENT_REQUESTED]',
+	TX_DELETE = '[TX_EVENT_DELETED]',
 	CONNECTION_STATE = '[CONNECTION_STATE]',
 	DISCONNECT = '[DISCONNECT]',
 
@@ -35,6 +36,12 @@ export enum SocketUsernames {
 	UI = '[UI]',
 	CONNECTOR = '[CONNECTOR]',
 	API = '[API]',
+}
+
+export enum EFuelConnectorsTypes {
+	BAKO = 'Bako Safe',
+	EVM = 'Ethereum Wallets',
+	SOCIAL = 'Social Login',
 }
 
 export interface IDefaultMessage {

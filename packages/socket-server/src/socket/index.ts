@@ -55,12 +55,22 @@ export const setupSocket = (io: SocketIOServer, database: DatabaseClass, api: Ax
             [UI] emite esse evento quando o usuário assina a tx 
                 - verifica se o evento veio da origem correta -> BAKO-UI [http://localhost:5174, https://safe.bako.global]
                 - recupera as infos do dapp que está tentando criar a tx pelo sessionId
-                - usa uma credencial temporária (code) que é utilizada para criar e assinar a tx com o pacote bakosafe
+                - usa uma credencial temporária (code) que é utilizada para criar, assinar e excluir a tx com o pacote bakosafe
                 - consome endpoint /transaction/sign/:hash para assinar a tx
-                - invalida credencial temporária (code) que foi utilizada para criar e assinar a tx
+                - invalida credencial temporária (code) que foi utilizada para criar, assinar e excluir a tx
                 - emite uma mensagem para a [UI] com o resultado da assiantura da tx
             */
 		socket.on(SocketEvents.TX_SIGN, data => transactionEventHandler.sign({ data, socket }))
+
+		/*
+			      [UI] emite esse evento quando a tx é criada, mas não assinada e o popup é fechado
+					    - verifica se o evento veio da origem correta -> BAKO-UI [http://localhost:5174, https://safe.bako.global]
+							- recupera as infos do dapp que está tentando criar a tx pelo sessionId
+							- usa uma credencial temporária (code) que é utilizada para criar, assinar e excluir a tx com o pacote bakosafe
+							- consome o endpoint DELETE - /transaction/by-hash/:hash para excluir a tx
+							- invalida credencial temporária (code) que foi utilizada para criar, assinar e excluir a tx
+		*/
+		socket.on(SocketEvents.TX_DELETE, data => transactionEventHandler.delete({ data, socket }))
 
 		/*
             [CONNECTOR] emite esse evento quando o usuário quer criar uma transação
