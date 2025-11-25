@@ -177,7 +177,7 @@ export class BalanceCache {
       await this.clearInvalidationFlag(predicateAddress, chainId);
 
       console.log(
-        `[BalanceCache] SET ${predicateAddress.slice(0, 12)}... chain:${chainId} (${balances.length} assets)`,
+        `[BalanceCache] SET ${predicateAddress?.slice(0, 12)}... chain:${chainId} (${balances.length} assets)`,
       );
     } catch (error) {
       console.error('[BalanceCache] SET error:', error);
