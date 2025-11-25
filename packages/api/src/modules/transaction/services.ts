@@ -648,8 +648,8 @@ export class TransactionService implements ITransactionService {
       await new NotificationService().transactionSuccess(id, network);
 
       // Invalidate balance cache after successful transaction
-      this.invalidatePredicateBalanceCache(predicate.predicateAddress).catch(
-        err => console.error('[TX_SUCCESS] Failed to invalidate cache:', err),
+      this.invalidatePredicateBalanceCache(predicate.predicateAddress).catch(err =>
+        console.error('[TX_SUCCESS] Failed to invalidate cache:', err),
       );
 
       return await this.update(id, _api_transaction);
@@ -773,7 +773,10 @@ export class TransactionService implements ITransactionService {
       const balanceCache = App.getInstance()._balanceCache;
       await balanceCache.invalidate(predicateAddress);
       console.log(
-        `[TX_CACHE] Balance cache invalidated for ${predicateAddress.slice(0, 12)}...`,
+        `[TX_CACHE] Balance cache invalidated for ${predicateAddress?.slice(
+          0,
+          12,
+        )}...`,
       );
     } catch (error) {
       // Don't throw - cache invalidation failure shouldn't break transaction flow

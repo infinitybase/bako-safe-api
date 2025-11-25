@@ -783,7 +783,10 @@ export class TransactionController {
       const balanceCache = App.getInstance()._balanceCache;
       await balanceCache.invalidate(predicateAddress);
       console.log(
-        `[TX_CACHE] Balance cache invalidated for ${predicateAddress.slice(0, 12)}...`,
+        `[TX_CACHE] Balance cache invalidated for ${predicateAddress?.slice(
+          0,
+          12,
+        )}...`,
       );
     } catch (error) {
       console.error('[TX_CACHE] Failed to invalidate balance cache:', error);

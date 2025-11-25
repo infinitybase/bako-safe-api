@@ -138,7 +138,7 @@ export class BalanceCache {
 
       CacheMetrics.hit();
       console.log(
-        `[BalanceCache] HIT ${predicateAddress.slice(0, 12)}... chain:${chainId} (${Math.round((Date.now() - data.timestamp) / 1000)}s old)`,
+        `[BalanceCache] HIT ${predicateAddress?.slice(0, 12)}... chain:${chainId} (${Math.round((Date.now() - data.timestamp) / 1000)}s old)`,
       );
 
       return balances;
@@ -206,7 +206,7 @@ export class BalanceCache {
 
         CacheMetrics.invalidate();
         console.log(
-          `[BalanceCache] INVALIDATED ${predicateAddress.slice(0, 12)}... chain:${chainId}`,
+          `[BalanceCache] INVALIDATED ${predicateAddress?.slice(0, 12)}... chain:${chainId}`,
         );
       } else {
         // Invalidate all chains for this predicate
@@ -222,7 +222,7 @@ export class BalanceCache {
 
         CacheMetrics.invalidate(deletedCount || 1);
         console.log(
-          `[BalanceCache] INVALIDATED ${predicateAddress.slice(0, 12)}... all chains (${deletedCount} keys)`,
+          `[BalanceCache] INVALIDATED ${predicateAddress?.slice(0, 12)}... all chains (${deletedCount} keys)`,
         );
       }
     } catch (error) {
