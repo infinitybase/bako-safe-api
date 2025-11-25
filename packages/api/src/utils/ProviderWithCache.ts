@@ -1,6 +1,16 @@
-import { Provider, type CoinQuantity, type ProviderOptions } from 'fuels';
+import { Provider, type CoinQuantity, type ProviderOptions, Address } from 'fuels';
 import { BalanceCache } from '@src/server/storage/balance';
 import { cacheConfig } from '@src/config/cache';
+
+// Type for address parameter (matches Fuel SDK's Provider.getBalances signature)
+type AddressInput = string | Address;
+
+/**
+ * Convert address to string (handles both string and Address objects)
+ */
+function toAddressString(address: AddressInput): string {
+  return typeof address === 'string' ? address : address.toB256();
+}
 
 /**
  * ProviderWithCache - A transparent wrapper around Fuel's Provider
@@ -56,9 +66,12 @@ export class ProviderWithCache extends Provider {
    * This is the main method called by Vault.getBalances()
    */
   async getBalances(
-    address: string,
+    address: AddressInput,
   ): Promise<{ balances: CoinQuantity[] }> {
     const cache = this.getBalanceCache();
+
+    // Convert address to string (handles both string and Address objects)
+    const addressStr = toAddressString(address);
 
     // If cache is not available, go directly to blockchain
     if (!cache) {
@@ -69,7 +82,7 @@ export class ProviderWithCache extends Provider {
       const chainId = await this.getCachedChainId();
 
       // Try to get from cache
-      const cachedBalances = await cache.get(address, chainId);
+      const cachedBalances = await cache.get(addressStr, chainId);
 
       if (cachedBalances) {
         return { balances: cachedBalances };
@@ -79,7 +92,7 @@ export class ProviderWithCache extends Provider {
       const result = await super.getBalances(address);
 
       // Store in cache (don't await to not block response)
-      cache.set(address, result.balances, chainId, this.url).catch(err => {
+      cache.set(addressStr, result.balances, chainId, this.url).catch(err => {
         console.error('[ProviderWithCache] Failed to cache balances:', err);
       });
 
@@ -96,16 +109,19 @@ export class ProviderWithCache extends Provider {
    * Use this for critical operations like before sending transactions
    */
   async getBalancesForceRefresh(
-    address: string,
+    address: AddressInput,
   ): Promise<{ balances: CoinQuantity[] }> {
     const result = await super.getBalances(address);
+
+    // Convert address to string (handles both string and Address objects)
+    const addressStr = toAddressString(address);
 
     // Update cache with fresh data
     const cache = this.getBalanceCache();
     if (cache) {
       try {
         const chainId = await this.getCachedChainId();
-        await cache.set(address, result.balances, chainId, this.url);
+        await cache.set(addressStr, result.balances, chainId, this.url);
       } catch (err) {
         console.error('[ProviderWithCache] Failed to update cache:', err);
       }
