@@ -1,9 +1,23 @@
-database-init:
-	docker-compose -f docker-compose.yml --env-file .env.example up --build -d > /dev/null 2>&1
+export DOCKER_API_VERSION ?= 1.44
+NETWORK_NAME ?= bako-network
+
+.PHONY: ensure-network database-init database-down database-wait
+
+ensure-network:
+	@echo "🔧 Checking Docker network '$(NETWORK_NAME)'..."; \
+	if ! docker network ls --format '{{.Name}}' | grep -q "^$(NETWORK_NAME)$$"; then \
+		docker network create $(NETWORK_NAME) >/dev/null; \
+		echo "✅ Network '$(NETWORK_NAME)' created."; \
+	else \
+		echo "✅ Network '$(NETWORK_NAME)' already exists."; \
+	fi
+
+database-init: ensure-network
+	docker compose -f docker-compose.yml --env-file .env.example up --build -d
 	@echo "✅ Database containers started."
 
 database-down:
-	docker-compose -f docker-compose.yml --env-file .env.example down > /dev/null 2>&1
+	docker compose -f docker-compose.yml --env-file .env.example down > /dev/null 2>&1
 	@echo "🛑 Database containers stopped."
 
 database-wait:
