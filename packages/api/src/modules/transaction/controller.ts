@@ -25,6 +25,7 @@ import { In, Not } from 'typeorm';
 import { IAddressBookService } from '../addressBook/types';
 import { NotificationService } from '../notification/services';
 import { INotificationService } from '../notification/types';
+import App from '@src/server/app';
 import { PredicateService } from '../predicate/services';
 import { UserService } from '../user/service';
 import { WorkspaceService } from '../workspace/services';
@@ -744,15 +745,48 @@ export class TransactionController {
     params: { id },
   }: ICloseTransactionRequest) {
     try {
+      // Get transaction with predicate to invalidate cache
+      const transaction = await Transaction.findOne({
+        where: { id },
+        relations: ['predicate'],
+      });
+
       const response = await this.transactionService.update(id, {
         status: TransactionStatus.SUCCESS,
         sendTime: new Date(),
         gasUsed,
         resume: transactionResult,
       });
+
+      // Invalidate balance cache after closing transaction
+      if (transaction?.predicate?.predicateAddress) {
+        this.invalidatePredicateBalanceCache(
+          transaction.predicate.predicateAddress,
+        ).catch(err =>
+          console.error('[TX_CLOSE] Failed to invalidate cache:', err),
+        );
+      }
+
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
+    }
+  }
+
+  /**
+   * Invalidate balance cache for a predicate
+   */
+  private async invalidatePredicateBalanceCache(
+    predicateAddress: string,
+  ): Promise<void> {
+    try {
+      const balanceCache = App.getInstance()._balanceCache;
+      await balanceCache.invalidate(predicateAddress);
+      console.log(
+        `[TX_CACHE] Balance cache invalidated for ${predicateAddress.slice(0, 12)}...`,
+      );
+    } catch (error) {
+      console.error('[TX_CACHE] Failed to invalidate balance cache:', error);
     }
   }
 

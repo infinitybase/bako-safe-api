@@ -92,4 +92,57 @@ export class RedisWriteClient {
       console.error('[CACHE_SESSIONS_REMOVE_ERROR]', e, keys);
     }
   }
+
+  /**
+   * Set a key with custom TTL (in seconds)
+   */
+  static async setWithTTL(key: string, value: string | number, ttlSeconds: number) {
+    try {
+      if (RedisWriteClient.isMock) {
+        return RedisMockStore.set(key, String(value));
+      }
+
+      await RedisWriteClient.client.set(key, value, {
+        EX: ttlSeconds,
+      });
+    } catch (e) {
+      console.error('[CACHE_SET_WITH_TTL_ERROR]', e, key);
+    }
+  }
+
+  /**
+   * Delete keys matching a pattern using SCAN
+   */
+  static async delByPattern(pattern: string): Promise<number> {
+    try {
+      if (RedisWriteClient.isMock) {
+        const keys = await RedisMockStore.scan(pattern);
+        for (const key of keys.keys()) {
+          await RedisMockStore.set(key, undefined);
+        }
+        return keys.size;
+      }
+
+      let deletedCount = 0;
+      let cursor = 0;
+
+      do {
+        const result = await RedisWriteClient.client.scan(cursor, {
+          MATCH: pattern,
+          COUNT: 100,
+        });
+        cursor = result.cursor;
+
+        if (result.keys.length > 0) {
+          await RedisWriteClient.client.del(result.keys);
+          deletedCount += result.keys.length;
+        }
+      } while (cursor !== 0);
+
+      return deletedCount;
+    } catch (e) {
+      console.error('[CACHE_DEL_BY_PATTERN_ERROR]', e, pattern);
+      return 0;
+    }
+  }
 }

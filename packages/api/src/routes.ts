@@ -13,6 +13,7 @@ import rampTransactions from '@modules/rampTransactions/routes';
 import bridge from '@src/modules/bridge/routes';
 import transactions from '@modules/transaction/routes';
 import { webhookRouters } from './modules/webhook/routes';
+import { internalRouter } from './modules/internal/routes';
 import workspace from '@modules/workspace/routes';
 // import debugPprof from '@modules/debugPprof/routes';
 import externalRoute from '@modules/external/routes';
@@ -36,6 +37,7 @@ router.use('/ramp-transactions/meld', meld);
 router.use('/ramp-transactions', rampTransactions);
 router.use('/bridge', bridge);
 router.use('/webhooks', webhookRouters);
+router.use('/internal', internalRouter);
 
 // ping route
 //

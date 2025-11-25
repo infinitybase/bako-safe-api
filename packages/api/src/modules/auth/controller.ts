@@ -13,7 +13,45 @@ import { IAuthService, ICreateRecoverCodeRequest, ISignInRequest } from './types
 import App from '@src/server/app';
 import { Request } from 'express';
 import { FuelProvider } from '@src/utils';
+import { cacheConfig, CacheMetrics } from '@src/config/cache';
+import { Predicate } from '@src/models';
+
 const { FUEL_PROVIDER } = process.env;
+
+/**
+ * Simple concurrency limiter for warmup requests
+ */
+function createConcurrencyLimiter(concurrency: number) {
+  let running = 0;
+  const queue: (() => void)[] = [];
+
+  const next = () => {
+    if (running < concurrency && queue.length > 0) {
+      running++;
+      const fn = queue.shift();
+      fn?.();
+    }
+  };
+
+  return async <T>(fn: () => Promise<T>): Promise<T> => {
+    return new Promise((resolve, reject) => {
+      const run = async () => {
+        try {
+          const result = await fn();
+          resolve(result);
+        } catch (err) {
+          reject(err);
+        } finally {
+          running--;
+          next();
+        }
+      };
+
+      queue.push(run);
+      next();
+    });
+  };
+}
 
 export class AuthController {
   private authService: IAuthService;
@@ -41,11 +79,87 @@ export class AuthController {
         userToken.accessToken,
         userToken,
       );
+
+      // Trigger warm-up in background (don't await)
+      if (cacheConfig.warmup.enabled) {
+        this.warmupUserBalances(signin.user_id, signin.network?.url).catch(
+          err => console.error('[WARMUP] Failed:', err),
+        );
+      }
+
       return successful(signin, Responses.Ok);
     } catch (e) {
       if (e instanceof GeneralError) throw e;
 
       return error(e.error, e.statusCode);
+    }
+  }
+
+  /**
+   * Pre-warm balance cache for all user's predicates
+   * Runs in background to not block login response
+   */
+  private async warmupUserBalances(
+    userId: string,
+    networkUrl?: string,
+  ): Promise<void> {
+    if (!userId || !networkUrl) {
+      console.log('[WARMUP] Skipped: missing userId or networkUrl');
+      return;
+    }
+
+    try {
+      console.time(`[WARMUP] User ${userId.slice(0, 8)}...`);
+
+      // Get user's predicates using query builder for ManyToMany relation
+      const predicates = await Predicate.createQueryBuilder('predicate')
+        .innerJoin('predicate.members', 'member')
+        .where('member.id = :userId', { userId })
+        .select(['predicate.predicateAddress'])
+        .getMany();
+
+      if (predicates.length === 0) {
+        console.log(`[WARMUP] No predicates found for user ${userId.slice(0, 8)}...`);
+        return;
+      }
+
+      console.log(
+        `[WARMUP] Found ${predicates.length} predicates, fetching balances...`,
+      );
+
+      // Get provider
+      const provider = await FuelProvider.create(networkUrl);
+
+      // Use rate limiting for concurrent requests
+      const limit = createConcurrencyLimiter(cacheConfig.warmup.concurrency);
+
+      const results = await Promise.allSettled(
+        predicates.map(predicate =>
+          limit(async () => {
+            try {
+              await provider.getBalances(predicate.predicateAddress);
+              return { success: true, address: predicate.predicateAddress };
+            } catch (err) {
+              return {
+                success: false,
+                address: predicate.predicateAddress,
+                error: err instanceof Error ? err.message : 'Unknown error',
+              };
+            }
+          }),
+        ),
+      );
+
+      const successCount = results.filter(
+        r => r.status === 'fulfilled' && r.value.success,
+      ).length;
+
+      CacheMetrics.warmup(successCount);
+
+      console.timeEnd(`[WARMUP] User ${userId.slice(0, 8)}...`);
+      console.log(`[WARMUP] Success: ${successCount}/${predicates.length}`);
+    } catch (error) {
+      console.error('[WARMUP] Error:', error);
     }
   }
 

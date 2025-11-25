@@ -8,7 +8,7 @@ import { router } from '@src/routes';
 import { isDevMode } from '@src/utils';
 
 import { handleErrors } from '@middlewares/index';
-import { QuoteStorage, SessionStorage } from './storage';
+import { QuoteStorage, SessionStorage, BalanceCache } from './storage';
 import Monitoring from './monitoring';
 import Bootstrap from './bootstrap';
 import { RedisWriteClient, RedisReadClient, FuelProvider } from '@src/utils';
@@ -22,6 +22,7 @@ class App {
   private sessionCache: SessionStorage;
   private quoteCache: QuoteStorage;
   private rigCache: Promise<RigInstance>;
+  private balanceCache: BalanceCache;
 
   protected constructor() {
     this.app = Express();
@@ -38,6 +39,7 @@ class App {
     this.sessionCache = SessionStorage.start();
     this.quoteCache = QuoteStorage.start();
     this.rigCache = RigInstance.start();
+    this.balanceCache = BalanceCache.start();
   }
 
   private initMiddlewares() {
@@ -80,6 +82,10 @@ class App {
     return this.rigCache;
   }
 
+  get _balanceCache() {
+    return this.balanceCache;
+  }
+
   static stop() {
     return Bootstrap.stop()
       .then(() => RedisWriteClient.stop())
@@ -88,6 +94,7 @@ class App {
       .then(() => SessionStorage.stop())
       .then(() => QuoteStorage.stop())
       .then(() => RigInstance.stop())
+      .then(() => BalanceCache.stop())
       .then(() => {
         App.instance = undefined;
       })

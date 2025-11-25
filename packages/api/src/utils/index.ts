@@ -15,3 +15,4 @@ export * from './formatAssets';
 export * from './redis/RedisReadClient';
 export * from './redis/RedisWriteClient';
 export * from './FuelProvider';
+export * from './ProviderWithCache';

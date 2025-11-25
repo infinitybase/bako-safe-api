@@ -19,6 +19,7 @@ import { IOrdination, setOrdination } from '@utils/ordination';
 import { IPagination, Pagination, PaginationParams } from '@utils/pagination';
 
 import { FuelProvider } from '@src/utils';
+import App from '@src/server/app';
 import { NotificationService } from '../notification/services';
 import { TransactionPagination, TransactionPaginationParams } from './pagination';
 import {
@@ -646,6 +647,11 @@ export class TransactionService implements ITransactionService {
 
       await new NotificationService().transactionSuccess(id, network);
 
+      // Invalidate balance cache after successful transaction
+      this.invalidatePredicateBalanceCache(predicate.predicateAddress).catch(
+        err => console.error('[TX_SUCCESS] Failed to invalidate cache:', err),
+      );
+
       return await this.update(id, _api_transaction);
     } catch (e) {
       console.log(e);
@@ -754,5 +760,24 @@ export class TransactionService implements ITransactionService {
       .innerJoin('t.createdBy', 'u');
 
     return Pagination.create(queryBuilder).paginate(this._pagination);
+  }
+
+  /**
+   * Invalidate balance cache for a predicate after transaction changes
+   * Called after successful transactions to ensure fresh balance data
+   */
+  private async invalidatePredicateBalanceCache(
+    predicateAddress: string,
+  ): Promise<void> {
+    try {
+      const balanceCache = App.getInstance()._balanceCache;
+      await balanceCache.invalidate(predicateAddress);
+      console.log(
+        `[TX_CACHE] Balance cache invalidated for ${predicateAddress.slice(0, 12)}...`,
+      );
+    } catch (error) {
+      // Don't throw - cache invalidation failure shouldn't break transaction flow
+      console.error('[TX_CACHE] Failed to invalidate balance cache:', error);
+    }
   }
 }

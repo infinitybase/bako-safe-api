@@ -83,4 +83,49 @@ export class RedisReadClient {
 
     return result;
   }
+
+  /**
+   * Get all keys matching a pattern (for debugging/stats)
+   */
+  static async keys(pattern: string): Promise<string[]> {
+    try {
+      if (RedisReadClient.isMock) {
+        const result = await RedisMockStore.scan(pattern);
+        return Array.from(result.keys());
+      }
+
+      const allKeys: string[] = [];
+      let cursor = 0;
+
+      do {
+        const result = await RedisReadClient.client.scan(cursor, {
+          MATCH: pattern,
+          COUNT: 100,
+        });
+        cursor = result.cursor;
+        allKeys.push(...result.keys);
+      } while (cursor !== 0);
+
+      return allKeys;
+    } catch (e) {
+      console.error('[CACHE_KEYS_ERROR]', e, pattern);
+      return [];
+    }
+  }
+
+  /**
+   * Get TTL of a key in seconds
+   */
+  static async ttl(key: string): Promise<number> {
+    try {
+      if (RedisReadClient.isMock) {
+        return -1; // Mock doesn't support TTL
+      }
+
+      return await RedisReadClient.client.ttl(key);
+    } catch (e) {
+      console.error('[CACHE_TTL_ERROR]', e, key);
+      return -1;
+    }
+  }
 }
