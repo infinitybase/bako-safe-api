@@ -26,7 +26,7 @@ import {
   subCoins,
 } from '@src/utils';
 import { IconUtils } from '@src/utils/icons';
-import { bn, Network, ZeroBytes32 } from 'fuels';
+import { bn, BN, Network, ZeroBytes32 } from 'fuels';
 import { UserService } from '../user/service';
 import { IPredicateOrdination, setOrdination } from './ordination';
 import {
@@ -573,53 +573,72 @@ export class PredicateService implements IPredicateService {
         coins: calculateReservedCoins(predicate.transactions),
       }));
 
+      // Otimização 1: Buscar quotes e assetsMap uma única vez
+      const { getAssetsMaps } = await import('@src/utils/assets');
+      const { fuelUnitAssets } = await getAssetsMaps();
+      const quotes = await App.getInstance()._quoteCache.getActiveQuotes();
+
+      // Função otimizada para calcular USD sem chamadas repetidas a cache
+      const calculateBalanceUSDOptimized = (
+        balances: { assetId: string; amount: BN }[],
+      ): number => {
+        let balanceUSD = 0;
+        for (const balance of balances) {
+          const units = fuelUnitAssets(network.chainId, balance.assetId);
+          const formattedAmount = balance.amount
+            .format({ units })
+            .replace(/,/g, '');
+          const priceUSD = quotes[balance.assetId] ?? 0;
+          balanceUSD += parseFloat(formattedAmount) * priceUSD;
+        }
+        return balanceUSD;
+      };
+
+      // Otimização 2: Paralelizar chamadas à blockchain
+      const predicateBalances = await Promise.all(
+        reservedCoins.map(async ({ coins, configurable, version }) => {
+          const instance = await this.instancePredicate(
+            configurable,
+            network.url,
+            version,
+          );
+
+          const balances = (await instance.getBalances()).balances.filter(a =>
+            a.amount.gt(0),
+          );
+          const assets =
+            reservedCoins.length > 0 ? subCoins(balances, coins) : balances;
+
+          const assetsWithoutNFT = assets.filter(({ amount, assetId }) => {
+            const hasFuelMapped = assetsMap[assetId];
+            const isOneUnit = amount.eq(1);
+            const isNFT = !hasFuelMapped && isOneUnit;
+
+            return !isNFT;
+          });
+
+          return assetsWithoutNFT;
+        }),
+      );
+
       const allocationMap = new Map<string, AssetAllocation>();
       let totalAmountInUSD = 0;
 
-      for (const { coins, configurable, version } of reservedCoins) {
-        const instance = await this.instancePredicate(
-          configurable,
-          network.url,
-          version,
-        );
-
-        const balances = (await instance.getBalances()).balances.filter(a =>
-          a.amount.gt(0),
-        );
-        const assets =
-          reservedCoins.length > 0 ? subCoins(balances, coins) : balances;
-
-        const assetsWithoutNFT = assets.filter(({ amount, assetId }) => {
-          const hasFuelMapped = assetsMap[assetId];
-          const isOneUnit = amount.eq(1);
-          const isNFT = !hasFuelMapped && isOneUnit;
-
-          return !isNFT;
-        });
-
-        // Calculate total balance
-        const totalBalance = await calculateBalanceUSD(
-          assetsWithoutNFT,
-          network.chainId,
-        );
-        const totalInNumber = parseFloat(totalBalance.replace(/,/g, ''));
-        totalAmountInUSD += totalInNumber;
-
-        // Calculate allocation
+      // Otimização 3: Processar todos os balances com cálculo otimizado
+      for (const assetsWithoutNFT of predicateBalances) {
+        // Calcular allocation sem chamadas redundantes
         for (const { assetId, amount } of assetsWithoutNFT) {
-          const usdBalance = await calculateBalanceUSD(
-            [{ assetId, amount }],
-            network.chainId,
-          );
-          const usdInNumber = parseFloat(usdBalance.replace(/,/g, ''));
+          const usdBalance = calculateBalanceUSDOptimized([{ assetId, amount }]);
+
+          totalAmountInUSD += usdBalance;
 
           const existingAllocation = allocationMap.get(assetId);
 
           const assetAllocation: AssetAllocation = {
             assetId,
             amountInUSD: existingAllocation
-              ? existingAllocation.amountInUSD + usdInNumber
-              : usdInNumber,
+              ? existingAllocation.amountInUSD + usdBalance
+              : usdBalance,
             amount: existingAllocation
               ? existingAllocation.amount.add(amount)
               : amount,
