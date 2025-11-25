@@ -6,10 +6,9 @@ const REFRESH_TIME = 60000 * 60; // 60 minutes
 const FUEL_PROVIDER =
   process.env.FUEL_PROVIDER || 'https://testnet.fuel.network/v1/graphql';
 
-// Provider options to disable Fuel SDK's internal cache (we use our own)
-const PROVIDER_OPTIONS: ProviderOptions = {
-  resourceCacheTTL: 0,
-};
+// Provider options - use default Fuel SDK cache settings
+// Our BalanceCache layer works on top of the SDK's cache
+const PROVIDER_OPTIONS: ProviderOptions = {};
 
 export class FuelProvider {
   private static instance?: FuelProvider;

@@ -132,11 +132,7 @@ export class ProviderWithCache extends Provider {
     url: string,
     options?: ProviderOptions,
   ): Promise<ProviderWithCache> {
-    const provider = new ProviderWithCache(url, {
-      ...options,
-      // Disable Fuel SDK's internal resource cache since we have our own
-      resourceCacheTTL: 0,
-    });
+    const provider = new ProviderWithCache(url, options);
 
     return provider;
   }
