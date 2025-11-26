@@ -1,6 +1,8 @@
 import { IQuote } from '@src/server/storage';
 import { fetchFuelAssets } from '@src/server/storage/fuelAssetsFetcher';
 import { Assets, NetworkFuel } from 'fuels';
+import { RedisReadClient } from './redis/RedisReadClient';
+import { RedisWriteClient } from './redis/RedisWriteClient';
 
 export type IAsset = {
   symbol: string;
@@ -32,17 +34,26 @@ export type Asset = {
 
 const blocklist = ['rsteth', 'rsusde', 're7lrt', 'amphreth'];
 
-// Cache para o resultado processado de getAssetsMaps
-interface AssetsMapsCache {
+// Redis key for assets cache
+const ASSETS_CACHE_KEY = 'assets:maps';
+const ASSETS_CACHE_TTL = 60 * 60; // 1 hour
+
+// Interface for data stored in Redis (without functions)
+interface AssetsMapsData {
   fuelAssetsList: Assets;
   QuotesMock: IQuote[];
   assets: IAsset[];
   assetsMapById: IAssetMapById;
   assetsMapBySymbol: IAssetMapBySymbol;
+}
+
+// Interface returned to callers (with functions)
+interface AssetsMapsCache extends AssetsMapsData {
   fuelUnitAssets: (chainId: number, assetId: string) => number;
 }
 
-let assetsMapsCache: AssetsMapsCache | null = null;
+// Local reference to fuelAssetsList for the function (lightweight)
+let localFuelAssetsList: Assets | null = null;
 
 export const fuelAssetsByChainId = (
   chainId: number,
@@ -152,12 +163,26 @@ const generateQuotesMock = (assetsMapBySymbol: IAssetMapBySymbol): IQuote[] => {
 };
 
 export const getAssetsMaps = async (): Promise<AssetsMapsCache> => {
-  // Retorna cache se já existir
-  if (assetsMapsCache) {
-    return assetsMapsCache;
+  // Try to get from Redis first
+  try {
+    const cached = await RedisReadClient.get(ASSETS_CACHE_KEY);
+    if (cached) {
+      const data: AssetsMapsData = JSON.parse(cached);
+      // Store locally for the function
+      localFuelAssetsList = data.fuelAssetsList;
+
+      const fuelUnitAssets = (chainId: number, assetId: string): number =>
+        handleFuelUnitAssets(data.fuelAssetsList, chainId, assetId);
+
+      return { ...data, fuelUnitAssets };
+    }
+  } catch (error) {
+    console.error('[AssetsCache] Error reading from Redis:', error);
   }
 
+  // Cache miss - fetch from source
   const fuelAssetsList = await fetchFuelAssets();
+  localFuelAssetsList = fuelAssetsList;
 
   const fuelUnitAssets = (chainId: number, assetId: string): number =>
     handleFuelUnitAssets(fuelAssetsList, chainId, assetId);
@@ -169,20 +194,31 @@ export const getAssetsMaps = async (): Promise<AssetsMapsCache> => {
   const assetsMapBySymbol = createAssetsMapBySymbol(fuelAssets);
   const QuotesMock = generateQuotesMock(assetsMapBySymbol);
 
-  // Armazena no cache
-  assetsMapsCache = {
+  // Data to store in Redis (without functions)
+  const dataToCache: AssetsMapsData = {
     fuelAssetsList,
     QuotesMock,
     assets,
     assetsMapById,
     assetsMapBySymbol,
-    fuelUnitAssets,
   };
 
-  return assetsMapsCache;
+  // Store in Redis (async, don't block)
+  RedisWriteClient.setWithTTL(
+    ASSETS_CACHE_KEY,
+    JSON.stringify(dataToCache),
+    ASSETS_CACHE_TTL,
+  ).catch(err => console.error('[AssetsCache] Error writing to Redis:', err));
+
+  return { ...dataToCache, fuelUnitAssets };
 };
 
 // Função para limpar o cache (útil para testes ou refresh manual)
-export const clearAssetsMapsCache = () => {
-  assetsMapsCache = null;
+export const clearAssetsMapsCache = async () => {
+  localFuelAssetsList = null;
+  try {
+    await RedisWriteClient.del([ASSETS_CACHE_KEY]);
+  } catch (error) {
+    console.error('[AssetsCache] Error clearing Redis cache:', error);
+  }
 };
