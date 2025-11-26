@@ -3,17 +3,19 @@ import { ProviderWithCache } from './ProviderWithCache';
 import { cacheConfig } from '@src/config/cache';
 
 const REFRESH_TIME = 60000 * 60; // 60 minutes
+const CACHE_CLEAR_INTERVAL = 60000 * 5; // 5 minutes - clear internal SDK caches
 const FUEL_PROVIDER =
   process.env.FUEL_PROVIDER || 'https://testnet.fuel.network/v1/graphql';
 
-// Provider options - use default Fuel SDK cache settings
-// Our BalanceCache layer works on top of the SDK's cache
+// Provider options - use default Fuel SDK settings
+// Internal caches are cleared periodically to free memory
 const PROVIDER_OPTIONS: ProviderOptions = {};
 
 export class FuelProvider {
   private static instance?: FuelProvider;
   private providers: Record<string, Provider | ProviderWithCache>;
-  private intervalRef?: NodeJS.Timeout;
+  private resetIntervalRef?: NodeJS.Timeout;
+  private cacheCleanIntervalRef?: NodeJS.Timeout;
 
   private constructor() {
     this.providers = {};
@@ -47,15 +49,61 @@ export class FuelProvider {
     return provider;
   }
 
+  /**
+   * Get current provider stats
+   */
+  static getStats(): { size: number; urls: string[] } {
+    if (!FuelProvider.instance) {
+      return { size: 0, urls: [] };
+    }
+    const urls = Object.keys(FuelProvider.instance.providers);
+    return {
+      size: urls.length,
+      urls,
+    };
+  }
+
   async reset(): Promise<void> {
-    const providers: Record<string, Provider | ProviderWithCache> = {};
+    // Clear static caches from Fuel SDK
+    Provider.clearChainAndNodeCaches();
+
+    this.providers = {};
 
     // Use ProviderWithCache for default provider when cache is enabled
-    providers[FUEL_PROVIDER] = cacheConfig.enabled
+    const defaultProvider = cacheConfig.enabled
       ? new ProviderWithCache(FUEL_PROVIDER, PROVIDER_OPTIONS)
       : new Provider(FUEL_PROVIDER, PROVIDER_OPTIONS);
 
-    this.providers = providers;
+    this.providers[FUEL_PROVIDER] = defaultProvider;
+    console.log('[FuelProvider] Reset - cleared all providers and SDK caches');
+  }
+
+  /**
+   * Clear internal caches of all providers without removing them
+   * Called periodically to free memory from ResourceCache
+   */
+  clearInternalCaches(): void {
+    for (const [url, provider] of Object.entries(this.providers)) {
+      try {
+        if (provider.cache) {
+          provider.cache.clear();
+        }
+      } catch (error) {
+        console.error(`[FuelProvider] Error clearing cache for ${url.slice(0, 30)}:`, error);
+      }
+    }
+    // Also clear static SDK caches
+    Provider.clearChainAndNodeCaches();
+    console.log('[FuelProvider] Cleared internal SDK caches');
+  }
+
+  /**
+   * Manually trigger cache cleanup
+   */
+  static clearCaches(): void {
+    if (FuelProvider.instance) {
+      FuelProvider.instance.clearInternalCaches();
+    }
   }
 
   static async start(): Promise<void> {
@@ -64,15 +112,28 @@ export class FuelProvider {
       FuelProvider.instance = instance;
       await instance.reset();
 
-      instance.intervalRef = setInterval(() => {
+      // Reset providers every 60 minutes
+      instance.resetIntervalRef = setInterval(() => {
         instance.reset();
       }, REFRESH_TIME);
+
+      // Clear internal caches every 5 minutes
+      instance.cacheCleanIntervalRef = setInterval(() => {
+        instance.clearInternalCaches();
+      }, CACHE_CLEAR_INTERVAL);
+
+      console.log(
+        `[FuelProvider] Started (cache clear every ${CACHE_CLEAR_INTERVAL / 60000}min)`,
+      );
     }
   }
 
   static stop(): void {
-    if (FuelProvider.instance?.intervalRef) {
-      clearInterval(FuelProvider.instance.intervalRef);
+    if (FuelProvider.instance?.resetIntervalRef) {
+      clearInterval(FuelProvider.instance.resetIntervalRef);
+    }
+    if (FuelProvider.instance?.cacheCleanIntervalRef) {
+      clearInterval(FuelProvider.instance.cacheCleanIntervalRef);
     }
   }
 }
