@@ -83,27 +83,49 @@ export class TransactionController {
       const predicate =
         predicateId && predicateId.length > 0 ? predicateId[0] : undefined;
 
+      // Use chainId for filtering (faster than URL regex, uses index)
+      const chainId = String(network.chainId);
+
       if (!predicate) {
-        const qb = Transaction.createQueryBuilder('t')
-          .innerJoinAndSelect('t.predicate', 'pred')
+        // Query 1: Get count of pending transactions (fast, no data transfer)
+        const countQb = Transaction.createQueryBuilder('t')
+          .innerJoin('t.predicate', 'pred')
           .innerJoin('pred.workspace', 'wks', 'wks.id = :workspaceId', {
             workspaceId: workspace.id,
           })
-          .addSelect(['t.status', 't.resume'])
           .where('t.status = :status', {
             status: TransactionStatus.AWAIT_REQUIREMENTS,
           })
-          .andWhere(
-            // TODO: On release to mainnet we need to remove this condition
-            `regexp_replace(t.network->>'url', '^https?://[^@]+@', 'https://') = :network`,
+          .andWhere(`t.network->>'chainId' = :chainId`, { chainId });
+
+        const ofUser = await countQb.getCount();
+
+        // Early return if no pending transactions
+        if (ofUser === 0) {
+          return successful(
             {
-              network: network.url.replace(/^https?:\/\/[^@]+@/, 'https://'),
+              ofUser: 0,
+              transactionsBlocked: false,
+              pendingSignature: false,
             },
+            Responses.Ok,
           );
+        }
 
-        const transactions = await qb.getMany();
+        // Query 2: Check if user has pending signature (only fetch resume)
+        const pendingSignatureQb = Transaction.createQueryBuilder('t')
+          .select(['t.id', 't.resume'])
+          .innerJoin('t.predicate', 'pred')
+          .innerJoin('pred.workspace', 'wks', 'wks.id = :workspaceId', {
+            workspaceId: workspace.id,
+          })
+          .where('t.status = :status', {
+            status: TransactionStatus.AWAIT_REQUIREMENTS,
+          })
+          .andWhere(`t.network->>'chainId' = :chainId`, { chainId });
 
-        const ofUser = transactions.length;
+        const transactions = await pendingSignatureQb.getMany();
+
         const pendingSignature = transactions.some(tx =>
           tx.resume?.witnesses?.some(
             w => w.account === user.address && !w.signature,
@@ -120,19 +142,14 @@ export class TransactionController {
         );
       }
 
+      // With predicateId filter
       const qb = Transaction.createQueryBuilder('t')
-        .addSelect(['t.resume'])
+        .select(['t.id', 't.resume'])
         .where('t.status = :status', {
           status: TransactionStatus.AWAIT_REQUIREMENTS,
         })
         .andWhere('t.predicateId = :predicate', { predicate })
-        .andWhere(
-          // TODO: On release to mainnet we need to remove this condition
-          `regexp_replace(t.network->>'url', '^https?://[^@]+@', 'https://') = :network`,
-          {
-            network: network.url.replace(/^https?:\/\/[^@]+@/, 'https://'),
-          },
-        );
+        .andWhere(`t.network->>'chainId' = :chainId`, { chainId });
 
       const transactions = await qb.getMany();
 
