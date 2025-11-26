@@ -79,6 +79,7 @@ export interface AssetAllocation {
 export interface IPredicateAllocation {
   data: AssetAllocation[];
   totalAmountInUSD: number;
+  predicates: Record<string, number>;
 }
 
 export interface IPredicateAllocationParams {

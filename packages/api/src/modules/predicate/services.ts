@@ -547,6 +547,7 @@ export class PredicateService implements IPredicateService {
     try {
       const query = Predicate.createQueryBuilder('p')
         .leftJoin('p.owner', 'owner')
+        .leftJoin('p.members', 'members')
         .leftJoin(
           'p.transactions',
           't',
@@ -559,7 +560,9 @@ export class PredicateService implements IPredicateService {
             network: network.url.replace(/^https?:\/\/[^@]+@/, 'https://'),
           },
         )
-        .where('owner.id = :userId', { userId: user.id })
+        .where('owner.id = :userId OR members.id = :userId', {
+          userId: user.id,
+        })
         .addSelect(['p.id', 'p.configurable', 't.txData']);
 
       if (predicateId) {
@@ -568,6 +571,7 @@ export class PredicateService implements IPredicateService {
 
       const predicates = await query.getMany();
       const reservedCoins = predicates.map(predicate => ({
+        predicateId: predicate.id,
         configurable: predicate.configurable,
         version: predicate.version,
         coins: calculateReservedCoins(predicate.transactions),
@@ -596,7 +600,7 @@ export class PredicateService implements IPredicateService {
 
       // Otimização 2: Paralelizar chamadas à blockchain
       const predicateBalances = await Promise.all(
-        reservedCoins.map(async ({ coins, configurable, version }) => {
+        reservedCoins.map(async ({ predicateId, coins, configurable, version }) => {
           const instance = await this.instancePredicate(
             configurable,
             network.url,
@@ -617,7 +621,10 @@ export class PredicateService implements IPredicateService {
             return !isNFT;
           });
 
-          return assetsWithoutNFT;
+          return {
+            predicateId,
+            assets: assetsWithoutNFT,
+          };
         }),
       );
 
@@ -625,12 +632,18 @@ export class PredicateService implements IPredicateService {
       let totalAmountInUSD = 0;
 
       // Otimização 3: Processar todos os balances com cálculo otimizado
-      for (const assetsWithoutNFT of predicateBalances) {
+      const predicatesMap: Record<string, number> = {};
+
+      for (const { predicateId, assets: assetsWithoutNFT } of predicateBalances) {
+        // Initialize predicate map if not present
+        if (!predicatesMap[predicateId]) predicatesMap[predicateId] = 0;
+
         // Calcular allocation sem chamadas redundantes
         for (const { assetId, amount } of assetsWithoutNFT) {
           const usdBalance = calculateBalanceUSDOptimized([{ assetId, amount }]);
 
           totalAmountInUSD += usdBalance;
+          predicatesMap[predicateId] += usdBalance;
 
           const existingAllocation = allocationMap.get(assetId);
 
@@ -692,6 +705,7 @@ export class PredicateService implements IPredicateService {
       return {
         data: finalData,
         totalAmountInUSD,
+        predicates: predicatesMap,
       };
     } catch (error) {
       throw new Internal({
