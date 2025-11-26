@@ -647,11 +647,11 @@ export class TransactionService implements ITransactionService {
 
       await new NotificationService().transactionSuccess(id, network);
 
-      // Invalidate balance cache after successful transaction (granular by chainId)
-      this.invalidatePredicateBalanceCache(
+      // Invalidate caches after successful transaction (granular by chainId)
+      this.invalidatePredicateCaches(
         predicate.predicateAddress,
         transaction.network?.chainId,
-      ).catch(err => console.error('[TX_SUCCESS] Failed to invalidate cache:', err));
+      ).catch(err => console.error('[TX_SUCCESS] Failed to invalidate caches:', err));
 
       return await this.update(id, _api_transaction);
     } catch (e) {
@@ -679,16 +679,38 @@ export class TransactionService implements ITransactionService {
     try {
       let _transactions: ITransactionResponse[] = [];
 
+      const provider = await FuelProvider.create(providerUrl);
+      const chainId = await FuelProvider.getChainId(providerUrl);
+      const transactionCache = App.getInstance()._transactionCache;
+
       for await (const predicate of predicates) {
         const address = Address.fromString(predicate.predicateAddress).toB256();
-        const provider = await FuelProvider.create(providerUrl);
 
-        // TODO: change this to use pagination and order DESC
+        // Check cache with refresh status
+        const cacheResult = await transactionCache.getWithRefreshCheck(
+          address,
+          chainId,
+        );
+
+        if (!cacheResult.needsIncrementalFetch) {
+          // Cache is fresh, use it directly
+          _transactions = [
+            ..._transactions,
+            ...(cacheResult.cachedTransactions as unknown as ITransactionResponse[]),
+          ];
+          continue;
+        }
+
+        // Need to fetch from blockchain (full or incremental)
+        const fetchLimit = cacheResult.cachedTransactions.length > 0
+          ? transactionCache.getIncrementalFetchLimit() // Incremental: fetch only recent
+          : 57; // Full fetch
+
         const { transactions } = await getTransactionsSummaries({
           provider,
           filters: {
             owner: address,
-            first: 57,
+            first: fetchLimit,
           },
         });
 
@@ -697,14 +719,32 @@ export class TransactionService implements ITransactionService {
           .filter(tx => tx.isStatusSuccess)
           .filter(tx => tx.operations.some(op => op.to?.address === address));
 
-        // formatFueLTransactio needs to be async because of the request to get fuels tokens up to date and use them to get the network units
+        // Format transactions
         const formattedTransactions = await Promise.all(
           filteredTransactions.map(tx =>
             formatFuelTransaction(tx, predicate, provider),
           ),
         );
 
-        _transactions = [..._transactions, ...formattedTransactions];
+        // Merge with cached if incremental, otherwise use fresh data
+        let finalTransactions: ITransactionResponse[];
+        if (cacheResult.cachedTransactions.length > 0) {
+          // Incremental merge - cast to any to handle generic type
+          const cachedTxs = cacheResult.cachedTransactions as ITransactionResponse[];
+          finalTransactions = transactionCache.mergeTransactions(
+            cachedTxs,
+            formattedTransactions,
+            cacheResult.knownHashes,
+          );
+        } else {
+          // Full fetch
+          finalTransactions = formattedTransactions;
+        }
+
+        // Update cache
+        await transactionCache.set(address, finalTransactions, chainId);
+
+        _transactions = [..._transactions, ...finalTransactions];
       }
 
       return _transactions;
@@ -764,29 +804,32 @@ export class TransactionService implements ITransactionService {
   }
 
   /**
-   * Invalidate balance cache for a predicate after transaction changes
-   * Called after successful transactions to ensure fresh balance data
+   * Invalidate all caches for a predicate after transaction changes
+   * Called after successful transactions to ensure fresh data
    *
    * @param predicateAddress - The predicate address to invalidate
    * @param chainId - Optional chainId for granular invalidation (only invalidates that specific chain)
    */
-  private async invalidatePredicateBalanceCache(
+  private async invalidatePredicateCaches(
     predicateAddress: string,
     chainId?: number,
   ): Promise<void> {
+    const chainInfo = chainId ? ` chain:${chainId}` : ' all chains';
+    const addrShort = predicateAddress?.slice(0, 12);
+
     try {
+      // Invalidate balance cache
       const balanceCache = App.getInstance()._balanceCache;
       await balanceCache.invalidate(predicateAddress, chainId);
-      const chainInfo = chainId ? ` chain:${chainId}` : ' all chains';
-      console.log(
-        `[TX_CACHE] Balance cache invalidated for ${predicateAddress?.slice(
-          0,
-          12,
-        )}...${chainInfo}`,
-      );
+
+      // Invalidate transaction cache
+      const transactionCache = App.getInstance()._transactionCache;
+      await transactionCache.invalidate(predicateAddress, chainId);
+
+      console.log(`[TX_CACHE] Caches invalidated for ${addrShort}...${chainInfo}`);
     } catch (error) {
       // Don't throw - cache invalidation failure shouldn't break transaction flow
-      console.error('[TX_CACHE] Failed to invalidate balance cache:', error);
+      console.error('[TX_CACHE] Failed to invalidate caches:', error);
     }
   }
 }

@@ -758,13 +758,13 @@ export class TransactionController {
         resume: transactionResult,
       });
 
-      // Invalidate balance cache after closing transaction (granular by chainId)
+      // Invalidate caches after closing transaction (granular by chainId)
       if (transaction?.predicate?.predicateAddress) {
-        this.invalidatePredicateBalanceCache(
+        this.invalidatePredicateCaches(
           transaction.predicate.predicateAddress,
           transaction.network?.chainId,
         ).catch(err =>
-          console.error('[TX_CLOSE] Failed to invalidate cache:', err),
+          console.error('[TX_CLOSE] Failed to invalidate caches:', err),
         );
       }
 
@@ -775,27 +775,30 @@ export class TransactionController {
   }
 
   /**
-   * Invalidate balance cache for a predicate
+   * Invalidate all caches for a predicate
    *
    * @param predicateAddress - The predicate address to invalidate
    * @param chainId - Optional chainId for granular invalidation (only invalidates that specific chain)
    */
-  private async invalidatePredicateBalanceCache(
+  private async invalidatePredicateCaches(
     predicateAddress: string,
     chainId?: number,
   ): Promise<void> {
+    const chainInfo = chainId ? ` chain:${chainId}` : ' all chains';
+    const addrShort = predicateAddress?.slice(0, 12);
+
     try {
+      // Invalidate balance cache
       const balanceCache = App.getInstance()._balanceCache;
       await balanceCache.invalidate(predicateAddress, chainId);
-      const chainInfo = chainId ? ` chain:${chainId}` : ' all chains';
-      console.log(
-        `[TX_CACHE] Balance cache invalidated for ${predicateAddress?.slice(
-          0,
-          12,
-        )}...${chainInfo}`,
-      );
+
+      // Invalidate transaction cache
+      const transactionCache = App.getInstance()._transactionCache;
+      await transactionCache.invalidate(predicateAddress, chainId);
+
+      console.log(`[TX_CACHE] Caches invalidated for ${addrShort}...${chainInfo}`);
     } catch (error) {
-      console.error('[TX_CACHE] Failed to invalidate balance cache:', error);
+      console.error('[TX_CACHE] Failed to invalidate caches:', error);
     }
   }
 
