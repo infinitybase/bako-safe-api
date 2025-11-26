@@ -393,9 +393,9 @@ export class UserController {
 
   async changeNetwork({ user, body }: IChangenetworkRequest) {
     const { network } = body;
-    const result = await TokenUtils.changeNetwork(user.id, network);
+    const updatedNetwork = await TokenUtils.changeNetwork(user.id, network);
 
-    return successful(!!result, Responses.Ok);
+    return successful(updatedNetwork, Responses.Ok);
   }
 
   async listAll(req: IListRequest) {

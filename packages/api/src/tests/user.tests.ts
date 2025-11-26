@@ -8,11 +8,28 @@ import { TestEnvironment } from './utils/Setup';
 
 test('User Endpoints', async t => {
   const { node } = await generateNode();
-  const { app, users, close, predicates } = await TestEnvironment.init(2, 1, node);
+  const { app, users, close, predicates, network } = await TestEnvironment.init(2, 1, node);
 
   t.after(async () => {
     await close();
   });
+
+  await t.test(
+    'POST /user/select-network should return network object with url and chainId',
+    async () => {
+      const res = await request(app)
+        .post('/user/select-network')
+        .set('Authorization', users[0].token)
+        .set('signeraddress', users[0].payload.address)
+        .send({ network: network.url });
+
+      assert.equal(res.status, 200);
+      assert.ok('url' in res.body, 'Response should contain url');
+      assert.ok('chainId' in res.body, 'Response should contain chainId');
+      assert.equal(typeof res.body.url, 'string');
+      assert.equal(typeof res.body.chainId, 'number');
+    },
+  );
 
   await t.test('PUT /user/:id should update the entry nickname', async () => {
     const newName = `${new Date().getTime()} - Update user test`;
