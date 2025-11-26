@@ -56,6 +56,51 @@ test('User Endpoints', async t => {
     },
   );
 
+  await t.test(
+    'GET /user/transactions should accept status query param',
+    async () => {
+      const res = await request(app)
+        .get('/user/transactions')
+        .query({ status: ['await_requirements', 'pending_sender'] })
+        .set('Authorization', users[0].token)
+        .set('signeraddress', users[0].payload.address);
+
+      assert.equal(res.status, 200);
+      assert.ok('data' in res.body);
+      assert.ok(Array.isArray(res.body.data));
+    },
+  );
+
+  await t.test(
+    'GET /user/transactions should accept type query param',
+    async () => {
+      const res = await request(app)
+        .get('/user/transactions')
+        .query({ type: 'DEPOSIT' })
+        .set('Authorization', users[0].token)
+        .set('signeraddress', users[0].payload.address);
+
+      assert.equal(res.status, 200);
+      assert.ok('data' in res.body);
+      assert.ok(Array.isArray(res.body.data));
+    },
+  );
+
+  await t.test(
+    'GET /user/transactions should accept both status and type query params',
+    async () => {
+      const res = await request(app)
+        .get('/user/transactions')
+        .query({ status: ['success'], type: 'TRANSACTION_SCRIPT' })
+        .set('Authorization', users[0].token)
+        .set('signeraddress', users[0].payload.address);
+
+      assert.equal(res.status, 200);
+      assert.ok('data' in res.body);
+      assert.ok(Array.isArray(res.body.data));
+    },
+  );
+
   await t.test('GET /user/latest/tokens should get token usd amounts', async () => {
     const res = await request(app)
       .get('/user/latest/tokens')
