@@ -15,8 +15,12 @@ import { Request } from 'express';
 import { FuelProvider } from '@src/utils';
 import { cacheConfig, CacheMetrics } from '@src/config/cache';
 import { Predicate } from '@src/models';
+import { networksByChainId } from '@src/constants/networks';
 
 const { FUEL_PROVIDER } = process.env;
+
+// All networks to warmup on login
+const WARMUP_NETWORKS = Object.values(networksByChainId);
 
 /**
  * Simple concurrency limiter for warmup requests
@@ -234,11 +238,15 @@ export class AuthController {
         },
       });
 
-      // Trigger warm-up early (when code is generated, before user signs)
-      // This way cache is ready when user completes login
+      // Trigger warm-up early for ALL networks (when code is generated, before user signs)
+      // This way cache is ready when user completes login, regardless of which network they use
       if (cacheConfig.warmup.enabled) {
-        this.warmupUserBalances(owner.id, provider.url).catch(err =>
-          console.error('[WARMUP] Failed:', err),
+        Promise.all(
+          WARMUP_NETWORKS.map(networkUrl =>
+            this.warmupUserBalances(owner.id, networkUrl).catch(err =>
+              console.error(`[WARMUP] Failed for ${networkUrl}:`, err),
+            ),
+          ),
         );
       }
 
