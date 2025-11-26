@@ -20,6 +20,8 @@ export const cacheConfig = {
   warmup: {
     enabled: process.env.WARMUP_ENABLED !== 'false', // enabled by default
     concurrency: parseInt(process.env.WARMUP_CONCURRENCY || '5', 10),
+    maxPredicates: parseInt(process.env.WARMUP_MAX_PREDICATES || '20', 10), // Limit predicates per warmup
+    skipIfCached: process.env.WARMUP_SKIP_CACHED !== 'false', // Skip if already cached
   },
 
   // Redis key prefixes

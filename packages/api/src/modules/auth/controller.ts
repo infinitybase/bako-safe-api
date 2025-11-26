@@ -96,8 +96,14 @@ export class AuthController {
   }
 
   /**
-   * Pre-warm balance cache for all user's predicates
+   * Pre-warm balance cache for user's most recently used predicates
    * Runs in background to not block login response
+   *
+   * Optimizations:
+   * - Orders by updatedAt (most recently used first)
+   * - Limits to maxPredicates (default 20)
+   * - Skips predicates already in cache
+   * - Uses global chainId cache
    */
   private async warmupUserBalances(
     userId: string,
@@ -109,23 +115,49 @@ export class AuthController {
     }
 
     try {
-      console.time(`[WARMUP] User ${userId.slice(0, 8)}...`);
+      const startTime = Date.now();
+      const userIdShort = userId.slice(0, 8);
 
-      // Get user's predicates using query builder for ManyToMany relation
+      // Get chainId from global cache (avoids extra RPC call)
+      const chainId = await FuelProvider.getChainId(networkUrl);
+
+      // Get user's predicates ordered by most recently used, limited
       const predicates = await Predicate.createQueryBuilder('predicate')
         .innerJoin('predicate.members', 'member')
         .where('member.id = :userId', { userId })
         .select(['predicate.predicateAddress'])
+        .orderBy('predicate.updatedAt', 'DESC')
+        .limit(cacheConfig.warmup.maxPredicates)
         .getMany();
 
       if (predicates.length === 0) {
-        console.log(`[WARMUP] No predicates found for user ${userId.slice(0, 8)}...`);
+        console.log(`[WARMUP] No predicates found for user ${userIdShort}...`);
         return;
       }
 
-      console.log(
-        `[WARMUP] Found ${predicates.length} predicates, fetching balances...`,
-      );
+      const addresses = predicates.map(p => p.predicateAddress);
+
+      // Filter out already cached predicates (if skipIfCached is enabled)
+      let addressesToWarmup = addresses;
+      if (cacheConfig.warmup.skipIfCached) {
+        const balanceCache = App.getInstance()._balanceCache;
+        addressesToWarmup = await balanceCache.filterUncached(addresses, chainId);
+
+        if (addressesToWarmup.length === 0) {
+          console.log(
+            `[WARMUP] User ${userIdShort}: All ${addresses.length} predicates already cached`,
+          );
+          return;
+        }
+
+        console.log(
+          `[WARMUP] User ${userIdShort}: ${addressesToWarmup.length}/${addresses.length} need warming`,
+        );
+      } else {
+        console.log(
+          `[WARMUP] User ${userIdShort}: Warming ${addresses.length} predicates`,
+        );
+      }
 
       // Get provider
       const provider = await FuelProvider.create(networkUrl);
@@ -134,15 +166,15 @@ export class AuthController {
       const limit = createConcurrencyLimiter(cacheConfig.warmup.concurrency);
 
       const results = await Promise.allSettled(
-        predicates.map(predicate =>
+        addressesToWarmup.map(address =>
           limit(async () => {
             try {
-              await provider.getBalances(predicate.predicateAddress);
-              return { success: true, address: predicate.predicateAddress };
+              await provider.getBalances(address);
+              return { success: true, address };
             } catch (err) {
               return {
                 success: false,
-                address: predicate.predicateAddress,
+                address,
                 error: err instanceof Error ? err.message : 'Unknown error',
               };
             }
@@ -156,8 +188,10 @@ export class AuthController {
 
       CacheMetrics.warmup(successCount);
 
-      console.timeEnd(`[WARMUP] User ${userId.slice(0, 8)}...`);
-      console.log(`[WARMUP] Success: ${successCount}/${predicates.length}`);
+      const elapsed = Date.now() - startTime;
+      console.log(
+        `[WARMUP] User ${userIdShort}: ${successCount}/${addressesToWarmup.length} warmed in ${elapsed}ms`,
+      );
     } catch (error) {
       console.error('[WARMUP] Error:', error);
     }

@@ -128,4 +128,22 @@ export class RedisReadClient {
       return -1;
     }
   }
+
+  /**
+   * Check if a key exists in Redis
+   */
+  static async exists(key: string): Promise<boolean> {
+    try {
+      if (RedisReadClient.isMock) {
+        const value = await RedisMockStore.get(key);
+        return value !== null && value !== undefined;
+      }
+
+      const result = await RedisReadClient.client.exists(key);
+      return result === 1;
+    } catch (e) {
+      console.error('[CACHE_EXISTS_ERROR]', e, key);
+      return false;
+    }
+  }
 }

@@ -106,6 +106,56 @@ export class BalanceCache {
   }
 
   /**
+   * Check if cache exists for a predicate (without reading full data)
+   * Useful for warm-up to skip already cached predicates
+   */
+  async exists(predicateAddress: string, chainId: number): Promise<boolean> {
+    if (!cacheConfig.enabled) {
+      return false;
+    }
+
+    try {
+      // Check if invalidated first
+      const invalidated = await this.isInvalidated(predicateAddress, chainId);
+      if (invalidated) {
+        return false;
+      }
+
+      const key = this.buildKey(predicateAddress, chainId);
+      const exists = await RedisReadClient.exists(key);
+      return exists;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Check which addresses are NOT cached (for batch warm-up)
+   * Returns addresses that need to be fetched
+   */
+  async filterUncached(
+    addresses: string[],
+    chainId: number,
+  ): Promise<string[]> {
+    if (!cacheConfig.enabled || addresses.length === 0) {
+      return addresses;
+    }
+
+    try {
+      const results = await Promise.all(
+        addresses.map(async addr => ({
+          address: addr,
+          cached: await this.exists(addr, chainId),
+        })),
+      );
+
+      return results.filter(r => !r.cached).map(r => r.address);
+    } catch {
+      return addresses; // On error, assume none are cached
+    }
+  }
+
+  /**
    * Get cached balances for a predicate
    * Returns null if not cached, expired, or invalidated
    */
