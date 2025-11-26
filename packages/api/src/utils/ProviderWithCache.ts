@@ -52,11 +52,24 @@ export class ProviderWithCache extends Provider {
   }
 
   /**
-   * Get chainId with caching
+   * Get chainId with caching (uses global FuelProvider cache)
    */
   private async getCachedChainId(): Promise<number> {
     if (this.cachedChainId === undefined) {
-      this.cachedChainId = await this.getChainId();
+      // Import dynamically to avoid circular dependency
+      const { FuelProvider } = await import('./FuelProvider');
+
+      // Try global cache first
+      const stats = FuelProvider.getStats();
+      const globalCached = stats.chainIds[this.url];
+
+      if (globalCached !== undefined) {
+        this.cachedChainId = globalCached;
+      } else {
+        // Fetch and cache globally
+        this.cachedChainId = await this.getChainId();
+        FuelProvider.setChainId(this.url, this.cachedChainId);
+      }
     }
     return this.cachedChainId;
   }

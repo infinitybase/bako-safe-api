@@ -14,11 +14,13 @@ const PROVIDER_OPTIONS: ProviderOptions = {};
 export class FuelProvider {
   private static instance?: FuelProvider;
   private providers: Record<string, Provider | ProviderWithCache>;
+  private chainIdCache: Map<string, number>; // Global cache for chainIds by URL
   private resetIntervalRef?: NodeJS.Timeout;
   private cacheCleanIntervalRef?: NodeJS.Timeout;
 
   private constructor() {
     this.providers = {};
+    this.chainIdCache = new Map();
   }
 
   /**
@@ -52,15 +54,51 @@ export class FuelProvider {
   /**
    * Get current provider stats
    */
-  static getStats(): { size: number; urls: string[] } {
+  static getStats(): { size: number; urls: string[]; chainIds: Record<string, number> } {
     if (!FuelProvider.instance) {
-      return { size: 0, urls: [] };
+      return { size: 0, urls: [], chainIds: {} };
     }
     const urls = Object.keys(FuelProvider.instance.providers);
+    const chainIds = Object.fromEntries(FuelProvider.instance.chainIdCache);
     return {
       size: urls.length,
       urls,
+      chainIds,
     };
+  }
+
+  /**
+   * Get chainId for a URL from global cache
+   * Fetches from provider if not cached
+   */
+  static async getChainId(url: string): Promise<number> {
+    if (!FuelProvider.instance) {
+      throw new Error('FuelProvider not started');
+    }
+
+    // Check cache first
+    const cached = FuelProvider.instance.chainIdCache.get(url);
+    if (cached !== undefined) {
+      return cached;
+    }
+
+    // Get or create provider and fetch chainId
+    const provider = await FuelProvider.create(url);
+    const chainId = await provider.getChainId();
+
+    // Cache the result
+    FuelProvider.instance.chainIdCache.set(url, chainId);
+
+    return chainId;
+  }
+
+  /**
+   * Set chainId in global cache (used by ProviderWithCache)
+   */
+  static setChainId(url: string, chainId: number): void {
+    if (FuelProvider.instance) {
+      FuelProvider.instance.chainIdCache.set(url, chainId);
+    }
   }
 
   async reset(): Promise<void> {
@@ -89,7 +127,10 @@ export class FuelProvider {
           provider.cache.clear();
         }
       } catch (error) {
-        console.error(`[FuelProvider] Error clearing cache for ${url.slice(0, 30)}:`, error);
+        console.error(
+          `[FuelProvider] Error clearing cache for ${url.slice(0, 30)}:`,
+          error,
+        );
       }
     }
     // Also clear static SDK caches
@@ -123,7 +164,9 @@ export class FuelProvider {
       }, CACHE_CLEAR_INTERVAL);
 
       console.log(
-        `[FuelProvider] Started (cache clear every ${CACHE_CLEAR_INTERVAL / 60000}min)`,
+        `[FuelProvider] Started (cache clear every ${
+          CACHE_CLEAR_INTERVAL / 60000
+        }min)`,
       );
     }
   }
