@@ -1,3 +1,6 @@
+import { RedisReadClient } from '@src/utils/redis/RedisReadClient';
+import { RedisWriteClient } from '@src/utils/redis/RedisWriteClient';
+
 /**
  * Cache configuration for Balance Cache feature
  * All values are configurable via environment variables
@@ -23,66 +26,108 @@ export const cacheConfig = {
   prefixes: {
     balance: 'balance',
     invalidated: 'balance:invalidated',
+    metrics: 'cache:metrics',
   },
 };
 
+const METRICS_KEY = cacheConfig.prefixes.metrics;
+
 /**
  * Cache metrics singleton for monitoring cache performance
+ * Stores metrics in Redis for persistence across restarts and memory efficiency
  */
 class CacheMetricsClass {
-  private hits = 0;
-  private misses = 0;
-  private invalidations = 0;
-  private warmups = 0;
-  private warmupPredicates = 0;
-  private errors = 0;
   private startTime = Date.now();
 
+  /**
+   * Increment a metric field in Redis
+   */
+  private async increment(field: string, count = 1): Promise<void> {
+    try {
+      const current = await RedisReadClient.get(`${METRICS_KEY}:${field}`);
+      const newValue = (parseInt(current || '0', 10) + count).toString();
+      await RedisWriteClient.set(`${METRICS_KEY}:${field}`, newValue);
+    } catch (error) {
+      // Silently fail - metrics should not break the app
+      console.error('[CacheMetrics] Error incrementing:', field, error);
+    }
+  }
+
+  /**
+   * Get a metric value from Redis
+   */
+  private async getValue(field: string): Promise<number> {
+    try {
+      const value = await RedisReadClient.get(`${METRICS_KEY}:${field}`);
+      return parseInt(value || '0', 10);
+    } catch {
+      return 0;
+    }
+  }
+
   hit(): void {
-    this.hits++;
+    this.increment('hits').catch(() => {});
   }
 
   miss(): void {
-    this.misses++;
+    this.increment('misses').catch(() => {});
   }
 
   invalidate(count = 1): void {
-    this.invalidations += count;
+    this.increment('invalidations', count).catch(() => {});
   }
 
   warmup(predicateCount = 0): void {
-    this.warmups++;
-    this.warmupPredicates += predicateCount;
+    this.increment('warmups').catch(() => {});
+    if (predicateCount > 0) {
+      this.increment('warmupPredicates', predicateCount).catch(() => {});
+    }
   }
 
   error(): void {
-    this.errors++;
+    this.increment('errors').catch(() => {});
   }
 
-  getStats(): CacheStats {
-    const total = this.hits + this.misses;
+  async getStats(): Promise<CacheStats> {
+    const [hits, misses, invalidations, warmups, warmupPredicates, errors] =
+      await Promise.all([
+        this.getValue('hits'),
+        this.getValue('misses'),
+        this.getValue('invalidations'),
+        this.getValue('warmups'),
+        this.getValue('warmupPredicates'),
+        this.getValue('errors'),
+      ]);
+
+    const total = hits + misses;
     const uptimeSeconds = Math.floor((Date.now() - this.startTime) / 1000);
 
     return {
-      hits: this.hits,
-      misses: this.misses,
-      hitRate: total > 0 ? Math.round((this.hits / total) * 10000) / 100 : 0,
-      invalidations: this.invalidations,
-      warmups: this.warmups,
-      warmupPredicates: this.warmupPredicates,
-      errors: this.errors,
+      hits,
+      misses,
+      hitRate: total > 0 ? Math.round((hits / total) * 10000) / 100 : 0,
+      invalidations,
+      warmups,
+      warmupPredicates,
+      errors,
       uptimeSeconds,
     };
   }
 
-  reset(): void {
-    this.hits = 0;
-    this.misses = 0;
-    this.invalidations = 0;
-    this.warmups = 0;
-    this.warmupPredicates = 0;
-    this.errors = 0;
-    this.startTime = Date.now();
+  async reset(): Promise<void> {
+    try {
+      await RedisWriteClient.del([
+        `${METRICS_KEY}:hits`,
+        `${METRICS_KEY}:misses`,
+        `${METRICS_KEY}:invalidations`,
+        `${METRICS_KEY}:warmups`,
+        `${METRICS_KEY}:warmupPredicates`,
+        `${METRICS_KEY}:errors`,
+      ]);
+      this.startTime = Date.now();
+    } catch (error) {
+      console.error('[CacheMetrics] Error resetting:', error);
+    }
   }
 }
 

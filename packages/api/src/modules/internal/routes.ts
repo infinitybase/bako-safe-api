@@ -252,7 +252,7 @@ internalRouter.post('/cache/warmup', requireApiKey, async (req, res) => {
  */
 internalRouter.post('/cache/metrics/reset', requireApiKey, async (_req, res) => {
   try {
-    CacheMetrics.reset();
+    await CacheMetrics.reset();
 
     return res.json({
       success: true,

@@ -319,7 +319,7 @@ export class BalanceCache {
    * Get cache statistics
    */
   async stats(): Promise<BalanceCacheStats> {
-    const metrics = CacheMetrics.getStats();
+    const metrics = await CacheMetrics.getStats();
 
     try {
       // Get all balance keys
