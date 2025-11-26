@@ -351,7 +351,9 @@ export class PredicateService implements IPredicateService {
       if (hasPagination) {
         return await Pagination.create(queryBuilder).paginate(this._pagination);
       } else {
-        const predicates = await queryBuilder.getMany();
+        // Apply default limit to prevent loading entire table
+        const DEFAULT_LIMIT = 100;
+        const predicates = await queryBuilder.take(DEFAULT_LIMIT).getMany();
         return predicates ?? [];
       }
     } catch (e) {

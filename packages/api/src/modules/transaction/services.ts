@@ -305,12 +305,15 @@ export class TransactionService implements ITransactionService {
       });
     };
 
+    // Apply default limit to prevent loading entire table when no pagination
+    const DEFAULT_LIMIT = 100;
     const transactions = hasPagination
       ? await Pagination.create(queryBuilder)
           .paginate(this._pagination)
           .then(paginationResult => paginationResult)
           .catch(handleInternalError)
       : await queryBuilder
+          .take(DEFAULT_LIMIT)
           .getMany()
           .then(transactions => {
             return transactions ?? [];

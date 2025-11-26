@@ -2,7 +2,7 @@ import { Workspace } from '@src/models/Workspace';
 import { TransactionStatus, TransactionType, WitnessStatus } from 'bakosafe';
 import { isUUID } from 'class-validator';
 
-import { NotificationTitle, Predicate, Transaction } from '@models/index';
+import { NotificationTitle, Predicate, Transaction, User } from '@models/index';
 
 import { IPredicateService } from '@modules/predicate/types';
 
@@ -336,8 +336,6 @@ export class TransactionController {
   }
 
   static async formatTransactionsHistory(data: Transaction) {
-    const userService = new UserService();
-
     const events = [
       createTxHistoryEvent(
         TransactionHistory.CREATED,
@@ -353,18 +351,26 @@ export class TransactionController {
         witness.status === WitnessStatus.CANCELED,
     );
 
+    // Batch fetch all users at once instead of N individual queries
+    const witnessAddresses = _witnesses.map(w => w.account);
+    const users =
+      witnessAddresses.length > 0
+        ? await User.find({ where: { address: In(witnessAddresses) } })
+        : [];
+    const userMap = new Map(users.map(u => [u.address, u]));
+
     const witnessEventMap = {
       [WitnessStatus.DONE]: TransactionHistory.SIGN,
       [WitnessStatus.REJECTED]: TransactionHistory.DECLINE,
       [WitnessStatus.CANCELED]: TransactionHistory.CANCEL,
     };
-    const witnessEvents = await Promise.all(
-      _witnesses.map(async witness => {
-        const user = await userService.findByAddress(witness.account);
-        const eventType = witnessEventMap[witness.status];
-        return createTxHistoryEvent(eventType, witness.updatedAt, user);
-      }),
-    );
+
+    // Use pre-fetched users from map (O(1) lookup instead of DB call)
+    const witnessEvents = _witnesses.map(witness => {
+      const user = userMap.get(witness.account);
+      const eventType = witnessEventMap[witness.status];
+      return createTxHistoryEvent(eventType, witness.updatedAt, user);
+    });
 
     events.push(...witnessEvents);
 
