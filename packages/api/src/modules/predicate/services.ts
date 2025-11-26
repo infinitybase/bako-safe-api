@@ -546,6 +546,7 @@ export class PredicateService implements IPredicateService {
   }: IPredicateAllocationParams): Promise<IPredicateAllocation> {
     try {
       const query = Predicate.createQueryBuilder('p')
+        .distinctOn(['p.id'])
         .leftJoin('p.owner', 'owner')
         .leftJoin('p.members', 'members')
         .leftJoin(
