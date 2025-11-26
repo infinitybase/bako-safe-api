@@ -80,12 +80,8 @@ export class AuthController {
         userToken,
       );
 
-      // Trigger warm-up in background (don't await)
-      if (cacheConfig.warmup.enabled) {
-        this.warmupUserBalances(signin.user_id, signin.network?.url).catch(
-          err => console.error('[WARMUP] Failed:', err),
-        );
-      }
+      // Note: warmup is triggered earlier in generateSignCode
+      // so cache should already be ready by the time user signs in
 
       return successful(signin, Responses.Ok);
     } catch (e) {
@@ -237,6 +233,14 @@ export class AuthController {
           chainId: await provider.getChainId(),
         },
       });
+
+      // Trigger warm-up early (when code is generated, before user signs)
+      // This way cache is ready when user completes login
+      if (cacheConfig.warmup.enabled) {
+        this.warmupUserBalances(owner.id, provider.url).catch(err =>
+          console.error('[WARMUP] Failed:', err),
+        );
+      }
 
       return successful(response, Responses.Ok);
     } catch (e) {
