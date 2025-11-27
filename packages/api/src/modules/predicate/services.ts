@@ -695,12 +695,17 @@ export class PredicateService implements IPredicateService {
         return map;
       });
 
-      // Fetch all balances in parallel
+      // Fetch all balances in parallel with error handling per vault
       const balancesPromise = Promise.all(
         Array.from(vaultInfoMap.entries()).map(async ([vaultId, info]) => {
-          const instance = await this.instancePredicate(info.configurable, network.url, info.version);
-          const balances = (await instance.getBalances()).balances.filter(a => a.amount.gt(0));
-          return { vaultId, balances };
+          try {
+            const instance = await this.instancePredicate(info.configurable, network.url, info.version);
+            const balances = (await instance.getBalances()).balances.filter(a => a.amount.gt(0));
+            return { vaultId, balances };
+          } catch (err) {
+            console.warn(`[ALLOCATION] Failed to get balances for vault ${vaultId}:`, err?.message);
+            return { vaultId, balances: [] };
+          }
         }),
       );
 
@@ -714,10 +719,15 @@ export class PredicateService implements IPredicateService {
       // Process balances and build allocation
       // ========================================
       const calculateBalanceUSD = (assetId: string, amount: BN): number => {
-        const units = fuelUnitAssets(network.chainId, assetId);
-        const formattedAmount = amount.format({ units }).replace(/,/g, '');
-        const priceUSD = quotes[assetId] ?? 0;
-        return parseFloat(formattedAmount) * priceUSD;
+        try {
+          const units = fuelUnitAssets(network.chainId, assetId);
+          const formattedAmount = amount.format({ units }).replace(/,/g, '');
+          const priceUSD = quotes[assetId] ?? 0;
+          return parseFloat(formattedAmount) * priceUSD;
+        } catch (err) {
+          console.warn(`[ALLOCATION] Error calculating USD for asset ${assetId}:`, err?.message);
+          return 0;
+        }
       };
 
       const allocationMap = new Map<string, AssetAllocation>();
@@ -754,10 +764,17 @@ export class PredicateService implements IPredicateService {
 
       return this.buildAllocationResponse(vaultInfoMap, allocationMap, totalAmountInUSD);
     } catch (error) {
+      console.error('[ALLOCATION_ERROR]', {
+        message: error?.message || error,
+        stack: error?.stack,
+        userId: user?.id,
+        predicateId,
+        networkUrl: network?.url,
+      });
       throw new Internal({
         type: ErrorTypes.Internal,
         title: 'Error on get predicate allocation',
-        detail: error,
+        detail: error?.message || error,
       });
     }
   }
