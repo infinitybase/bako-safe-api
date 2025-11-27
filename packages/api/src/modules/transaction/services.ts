@@ -16,6 +16,7 @@ import { NotFound } from '@utils/error';
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
 import { IOrdination, setOrdination } from '@utils/ordination';
+// force commit
 import { IPagination, Pagination, PaginationParams } from '@utils/pagination';
 
 import { FuelProvider } from '@src/utils';
@@ -654,7 +655,9 @@ export class TransactionService implements ITransactionService {
       this.invalidatePredicateCaches(
         predicate.predicateAddress,
         transaction.network?.chainId,
-      ).catch(err => console.error('[TX_SUCCESS] Failed to invalidate caches:', err));
+      ).catch(err =>
+        console.error('[TX_SUCCESS] Failed to invalidate caches:', err),
+      );
 
       return await this.update(id, _api_transaction);
     } catch (e) {
@@ -699,15 +702,16 @@ export class TransactionService implements ITransactionService {
           // Cache is fresh, use it directly
           _transactions = [
             ..._transactions,
-            ...(cacheResult.cachedTransactions as unknown as ITransactionResponse[]),
+            ...((cacheResult.cachedTransactions as unknown) as ITransactionResponse[]),
           ];
           continue;
         }
 
         // Need to fetch from blockchain (full or incremental)
-        const fetchLimit = cacheResult.cachedTransactions.length > 0
-          ? transactionCache.getIncrementalFetchLimit() // Incremental: fetch only recent
-          : 57; // Full fetch
+        const fetchLimit =
+          cacheResult.cachedTransactions.length > 0
+            ? transactionCache.getIncrementalFetchLimit() // Incremental: fetch only recent
+            : 57; // Full fetch
 
         const { transactions } = await getTransactionsSummaries({
           provider,
