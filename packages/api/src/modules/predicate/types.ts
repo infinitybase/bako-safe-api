@@ -80,6 +80,8 @@ export interface PredicateAllocationInfo {
   id: string;
   name: string;
   address: string;
+  members: number; // total signers count
+  minSigners: number; // required signatures
   amountInUSD: number;
 }
 

@@ -548,10 +548,82 @@ export class PredicateService implements IPredicateService {
     limit,
   }: IPredicateAllocationParams): Promise<IPredicateAllocation> {
     try {
-      const query = Predicate.createQueryBuilder('p')
+      // ========================================
+      // QUERY 1: Vault structure (name, address, signers)
+      // ========================================
+      const structureQuery = Predicate.createQueryBuilder('p')
         .distinctOn(['p.id'])
         .leftJoin('p.owner', 'owner')
         .leftJoin('p.members', 'members')
+        .where('owner.id = :userId OR members.id = :userId', {
+          userId: user.id,
+        })
+        .select(['p.id', 'p.name', 'p.predicateAddress', 'p.configurable', 'p.version'])
+        .orderBy('p.updatedAt', 'DESC');
+
+      if (predicateId) {
+        structureQuery.andWhere('p.id = :predicateId', { predicateId });
+      }
+
+      if (limit) {
+        structureQuery.limit(limit);
+      }
+
+      const vaultStructures = await structureQuery.getMany();
+
+      // Extract signers info from configurable JSON
+      const vaultInfoMap = new Map<string, {
+        name: string;
+        address: string;
+        members: number;
+        minSigners: number;
+        configurable: string;
+        version: string;
+        amountInUSD: number;
+      }>();
+
+      for (const vault of vaultStructures) {
+        try {
+          const config = JSON.parse(vault.configurable);
+          const signers = (config.SIGNERS || []).filter((addr: string) => addr !== '0x0000000000000000000000000000000000000000000000000000000000000000');
+
+          vaultInfoMap.set(vault.id, {
+            name: vault.name,
+            address: vault.predicateAddress,
+            members: signers.length,
+            minSigners: config.SIGNATURES_COUNT || 1,
+            configurable: vault.configurable,
+            version: vault.version,
+            amountInUSD: 0,
+          });
+        } catch {
+          // If configurable parse fails, use defaults
+          vaultInfoMap.set(vault.id, {
+            name: vault.name,
+            address: vault.predicateAddress,
+            members: 1,
+            minSigners: 1,
+            configurable: vault.configurable,
+            version: vault.version,
+            amountInUSD: 0,
+          });
+        }
+      }
+
+      const vaultIds = Array.from(vaultInfoMap.keys());
+
+      if (vaultIds.length === 0) {
+        return {
+          data: [],
+          totalAmountInUSD: 0,
+          predicates: [],
+        };
+      }
+
+      // ========================================
+      // QUERY 2: Reserved coins (pending transactions)
+      // ========================================
+      const transactionsQuery = Predicate.createQueryBuilder('p')
         .leftJoin(
           'p.transactions',
           't',
@@ -564,36 +636,23 @@ export class PredicateService implements IPredicateService {
             network: network.url.replace(/^https?:\/\/[^@]+@/, 'https://'),
           },
         )
-        .where('owner.id = :userId OR members.id = :userId', {
-          userId: user.id,
-        })
-        .addSelect(['p.id', 'p.name', 'p.predicateAddress', 'p.configurable', 't.txData'])
-        .orderBy('p.updatedAt', 'DESC'); // Most recently used vaults first
+        .where('p.id IN (:...vaultIds)', { vaultIds })
+        .select(['p.id', 't.txData']);
 
-      if (predicateId) {
-        query.andWhere('p.id = :predicateId', { predicateId });
+      const predicatesWithTx = await transactionsQuery.getMany();
+
+      const reservedCoinsMap = new Map<string, ReturnType<typeof calculateReservedCoins>>();
+      for (const pred of predicatesWithTx) {
+        reservedCoinsMap.set(pred.id, calculateReservedCoins(pred.transactions));
       }
 
-      if (limit) {
-        query.limit(limit);
-      }
-
-      const predicates = await query.getMany();
-      const reservedCoins = predicates.map(predicate => ({
-        predicateId: predicate.id,
-        predicateName: predicate.name,
-        predicateAddress: predicate.predicateAddress,
-        configurable: predicate.configurable,
-        version: predicate.version,
-        coins: calculateReservedCoins(predicate.transactions),
-      }));
-
-      // Otimização 1: Buscar quotes e assetsMap uma única vez
+      // ========================================
+      // Fetch balances in parallel
+      // ========================================
       const { getAssetsMaps } = await import('@src/utils/assets');
       const { fuelUnitAssets } = await getAssetsMaps();
       const quotes = await App.getInstance()._quoteCache.getActiveQuotes();
 
-      // Função otimizada para calcular USD sem chamadas repetidas a cache
       const calculateBalanceUSDOptimized = (
         balances: { assetId: string; amount: BN }[],
       ): number => {
@@ -609,33 +668,30 @@ export class PredicateService implements IPredicateService {
         return balanceUSD;
       };
 
-      // Otimização 2: Paralelizar chamadas à blockchain
       const predicateBalances = await Promise.all(
-        reservedCoins.map(async ({ predicateId, predicateName, predicateAddress, coins, configurable, version }) => {
+        Array.from(vaultInfoMap.entries()).map(async ([vaultId, info]) => {
           const instance = await this.instancePredicate(
-            configurable,
+            info.configurable,
             network.url,
-            version,
+            info.version,
           );
 
           const balances = (await instance.getBalances()).balances.filter(a =>
             a.amount.gt(0),
           );
-          const assets =
-            reservedCoins.length > 0 ? subCoins(balances, coins) : balances;
+
+          const reservedCoins = reservedCoinsMap.get(vaultId) || [];
+          const assets = reservedCoins.length > 0 ? subCoins(balances, reservedCoins) : balances;
 
           const assetsWithoutNFT = assets.filter(({ amount, assetId }) => {
             const hasFuelMapped = assetsMap[assetId];
             const isOneUnit = amount.eq(1);
             const isNFT = !hasFuelMapped && isOneUnit;
-
             return !isNFT;
           });
 
           return {
-            predicateId,
-            predicateName,
-            predicateAddress,
+            predicateId: vaultId,
             assets: assetsWithoutNFT,
           };
         }),
@@ -644,26 +700,16 @@ export class PredicateService implements IPredicateService {
       const allocationMap = new Map<string, AssetAllocation>();
       let totalAmountInUSD = 0;
 
-      // Otimização 3: Processar todos os balances com cálculo otimizado
-      const predicatesMap = new Map<string, { name: string; address: string; amountInUSD: number }>();
+      // Process balances and update vaultInfoMap with amountInUSD
+      for (const { predicateId, assets: assetsWithoutNFT } of predicateBalances) {
+        const vaultInfo = vaultInfoMap.get(predicateId);
+        if (!vaultInfo) continue;
 
-      for (const { predicateId, predicateName, predicateAddress, assets: assetsWithoutNFT } of predicateBalances) {
-        // Initialize predicate map if not present
-        if (!predicatesMap.has(predicateId)) {
-          predicatesMap.set(predicateId, {
-            name: predicateName,
-            address: predicateAddress,
-            amountInUSD: 0,
-          });
-        }
-
-        // Calcular allocation sem chamadas redundantes
         for (const { assetId, amount } of assetsWithoutNFT) {
           const usdBalance = calculateBalanceUSDOptimized([{ assetId, amount }]);
 
           totalAmountInUSD += usdBalance;
-          const predInfo = predicatesMap.get(predicateId)!;
-          predInfo.amountInUSD += usdBalance;
+          vaultInfo.amountInUSD += usdBalance;
 
           const existingAllocation = allocationMap.get(assetId);
 
@@ -722,11 +768,13 @@ export class PredicateService implements IPredicateService {
         });
       }
 
-      // Convert predicatesMap to array format with id, name, address, amountInUSD
-      const predicatesArray = Array.from(predicatesMap.entries()).map(([id, info]) => ({
+      // Convert vaultInfoMap to array format with full info
+      const predicatesArray = Array.from(vaultInfoMap.entries()).map(([id, info]) => ({
         id,
         name: info.name,
         address: info.address,
+        members: info.members,
+        minSigners: info.minSigners,
         amountInUSD: info.amountInUSD,
       }));
 
