@@ -11,12 +11,12 @@ RUN npm install -g pnpm
 # Create the application directory
 WORKDIR /api
 
-# Copy only package files first (better layer caching)
-COPY package.json pnpm-lock.yaml ./
+# Copy only package.json first (better layer caching)
+COPY package.json ./
 
 # Install dependencies with cache mount for pnpm store
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
-    pnpm install --frozen-lockfile
+    pnpm install
 
 # Copy source code after dependencies are installed
 COPY . .
@@ -32,12 +32,12 @@ RUN npm install -g pnpm
 
 WORKDIR /api
 
-# Copy package files
-COPY package.json pnpm-lock.yaml ./
+# Copy package.json
+COPY package.json ./
 
 # Install only production dependencies with cache mount
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
-    pnpm install --frozen-lockfile --prod
+    pnpm install --prod
 
 # Copy built application from builder stage
 COPY --from=builder /api/build ./build
