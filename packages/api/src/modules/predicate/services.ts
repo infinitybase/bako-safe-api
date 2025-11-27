@@ -618,13 +618,14 @@ export class PredicateService implements IPredicateService {
       // ========================================
       // PARALLEL: Fetch vault structures and cache data
       // ========================================
+      // Use subquery to get unique predicate IDs first, then fetch full data
       const structureQuery = Predicate.createQueryBuilder('p')
-        .distinctOn(['p.id'])
         .leftJoin('p.owner', 'owner')
         .leftJoin('p.members', 'members')
         .where('owner.id = :userId OR members.id = :userId', { userId: user.id })
         .select(['p.id', 'p.name', 'p.predicateAddress', 'p.configurable', 'p.version'])
-        .orderBy('p.updatedAt', 'DESC');
+        .groupBy('p.id')
+        .orderBy('MAX(p.updatedAt)', 'DESC');
 
       if (predicateId) {
         structureQuery.andWhere('p.id = :predicateId', { predicateId });
