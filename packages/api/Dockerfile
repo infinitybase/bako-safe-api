@@ -21,8 +21,8 @@ RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
 # Copy source code after dependencies are installed
 COPY . .
 
-# Build the application
-RUN pnpm build
+# Build the application (excluding tests)
+RUN pnpm build:prod
 
 # Production stage - smaller final image
 FROM arm64v8/node:18.18.2-alpine AS production

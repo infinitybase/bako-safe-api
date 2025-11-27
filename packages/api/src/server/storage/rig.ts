@@ -1,8 +1,10 @@
 import { Rig } from '@src/contracts/rig/mainnet/types';
-import { networks } from '@src/tests/mocks/Networks';
+import { networksByChainId } from '@src/constants/networks';
 import { Vault } from 'bakosafe';
 import { Provider } from 'fuels';
+
 const { RIG_ID_CONTRACT } = process.env;
+const MAINNET_CHAIN_ID = '9889';
 
 export class RigInstance {
   private static instance?: RigInstance;
@@ -20,7 +22,7 @@ export class RigInstance {
 
   static async start(): Promise<RigInstance> {
     if (!RigInstance.instance) {
-      const provider = new Provider(networks['MAINNET']);
+      const provider = new Provider(networksByChainId[MAINNET_CHAIN_ID]);
       const version = '';
 
       const vault = new Vault(
