@@ -1,10 +1,7 @@
 # syntax=docker/dockerfile:1.4
-FROM arm64v8/node:18.18.2-alpine AS builder
+FROM arm64v8/node:18-bookworm AS builder
 
-# Install dependencies necessary for node-gyp
-RUN apk add --no-cache python3 make g++ \
-    && npm install -g node-gyp
-
+# Bookworm already has python3/make/g++ - no need to install
 # Install pnpm globally
 RUN npm install -g pnpm
 
