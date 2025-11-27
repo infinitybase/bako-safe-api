@@ -2,38 +2,56 @@ name: "[API] Deploy to Amazon ECS"
 
 on:
   push:
-    branches: [main]
+    branches: [main, staging, homologacao]
+    paths:
+      - "packages/api/**"
 
 jobs:
-  check-changes:
-    name: "[VERIFY] Check for Changes"
+  setup:
+    name: "[SETUP] Determine Environment"
     runs-on: ubuntu-latest
-
     outputs:
-      should_deploy: ${{ steps.check.outputs.should_deploy }}
+      environment: ${{ steps.env.outputs.environment }}
+      ecr_repository: ${{ steps.env.outputs.ecr_repository }}
+      ecs_service: ${{ steps.env.outputs.ecs_service }}
+      ecs_cluster: ${{ steps.env.outputs.ecs_cluster }}
+      task_definition: ${{ steps.env.outputs.task_definition }}
+      container_name: ${{ steps.env.outputs.container_name }}
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
-
-      - name: Check for changes in ./packages/api
-        id: check
+      - name: Determine environment from branch
+        id: env
         run: |
-          if git diff --quiet HEAD~1 -- ./packages/api; then
-            echo "No changes detected in ./packages/api"
-            echo "should_deploy=false" >> $GITHUB_OUTPUT
-          else
-            echo "Changes detected in ./packages/api"
-            echo "should_deploy=true" >> $GITHUB_OUTPUT
+          BRANCH="${GITHUB_REF#refs/heads/}"
+          echo "Branch: $BRANCH"
+
+          if [ "$BRANCH" = "main" ]; then
+            echo "environment=production" >> $GITHUB_OUTPUT
+            echo "ecr_repository=bako-safe-api" >> $GITHUB_OUTPUT
+            echo "ecs_service=bako-safe-api-service" >> $GITHUB_OUTPUT
+            echo "ecs_cluster=Bako-Safe-ECS" >> $GITHUB_OUTPUT
+            echo "task_definition=./packages/api/prod_api_task_definition.json" >> $GITHUB_OUTPUT
+            echo "container_name=bako-safe-api" >> $GITHUB_OUTPUT
+          elif [ "$BRANCH" = "staging" ]; then
+            echo "environment=staging" >> $GITHUB_OUTPUT
+            echo "ecr_repository=bako-safe-api-stg" >> $GITHUB_OUTPUT
+            echo "ecs_service=bako-safe-api-stg-service" >> $GITHUB_OUTPUT
+            echo "ecs_cluster=Bako-Safe-Stg" >> $GITHUB_OUTPUT
+            echo "task_definition=./packages/api/stg_api_task_definition.json" >> $GITHUB_OUTPUT
+            echo "container_name=bako-safe-api-stg" >> $GITHUB_OUTPUT
+          elif [ "$BRANCH" = "homologacao" ]; then
+            echo "environment=homologacao" >> $GITHUB_OUTPUT
+            echo "ecr_repository=bako-safe-api-hmg" >> $GITHUB_OUTPUT
+            echo "ecs_service=bako-safe-api-hmg-service" >> $GITHUB_OUTPUT
+            echo "ecs_cluster=Bako-Safe-Hmg" >> $GITHUB_OUTPUT
+            echo "task_definition=./packages/api/hml_api_task_definition.json" >> $GITHUB_OUTPUT
+            echo "container_name=bako-safe-api-hmg" >> $GITHUB_OUTPUT
           fi
 
   deploy:
-    name: "[API] Deploy to Amazon ECS"
-    needs: check-changes
+    name: "[API] Deploy to ${{ needs.setup.outputs.environment }}"
+    needs: setup
     runs-on: ubuntu-latest
-    if: needs.check-changes.outputs.should_deploy == 'true'
 
     steps:
       - name: Checkout
@@ -64,23 +82,23 @@ jobs:
           platforms: linux/arm64
           push: true
           tags: |
-            ${{ steps.login_ecr.outputs.registry }}/bako-safe-api:${{ github.sha }}
-            ${{ steps.login_ecr.outputs.registry }}/bako-safe-api:latest
-          cache-from: type=registry,ref=${{ steps.login_ecr.outputs.registry }}/bako-safe-api:latest
+            ${{ steps.login_ecr.outputs.registry }}/${{ needs.setup.outputs.ecr_repository }}:${{ github.sha }}
+            ${{ steps.login_ecr.outputs.registry }}/${{ needs.setup.outputs.ecr_repository }}:latest
+          cache-from: type=registry,ref=${{ steps.login_ecr.outputs.registry }}/${{ needs.setup.outputs.ecr_repository }}:latest
           cache-to: type=inline
 
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: ./packages/api/prod_api_task_definition.json
-          container-name: bako-safe-api
-          image: ${{ steps.login_ecr.outputs.registry }}/bako-safe-api:${{ github.sha }}
+          task-definition: ${{ needs.setup.outputs.task_definition }}
+          container-name: ${{ needs.setup.outputs.container_name }}
+          image: ${{ steps.login_ecr.outputs.registry }}/${{ needs.setup.outputs.ecr_repository }}:${{ github.sha }}
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: bako-safe-api-service
-          cluster: Bako-Safe-ECS
+          service: ${{ needs.setup.outputs.ecs_service }}
+          cluster: ${{ needs.setup.outputs.ecs_cluster }}
           wait-for-service-stability: true
