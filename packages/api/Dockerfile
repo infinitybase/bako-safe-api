@@ -2,6 +2,7 @@
 FROM arm64v8/node:18-bookworm AS builder
 
 # Bookworm already has python3/make/g++ - no need to install
+# Build trigger: 2024-11-27
 # Install pnpm globally
 RUN npm install -g pnpm
 
