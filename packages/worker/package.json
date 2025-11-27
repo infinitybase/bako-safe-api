@@ -25,7 +25,8 @@
     "pg": "8.5.1",
     "redis": "4.7.0",
     "ts-node": "^10.9.2",
-    "typescript": "~5.4.5"
+    "typescript": "~5.4.5",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
     "@commitlint/cli": "12.0.1",
@@ -36,6 +37,7 @@
     "@types/morgan": "1.9.2",
     "@types/node": "20.6.0",
     "@types/pg": "^8.15.5",
+    "@types/uuid": "^11.0.0",
     "@typescript-eslint/eslint-plugin": "6.5.0",
     "@typescript-eslint/parser": "6.5.0",
     "eslint": "7.22.0",

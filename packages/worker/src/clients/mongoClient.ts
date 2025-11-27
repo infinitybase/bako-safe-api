@@ -21,6 +21,7 @@ export enum CollectionName {
   PREDICATE_BLOCKS = 'predicate_blocks',
   FUEL_ASSETS = 'fuel_assets',
   ASSET_BALANCE = 'asset_balance',
+  USER_BLOCK_CONTROL = 'user_block_control',
 }
 
 export interface SchemaAssetBalance extends Document {

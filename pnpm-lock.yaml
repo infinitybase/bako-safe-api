@@ -435,6 +435,9 @@ importers:
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
+      uuid:
+        specifier: ^13.0.0
+        version: 13.0.0
     devDependencies:
       '@commitlint/cli':
         specifier: 12.0.1
@@ -460,6 +463,9 @@ importers:
       '@types/pg':
         specifier: ^8.15.5
         version: 8.15.5
+      '@types/uuid':
+        specifier: ^11.0.0
+        version: 11.0.0
       '@typescript-eslint/eslint-plugin':
         specifier: 6.5.0
         version: 6.5.0(@typescript-eslint/parser@6.5.0(eslint@7.22.0)(typescript@5.4.5))(eslint@7.22.0)(typescript@5.4.5)
@@ -2742,6 +2748,10 @@ packages:
 
   '@types/triple-beam@1.3.5':
     resolution: {integrity: sha512-6WaYesThRMCl19iryMYP7/x2OVgCtbIVflDGFpWnb9irXI3UjYE4AzmYuiUKY1AJstGijoY+MgUszMgRxIYTYw==}
+
+  '@types/uuid@11.0.0':
+    resolution: {integrity: sha512-HVyk8nj2m+jcFRNazzqyVKiZezyhDKrGUA3jlEcg/nZ6Ms+qHwocba1Y/AaVaznJTAM9xpdFSh+ptbNrhOGvZA==}
+    deprecated: This is a stub types definition. uuid provides its own type definitions, so you do not need this installed.
 
   '@types/validator@13.15.2':
     resolution: {integrity: sha512-y7pa/oEJJ4iGYBxOpfAKn5b9+xuihvzDVnC/OSvlVnGxVg0pOqmjiMafiJ1KVNQEaPZf9HsEp5icEwGg8uIe5Q==}
@@ -6921,6 +6931,10 @@ packages:
     resolution: {integrity: sha512-8XkAphELsDnEGrDxUOHB3RGvXz6TeuYSGEZBOjtTtPm2lwhGBjLgOzLHB63IUWfBpNucQjND6d3AOudO+H3RWQ==}
     hasBin: true
 
+  uuid@13.0.0:
+    resolution: {integrity: sha512-XQegIaBTVUjSHliKqcnFqYypAd4S+WCYt5NIeRs6w/UAry7z8Y9j5ZwRRL4kzq9U3sD6v+85er9FvkEaBpji2w==}
+    hasBin: true
+
   uuid@8.3.2:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
     hasBin: true
@@ -9831,6 +9845,10 @@ snapshots:
       '@types/superagent': 8.1.9
 
   '@types/triple-beam@1.3.5': {}
+
+  '@types/uuid@11.0.0':
+    dependencies:
+      uuid: 13.0.0
 
   '@types/validator@13.15.2': {}
 
@@ -14652,6 +14670,8 @@ snapshots:
   utils-merge@1.0.1: {}
 
   uuid@10.0.0: {}
+
+  uuid@13.0.0: {}
 
   uuid@8.3.2: {}
 
