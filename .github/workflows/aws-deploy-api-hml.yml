@@ -59,17 +59,15 @@ jobs:
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
         uses: docker/build-push-action@v6
-        env:
-          ECR_REGISTRY: ${{ steps.login_ecr.outputs.registry }}
-          ECR_REPOSITORY: bako-safe-api-hmg
-          IMAGE_TAG: ${{ github.sha }}
         with:
           context: ./packages/api
           platforms: linux/arm64
           push: true
-          tags: ${{ steps.login_ecr.outputs.registry }}/bako-safe-api-hmg:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tags: |
+            ${{ steps.login_ecr.outputs.registry }}/bako-safe-api-hmg:${{ github.sha }}
+            ${{ steps.login_ecr.outputs.registry }}/bako-safe-api-hmg:latest
+          cache-from: type=registry,ref=${{ steps.login_ecr.outputs.registry }}/bako-safe-api-hmg:latest
+          cache-to: type=inline
 
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
