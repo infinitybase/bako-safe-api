@@ -567,7 +567,7 @@ export class PredicateService implements IPredicateService {
         .where('owner.id = :userId OR members.id = :userId', {
           userId: user.id,
         })
-        .addSelect(['p.id', 'p.configurable', 't.txData'])
+        .addSelect(['p.id', 'p.name', 'p.predicateAddress', 'p.configurable', 't.txData'])
         .orderBy('p.updatedAt', 'DESC'); // Most recently used vaults first
 
       if (predicateId) {
@@ -581,6 +581,8 @@ export class PredicateService implements IPredicateService {
       const predicates = await query.getMany();
       const reservedCoins = predicates.map(predicate => ({
         predicateId: predicate.id,
+        predicateName: predicate.name,
+        predicateAddress: predicate.predicateAddress,
         configurable: predicate.configurable,
         version: predicate.version,
         coins: calculateReservedCoins(predicate.transactions),
@@ -609,7 +611,7 @@ export class PredicateService implements IPredicateService {
 
       // Otimização 2: Paralelizar chamadas à blockchain
       const predicateBalances = await Promise.all(
-        reservedCoins.map(async ({ predicateId, coins, configurable, version }) => {
+        reservedCoins.map(async ({ predicateId, predicateName, predicateAddress, coins, configurable, version }) => {
           const instance = await this.instancePredicate(
             configurable,
             network.url,
@@ -632,6 +634,8 @@ export class PredicateService implements IPredicateService {
 
           return {
             predicateId,
+            predicateName,
+            predicateAddress,
             assets: assetsWithoutNFT,
           };
         }),
@@ -641,18 +645,25 @@ export class PredicateService implements IPredicateService {
       let totalAmountInUSD = 0;
 
       // Otimização 3: Processar todos os balances com cálculo otimizado
-      const predicatesMap: Record<string, number> = {};
+      const predicatesMap = new Map<string, { name: string; address: string; amountInUSD: number }>();
 
-      for (const { predicateId, assets: assetsWithoutNFT } of predicateBalances) {
+      for (const { predicateId, predicateName, predicateAddress, assets: assetsWithoutNFT } of predicateBalances) {
         // Initialize predicate map if not present
-        if (!predicatesMap[predicateId]) predicatesMap[predicateId] = 0;
+        if (!predicatesMap.has(predicateId)) {
+          predicatesMap.set(predicateId, {
+            name: predicateName,
+            address: predicateAddress,
+            amountInUSD: 0,
+          });
+        }
 
         // Calcular allocation sem chamadas redundantes
         for (const { assetId, amount } of assetsWithoutNFT) {
           const usdBalance = calculateBalanceUSDOptimized([{ assetId, amount }]);
 
           totalAmountInUSD += usdBalance;
-          predicatesMap[predicateId] += usdBalance;
+          const predInfo = predicatesMap.get(predicateId)!;
+          predInfo.amountInUSD += usdBalance;
 
           const existingAllocation = allocationMap.get(assetId);
 
@@ -711,10 +722,18 @@ export class PredicateService implements IPredicateService {
         });
       }
 
+      // Convert predicatesMap to array format with id, name, address, amountInUSD
+      const predicatesArray = Array.from(predicatesMap.entries()).map(([id, info]) => ({
+        id,
+        name: info.name,
+        address: info.address,
+        amountInUSD: info.amountInUSD,
+      }));
+
       return {
         data: finalData,
         totalAmountInUSD,
-        predicates: predicatesMap,
+        predicates: predicatesArray,
       };
     } catch (error) {
       throw new Internal({
