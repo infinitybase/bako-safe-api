@@ -121,10 +121,11 @@ export class AuthController {
       // Get chainId from global cache (avoids extra RPC call)
       const chainId = await FuelProvider.getChainId(networkUrl);
 
-      // Get user's predicates ordered by most recently used, limited
+      // Get user's predicates (members + personal vault) ordered by most recently used
       const predicates = await Predicate.createQueryBuilder('predicate')
-        .innerJoin('predicate.members', 'member')
-        .where('member.id = :userId', { userId })
+        .leftJoin('predicate.members', 'member')
+        .leftJoin('predicate.owner', 'owner')
+        .where('member.id = :userId OR (owner.id = :userId AND predicate.root = true)', { userId })
         .select(['predicate.predicateAddress'])
         .orderBy('predicate.updatedAt', 'DESC')
         .limit(cacheConfig.warmup.maxPredicates)
