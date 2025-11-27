@@ -545,6 +545,7 @@ export class PredicateService implements IPredicateService {
     user,
     network,
     assetsMap,
+    limit,
   }: IPredicateAllocationParams): Promise<IPredicateAllocation> {
     try {
       const query = Predicate.createQueryBuilder('p')
@@ -566,10 +567,15 @@ export class PredicateService implements IPredicateService {
         .where('owner.id = :userId OR members.id = :userId', {
           userId: user.id,
         })
-        .addSelect(['p.id', 'p.configurable', 't.txData']);
+        .addSelect(['p.id', 'p.configurable', 't.txData'])
+        .orderBy('p.updatedAt', 'DESC'); // Most recently used vaults first
 
       if (predicateId) {
         query.andWhere('p.id = :predicateId', { predicateId });
+      }
+
+      if (limit) {
+        query.limit(limit);
       }
 
       const predicates = await query.getMany();

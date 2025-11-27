@@ -31,6 +31,7 @@ import { TransactionService } from '../transaction/services';
 import { mergeTransactionLists } from '../transaction/utils';
 import { UserService } from './service';
 import {
+  IAllocationRequest,
   ICheckHardwareRequest,
   ICheckNicknameRequest,
   ICreateRequest,
@@ -444,14 +445,16 @@ export class UserController {
     }
   }
 
-  async allocation({ user, network }: IMeRequest) {
+  async allocation({ user, network, query }: IAllocationRequest) {
     try {
+      const { limit } = query;
+
       const allocation = await new PredicateService().allocation({
         user,
         network,
         assetsMap: (await getAssetsMaps()).assetsMapById,
+        limit,
       });
-
 
       return successful(allocation, Responses.Ok);
     } catch (e) {

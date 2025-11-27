@@ -8,6 +8,7 @@ import { TransactionService } from '../transaction/services';
 import { UserController } from './controller';
 import { UserService } from './service';
 import {
+  AllocationQuerySchema,
   FindUserByIDParams,
   ListUserTransactionsQuerySchema,
   PayloadCreateUserSchema,
@@ -59,6 +60,7 @@ router.get(
 router.get(
   '/allocation',
   authMiddleware,
+  AllocationQuerySchema,
   handleResponse(userController.allocation),
 );
 router.get('/', authMiddleware, handleResponse(userController.find));

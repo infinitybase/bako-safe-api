@@ -47,3 +47,9 @@ export const ListUserTransactionsQuerySchema = validator.query(
       .optional(),
   }),
 );
+
+export const AllocationQuerySchema = validator.query(
+  Joi.object({
+    limit: Joi.number().integer().min(1).max(50).optional().default(5),
+  }),
+);

@@ -130,6 +130,14 @@ export type IMeInfoRequest = AuthValidatedRequest<null>;
 
 export type IListUserTransactionsRequest = AuthValidatedRequest<IListUserTransactionsRequestSchema>;
 
+interface IAllocationRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Query]: {
+    limit?: number;
+  };
+}
+
+export type IAllocationRequest = AuthValidatedRequest<IAllocationRequestSchema>;
+
 export interface IUserService {
   filter(filter: IFilterParams): this;
   paginate(pagination: PaginationParams): this;

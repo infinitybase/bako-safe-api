@@ -87,6 +87,7 @@ export interface IPredicateAllocationParams {
   predicateId?: string;
   network: Network;
   assetsMap: IAssetMapById;
+  limit?: number; // Max number of vaults to process (ordered by most recent tx)
 }
 
 interface ICreatePredicateRequestSchema extends ValidatedRequestSchema {
