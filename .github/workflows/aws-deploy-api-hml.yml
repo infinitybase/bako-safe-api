@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 2
 
@@ -23,28 +23,30 @@ jobs:
         run: |
           if git diff --quiet HEAD~1 -- ./packages/api; then
             echo "No changes detected in ./packages/api"
-            echo "::set-output name=should_deploy::false"
+            echo "should_deploy=false" >> $GITHUB_OUTPUT
           else
             echo "Changes detected in ./packages/api"
-            echo "::set-output name=should_deploy::true"
+            echo "should_deploy=true" >> $GITHUB_OUTPUT
           fi
 
   deploy:
     name: "[API-HMG] Deploy to Amazon ECS"
+    needs: check-changes
     runs-on: ubuntu-latest
+    if: needs.check-changes.outputs.should_deploy == 'true'
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.BAKO_AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.BAKO_AWS_SECRET_ACCESS_KEY }}
@@ -52,19 +54,22 @@ jobs:
 
       - name: Login to Amazon ECR
         id: login_ecr
-        uses: aws-actions/amazon-ecr-login@v1
+        uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
+        uses: docker/build-push-action@v6
         env:
           ECR_REGISTRY: ${{ steps.login_ecr.outputs.registry }}
           ECR_REPOSITORY: bako-safe-api-hmg
           IMAGE_TAG: ${{ github.sha }}
-        run: |
-          # Build a docker container and push it to ECR
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./packages/api
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+        with:
+          context: ./packages/api
+          platforms: linux/arm64
+          push: true
+          tags: ${{ steps.login_ecr.outputs.registry }}/bako-safe-api-hmg:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
@@ -72,7 +77,7 @@ jobs:
         with:
           task-definition: ./packages/api/hml_api_task_definition.json
           container-name: bako-safe-api-hmg
-          image: ${{ steps.build-image.outputs.image }}
+          image: ${{ steps.login_ecr.outputs.registry }}/bako-safe-api-hmg:${{ github.sha }}
 
       - name: Deploy Amazon ECS task definition
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
