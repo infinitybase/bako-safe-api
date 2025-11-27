@@ -560,11 +560,13 @@ export class PredicateService implements IPredicateService {
 
   /**
    * Build final allocation response from processed data
+   * @param limit - Maximum number of predicates to return in the response (default: 5)
    */
   private buildAllocationResponse(
     vaultInfoMap: Map<string, { name: string; address: string; members: number; minSigners: number; amountInUSD: number }>,
     allocationMap: Map<string, AssetAllocation>,
     totalAmountInUSD: number,
+    limit: number = 5,
   ): IPredicateAllocation {
     // Calculate percentages and sort
     const allocationArray = Array.from(allocationMap.values())
@@ -590,15 +592,18 @@ export class PredicateService implements IPredicateService {
       });
     }
 
-    // Convert vaultInfoMap to array
-    const predicatesArray = Array.from(vaultInfoMap.entries()).map(([id, info]) => ({
-      id,
-      name: info.name,
-      address: info.address,
-      members: info.members,
-      minSigners: info.minSigners,
-      amountInUSD: info.amountInUSD,
-    }));
+    // Convert vaultInfoMap to array, sorted by amountInUSD descending, limited to top N
+    const predicatesArray = Array.from(vaultInfoMap.entries())
+      .map(([id, info]) => ({
+        id,
+        name: info.name,
+        address: info.address,
+        members: info.members,
+        minSigners: info.minSigners,
+        amountInUSD: info.amountInUSD,
+      }))
+      .sort((a, b) => b.amountInUSD - a.amountInUSD)
+      .slice(0, limit);
 
     return {
       data: finalData,
@@ -618,7 +623,7 @@ export class PredicateService implements IPredicateService {
       // ========================================
       // PARALLEL: Fetch vault structures and cache data
       // ========================================
-      // Use subquery to get unique predicate IDs first, then fetch full data
+      // Fetch ALL predicates for total balance calculation (no limit here)
       const structureQuery = Predicate.createQueryBuilder('p')
         .leftJoin('p.owner', 'owner')
         .leftJoin('p.members', 'members')
@@ -630,9 +635,7 @@ export class PredicateService implements IPredicateService {
       if (predicateId) {
         structureQuery.andWhere('p.id = :predicateId', { predicateId });
       }
-      if (limit) {
-        structureQuery.limit(limit);
-      }
+      // Note: limit is applied later in buildAllocationResponse for the predicates array
 
       // Run vault query and cache fetch in parallel
       const [vaultStructures, { fuelUnitAssets }, quotes] = await Promise.all([
@@ -763,7 +766,7 @@ export class PredicateService implements IPredicateService {
         }
       }
 
-      return this.buildAllocationResponse(vaultInfoMap, allocationMap, totalAmountInUSD);
+      return this.buildAllocationResponse(vaultInfoMap, allocationMap, totalAmountInUSD, limit);
     } catch (error) {
       console.error('[ALLOCATION_ERROR]', {
         message: error?.message || error,
