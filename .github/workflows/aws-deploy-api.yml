@@ -82,8 +82,8 @@ jobs:
           platforms: linux/arm64
           push: true
           tags: ${{ steps.login_ecr.outputs.registry }}/${{ needs.setup.outputs.ecr_repository }}:${{ github.sha }}
-          cache-from: type=registry,ref=${{ steps.login_ecr.outputs.registry }}/${{ needs.setup.outputs.ecr_repository }}:cache
-          cache-to: type=registry,ref=${{ steps.login_ecr.outputs.registry }}/${{ needs.setup.outputs.ecr_repository }}:cache,mode=max
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Fill in the new image ID in the Amazon ECS task definition
         id: task-def
