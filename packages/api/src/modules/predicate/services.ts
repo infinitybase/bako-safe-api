@@ -540,6 +540,73 @@ export class PredicateService implements IPredicateService {
     return await Pagination.create(queryBuilder).paginate(this._pagination);
   }
 
+  /**
+   * Extract signers info from vault configurable JSON
+   */
+  private parseVaultSigners(configurable: string): { members: number; minSigners: number } {
+    try {
+      const config = JSON.parse(configurable);
+      const signers = (config.SIGNERS || []).filter(
+        (addr: string) => addr !== '0x0000000000000000000000000000000000000000000000000000000000000000',
+      );
+      return {
+        members: signers.length,
+        minSigners: config.SIGNATURES_COUNT || 1,
+      };
+    } catch {
+      return { members: 1, minSigners: 1 };
+    }
+  }
+
+  /**
+   * Build final allocation response from processed data
+   */
+  private buildAllocationResponse(
+    vaultInfoMap: Map<string, { name: string; address: string; members: number; minSigners: number; amountInUSD: number }>,
+    allocationMap: Map<string, AssetAllocation>,
+    totalAmountInUSD: number,
+  ): IPredicateAllocation {
+    // Calculate percentages and sort
+    const allocationArray = Array.from(allocationMap.values())
+      .filter(allocation => allocation.amountInUSD > 0)
+      .map(allocation => ({
+        ...allocation,
+        percentage: totalAmountInUSD > 0 ? (allocation.amountInUSD / totalAmountInUSD) * 100 : 0,
+      }));
+
+    allocationArray.sort((a, b) => b.percentage - a.percentage);
+
+    // Split into top 3 and others
+    const top3 = allocationArray.slice(0, 3);
+    const remaining = allocationArray.slice(3);
+    const finalData = [...top3];
+
+    if (remaining.length > 0) {
+      finalData.push({
+        assetId: null,
+        amountInUSD: remaining.reduce((sum, item) => sum + item.amountInUSD, 0),
+        amount: remaining.reduce((sum, item) => sum.add(item.amount), bn(0)),
+        percentage: remaining.reduce((sum, item) => sum + item.percentage, 0),
+      });
+    }
+
+    // Convert vaultInfoMap to array
+    const predicatesArray = Array.from(vaultInfoMap.entries()).map(([id, info]) => ({
+      id,
+      name: info.name,
+      address: info.address,
+      members: info.members,
+      minSigners: info.minSigners,
+      amountInUSD: info.amountInUSD,
+    }));
+
+    return {
+      data: finalData,
+      totalAmountInUSD,
+      predicates: predicatesArray,
+    };
+  }
+
   async allocation({
     predicateId,
     user,
@@ -549,29 +616,31 @@ export class PredicateService implements IPredicateService {
   }: IPredicateAllocationParams): Promise<IPredicateAllocation> {
     try {
       // ========================================
-      // QUERY 1: Vault structure (name, address, signers)
+      // PARALLEL: Fetch vault structures and cache data
       // ========================================
       const structureQuery = Predicate.createQueryBuilder('p')
         .distinctOn(['p.id'])
         .leftJoin('p.owner', 'owner')
         .leftJoin('p.members', 'members')
-        .where('owner.id = :userId OR members.id = :userId', {
-          userId: user.id,
-        })
+        .where('owner.id = :userId OR members.id = :userId', { userId: user.id })
         .select(['p.id', 'p.name', 'p.predicateAddress', 'p.configurable', 'p.version'])
         .orderBy('p.updatedAt', 'DESC');
 
       if (predicateId) {
         structureQuery.andWhere('p.id = :predicateId', { predicateId });
       }
-
       if (limit) {
         structureQuery.limit(limit);
       }
 
-      const vaultStructures = await structureQuery.getMany();
+      // Run vault query and cache fetch in parallel
+      const [vaultStructures, { fuelUnitAssets }, quotes] = await Promise.all([
+        structureQuery.getMany(),
+        import('@src/utils/assets').then(m => m.getAssetsMaps()),
+        App.getInstance()._quoteCache.getActiveQuotes(),
+      ]);
 
-      // Extract signers info from configurable JSON
+      // Build vault info map from structures
       const vaultInfoMap = new Map<string, {
         name: string;
         address: string;
@@ -583,45 +652,26 @@ export class PredicateService implements IPredicateService {
       }>();
 
       for (const vault of vaultStructures) {
-        try {
-          const config = JSON.parse(vault.configurable);
-          const signers = (config.SIGNERS || []).filter((addr: string) => addr !== '0x0000000000000000000000000000000000000000000000000000000000000000');
-
-          vaultInfoMap.set(vault.id, {
-            name: vault.name,
-            address: vault.predicateAddress,
-            members: signers.length,
-            minSigners: config.SIGNATURES_COUNT || 1,
-            configurable: vault.configurable,
-            version: vault.version,
-            amountInUSD: 0,
-          });
-        } catch {
-          // If configurable parse fails, use defaults
-          vaultInfoMap.set(vault.id, {
-            name: vault.name,
-            address: vault.predicateAddress,
-            members: 1,
-            minSigners: 1,
-            configurable: vault.configurable,
-            version: vault.version,
-            amountInUSD: 0,
-          });
-        }
+        const { members, minSigners } = this.parseVaultSigners(vault.configurable);
+        vaultInfoMap.set(vault.id, {
+          name: vault.name,
+          address: vault.predicateAddress,
+          members,
+          minSigners,
+          configurable: vault.configurable,
+          version: vault.version,
+          amountInUSD: 0,
+        });
       }
 
       const vaultIds = Array.from(vaultInfoMap.keys());
 
       if (vaultIds.length === 0) {
-        return {
-          data: [],
-          totalAmountInUSD: 0,
-          predicates: [],
-        };
+        return { data: [], totalAmountInUSD: 0, predicates: [] };
       }
 
       // ========================================
-      // QUERY 2: Reserved coins (pending transactions)
+      // PARALLEL: Fetch reserved coins and balances
       // ========================================
       const transactionsQuery = Predicate.createQueryBuilder('p')
         .leftJoin(
@@ -629,160 +679,80 @@ export class PredicateService implements IPredicateService {
           't',
           "t.status IN (:...status) AND regexp_replace(t.network->>'url', '^https?://[^@]+@', 'https://') = :network",
           {
-            status: [
-              TransactionStatus.AWAIT_REQUIREMENTS,
-              TransactionStatus.PENDING_SENDER,
-            ],
+            status: [TransactionStatus.AWAIT_REQUIREMENTS, TransactionStatus.PENDING_SENDER],
             network: network.url.replace(/^https?:\/\/[^@]+@/, 'https://'),
           },
         )
         .where('p.id IN (:...vaultIds)', { vaultIds })
         .select(['p.id', 't.txData']);
 
-      const predicatesWithTx = await transactionsQuery.getMany();
-
-      const reservedCoinsMap = new Map<string, ReturnType<typeof calculateReservedCoins>>();
-      for (const pred of predicatesWithTx) {
-        reservedCoinsMap.set(pred.id, calculateReservedCoins(pred.transactions));
-      }
-
-      // ========================================
-      // Fetch balances in parallel
-      // ========================================
-      const { getAssetsMaps } = await import('@src/utils/assets');
-      const { fuelUnitAssets } = await getAssetsMaps();
-      const quotes = await App.getInstance()._quoteCache.getActiveQuotes();
-
-      const calculateBalanceUSDOptimized = (
-        balances: { assetId: string; amount: BN }[],
-      ): number => {
-        let balanceUSD = 0;
-        for (const balance of balances) {
-          const units = fuelUnitAssets(network.chainId, balance.assetId);
-          const formattedAmount = balance.amount
-            .format({ units })
-            .replace(/,/g, '');
-          const priceUSD = quotes[balance.assetId] ?? 0;
-          balanceUSD += parseFloat(formattedAmount) * priceUSD;
+      // Fetch reserved coins query (runs in parallel with balance fetches)
+      const reservedCoinsPromise = transactionsQuery.getMany().then(predicatesWithTx => {
+        const map = new Map<string, ReturnType<typeof calculateReservedCoins>>();
+        for (const pred of predicatesWithTx) {
+          map.set(pred.id, calculateReservedCoins(pred.transactions));
         }
-        return balanceUSD;
-      };
+        return map;
+      });
 
-      const predicateBalances = await Promise.all(
+      // Fetch all balances in parallel
+      const balancesPromise = Promise.all(
         Array.from(vaultInfoMap.entries()).map(async ([vaultId, info]) => {
-          const instance = await this.instancePredicate(
-            info.configurable,
-            network.url,
-            info.version,
-          );
-
-          const balances = (await instance.getBalances()).balances.filter(a =>
-            a.amount.gt(0),
-          );
-
-          const reservedCoins = reservedCoinsMap.get(vaultId) || [];
-          const assets = reservedCoins.length > 0 ? subCoins(balances, reservedCoins) : balances;
-
-          const assetsWithoutNFT = assets.filter(({ amount, assetId }) => {
-            const hasFuelMapped = assetsMap[assetId];
-            const isOneUnit = amount.eq(1);
-            const isNFT = !hasFuelMapped && isOneUnit;
-            return !isNFT;
-          });
-
-          return {
-            predicateId: vaultId,
-            assets: assetsWithoutNFT,
-          };
+          const instance = await this.instancePredicate(info.configurable, network.url, info.version);
+          const balances = (await instance.getBalances()).balances.filter(a => a.amount.gt(0));
+          return { vaultId, balances };
         }),
       );
+
+      // Wait for both to complete
+      const [reservedCoinsMap, vaultBalances] = await Promise.all([
+        reservedCoinsPromise,
+        balancesPromise,
+      ]);
+
+      // ========================================
+      // Process balances and build allocation
+      // ========================================
+      const calculateBalanceUSD = (assetId: string, amount: BN): number => {
+        const units = fuelUnitAssets(network.chainId, assetId);
+        const formattedAmount = amount.format({ units }).replace(/,/g, '');
+        const priceUSD = quotes[assetId] ?? 0;
+        return parseFloat(formattedAmount) * priceUSD;
+      };
 
       const allocationMap = new Map<string, AssetAllocation>();
       let totalAmountInUSD = 0;
 
-      // Process balances and update vaultInfoMap with amountInUSD
-      for (const { predicateId, assets: assetsWithoutNFT } of predicateBalances) {
-        const vaultInfo = vaultInfoMap.get(predicateId);
+      for (const { vaultId, balances } of vaultBalances) {
+        const vaultInfo = vaultInfoMap.get(vaultId);
         if (!vaultInfo) continue;
 
-        for (const { assetId, amount } of assetsWithoutNFT) {
-          const usdBalance = calculateBalanceUSDOptimized([{ assetId, amount }]);
+        const reservedCoins = reservedCoinsMap.get(vaultId) || [];
+        const assets = reservedCoins.length > 0 ? subCoins(balances, reservedCoins) : balances;
 
+        // Filter out NFTs
+        const assetsWithoutNFT = assets.filter(({ amount, assetId }) => {
+          const hasFuelMapped = assetsMap[assetId];
+          const isOneUnit = amount.eq(1);
+          return !((!hasFuelMapped && isOneUnit));
+        });
+
+        for (const { assetId, amount } of assetsWithoutNFT) {
+          const usdBalance = calculateBalanceUSD(assetId, amount);
           totalAmountInUSD += usdBalance;
           vaultInfo.amountInUSD += usdBalance;
 
-          const existingAllocation = allocationMap.get(assetId);
-
-          const assetAllocation: AssetAllocation = {
+          const existing = allocationMap.get(assetId);
+          allocationMap.set(assetId, {
             assetId,
-            amountInUSD: existingAllocation
-              ? existingAllocation.amountInUSD + usdBalance
-              : usdBalance,
-            amount: existingAllocation
-              ? existingAllocation.amount.add(amount)
-              : amount,
+            amountInUSD: existing ? existing.amountInUSD + usdBalance : usdBalance,
+            amount: existing ? existing.amount.add(amount) : amount,
             percentage: 0,
-          };
-
-          allocationMap.set(assetId, assetAllocation);
+          });
         }
       }
 
-      const allocationArray = Array.from(allocationMap.values())
-        .filter(allocation => allocation.amountInUSD > 0)
-        .map(allocation => ({
-          ...allocation,
-          percentage:
-            totalAmountInUSD > 0
-              ? (allocation.amountInUSD / totalAmountInUSD) * 100
-              : 0,
-        }));
-
-      allocationArray.sort((a, b) => b.percentage - a.percentage);
-
-      const top3 = allocationArray.slice(0, 3);
-
-      const remaining = allocationArray.slice(3);
-
-      const finalData = [...top3];
-
-      if (remaining.length > 0) {
-        const othersAmountInUSD = remaining.reduce(
-          (sum, item) => sum + item.amountInUSD,
-          0,
-        );
-        const othersPercentage = remaining.reduce(
-          (sum, item) => sum + item.percentage,
-          0,
-        );
-        const othersAmount = remaining.reduce(
-          (sum, item) => sum.add(item.amount),
-          bn(0),
-        );
-
-        finalData.push({
-          assetId: null,
-          amountInUSD: othersAmountInUSD,
-          amount: othersAmount,
-          percentage: othersPercentage,
-        });
-      }
-
-      // Convert vaultInfoMap to array format with full info
-      const predicatesArray = Array.from(vaultInfoMap.entries()).map(([id, info]) => ({
-        id,
-        name: info.name,
-        address: info.address,
-        members: info.members,
-        minSigners: info.minSigners,
-        amountInUSD: info.amountInUSD,
-      }));
-
-      return {
-        data: finalData,
-        totalAmountInUSD,
-        predicates: predicatesArray,
-      };
+      return this.buildAllocationResponse(vaultInfoMap, allocationMap, totalAmountInUSD);
     } catch (error) {
       throw new Internal({
         type: ErrorTypes.Internal,
