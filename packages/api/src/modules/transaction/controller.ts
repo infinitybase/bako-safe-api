@@ -78,7 +78,7 @@ export class TransactionController {
   // pending tx
   async pending(req: IListRequest) {
     try {
-      const { workspace, user, network } = req;
+      const { user, network } = req;
       const { predicateId } = req.query;
       const predicate =
         predicateId && predicateId.length > 0 ? predicateId[0] : undefined;
@@ -90,10 +90,10 @@ export class TransactionController {
         // Query 1: Get count of pending transactions (fast, no data transfer)
         const countQb = Transaction.createQueryBuilder('t')
           .innerJoin('t.predicate', 'pred')
-          .innerJoin('pred.workspace', 'wks', 'wks.id = :workspaceId', {
-            workspaceId: workspace.id,
-          })
-          .where('t.status = :status', {
+          .leftJoin('pred.members', 'pm')
+          .leftJoin('pred.owner', 'owner')
+          .where('(pm.id = :userId OR owner.id = :userId)', { userId: user.id })
+          .andWhere('t.status = :status', {
             status: TransactionStatus.AWAIT_REQUIREMENTS,
           })
           .andWhere(`t.network->>'chainId' = :chainId`, { chainId });
@@ -116,10 +116,10 @@ export class TransactionController {
         const pendingSignatureQb = Transaction.createQueryBuilder('t')
           .select(['t.id', 't.resume'])
           .innerJoin('t.predicate', 'pred')
-          .innerJoin('pred.workspace', 'wks', 'wks.id = :workspaceId', {
-            workspaceId: workspace.id,
-          })
-          .where('t.status = :status', {
+          .leftJoin('pred.members', 'pm')
+          .leftJoin('pred.owner', 'owner')
+          .where('(pm.id = :userId OR owner.id = :userId)', { userId: user.id })
+          .andWhere('t.status = :status', {
             status: TransactionStatus.AWAIT_REQUIREMENTS,
           })
           .andWhere(`t.network->>'chainId' = :chainId`, { chainId });
