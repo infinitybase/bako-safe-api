@@ -89,6 +89,7 @@ export class TransactionController {
       if (!predicate) {
         // Query 1: Get count of pending transactions (fast, no data transfer)
         const countQb = Transaction.createQueryBuilder('t')
+          .select('COUNT(DISTINCT t.id)', 'count')
           .innerJoin('t.predicate', 'pred')
           .leftJoin('pred.members', 'pm')
           .leftJoin('pred.owner', 'owner')
@@ -98,7 +99,8 @@ export class TransactionController {
           })
           .andWhere(`t.network->>'chainId' = :chainId`, { chainId });
 
-        const ofUser = await countQb.getCount();
+        const countResult = await countQb.getRawOne();
+        const ofUser = Number(countResult?.count ?? 0);
 
         // Early return if no pending transactions
         if (ofUser === 0) {
