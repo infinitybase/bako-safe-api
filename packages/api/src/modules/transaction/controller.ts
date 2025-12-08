@@ -78,7 +78,7 @@ export class TransactionController {
   // pending tx
   async pending(req: IListRequest) {
     try {
-      const { workspace, user, network } = req;
+      const { user, network } = req;
       const { predicateId } = req.query;
       const predicate =
         predicateId && predicateId.length > 0 ? predicateId[0] : undefined;
@@ -89,16 +89,18 @@ export class TransactionController {
       if (!predicate) {
         // Query 1: Get count of pending transactions (fast, no data transfer)
         const countQb = Transaction.createQueryBuilder('t')
+          .select('COUNT(DISTINCT t.id)', 'count')
           .innerJoin('t.predicate', 'pred')
-          .innerJoin('pred.workspace', 'wks', 'wks.id = :workspaceId', {
-            workspaceId: workspace.id,
-          })
-          .where('t.status = :status', {
+          .leftJoin('pred.members', 'pm')
+          .leftJoin('pred.owner', 'owner')
+          .where('(pm.id = :userId OR owner.id = :userId)', { userId: user.id })
+          .andWhere('t.status = :status', {
             status: TransactionStatus.AWAIT_REQUIREMENTS,
           })
           .andWhere(`t.network->>'chainId' = :chainId`, { chainId });
 
-        const ofUser = await countQb.getCount();
+        const countResult = await countQb.getRawOne();
+        const ofUser = Number(countResult?.count ?? 0);
 
         // Early return if no pending transactions
         if (ofUser === 0) {
@@ -115,14 +117,16 @@ export class TransactionController {
         // Query 2: Check if user has pending signature (only fetch resume)
         const pendingSignatureQb = Transaction.createQueryBuilder('t')
           .select(['t.id', 't.resume'])
+          .distinctOn(['t.id'])
           .innerJoin('t.predicate', 'pred')
-          .innerJoin('pred.workspace', 'wks', 'wks.id = :workspaceId', {
-            workspaceId: workspace.id,
-          })
-          .where('t.status = :status', {
+          .leftJoin('pred.members', 'pm')
+          .leftJoin('pred.owner', 'owner')
+          .where('(pm.id = :userId OR owner.id = :userId)', { userId: user.id })
+          .andWhere('t.status = :status', {
             status: TransactionStatus.AWAIT_REQUIREMENTS,
           })
-          .andWhere(`t.network->>'chainId' = :chainId`, { chainId });
+          .andWhere(`t.network->>'chainId' = :chainId`, { chainId })
+          .orderBy('t.id', 'ASC');
 
         const transactions = await pendingSignatureQb.getMany();
 
