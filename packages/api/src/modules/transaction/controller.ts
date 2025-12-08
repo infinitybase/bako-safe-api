@@ -117,6 +117,7 @@ export class TransactionController {
         // Query 2: Check if user has pending signature (only fetch resume)
         const pendingSignatureQb = Transaction.createQueryBuilder('t')
           .select(['t.id', 't.resume'])
+          .distinctOn(['t.id'])
           .innerJoin('t.predicate', 'pred')
           .leftJoin('pred.members', 'pm')
           .leftJoin('pred.owner', 'owner')
@@ -124,7 +125,8 @@ export class TransactionController {
           .andWhere('t.status = :status', {
             status: TransactionStatus.AWAIT_REQUIREMENTS,
           })
-          .andWhere(`t.network->>'chainId' = :chainId`, { chainId });
+          .andWhere(`t.network->>'chainId' = :chainId`, { chainId })
+          .orderBy('t.id', 'ASC');
 
         const transactions = await pendingSignatureQb.getMany();
 
