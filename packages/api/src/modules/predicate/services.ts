@@ -643,21 +643,25 @@ export class PredicateService implements IPredicateService {
       const structureQuery = Predicate.createQueryBuilder('p')
         .leftJoin('p.owner', 'owner')
         .leftJoin('p.members', 'members')
-        .where('owner.id = :userId OR members.id = :userId', { userId: user.id })
         .select([
           'p.id',
           'p.name',
           'p.predicateAddress',
           'p.configurable',
           'p.version',
+          'p.updatedAt',
         ])
-        .groupBy('p.id')
-        .orderBy('MAX(p.updatedAt)', 'DESC');
+        .distinctOn(['p.id'])
+        .orderBy('p.id')
+        .addOrderBy('p.updatedAt', 'DESC');
 
       if (predicateId) {
-        structureQuery.andWhere('p.id = :predicateId', { predicateId });
+        structureQuery.where('p.id = :predicateId', { predicateId });
+      } else {
+        structureQuery.where('owner.id = :userId OR members.id = :userId', {
+          userId: user.id,
+        });
       }
-      // Note: limit is applied later in buildAllocationResponse for the predicates array
 
       // Run vault query and cache fetch in parallel
       const [vaultStructures, { fuelUnitAssets }, quotes] = await Promise.all([
