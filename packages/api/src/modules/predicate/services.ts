@@ -656,11 +656,24 @@ export class PredicateService implements IPredicateService {
         .addOrderBy('p.updatedAt', 'DESC');
 
       if (predicateId) {
+        // if a specific predicateId is requested, fetch only that predicate
         structureQuery.andWhere('p.id = :predicateId', { predicateId });
       } else {
-        structureQuery.andWhere('owner.id = :userId OR members.id = :userId', {
+        // otherwise fetch predicates related to the user and exclude inactives
+        structureQuery.andWhere('(owner.id = :userId OR members.id = :userId)', {
           userId: user.id,
         });
+
+        structureQuery.andWhere(
+          `
+          p.predicateAddress NOT IN (
+            SELECT jsonb_array_elements_text(u.settings->'inactivesPredicates')
+            FROM users u
+            WHERE u.id = :userId
+          )
+          `,
+          { userId: user.id },
+        );
       }
 
       // Run vault query and cache fetch in parallel
@@ -669,10 +682,6 @@ export class PredicateService implements IPredicateService {
         import('@src/utils/assets').then(m => m.getAssetsMaps()),
         App.getInstance()._quoteCache.getActiveQuotes(),
       ]);
-
-      const validVaultStructures = predicateId
-        ? vaultStructures
-        : vaultStructures.filter(v => !v.isHiddenForUser(user));
 
       // Build vault info map from structures
       const vaultInfoMap = new Map<
@@ -688,7 +697,7 @@ export class PredicateService implements IPredicateService {
         }
       >();
 
-      for (const vault of validVaultStructures) {
+      for (const vault of vaultStructures) {
         const { members, minSigners } = this.parseVaultSigners(vault.configurable);
         vaultInfoMap.set(vault.id, {
           name: vault.name,
