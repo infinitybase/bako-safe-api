@@ -253,10 +253,8 @@ test('Predicate Endpoints', async t => {
         .set('signeraddress', users[0].payload.address);
       assert.equal(res.status, 200);
       assert.ok(Array.isArray(res.body.data));
-      assert.ok('totalAmountInUSD' in res.body);
-      assert.ok('predicates' in res.body);
-      assert.strictEqual(typeof res.body.predicates, 'object');
-      assert.strictEqual(typeof res.body.predicates[predicate.id], 'number');
+      assert.ok(Array.isArray(res.body.predicates));
+      assert.strictEqual(typeof res.body.totalAmountInUSD, 'number');
     },
   );
 
