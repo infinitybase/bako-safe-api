@@ -656,9 +656,9 @@ export class PredicateService implements IPredicateService {
         .addOrderBy('p.updatedAt', 'DESC');
 
       if (predicateId) {
-        structureQuery.where('p.id = :predicateId', { predicateId });
+        structureQuery.andWhere('p.id = :predicateId', { predicateId });
       } else {
-        structureQuery.where('owner.id = :userId OR members.id = :userId', {
+        structureQuery.andWhere('owner.id = :userId OR members.id = :userId', {
           userId: user.id,
         });
       }
