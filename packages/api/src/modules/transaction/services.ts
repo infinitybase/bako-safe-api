@@ -828,6 +828,10 @@ export class TransactionService implements ITransactionService {
           transaction.network?.chainId,
         );
       }
+
+      console.log(
+        `[TX_CACHE] Invalidated caches for ${predicateAddresses.length} predicates`,
+      );
     } catch (error) {
       console.error('[TX_CACHE] Failed to invalidate transaction caches:', error);
     }
