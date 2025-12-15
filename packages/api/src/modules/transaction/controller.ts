@@ -25,9 +25,8 @@ import { In, Not } from 'typeorm';
 import { IAddressBookService } from '../addressBook/types';
 import { NotificationService } from '../notification/services';
 import { INotificationService } from '../notification/types';
-import App from '@src/server/app';
 import { PredicateService } from '../predicate/services';
-import { UserService } from '../user/service';
+
 import { WorkspaceService } from '../workspace/services';
 import { TransactionService } from './services';
 import {
@@ -785,47 +784,16 @@ export class TransactionController {
         resume: transactionResult,
       });
 
-      // Invalidate caches after closing transaction (granular by chainId)
-      if (transaction?.predicate?.predicateAddress) {
-        this.invalidatePredicateCaches(
-          transaction.predicate.predicateAddress,
-          transaction.network?.chainId,
-        ).catch(err =>
+      // Invalidate caches for all predicates involved in this transaction
+      this.transactionService
+        .invalidateCaches(transaction)
+        .catch(err =>
           console.error('[TX_CLOSE] Failed to invalidate caches:', err),
         );
-      }
 
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
-    }
-  }
-
-  /**
-   * Invalidate all caches for a predicate
-   *
-   * @param predicateAddress - The predicate address to invalidate
-   * @param chainId - Optional chainId for granular invalidation (only invalidates that specific chain)
-   */
-  private async invalidatePredicateCaches(
-    predicateAddress: string,
-    chainId?: number,
-  ): Promise<void> {
-    const chainInfo = chainId ? ` chain:${chainId}` : ' all chains';
-    const addrShort = predicateAddress?.slice(0, 12);
-
-    try {
-      // Invalidate balance cache
-      const balanceCache = App.getInstance()._balanceCache;
-      await balanceCache.invalidate(predicateAddress, chainId);
-
-      // Invalidate transaction cache
-      const transactionCache = App.getInstance()._transactionCache;
-      await transactionCache.invalidate(predicateAddress, chainId);
-
-      console.log(`[TX_CACHE] Caches invalidated for ${addrShort}...${chainInfo}`);
-    } catch (error) {
-      console.error('[TX_CACHE] Failed to invalidate caches:', error);
     }
   }
 

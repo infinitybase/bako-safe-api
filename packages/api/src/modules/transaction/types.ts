@@ -291,4 +291,5 @@ export interface ITransactionService {
   checkInvalidConditions: (api_transaction: TransactionStatus) => void;
   validateSignature: (transaction: Transaction, userAddress: string) => boolean;
   listAll(): Promise<IPagination<Transaction>>;
+  invalidateCaches: (transaction: Transaction) => Promise<void>;
 }
