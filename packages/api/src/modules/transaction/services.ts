@@ -16,10 +16,10 @@ import { NotFound } from '@utils/error';
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
 import { IOrdination, setOrdination } from '@utils/ordination';
-// force commit
+
 import { IPagination, Pagination, PaginationParams } from '@utils/pagination';
 
-import { FuelProvider } from '@src/utils';
+import { extractPredicatesFromTransaction, FuelProvider } from '@src/utils';
 import App from '@src/server/app';
 import { NotificationService } from '../notification/services';
 import { TransactionPagination, TransactionPaginationParams } from './pagination';
@@ -651,11 +651,8 @@ export class TransactionService implements ITransactionService {
 
       await new NotificationService().transactionSuccess(id, network);
 
-      // Invalidate caches after successful transaction (granular by chainId)
-      this.invalidatePredicateCaches(
-        predicate.predicateAddress,
-        transaction.network?.chainId,
-      ).catch(err =>
+      // Invalidate caches for all predicates involved in this transaction
+      this.invalidateCaches(transaction).catch(err =>
         console.error('[TX_SUCCESS] Failed to invalidate caches:', err),
       );
 
@@ -808,6 +805,32 @@ export class TransactionService implements ITransactionService {
       .innerJoin('t.createdBy', 'u');
 
     return Pagination.create(queryBuilder).paginate(this._pagination);
+  }
+
+  /**
+   * Invalidate all caches for predicates involved in a transaction
+   * Called after successful transactions to ensure fresh data for all affected predicates
+   *
+   * @param transaction - The transaction object containing summary with operations
+   */
+  async invalidateCaches(transaction: Transaction): Promise<void> {
+    try {
+      const predicateAddresses = extractPredicatesFromTransaction(transaction);
+
+      if (predicateAddresses.length === 0) {
+        console.log('[TX_CACHE] No predicate addresses found in transaction');
+        return;
+      }
+
+      for (const predicateAddress of predicateAddresses) {
+        await this.invalidatePredicateCaches(
+          predicateAddress,
+          transaction.network?.chainId,
+        );
+      }
+    } catch (error) {
+      console.error('[TX_CACHE] Failed to invalidate transaction caches:', error);
+    }
   }
 
   /**
