@@ -24,10 +24,10 @@ export class SocketClient {
     } else {
       await new Promise<void>(resolve => {
         this._socket.once('connect', () => {
+          this._socket.emit(event, data);
           resolve();
         });
       });
-      this._socket.emit(event, data);
     }
   }
 
