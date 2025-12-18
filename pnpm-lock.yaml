@@ -66,8 +66,8 @@ importers:
         specifier: 1.5.1
         version: 1.5.1
       bakosafe:
-        specifier: 0.5.2
-        version: 0.5.2(fuels@0.101.3(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.0)))(typescript@5.4.5)
+        specifier: 0.5.4
+        version: 0.5.4(fuels@0.101.3(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.0)))(typescript@5.4.5)
       body-parser:
         specifier: 1.20.2
         version: 1.20.2
@@ -279,8 +279,8 @@ importers:
         specifier: 1.5.1
         version: 1.5.1
       bakosafe:
-        specifier: 0.5.2
-        version: 0.5.2(fuels@0.101.1(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.0)))(typescript@5.4.5)
+        specifier: 0.5.4
+        version: 0.5.4(fuels@0.101.1(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.0)))(typescript@5.4.5)
       date-fns:
         specifier: 2.30.0
         version: 2.30.0
@@ -3103,8 +3103,8 @@ packages:
     peerDependencies:
       '@babel/core': ^7.0.0
 
-  bakosafe@0.5.2:
-    resolution: {integrity: sha512-ucX03xD3Y+HS/7aDr0k7vAAqK/Ho1b813txrRstQpvvEoXxigslvrjwLl7q7gzBv55Qk3gSckiMJGKIkx/kvhw==}
+  bakosafe@0.5.4:
+    resolution: {integrity: sha512-QxaSE0PcX7aivKwwYsb2B2MO6TvueiHJPPfJH6o4XDDtx+TEGMu1/WKvEaolkRVvU8qNzq09zOuSNZg2/d3D3g==}
     peerDependencies:
       fuels: ^0.101.0
 
@@ -10239,7 +10239,7 @@ snapshots:
       babel-plugin-jest-hoist: 29.6.3
       babel-preset-current-node-syntax: 1.1.0(@babel/core@7.28.0)
 
-  bakosafe@0.5.2(fuels@0.101.1(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.0)))(typescript@5.4.5):
+  bakosafe@0.5.4(fuels@0.101.1(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.0)))(typescript@5.4.5):
     dependencies:
       '@ethereumjs/util': 9.0.3
       '@ethersproject/bytes': 5.7.0
@@ -10259,7 +10259,7 @@ snapshots:
       - utf-8-validate
       - zod
 
-  bakosafe@0.5.2(fuels@0.101.3(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.0)))(typescript@5.4.5):
+  bakosafe@0.5.4(fuels@0.101.3(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.0)))(typescript@5.4.5):
     dependencies:
       '@ethereumjs/util': 9.0.3
       '@ethersproject/bytes': 5.7.0
