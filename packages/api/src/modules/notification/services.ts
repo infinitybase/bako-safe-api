@@ -239,6 +239,8 @@ export class NotificationService implements INotificationService {
             ? sendMail(EmailTemplateType.TRANSACTION_COMPLETED, {
                 to: member.email,
                 data: { summary: { ...summary, name: member?.name ?? '' } },
+              }).catch(e => {
+                console.error('Error sending transaction success email:', e);
               })
             : Promise.resolve(),
         ]);
