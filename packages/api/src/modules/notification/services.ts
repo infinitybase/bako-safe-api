@@ -242,6 +242,11 @@ export class NotificationService implements INotificationService {
               }).catch(e => {
                 console.error(
                   '[NOTIFICATION] Failed to send transaction success email',
+                  {
+                    to: member.email,
+                    memberId: member?.id,
+                    transactionId: summary?.transactionId,
+                  },
                   e,
                 );
               })
