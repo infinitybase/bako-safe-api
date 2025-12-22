@@ -82,32 +82,40 @@ export class PredicateService implements IPredicateService {
     workspace: Workspace,
   ): Promise<Predicate> {
     try {
-      const members = [];
       const userService = new UserService();
-      //const workspaceService = new WorkspaceService();
+      const config = JSON.parse(payload.configurable);
 
-      // create a pending users
-      const { SIGNERS } = JSON.parse(payload.configurable);
-      const validUsers = SIGNERS.filter(address => address !== ZeroBytes32);
+      let members: User[] = [];
 
-      for await (const member of validUsers) {
-        let user = await userService.findByAddress(member);
-        let type = TypeUser.FUEL;
-        if (BakoAddressUtils.isEvm(member)) {
-          type = TypeUser.EVM;
+      // Connector predicate (SIGNER) - owner is the only member
+      if (config.SIGNER) {
+        members = [owner];
+      }
+      // Multisig predicate (SIGNERS) - process all signers
+      else if (config.SIGNERS) {
+        const validUsers = config.SIGNERS.filter(
+          (address: string) => address !== ZeroBytes32,
+        );
+
+        for await (const member of validUsers) {
+          let user = await userService.findByAddress(member);
+          let type = TypeUser.FUEL;
+          if (BakoAddressUtils.isEvm(member)) {
+            type = TypeUser.EVM;
+          }
+
+          if (!user) {
+            user = await userService.create({
+              address: member,
+              avatar: IconUtils.user(),
+              type,
+              name: member,
+              provider: network.url,
+            });
+          }
+
+          members.push(user);
         }
-
-        if (!user) {
-          user = await userService.create({
-            address: member,
-            avatar: IconUtils.user(),
-            type,
-            name: member,
-            provider: network.url,
-          });
-        }
-
-        members.push(user);
       }
 
       // create a predicate
