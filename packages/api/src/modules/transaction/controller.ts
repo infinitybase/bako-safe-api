@@ -209,17 +209,12 @@ export class TransactionController {
       }
 
       console.log('[TX_CREATE] Looking for predicate by address:', predicateAddress);
-      const predicate = await new PredicateService()
-        .filter({ address: predicateAddress })
-        .list()
-        .then((result: Predicate[]) => {
-          console.log('[TX_CREATE] Predicate search result:', {
-            found: result?.length > 0,
-            count: result?.length,
-            predicateId: result?.[0]?.id,
-          });
-          return result[0];
-        });
+      const predicate = await this.predicateService.findByAddress(predicateAddress);
+      console.log('[TX_CREATE] Predicate search result:', {
+        found: !!predicate,
+        predicateId: predicate?.id,
+        predicateName: predicate?.name,
+      });
 
       // if possible move this next part to a middleware, but we dont have access to body of request
       // ========================================================================================================
@@ -318,7 +313,7 @@ export class TransactionController {
             vaultName: predicate.name,
             transactionName: name,
             transactionId: id,
-            workspaceId: predicate.workspace.id,
+            workspaceId: predicate.workspace?.id,
           },
           user_id: member.id,
           network,
