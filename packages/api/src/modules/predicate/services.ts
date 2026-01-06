@@ -209,11 +209,18 @@ export class PredicateService implements IPredicateService {
         .leftJoin('p.members', 'members')
         .leftJoin('p.workspace', 'workspace')
         .select([
+          // Predicate fields (same as predicateFieldsSelection)
           'p.id',
+          'p.createdAt',
+          'p.deletedAt',
+          'p.updatedAt',
           'p.name',
           'p.predicateAddress',
+          'p.description',
           'p.configurable',
+          'p.root',
           'p.version',
+          // Relation fields
           'owner.id',
           'owner.address',
           'members.id',
