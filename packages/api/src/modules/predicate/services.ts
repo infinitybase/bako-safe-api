@@ -204,24 +204,24 @@ export class PredicateService implements IPredicateService {
   async findByAddress(address: string): Promise<Predicate> {
     try {
       console.log(`Finding predicate by address: ${address}`);
-      return await Predicate.findOne({
-        where: { predicateAddress: address },
-        relations: ['owner', 'members', 'workspace'],
-        select: {
-          owner: {
-            id: true,
-            address: true,
-          },
-          members: {
-            id: true,
-            address: true,
-          },
-          workspace: {
-            id: true,
-            name: true,
-          },
-        },
-      });
+      return await Predicate.createQueryBuilder('p')
+        .leftJoin('p.owner', 'owner')
+        .leftJoin('p.members', 'members')
+        .leftJoin('p.workspace', 'workspace')
+        .select([
+          'p.id',
+          'p.name',
+          'p.predicateAddress',
+          'p.configurable',
+          'p.version',
+          'owner.id',
+          'owner.address',
+          'members.id',
+          'members.address',
+          'workspace.id',
+        ])
+        .where('p.predicateAddress = :address', { address })
+        .getOne();
     } catch (e) {
       console.log(e);
       throw new Internal({
