@@ -58,41 +58,62 @@ export class PredicateController {
     network,
     workspace,
   }: ICreatePredicateRequest) {
-    const predicateService = new PredicateService();
-    const predicate = await predicateService.create(
-      payload,
-      network,
-      user,
-      workspace,
-    );
+    console.log('[PREDICATE_CREATE] Starting predicate creation', {
+      name: payload?.name,
+      predicateAddress: payload?.predicateAddress,
+      userId: user?.id,
+      workspaceId: workspace?.id,
+    });
 
-    const notifyDestination = predicate.members.filter(
-      member => user.id !== member.id,
-    );
-    const notifyContent = {
-      vaultId: predicate.id,
-      vaultName: predicate.name,
-      workspaceId: workspace.id,
-    };
-    for await (const member of notifyDestination) {
-      await this.notificationService.create({
-        title: NotificationTitle.NEW_VAULT_CREATED,
-        user_id: member.id,
-        summary: notifyContent,
+    try {
+      const predicateService = new PredicateService();
+      const predicate = await predicateService.create(
+        payload,
         network,
+        user,
+        workspace,
+      );
+
+      console.log('[PREDICATE_CREATE] Predicate created successfully', {
+        predicateId: predicate?.id,
+        predicateName: predicate?.name,
       });
 
-      if (member.notify) {
-        await sendMail(EmailTemplateType.VAULT_CREATED, {
-          to: member.email,
-          data: { summary: { ...notifyContent, name: member?.name ?? '' } },
+      const notifyDestination = predicate.members.filter(
+        member => user.id !== member.id,
+      );
+      const notifyContent = {
+        vaultId: predicate.id,
+        vaultName: predicate.name,
+        workspaceId: workspace.id,
+      };
+      for await (const member of notifyDestination) {
+        await this.notificationService.create({
+          title: NotificationTitle.NEW_VAULT_CREATED,
+          user_id: member.id,
+          summary: notifyContent,
+          network,
         });
+
+        if (member.notify) {
+          await sendMail(EmailTemplateType.VAULT_CREATED, {
+            to: member.email,
+            data: { summary: { ...notifyContent, name: member?.name ?? '' } },
+          });
+        }
       }
+
+      await new NotificationService().vaultUpdate(predicate.id);
+
+      return successful(predicate, Responses.Created);
+    } catch (e) {
+      console.log('[PREDICATE_CREATE] ERROR:', {
+        message: e?.message || e,
+        name: e?.name,
+        stack: e?.stack?.slice(0, 500),
+      });
+      return error(e.error, e.statusCode);
     }
-
-    await new NotificationService().vaultUpdate(predicate.id);
-
-    return successful(predicate, Responses.Created);
   }
 
   async delete({ params: { id } }: IDeletePredicateRequest) {
