@@ -220,12 +220,17 @@ export class PredicateService implements IPredicateService {
           'p.configurable',
           'p.root',
           'p.version',
-          // Relation fields
+          // Relation fields (same as list() method)
           'owner.id',
           'owner.address',
+          'owner.avatar',
           'members.id',
           'members.address',
+          'members.avatar',
           'workspace.id',
+          'workspace.name',
+          'workspace.single',
+          'workspace.avatar',
         ])
         .where('p.predicateAddress = :address', { address })
         .getOne();
