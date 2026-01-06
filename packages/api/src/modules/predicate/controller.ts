@@ -66,12 +66,23 @@ export class PredicateController {
     });
 
     try {
+      // If workspace is not provided, use user's single workspace as default
+      let effectiveWorkspace = workspace;
+      if (!workspace?.id) {
+        console.log('[PREDICATE_CREATE] No workspace provided, fetching user single workspace');
+        effectiveWorkspace = await new WorkspaceService()
+          .filter({ user: user.id, single: true })
+          .list()
+          .then((response: Workspace[]) => response[0]);
+        console.log('[PREDICATE_CREATE] Using single workspace:', effectiveWorkspace?.id);
+      }
+
       const predicateService = new PredicateService();
       const predicate = await predicateService.create(
         payload,
         network,
         user,
-        workspace,
+        effectiveWorkspace,
       );
 
       console.log('[PREDICATE_CREATE] Predicate created successfully', {
@@ -85,7 +96,7 @@ export class PredicateController {
       const notifyContent = {
         vaultId: predicate.id,
         vaultName: predicate.name,
-        workspaceId: workspace.id,
+        workspaceId: effectiveWorkspace.id,
       };
       for await (const member of notifyDestination) {
         await this.notificationService.create({
