@@ -182,6 +182,13 @@ export class TransactionController {
   }: ICreateTransactionRequest) {
     const { predicateAddress, summary, hash } = transaction;
 
+    console.log('[TX_CREATE] Starting transaction creation', {
+      predicateAddress,
+      hash,
+      userId: user?.id,
+      networkUrl: network?.url,
+    });
+
     try {
       const existsTx = await Transaction.findOne({
         where: {
@@ -197,13 +204,22 @@ export class TransactionController {
       });
 
       if (existsTx) {
+        console.log('[TX_CREATE] Transaction already exists', { hash, txId: existsTx.id });
         return successful(existsTx, Responses.Ok);
       }
 
+      console.log('[TX_CREATE] Looking for predicate by address:', predicateAddress);
       const predicate = await new PredicateService()
         .filter({ address: predicateAddress })
         .list()
-        .then((result: Predicate[]) => result[0]);
+        .then((result: Predicate[]) => {
+          console.log('[TX_CREATE] Predicate search result:', {
+            found: result?.length > 0,
+            count: result?.length,
+            predicateId: result?.[0]?.id,
+          });
+          return result[0];
+        });
 
       // if possible move this next part to a middleware, but we dont have access to body of request
       // ========================================================================================================
@@ -224,6 +240,21 @@ export class TransactionController {
       //   });
       // }
       // ========================================================================================================
+
+      if (!predicate) {
+        console.log('[TX_CREATE] ERROR: Predicate not found for address:', predicateAddress);
+        throw new BadRequest({
+          type: ErrorTypes.NotFound,
+          title: 'Predicate not found',
+          detail: `No predicate found with address ${predicateAddress}`,
+        });
+      }
+
+      console.log('[TX_CREATE] Predicate found:', {
+        predicateId: predicate.id,
+        predicateName: predicate.name,
+        membersCount: predicate.members?.length,
+      });
 
       const witnesses = predicate.members.map(member => ({
         account: member.address,
@@ -310,6 +341,12 @@ export class TransactionController {
 
       return successful(newTransaction, Responses.Created);
     } catch (e) {
+      console.log('[TX_CREATE] ERROR:', {
+        message: e?.message || e?.error?.detail || e,
+        type: e?.error?.type,
+        title: e?.error?.title,
+        stack: e?.stack?.slice(0, 500),
+      });
       return error(e.error, e.statusCode);
     }
   }

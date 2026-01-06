@@ -6,7 +6,7 @@ import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
 
 import { NotificationTitle } from '@models/index';
 
-import { error } from '@utils/error';
+import { error, ErrorTypes, NotFound } from '@utils/error';
 import {
   Responses,
   bindMethods,
@@ -117,11 +117,27 @@ export class PredicateController {
 
   async findByAddress({ params: { address } }: IFindByHashRequest) {
     try {
+      console.log('[PREDICATE_FIND_BY_ADDRESS] Looking for predicate:', address);
       const predicate = await this.predicateService.findByAddress(address);
+
+      if (!predicate) {
+        console.log('[PREDICATE_FIND_BY_ADDRESS] Predicate NOT found for address:', address);
+        throw new NotFound({
+          type: ErrorTypes.NotFound,
+          title: 'Predicate not found',
+          detail: `No predicate found with address ${address}`,
+        });
+      }
+
+      console.log('[PREDICATE_FIND_BY_ADDRESS] Predicate found:', {
+        predicateId: predicate.id,
+        predicateName: predicate.name,
+        membersCount: predicate.members?.length,
+      });
 
       return successful(predicate, Responses.Ok);
     } catch (e) {
-      console.log(e);
+      console.log('[PREDICATE_FIND_BY_ADDRESS] ERROR:', e?.message || e);
       return error(e.error, e.statusCode);
     }
   }
