@@ -66,8 +66,8 @@ importers:
         specifier: 1.5.1
         version: 1.5.1
       bakosafe:
-        specifier: 0.5.4
-        version: 0.5.4(fuels@0.101.3(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.0)))(typescript@5.4.5)
+        specifier: 0.6.0
+        version: 0.6.0(fuels@0.101.3(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.0)))(typescript@5.4.5)
       body-parser:
         specifier: 1.20.2
         version: 1.20.2
@@ -3105,6 +3105,11 @@ packages:
 
   bakosafe@0.5.4:
     resolution: {integrity: sha512-QxaSE0PcX7aivKwwYsb2B2MO6TvueiHJPPfJH6o4XDDtx+TEGMu1/WKvEaolkRVvU8qNzq09zOuSNZg2/d3D3g==}
+    peerDependencies:
+      fuels: ^0.101.0
+
+  bakosafe@0.6.0:
+    resolution: {integrity: sha512-exyZ1NAb4IrTBuvVG2v8+2MaKm3B2Kqe0KZcNFUHtg/7qRrN2gC25m4QNgSlPGkV4cAmPyngWyFSXyV3LP33Mw==}
     peerDependencies:
       fuels: ^0.101.0
 
@@ -10259,7 +10264,7 @@ snapshots:
       - utf-8-validate
       - zod
 
-  bakosafe@0.5.4(fuels@0.101.3(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.0)))(typescript@5.4.5):
+  bakosafe@0.6.0(fuels@0.101.3(vitest@3.0.9(@types/node@20.6.0)(tsx@4.19.3)(yaml@2.8.0)))(typescript@5.4.5):
     dependencies:
       '@ethereumjs/util': 9.0.3
       '@ethersproject/bytes': 5.7.0
