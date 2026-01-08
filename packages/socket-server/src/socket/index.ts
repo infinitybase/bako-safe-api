@@ -5,7 +5,7 @@ import { TransactionEventHandler } from '@modules/transactions'
 import { SwitchNetworkEventHandler } from '../modules/switchNetwork'
 
 import { SocketEvents, SocketUsernames } from '../types'
-import { DatabaseClass, retryWithBackoff } from '@src/utils'
+import { DatabaseClass } from '@src/utils'
 
 // import Redis from 'ioredis'
 // import { createAdapter } from '@socket.io/redis-adapter'
@@ -92,8 +92,7 @@ export const setupSocket = (io: SocketIOServer, database: DatabaseClass, api: Ax
 			const connectorRoom = `${sessionId}:${SocketUsernames.CONNECTOR}:${request_id}`
 
 			try {
-				const connectionStateUrl = `/connections/${sessionId}/state`
-				const { data: connected } = await retryWithBackoff(() => api.get(connectionStateUrl), connectionStateUrl)
+				const { data: connected } = await api.get(`/connections/${sessionId}/state`)
 
 				console.log('[SOCKET] [CONNECTION_STATE] Connected state for session', sessionId, '->', connected)
 
