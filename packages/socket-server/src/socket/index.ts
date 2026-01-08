@@ -95,6 +95,8 @@ export const setupSocket = (io: SocketIOServer, database: DatabaseClass, api: Ax
 				const connectionStateUrl = `/connections/${sessionId}/state`
 				const { data: connected } = await retryWithBackoff(() => api.get(connectionStateUrl), connectionStateUrl)
 
+				console.log('[SOCKET] [CONNECTION_STATE] Connected state for session', sessionId, '->', connected)
+
 				io.to(connectorRoom).emit(SocketEvents.CONNECTION_STATE, {
 					username: SocketUsernames.CONNECTOR,
 					request_id,
