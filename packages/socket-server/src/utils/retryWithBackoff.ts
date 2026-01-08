@@ -6,7 +6,7 @@ type RetryOptions = {
 }
 
 const DEFAULT_RETRIES = 3
-const DEFAULT_BASE_DELAY = 400 // ms
+const DEFAULT_BASE_DELAY = 300 // ms
 
 /**
  * Executes an async function with retry attempts and exponential backoff for 5xx errors.
@@ -20,7 +20,7 @@ const DEFAULT_BASE_DELAY = 400 // ms
  * @param fn The async function to execute
  * @param url The url related to the request (for logging)
  * @param options.retries Maximum number of attempts (default: 3)
- * @param options.baseDelay Base delay in ms for exponential backoff (default: 400)
+ * @param options.baseDelay Base delay in ms for exponential backoff (default: 300)
  * @returns The result of the async function if any attempt succeeds
  * @throws Rethrows the original error if not a 5xx error or if all attempts fail
  */
