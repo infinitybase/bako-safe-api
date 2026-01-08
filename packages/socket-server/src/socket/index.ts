@@ -5,7 +5,7 @@ import { TransactionEventHandler } from '@modules/transactions'
 import { SwitchNetworkEventHandler } from '../modules/switchNetwork'
 
 import { SocketEvents, SocketUsernames } from '../types'
-import { DatabaseClass, retryWithBackoff } from '@src/utils/index.ts'
+import { DatabaseClass, retryWithBackoff } from '@src/utils'
 
 // import Redis from 'ioredis'
 // import { createAdapter } from '@socket.io/redis-adapter'
