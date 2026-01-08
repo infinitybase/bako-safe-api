@@ -3,8 +3,9 @@ import { AxiosInstance } from 'axios'
 
 import { TransactionEventHandler } from '@modules/transactions'
 import { SwitchNetworkEventHandler } from '../modules/switchNetwork'
-import { DatabaseClass } from '@utils/database'
+
 import { SocketEvents, SocketUsernames } from '../types'
+import { DatabaseClass, retryWithBackoff } from '@src/utils'
 
 // import Redis from 'ioredis'
 // import { createAdapter } from '@socket.io/redis-adapter'
@@ -89,16 +90,37 @@ export const setupSocket = (io: SocketIOServer, database: DatabaseClass, api: Ax
 		socket.on(SocketEvents.CONNECTION_STATE, async () => {
 			const { sessionId, request_id } = socket.handshake.auth
 			const connectorRoom = `${sessionId}:${SocketUsernames.CONNECTOR}:${request_id}`
-			const { data: connected } = await api.get(`/connections/${sessionId}/state`)
 
-			io.to(connectorRoom).emit(SocketEvents.CONNECTION_STATE, {
-				username: SocketUsernames.CONNECTOR,
-				request_id,
-				room: sessionId,
-				to: SocketUsernames.CONNECTOR,
-				type: SocketEvents.CONNECTION_STATE,
-				data: connected,
-			})
+			try {
+				const connectionStateUrl = `/connections/${sessionId}/state`
+				const { data: connected } = await retryWithBackoff(() => api.get(connectionStateUrl), connectionStateUrl)
+
+				console.log('[SOCKET] [CONNECTION_STATE] Connected state for session', sessionId, '->', connected)
+
+				io.to(connectorRoom).emit(SocketEvents.CONNECTION_STATE, {
+					username: SocketUsernames.CONNECTOR,
+					request_id,
+					room: sessionId,
+					to: SocketUsernames.CONNECTOR,
+					type: SocketEvents.CONNECTION_STATE,
+					data: connected,
+				})
+			} catch (error) {
+				console.error('[SOCKET] [CONNECTION_STATE] Error:', {
+					message: error.message,
+					status: error.response?.status,
+					url: error.config?.url,
+				})
+				// Returns an error response to the client
+				io.to(connectorRoom).emit(SocketEvents.CONNECTION_STATE, {
+					username: SocketUsernames.CONNECTOR,
+					request_id,
+					room: sessionId,
+					to: SocketUsernames.CONNECTOR,
+					type: SocketEvents.CONNECTION_STATE,
+					data: false,
+				})
+			}
 		})
 
 		// Lidar com mensagens recebidas do cliente
