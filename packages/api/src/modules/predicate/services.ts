@@ -62,16 +62,26 @@ export class PredicateService implements IPredicateService {
     'p.version',
   ];
 
-  private async validateUniqueName(name: string, workspaceId: string): Promise<void> {
-    const exists = await Predicate.createQueryBuilder('p')
+  private static async validateUniqueName(
+      name: string,
+      workspaceId: string,
+      type: ErrorTypes,
+      predicateId?: string,
+  ): Promise<void> {
+    const query = Predicate.createQueryBuilder('p')
         .where('LOWER(p.name) = LOWER(:name)', { name })
         .andWhere('p.workspace_id = :workspaceId', { workspaceId })
         .andWhere('p.deletedAt IS NULL')
-        .getOne();
+
+    if (predicateId) {
+      query.andWhere('p.id != :predicateId', { predicateId });
+    }
+
+    const exists = await query.getOne();
 
     if (exists) {
       throw new BadRequest({
-        type: ErrorTypes.Create,
+        type,
         title: 'Predicate name already exists',
         detail: `A predicate with name "${name}" already exists in this workspace`,
       });
@@ -100,7 +110,10 @@ export class PredicateService implements IPredicateService {
     workspace: Workspace,
   ): Promise<Predicate> {
     try {
-      await this.validateUniqueName(payload.name, workspace.id);
+      await PredicateService.validateUniqueName(payload.name,
+          workspace.id,
+          ErrorTypes.Create
+      );
 
       const userService = new UserService();
       const config = JSON.parse(payload.configurable);
@@ -419,7 +432,10 @@ export class PredicateService implements IPredicateService {
     payload?: Partial<IPredicatePayload>,
   ): Promise<Predicate> {
     try {
-      const currentPredicate = await this.findById(id);
+      const currentPredicate = await Predicate.findOne({
+        where: { id },
+        relations: ['workspace']
+      });
 
       if (!currentPredicate) {
         throw new NotFound({
@@ -427,6 +443,15 @@ export class PredicateService implements IPredicateService {
           title: 'Predicate not found',
           detail: `Predicate with id ${id} not found after update`,
         });
+      }
+
+      if (payload?.name && payload.name !== currentPredicate.name) {
+        await PredicateService.validateUniqueName(
+            payload.name,
+            currentPredicate.workspace.id,
+            ErrorTypes.Update,
+            currentPredicate.id,
+        );
       }
 
       const updatedPredicate = await Predicate.merge(currentPredicate, {
