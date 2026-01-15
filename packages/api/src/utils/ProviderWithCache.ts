@@ -1,6 +1,6 @@
-import { Provider, type CoinQuantity, type ProviderOptions, Address } from 'fuels';
 import { BalanceCache } from '@src/server/storage/balance';
 import { cacheConfig } from '@src/config/cache';
+import { Address, CoinQuantity, Provider, ProviderOptions } from 'fuels';
 
 // Type for address parameter (matches Fuel SDK's Provider.getBalances signature)
 type AddressInput = string | Address;
@@ -78,9 +78,7 @@ export class ProviderWithCache extends Provider {
    * Override getBalances to add caching
    * This is the main method called by Vault.getBalances()
    */
-  async getBalances(
-    address: AddressInput,
-  ): Promise<{ balances: CoinQuantity[] }> {
+  async getBalances(address: AddressInput): Promise<{ balances: CoinQuantity[] }> {
     const cache = this.getBalanceCache();
 
     // Convert address to string (handles both string and Address objects)
@@ -111,7 +109,10 @@ export class ProviderWithCache extends Provider {
 
       return result;
     } catch (error) {
-      console.error('[ProviderWithCache] Error, falling back to blockchain:', error);
+      console.error(
+        '[ProviderWithCache] Error, falling back to blockchain:',
+        error,
+      );
       // Fallback to blockchain on any cache error
       return super.getBalances(address);
     }
@@ -141,6 +142,16 @@ export class ProviderWithCache extends Provider {
     }
 
     return result;
+  }
+
+  /**
+   * Get balances directly from blockchain without using or modifying cache
+   * Use this for diagnostic purposes to compare blockchain state with cached state
+   */
+  async getBalancesFromBlockchain(
+    address: AddressInput,
+  ): Promise<{ balances: CoinQuantity[] }> {
+    return super.getBalances(address);
   }
 
   /**

@@ -21,6 +21,7 @@ import { INotificationService } from '../notification/types';
 
 import { WorkspaceService } from '../workspace/services';
 import {
+  ICheckPredicateBalancesRequest,
   ICreatePredicateRequest,
   IDeletePredicateRequest,
   IFindByHashRequest,
@@ -69,12 +70,17 @@ export class PredicateController {
       // If workspace is not provided, use user's single workspace as default
       let effectiveWorkspace = workspace;
       if (!workspace?.id) {
-        console.log('[PREDICATE_CREATE] No workspace provided, fetching user single workspace');
+        console.log(
+          '[PREDICATE_CREATE] No workspace provided, fetching user single workspace',
+        );
         effectiveWorkspace = await new WorkspaceService()
           .filter({ user: user.id, single: true })
           .list()
           .then((response: Workspace[]) => response[0]);
-        console.log('[PREDICATE_CREATE] Using single workspace:', effectiveWorkspace?.id);
+        console.log(
+          '[PREDICATE_CREATE] Using single workspace:',
+          effectiveWorkspace?.id,
+        );
       }
 
       const predicateService = new PredicateService();
@@ -153,7 +159,10 @@ export class PredicateController {
       const predicate = await this.predicateService.findByAddress(address);
 
       if (!predicate) {
-        console.log('[PREDICATE_FIND_BY_ADDRESS] Predicate NOT found for address:', address);
+        console.log(
+          '[PREDICATE_FIND_BY_ADDRESS] Predicate NOT found for address:',
+          address,
+        );
         throw new NotFound({
           type: ErrorTypes.NotFound,
           title: 'Predicate not found',
@@ -419,6 +428,23 @@ export class PredicateController {
       });
 
       return successful(allocation, Responses.Ok);
+    } catch (e) {
+      return error(e.error || e, e.statusCode);
+    }
+  }
+
+  async checkPredicateBalances({
+    params: { predicateId },
+    user,
+    network,
+  }: ICheckPredicateBalancesRequest) {
+    try {
+      await this.predicateService.checkBalances({
+        predicateId,
+        userId: user.id,
+        network,
+      });
+      return successful(null, Responses.Ok);
     } catch (e) {
       return error(e.error || e, e.statusCode);
     }

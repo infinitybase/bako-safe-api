@@ -156,6 +156,12 @@ interface IGetAllocationRequestSchema extends ValidatedRequestSchema {
   };
 }
 
+interface ICheckPredicateBalancesRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Params]: {
+    predicateId: string;
+  };
+}
+
 export type ICreatePredicateRequest = AuthValidatedRequest<ICreatePredicateRequestSchema>;
 export type ITooglePredicateRequest = AuthValidatedRequest<ITooglePredicateRequestSchema>;
 export type IUpdatePredicateRequest = AuthValidatedRequest<IUpdatePredicateRequestSchema>;
@@ -179,6 +185,7 @@ export type PredicateWithHidden = Omit<
   isHidden: boolean;
 };
 export type IGetAllocationRequest = AuthValidatedRequest<IGetAllocationRequestSchema>;
+export type ICheckPredicateBalancesRequest = AuthValidatedRequest<ICheckPredicateBalancesRequestSchema>;
 
 export interface IPredicateService {
   ordination(ordination?: IPredicateOrdination): this;
@@ -208,4 +215,9 @@ export interface IPredicateService {
     authorization: string,
   ) => Promise<string[]>;
   allocation: (params: IPredicateAllocationParams) => Promise<IPredicateAllocation>;
+  checkBalances: (params: {
+    predicateId: string;
+    userId: string;
+    network: Network;
+  }) => Promise<void>;
 }

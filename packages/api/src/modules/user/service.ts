@@ -27,13 +27,20 @@ import {
 import App from '@src/server/app';
 
 import { Address, Network } from 'fuels';
-import { Vault } from 'bakosafe';
 import { PredicateService } from '../predicate/services';
 
 import { Maybe } from '@src/utils/types/maybe';
 import { FuelProvider } from '@src/utils';
+import { BalanceCache } from '@src/server/storage/balance';
+import { TransactionCache } from '@src/server/storage/transaction';
+import { compareBalances } from '@src/utils/balance';
+import { emitBalanceOutdatedUser } from '@src/socket/events';
+import { SocketUsernames, SocketEvents } from '@src/socket/types';
+import { ProviderWithCache } from '@src/utils/ProviderWithCache';
 
 const { UI_URL } = process.env;
+
+const MAX_PREDICATES_TO_CHECK_BALANCE = 50;
 
 export class UserService implements IUserService {
   private _pagination: PaginationParams;
@@ -315,5 +322,118 @@ export class UserService implements IUserService {
     ]);
 
     return Pagination.create(queryBuilder).paginate(this._pagination);
+  }
+
+  async checkBalances({
+    userId,
+    workspaceId,
+    network,
+  }: {
+    userId: string;
+    workspaceId: string;
+    network: Network;
+  }): Promise<void> {
+    try {
+      // Get all predicates for this user (owner or member)
+      const predicates = await Predicate.createQueryBuilder('p')
+        .leftJoinAndSelect('p.members', 'members')
+        .leftJoinAndSelect('p.workspace', 'predicateWorkspace')
+        .select([
+          'p.id',
+          'p.predicateAddress',
+          'p.configurable',
+          'p.version',
+          'members.id',
+          'predicateWorkspace.id',
+        ])
+        .where('predicateWorkspace.id = :workspaceId', {
+          workspaceId,
+        })
+        .andWhere('(p.owner_id = :userId OR members.id = :userId)', {
+          userId,
+        })
+        .limit(MAX_PREDICATES_TO_CHECK_BALANCE)
+        .getMany();
+
+      const balanceCache = BalanceCache.getInstance();
+      const transactionCache = TransactionCache.getInstance();
+      const predicateService = new PredicateService();
+      const outdatedPredicateIds: string[] = [];
+
+      const balanceChecks = predicates.map(async predicate => {
+        try {
+          const instance = await predicateService.instancePredicate(
+            predicate.configurable,
+            network.url,
+            predicate.version,
+          );
+
+          if (!(instance.provider instanceof ProviderWithCache)) {
+            return;
+          }
+
+          // Get cached balance
+          const cachedBalances = await balanceCache.get(
+            predicate.predicateAddress,
+            network.chainId,
+          );
+
+          // Get current balance directly from blockchain (bypass cache)
+          const currentBalances = (
+            await (instance.provider as ProviderWithCache).getBalancesFromBlockchain(
+              predicate.predicateAddress,
+            )
+          ).balances.filter(a => a.amount.gt(0));
+
+          if (cachedBalances) {
+            const _cachedBalances = cachedBalances.filter(a => a.amount.gt(0));
+
+            const hasChanged = compareBalances(_cachedBalances, currentBalances);
+
+            if (hasChanged) {
+              outdatedPredicateIds.push(predicate.id);
+
+              // Update cache with fresh data
+              await balanceCache.set(
+                predicate.predicateAddress,
+                currentBalances,
+                network.chainId,
+                network.url,
+              );
+
+              // Invalidate transaction cache
+              await transactionCache.invalidate(
+                predicate.predicateAddress,
+                network.chainId,
+              );
+            }
+          }
+        } catch (e) {
+          console.error(
+            `[CHECK_USER_BALANCES] Error checking predicate ${predicate.id}:`,
+            e?.message || e,
+          );
+        }
+      });
+
+      await Promise.all(balanceChecks);
+
+      // Emit event to notify balance change only if there are outdated predicates
+      if (outdatedPredicateIds.length > 0) {
+        emitBalanceOutdatedUser(userId, {
+          sessionId: userId,
+          to: SocketUsernames.UI,
+          type: SocketEvents.BALANCE_OUTDATED_USER,
+          workspaceId,
+          outdatedPredicateIds,
+        });
+      }
+    } catch (error) {
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on check user balances',
+        detail: error?.message || error,
+      });
+    }
   }
 }

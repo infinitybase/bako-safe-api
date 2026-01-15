@@ -11,6 +11,7 @@ import { IDefaultOrdination, IOrdination } from '@src/utils/ordination';
 import { IPagination, PaginationParams } from '@src/utils/pagination';
 import { Maybe } from '@src/utils/types/maybe';
 import { TypeUser } from 'bakosafe';
+import { Network } from 'fuels';
 
 export interface IWebAuthnSignUp {
   id: string;
@@ -138,6 +139,8 @@ interface IAllocationRequestSchema extends ValidatedRequestSchema {
 
 export type IAllocationRequest = AuthValidatedRequest<IAllocationRequestSchema>;
 
+export type ICheckUserBalancesRequest = AuthValidatedRequest<null>;
+
 export interface IUserService {
   filter(filter: IFilterParams): this;
   paginate(pagination: PaginationParams): this;
@@ -156,4 +159,9 @@ export interface IUserService {
     userId?: string,
   ): Promise<Maybe<IValidateNameResponse>>;
   listAll(): Promise<IPagination<User>>;
+  checkBalances: (params: {
+    userId: string;
+    workspaceId: string;
+    network: Network;
+  }) => Promise<void>;
 }
