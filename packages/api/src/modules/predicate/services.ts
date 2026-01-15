@@ -151,6 +151,7 @@ export class PredicateService implements IPredicateService {
       // return predicate;
     } catch (e) {
       console.log(e);
+      if (e instanceof BadRequest) throw e;
       throw new Internal({
         type: ErrorTypes.Internal,
         title: 'Error on predicate creation',
