@@ -33,7 +33,7 @@ export type BalanceOutdatedPredicateEvent = {
 
 export function emitTransaction(userId: string, data: TransactionEvent) {
   const socketClient = new SocketClient(userId, API_URL);
-  socketClient.socket.emit(SocketEvents.TRANSACTION_UPDATE, data);
+  socketClient.socket.emit(SocketEvents.TRANSACTION, data);
 }
 
 export function emitBalanceOutdatedUser(
