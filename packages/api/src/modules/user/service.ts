@@ -30,7 +30,7 @@ import { Address, Network } from 'fuels';
 import { PredicateService } from '../predicate/services';
 
 import { Maybe } from '@src/utils/types/maybe';
-import { FuelProvider } from '@src/utils';
+import { FuelProvider, processBatch } from '@src/utils';
 import { BalanceCache } from '@src/server/storage/balance';
 import { TransactionCache } from '@src/server/storage/transaction';
 import { compareBalances } from '@src/utils/balance';
@@ -41,6 +41,7 @@ import { ProviderWithCache } from '@src/utils/ProviderWithCache';
 const { UI_URL } = process.env;
 
 const MAX_PREDICATES_TO_CHECK_BALANCE = 50;
+const PREDICATES_BALANCE_CHECK_BATCH_SIZE = 10;
 
 export class UserService implements IUserService {
   private _pagination: PaginationParams;
@@ -360,63 +361,66 @@ export class UserService implements IUserService {
       const predicateService = new PredicateService();
       const outdatedPredicateIds: string[] = [];
 
-      const balanceChecks = predicates.map(async predicate => {
-        try {
-          const instance = await predicateService.instancePredicate(
-            predicate.configurable,
-            network.url,
-            predicate.version,
-          );
+      // Process predicates in batches to control concurrency
+      await processBatch(
+        predicates,
+        PREDICATES_BALANCE_CHECK_BATCH_SIZE,
+        async predicate => {
+          try {
+            const instance = await predicateService.instancePredicate(
+              predicate.configurable,
+              network.url,
+              predicate.version,
+            );
 
-          if (!(instance.provider instanceof ProviderWithCache)) {
-            return;
-          }
-
-          // Get cached balance
-          const cachedBalances = await balanceCache.get(
-            predicate.predicateAddress,
-            network.chainId,
-          );
-
-          // Get current balance directly from blockchain (bypass cache)
-          const currentBalances = (
-            await (instance.provider as ProviderWithCache).getBalancesFromBlockchain(
-              predicate.predicateAddress,
-            )
-          ).balances.filter(a => a.amount.gt(0));
-
-          if (cachedBalances) {
-            const _cachedBalances = cachedBalances.filter(a => a.amount.gt(0));
-
-            const hasChanged = compareBalances(_cachedBalances, currentBalances);
-
-            if (hasChanged) {
-              outdatedPredicateIds.push(predicate.id);
-
-              // Update cache with fresh data
-              await balanceCache.set(
-                predicate.predicateAddress,
-                currentBalances,
-                network.chainId,
-                network.url,
-              );
-
-              // Invalidate transaction cache
-              await transactionCache.invalidate(
-                predicate.predicateAddress,
-                network.chainId,
-              );
+            if (!(instance.provider instanceof ProviderWithCache)) {
+              return;
             }
-          }
-        } catch (e) {
-          console.error(
-            `[CHECK_USER_BALANCES] Error checking predicate ${predicate.id}:`,
-            e?.message || e,
-          );
-        }
-      });
 
-      await Promise.all(balanceChecks);
+            // Get cached balance
+            const cachedBalances = await balanceCache.get(
+              predicate.predicateAddress,
+              network.chainId,
+            );
+
+            // Get current balance directly from blockchain (bypass cache)
+            const currentBalances = (
+              await (instance.provider as ProviderWithCache).getBalancesFromBlockchain(
+                predicate.predicateAddress,
+              )
+            ).balances.filter(a => a.amount.gt(0));
+
+            if (cachedBalances) {
+              const _cachedBalances = cachedBalances.filter(a => a.amount.gt(0));
+
+              const hasChanged = compareBalances(_cachedBalances, currentBalances);
+
+              if (hasChanged) {
+                outdatedPredicateIds.push(predicate.id);
+
+                // Update cache with fresh data
+                await balanceCache.set(
+                  predicate.predicateAddress,
+                  currentBalances,
+                  network.chainId,
+                  network.url,
+                );
+
+                // Invalidate transaction cache
+                await transactionCache.invalidate(
+                  predicate.predicateAddress,
+                  network.chainId,
+                );
+              }
+            }
+          } catch (e) {
+            console.error(
+              `[CHECK_USER_BALANCES] Error checking predicate ${predicate.id}:`,
+              e?.message || e,
+            );
+          }
+        },
+      );
 
       // Emit event to notify balance change only if there are outdated predicates
       if (outdatedPredicateIds.length > 0) {

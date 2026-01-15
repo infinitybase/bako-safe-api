@@ -17,3 +17,4 @@ export * from './redis/RedisWriteClient';
 export * from './FuelProvider';
 export * from './ProviderWithCache';
 export * from './extractPredicatesFromTransaction';
+export * from './processBatch';
