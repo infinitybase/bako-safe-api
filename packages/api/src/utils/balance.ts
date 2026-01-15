@@ -76,4 +76,39 @@ const subCoins = (
     .filter(balance => balance.amount.gt(bn.parseUnits('0')));
 };
 
-export { calculateReservedCoins, calculateBalanceUSD, subCoins };
+/**
+ * Compare two arrays of CoinQuantity to detect balance changes
+ * @param cached - Previously cached balances
+ * @param current - Current balances from blockchain
+ * @returns true if balances are different, false if identical
+ */
+const compareBalances = (
+  cached: CoinQuantity[],
+  current: CoinQuantity[],
+): boolean => {
+  if (cached.length !== current.length) {
+    return true;
+  }
+
+  // Sort by assetId for comparison
+  const sortFn = (a: CoinQuantity, b: CoinQuantity) =>
+    a.assetId.localeCompare(b.assetId);
+  const cachedSorted = [...cached].sort(sortFn);
+  const currentSorted = [...current].sort(sortFn);
+
+  for (let i = 0; i < cachedSorted.length; i++) {
+    const cachedAsset = cachedSorted[i];
+    const currentAsset = currentSorted[i];
+
+    if (
+      cachedAsset.assetId !== currentAsset.assetId ||
+      !cachedAsset.amount.eq(currentAsset.amount)
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+export { calculateReservedCoins, calculateBalanceUSD, subCoins, compareBalances };

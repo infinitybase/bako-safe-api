@@ -194,7 +194,7 @@ export class NotificationService implements INotificationService {
           sessionId: member.id,
           to: SocketUsernames.UI,
           request_id: undefined,
-          type: SocketEvents.TRANSACTION_UPDATE,
+          type: SocketEvents.TRANSACTION,
           data: {},
         });
         socketClient.disconnect();
@@ -259,7 +259,7 @@ export class NotificationService implements INotificationService {
           sessionId: member.id,
           to: SocketUsernames.UI,
           request_id: undefined,
-          type: SocketEvents.TRANSACTION_UPDATE,
+          type: SocketEvents.TRANSACTION,
           data: {},
         });
         socketClient.disconnect();

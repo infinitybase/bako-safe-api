@@ -152,6 +152,24 @@ export const setupSocket = (io: SocketIOServer, database: DatabaseClass, api: Ax
 			}
 		})
 
+		socket.on(SocketEvents.BALANCE_OUTDATED_USER, data => {
+			const { sessionId, to } = data
+			const room = `${sessionId}:${to}`
+			const clientsInRoom = io.sockets.adapter.rooms.get(room) || new Set()
+			if (clientsInRoom.size > 0) {
+				socket.to(room).emit(SocketEvents.BALANCE_OUTDATED_USER, data)
+			}
+		})
+
+		socket.on(SocketEvents.BALANCE_OUTDATED_PREDICATE, data => {
+			const { sessionId, to } = data
+			const room = `${sessionId}:${to}`
+			const clientsInRoom = io.sockets.adapter.rooms.get(room) || new Set()
+			if (clientsInRoom.size > 0) {
+				socket.to(room).emit(SocketEvents.BALANCE_OUTDATED_PREDICATE, data)
+			}
+		})
+
 		socket.on(SocketEvents.NOTIFICATION, data => {
 			const { sessionId, to } = data
 			const room = `${sessionId}:${to}`

@@ -34,6 +34,7 @@ import {
   IAllocationRequest,
   ICheckHardwareRequest,
   ICheckNicknameRequest,
+  ICheckUserBalancesRequest,
   ICreateRequest,
   IDeleteRequest,
   IFindByNameRequest,
@@ -459,6 +460,19 @@ export class UserController {
       return successful(allocation, Responses.Ok);
     } catch (e) {
       return error(e.error ?? e, e.statusCode);
+    }
+  }
+
+  async checkUserBalances({ user, workspace, network }: ICheckUserBalancesRequest) {
+    try {
+      await this.userService.checkBalances({
+        userId: user.id,
+        workspaceId: workspace.id,
+        network,
+      });
+      return successful(null, Responses.Ok);
+    } catch (e) {
+      return error(e.error || e, e.statusCode);
     }
   }
 }

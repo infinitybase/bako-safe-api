@@ -19,12 +19,7 @@ import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
 
 import App from '@src/server/app';
-import {
-  calculateBalanceUSD,
-  calculateReservedCoins,
-  FuelProvider,
-  subCoins,
-} from '@src/utils';
+import { calculateReservedCoins, FuelProvider, subCoins } from '@src/utils';
 import { IconUtils } from '@src/utils/icons';
 import { bn, BN, Network, ZeroBytes32 } from 'fuels';
 import { UserService } from '../user/service';
@@ -37,6 +32,12 @@ import {
   IPredicatePayload,
   IPredicateService,
 } from './types';
+import { BalanceCache } from '@src/server/storage/balance';
+import { TransactionCache } from '@src/server/storage/transaction';
+import { compareBalances } from '@src/utils/balance';
+import { emitBalanceOutdatedPredicate } from '@src/socket/events';
+import { SocketUsernames, SocketEvents } from '@src/socket/types';
+import { ProviderWithCache } from '@src/utils/ProviderWithCache';
 
 export class PredicateService implements IPredicateService {
   private _ordination: IPredicateOrdination = {
@@ -867,6 +868,105 @@ export class PredicateService implements IPredicateService {
       throw new Internal({
         type: ErrorTypes.Internal,
         title: 'Error on get predicate allocation',
+        detail: error?.message || error,
+      });
+    }
+  }
+
+  async checkBalances({
+    predicateId,
+    userId,
+    network,
+  }: {
+    predicateId: string;
+    userId: string;
+    network: Network;
+  }): Promise<void> {
+    try {
+      const predicate = await Predicate.createQueryBuilder('p')
+        .leftJoinAndSelect('p.workspace', 'workspace')
+        .select([
+          'p.id',
+          'p.predicateAddress',
+          'p.configurable',
+          'p.version',
+          'workspace.id',
+        ])
+        .where('p.id = :predicateId', { predicateId })
+        .getOne();
+
+      if (!predicate) {
+        throw new NotFound({
+          type: ErrorTypes.NotFound,
+          title: 'Predicate not found',
+          detail: `No predicate found with id ${predicateId}`,
+        });
+      }
+
+      const balanceCache = BalanceCache.getInstance();
+      const instance = await this.instancePredicate(
+        predicate.configurable,
+        network.url,
+        predicate.version,
+      );
+
+      // Only proceed if provider is ProviderWithCache
+      if (!(instance.provider instanceof ProviderWithCache)) {
+        return;
+      }
+
+      // Get cached balance
+      const cachedBalances = await balanceCache.get(
+        predicate.predicateAddress,
+        network.chainId,
+      );
+
+      // Get current balance directly from blockchain (bypass cache)
+      const currentBalances = (
+        await (instance.provider as ProviderWithCache).getBalancesFromBlockchain(
+          predicate.predicateAddress,
+        )
+      ).balances.filter(a => a.amount.gt(0));
+
+      if (cachedBalances) {
+        const _cachedBalances = cachedBalances.filter(a => a.amount.gt(0));
+
+        const hasChanged = compareBalances(_cachedBalances, currentBalances);
+
+        if (hasChanged) {
+          // Update cache with fresh data
+          await balanceCache.set(
+            predicate.predicateAddress,
+            currentBalances,
+            network.chainId,
+            network.url,
+          );
+
+          // Invalidate transaction cache
+          const transactionCache = TransactionCache.getInstance();
+          await transactionCache.invalidate(
+            predicate.predicateAddress,
+            network.chainId,
+          );
+
+          // Emit event to notify balance change
+          emitBalanceOutdatedPredicate(userId, {
+            sessionId: userId,
+            to: SocketUsernames.UI,
+            type: SocketEvents.BALANCE_OUTDATED_PREDICATE,
+            predicateId: predicate.id,
+            workspaceId: predicate.workspace.id,
+          });
+        }
+      }
+    } catch (error) {
+      if (error instanceof NotFound) {
+        throw error;
+      }
+
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on check predicate balance',
         detail: error?.message || error,
       });
     }

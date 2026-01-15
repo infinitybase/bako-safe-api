@@ -63,6 +63,11 @@ router.get(
   AllocationQuerySchema,
   handleResponse(userController.allocation),
 );
+router.get(
+  '/check-balances',
+  authMiddleware,
+  handleResponse(userController.checkUserBalances),
+);
 router.get('/', authMiddleware, handleResponse(userController.find));
 router.get(
   '/:id',

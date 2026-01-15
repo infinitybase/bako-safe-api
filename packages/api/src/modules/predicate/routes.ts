@@ -47,6 +47,7 @@ const {
   tooglePredicateVisibility,
   update,
   allocation,
+  checkPredicateBalances,
 } = new PredicateController(predicateService, notificationsService);
 
 router.use(authMiddleware);
@@ -83,6 +84,16 @@ router.put(
   validateTooglePredicatePayload,
   handleResponse(tooglePredicateVisibility),
 );
-router.get('/:predicateId/allocation', handleResponse(allocation));
+router.get(
+  '/:predicateId/allocation',
+  validatePredicateIdParams,
+  handleResponse(allocation),
+);
+router.get(
+  '/check-balances/:predicateId',
+  validatePredicateIdParams,
+  permissionMiddlewareById,
+  handleResponse(checkPredicateBalances),
+);
 
 export default router;
