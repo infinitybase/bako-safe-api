@@ -16,6 +16,7 @@ import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination
 import { Predicate, User, Workspace } from '@models/index';
 
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
+import {BadRequest} from "@utils/error";
 import Internal from '@utils/error/Internal';
 
 import App from '@src/server/app';
@@ -61,6 +62,22 @@ export class PredicateService implements IPredicateService {
     'p.version',
   ];
 
+  private async validateUniqueName(name: string, workspaceId: string): Promise<void> {
+    const exists = await Predicate.createQueryBuilder('p')
+        .where('LOWER(p.name) = LOWER(:name)', { name })
+        .andWhere('p.workspace_id = :workspaceId', { workspaceId })
+        .andWhere('p.deletedAt IS NULL')
+        .getOne();
+
+    if (exists) {
+      throw new BadRequest({
+        type: ErrorTypes.Create,
+        title: 'Predicate name already exists',
+        detail: `A predicate with name "${name}" already exists in this workspace`,
+      });
+    }
+  }
+
   filter(filter: IPredicateFilterParams) {
     this._filter = filter;
     return this;
@@ -83,6 +100,8 @@ export class PredicateService implements IPredicateService {
     workspace: Workspace,
   ): Promise<Predicate> {
     try {
+      await this.validateUniqueName(payload.name, workspace.id);
+
       const userService = new UserService();
       const config = JSON.parse(payload.configurable);
 
