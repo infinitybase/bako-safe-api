@@ -78,7 +78,9 @@ const subCoins = (
 
 /**
  * Compare two arrays of CoinQuantity to detect balance changes
- * Returns true if balances are different
+ * @param cached - Previously cached balances
+ * @param current - Current balances from blockchain
+ * @returns true if balances are different, false if identical
  */
 const compareBalances = (
   cached: CoinQuantity[],
