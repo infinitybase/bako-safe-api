@@ -16,7 +16,7 @@ import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination
 import { Predicate, User, Workspace } from '@models/index';
 
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
-import {BadRequest} from "@utils/error";
+import { BadRequest } from '@utils/error';
 import Internal from '@utils/error/Internal';
 
 import App from '@src/server/app';
@@ -63,15 +63,15 @@ export class PredicateService implements IPredicateService {
   ];
 
   private static async validateUniqueName(
-      name: string,
-      workspaceId: string,
-      type: ErrorTypes,
-      predicateId?: string,
+    name: string,
+    workspaceId: string,
+    type: ErrorTypes,
+    predicateId?: string,
   ): Promise<void> {
     const query = Predicate.createQueryBuilder('p')
-        .where('LOWER(p.name) = LOWER(:name)', { name })
-        .andWhere('p.workspace_id = :workspaceId', { workspaceId })
-        .andWhere('p.deletedAt IS NULL')
+      .where('LOWER(p.name) = LOWER(:name)', { name })
+      .andWhere('p.workspace_id = :workspaceId', { workspaceId })
+      .andWhere('p.deletedAt IS NULL');
 
     if (predicateId) {
       query.andWhere('p.id != :predicateId', { predicateId });
@@ -110,9 +110,10 @@ export class PredicateService implements IPredicateService {
     workspace: Workspace,
   ): Promise<Predicate> {
     try {
-      await PredicateService.validateUniqueName(payload.name,
-          workspace.id,
-          ErrorTypes.Create
+      await PredicateService.validateUniqueName(
+        payload.name,
+        workspace.id,
+        ErrorTypes.Create,
       );
 
       const userService = new UserService();
@@ -434,7 +435,7 @@ export class PredicateService implements IPredicateService {
     try {
       const currentPredicate = await Predicate.findOne({
         where: { id },
-        relations: ['workspace']
+        relations: ['workspace'],
       });
 
       if (!currentPredicate) {
@@ -447,10 +448,10 @@ export class PredicateService implements IPredicateService {
 
       if (payload?.name && payload.name !== currentPredicate.name) {
         await PredicateService.validateUniqueName(
-            payload.name,
-            currentPredicate.workspace.id,
-            ErrorTypes.Update,
-            currentPredicate.id,
+          payload.name,
+          currentPredicate.workspace.id,
+          ErrorTypes.Update,
+          currentPredicate.id,
         );
       }
 
