@@ -831,7 +831,7 @@ export class TransactionService implements ITransactionService {
       }
 
       logger.info(
-        { predicateSCount: predicateAddresses.length },
+        { predicatesCount: predicateAddresses.length },
         '[TX_CACHE] Invalidated caches for predicates',
       );
     } catch (error) {
