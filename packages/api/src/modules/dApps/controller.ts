@@ -25,7 +25,6 @@ import App from '@src/server/app';
 import { SocketEvents, SocketUsernames } from "@src/socket/types";
 import { logger } from '@src/config/logger';
 
-
 const { API_URL } = process.env;
 const PREFIX = 'dapp';
 export class DappController {
