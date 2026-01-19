@@ -7,6 +7,7 @@ import { DatabaseClass } from '@utils/database'
 import { io, api } from '..'
 import { DappService, PredicateService, RecoverCodeService, TransactionService } from '@src/services'
 import { subMinutes } from 'date-fns'
+import { logger } from '@src/config/logger'
 
 export interface IEventTX_REQUEST {
 	_transaction: TransactionRequestLike
@@ -73,14 +74,7 @@ export class TransactionEventHandler {
 			const { auth } = socket.handshake
 
 			const dapp = await this.dappService.getBySessionIdWithPredicate(auth.sessionId)
-			console.log(
-				'[DAPP]: ',
-				JSON.stringify({
-					dapp,
-					origin,
-					host,
-				}),
-			)
+			logger.info({ dapp, origin, host }, '[DAPP]')
 			const isValid = dapp && dapp.origin === origin
 
 			//todo: adicionar emissao de erro
@@ -102,13 +96,13 @@ export class TransactionEventHandler {
 				predicateId: vault.id,
 				networkUrl: dapp.network.url,
 			})
-			console.log('TX_PENDING', dapp.network.url, tx_pending.count)
+			logger.info({ url: dapp.network.url, count: tx_pending.count }, 'TX_PENDING')
 
 			const _provider = dapp.network.url.replace(/^https?:\/\/[^@]+@/, 'https://')
 
 			const provider = new Provider(_provider)
 
-			console.log('VAULT', _provider)
+			logger.info({ provider: _provider }, 'VAULT')
 
 			const vaultInstance = new Vault(provider, JSON.parse(vault.configurable), vault.version)
 			const { tx } = await vaultInstance.BakoTransfer(_transaction)
@@ -140,7 +134,7 @@ export class TransactionEventHandler {
 				},
 			})
 		} catch (e) {
-			console.log(e)
+			logger.error({ error: e }, 'Error in request transaction')
 		}
 	}
 
@@ -195,7 +189,7 @@ export class TransactionEventHandler {
 
 			// ------------------------------ [INVALIDATION] ------------------------------
 			if (!sign) {
-				await this.recoverCodeService.delete(code.id).catch(error => console.error(error))
+				await this.recoverCodeService.delete(code.id).catch(error => logger.error({ error }, 'Failed to delete recovery code'))
 			}
 
 			// ------------------------------ [EMIT] ------------------------------
@@ -285,7 +279,7 @@ export class TransactionEventHandler {
 			)
 
 			// ------------------------------ [INVALIDATION] ------------------------------
-			await this.recoverCodeService.delete(code.id).catch(error => console.error(error))
+			await this.recoverCodeService.delete(code.id).catch(error => logger.error({ error }, 'Failed to delete recovery code'))
 
 			// ------------------------------ [EMIT] ------------------------------
 			io.to(uiRoom).emit(SocketEvents.DEFAULT, {
@@ -356,9 +350,9 @@ export class TransactionEventHandler {
 			})
 
 			// ------------------------- [INVALIDATION] ---------------------------
-			await this.recoverCodeService.delete(code.id).catch(error => console.error(error))
+			await this.recoverCodeService.delete(code.id).catch(error => logger.error({ error }, 'Failed to delete recovery code'))
 		} catch (e) {
-			console.log(e)
+			logger.error({ error: e }, 'Error in delete transaction')
 		}
 	}
 }

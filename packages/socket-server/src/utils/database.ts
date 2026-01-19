@@ -1,5 +1,6 @@
 // eslint-disable-next-line prettier/prettier
 import { Client, type QueryResult } from 'pg'
+import { logger } from '@src/config/logger'
 
 const {
   DATABASE_HOST,
@@ -59,7 +60,7 @@ export class DatabaseClass {
       if (rows.length === 1) return rows[0]
       return rows
     } catch (error) {
-      console.error('Erro ao executar a query:', error)
+      logger.error({ error, query }, 'Error executing query')
       throw error
     }
   }
