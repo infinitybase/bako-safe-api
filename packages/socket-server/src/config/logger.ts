@@ -1,9 +1,12 @@
 import pino from 'pino'
 
-const isDevelopment = process.env.NODE_ENV === 'development'
+const { NODE_ENV, LOG_LEVEL } = process.env
 
-const pinoConfig = {
-	level: process.env.LOG_LEVEL || (isDevelopment ? 'debug' : 'info'),
+const isDevelopment = NODE_ENV === 'development'
+
+const pinoConfig: pino.LoggerOptions = {
+	level: LOG_LEVEL || (isDevelopment ? 'debug' : 'info'),
+	timestamp: pino.stdTimeFunctions.isoTime,
 
 	// Sensitive data redaction for security compliance
 	redact: {
@@ -99,16 +102,6 @@ const pinoConfig = {
 				},
 		  }
 		: undefined,
-
-	// Timestamp configuration
-	timestamp: pino.stdTimeFunctions.isoTime,
-
-	// Additional options for production
-	...(!isDevelopment && {
-		sync: false,
-	}),
 }
 
 export const logger = pino(pinoConfig)
-
-export default logger
