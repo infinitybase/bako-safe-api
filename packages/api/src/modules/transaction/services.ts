@@ -1,4 +1,5 @@
 import { IWitnesses, TransactionStatus, Vault, WitnessStatus } from 'bakosafe';
+import { logger } from '@src/config/logger';
 import {
   Address,
   bn,
@@ -653,12 +654,12 @@ export class TransactionService implements ITransactionService {
 
       // Invalidate caches for all predicates involved in this transaction
       this.invalidateCaches(transaction).catch(err =>
-        console.error('[TX_SUCCESS] Failed to invalidate caches:', err),
+        logger.error({ error: err }, '[TX_SUCCESS] Failed to invalidate caches'),
       );
 
       return await this.update(id, _api_transaction);
     } catch (e) {
-      console.log(e);
+      logger.error({ error: e }, '[TX_SEND_TO_CHAIN]');
       const error = 'toObject' in e ? e.toObject() : e;
       const _api_transaction: IUpdateTransactionPayload = {
         status: TransactionStatus.FAILED,
@@ -818,7 +819,7 @@ export class TransactionService implements ITransactionService {
       const predicateAddresses = extractPredicatesFromTransaction(transaction);
 
       if (predicateAddresses.length === 0) {
-        console.log('[TX_CACHE] No predicate addresses found in transaction');
+        logger.info('[TX_CACHE] No predicate addresses found in transaction');
         return;
       }
 
@@ -829,11 +830,15 @@ export class TransactionService implements ITransactionService {
         );
       }
 
-      console.log(
-        `[TX_CACHE] Invalidated caches for ${predicateAddresses.length} predicates`,
+      logger.info(
+        { predicateSCount: predicateAddresses.length },
+        '[TX_CACHE] Invalidated caches for predicates',
       );
     } catch (error) {
-      console.error('[TX_CACHE] Failed to invalidate transaction caches:', error);
+      logger.error(
+        { error: error },
+        '[TX_CACHE] Failed to invalidate transaction caches',
+      );
     }
   }
 
@@ -848,7 +853,7 @@ export class TransactionService implements ITransactionService {
     predicateAddress: string,
     chainId?: number,
   ): Promise<void> {
-    const chainInfo = chainId ? ` chain:${chainId}` : ' all chains';
+    const chainInfo = chainId ?? 'all chains';
     const addrShort = predicateAddress?.slice(0, 12);
 
     try {
@@ -860,10 +865,13 @@ export class TransactionService implements ITransactionService {
       const transactionCache = App.getInstance()._transactionCache;
       await transactionCache.invalidate(predicateAddress, chainId);
 
-      console.log(`[TX_CACHE] Caches invalidated for ${addrShort}...${chainInfo}`);
+      logger.info(
+        { predicateAddress: addrShort, chain: chainInfo },
+        '[TX_CACHE] Caches invalidated',
+      );
     } catch (error) {
       // Don't throw - cache invalidation failure shouldn't break transaction flow
-      console.error('[TX_CACHE] Failed to invalidate caches:', error);
+      logger.error({ error: error }, '[TX_CACHE] Failed to invalidate caches');
     }
   }
 }

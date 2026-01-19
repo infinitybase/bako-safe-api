@@ -1,6 +1,7 @@
-import { bn, type CoinQuantity } from 'fuels';
+import { logger } from '@src/config/logger';
 import { RedisReadClient, RedisWriteClient } from '@src/utils';
 import { cacheConfig, CacheMetrics, CacheStats } from '@src/config/cache';
+import { bn, CoinQuantity } from 'fuels';
 
 const { prefixes, ttl, invalidationFlagTtl } = cacheConfig;
 
@@ -54,10 +55,7 @@ export class BalanceCache {
   /**
    * Build invalidation flag key
    */
-  private buildInvalidationKey(
-    predicateAddress: string,
-    chainId?: number,
-  ): string {
+  private buildInvalidationKey(predicateAddress: string, chainId?: number): string {
     return chainId
       ? `${prefixes.invalidated}:${predicateAddress}:${chainId}`
       : `${prefixes.invalidated}:${predicateAddress}`;
@@ -88,10 +86,7 @@ export class BalanceCache {
   /**
    * Check if there's an invalidation flag for this predicate
    */
-  async isInvalidated(
-    predicateAddress: string,
-    chainId: number,
-  ): Promise<boolean> {
+  async isInvalidated(predicateAddress: string, chainId: number): Promise<boolean> {
     // Check specific chainId flag
     const specificFlag = await RedisReadClient.get(
       this.buildInvalidationKey(predicateAddress, chainId),
@@ -133,10 +128,7 @@ export class BalanceCache {
    * Check which addresses are NOT cached (for batch warm-up)
    * Returns addresses that need to be fetched
    */
-  async filterUncached(
-    addresses: string[],
-    chainId: number,
-  ): Promise<string[]> {
+  async filterUncached(addresses: string[], chainId: number): Promise<string[]> {
     if (!cacheConfig.enabled || addresses.length === 0) {
       return addresses;
     }
@@ -187,13 +179,18 @@ export class BalanceCache {
       const balances = this.deserializeBalances(data.balances);
 
       CacheMetrics.hit();
-      console.log(
-        `[BalanceCache] HIT ${predicateAddress?.slice(0, 12)}... chain:${chainId} (${Math.round((Date.now() - data.timestamp) / 1000)}s old)`,
+      logger.info(
+        {
+          predicateAddress: predicateAddress?.slice(0, 12),
+          chainId,
+          time: Math.round((Date.now() - data.timestamp) / 1000),
+        },
+        '[BalanceCache] HIT',
       );
 
       return balances;
     } catch (error) {
-      console.error('[BalanceCache] GET error:', error);
+      logger.error({ error }, '[BalanceCache] GET');
       CacheMetrics.error();
       return null;
     }
@@ -226,11 +223,16 @@ export class BalanceCache {
       // Clear any invalidation flags after setting new data
       await this.clearInvalidationFlag(predicateAddress, chainId);
 
-      console.log(
-        `[BalanceCache] SET ${predicateAddress?.slice(0, 12)}... chain:${chainId} (${balances.length} assets)`,
+      logger.info(
+        {
+          predicateAddress: predicateAddress?.slice(0, 12),
+          chainId,
+          assetsCount: balances.length,
+        },
+        '[BalanceCache] SET',
       );
     } catch (error) {
-      console.error('[BalanceCache] SET error:', error);
+      logger.error({ error }, '[BalanceCache] SET');
       CacheMetrics.error();
     }
   }
@@ -255,8 +257,12 @@ export class BalanceCache {
         );
 
         CacheMetrics.invalidate();
-        console.log(
-          `[BalanceCache] INVALIDATED ${predicateAddress?.slice(0, 12)}... chain:${chainId}`,
+        logger.info(
+          {
+            predicateAddress: predicateAddress?.slice(0, 12),
+            chainId,
+          },
+          '[BalanceCache] INVALIDATED',
         );
       } else {
         // Invalidate all chains for this predicate
@@ -271,12 +277,16 @@ export class BalanceCache {
         );
 
         CacheMetrics.invalidate(deletedCount || 1);
-        console.log(
-          `[BalanceCache] INVALIDATED ${predicateAddress?.slice(0, 12)}... all chains (${deletedCount} keys)`,
+        logger.info(
+          {
+            predicateAddress: predicateAddress?.slice(0, 12),
+            deletedCount,
+          },
+          '[BalanceCache] INVALIDATED for all chains',
         );
       }
     } catch (error) {
-      console.error('[BalanceCache] INVALIDATE error:', error);
+      logger.error({ error }, '[BalanceCache] INVALIDATE');
       CacheMetrics.error();
     }
   }
@@ -298,10 +308,16 @@ export class BalanceCache {
         count++;
       }
 
-      console.log(`[BalanceCache] INVALIDATED user ${userId} (${count} predicates)`);
+      logger.info(
+        {
+          userId,
+          predicatesCount: count,
+        },
+        '[BalanceCache] INVALIDATED by user',
+      );
       return count;
     } catch (error) {
-      console.error('[BalanceCache] INVALIDATE_BY_USER error:', error);
+      logger.error({ error }, '[BalanceCache] INVALIDATE_BY_USER');
       CacheMetrics.error();
       return 0;
     }
@@ -320,11 +336,16 @@ export class BalanceCache {
       await RedisWriteClient.delByPattern(invalidationPattern);
 
       CacheMetrics.invalidate(deletedCount);
-      console.log(`[BalanceCache] INVALIDATED ALL (${deletedCount} keys)`);
+      logger.info(
+        {
+          deletedCount,
+        },
+        '[BalanceCache] INVALIDATED ALL',
+      );
 
       return deletedCount;
     } catch (error) {
-      console.error('[BalanceCache] INVALIDATE_ALL error:', error);
+      logger.error({ error }, '[BalanceCache] INVALIDATE_ALL');
       CacheMetrics.error();
       return 0;
     }
@@ -344,7 +365,7 @@ export class BalanceCache {
       }
       await RedisWriteClient.del(keys);
     } catch (error) {
-      console.error('[BalanceCache] CLEAR_INVALIDATION error:', error);
+      logger.error({ error }, '[BalanceCache] CLEAR_INVALIDATION');
     }
   }
 
@@ -361,7 +382,7 @@ export class BalanceCache {
         await RedisWriteClient.delByPattern(pattern);
       }
     } catch (error) {
-      console.error('[BalanceCache] CLEAR error:', error);
+      logger.error({ error }, '[BalanceCache] CLEAR');
     }
   }
 
@@ -396,7 +417,7 @@ export class BalanceCache {
         },
       };
     } catch (error) {
-      console.error('[BalanceCache] STATS error:', error);
+      logger.error({ error }, '[BalanceCache] STATS');
       return {
         ...metrics,
         totalKeys: 0,
@@ -424,8 +445,9 @@ export class BalanceCache {
   static start(): BalanceCache {
     if (!BalanceCache.instance) {
       BalanceCache.instance = new BalanceCache();
-      console.log(
-        `[BalanceCache] Started (enabled: ${cacheConfig.enabled}, TTL: ${ttl}s)`,
+      logger.info(
+        { enabled: cacheConfig.enabled, ttl: `${ttl}s` },
+        '[BalanceCache] Started',
       );
     }
     return BalanceCache.instance;
@@ -437,7 +459,7 @@ export class BalanceCache {
   static stop(): void {
     if (BalanceCache.instance) {
       BalanceCache.instance = undefined;
-      console.log('[BalanceCache] Stopped');
+      logger.info('[BalanceCache] Stopped');
     }
   }
 

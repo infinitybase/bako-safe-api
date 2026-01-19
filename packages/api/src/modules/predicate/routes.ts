@@ -25,7 +25,6 @@ const permissionMiddlewareById = predicatePermissionMiddleware({
 
 const permissionMiddlewareByAddress = predicatePermissionMiddleware({
   predicateSelector: req => {
-    console.log(req.params);
     return {
       predicateAddress: req.params.address,
     };

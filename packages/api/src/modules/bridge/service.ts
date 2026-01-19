@@ -21,6 +21,7 @@ import {
   ISwapResponse,
 } from './types';
 import { createLayersSwapApi, LayersSwapEnv } from './utils';
+import { logger } from '@src/config/logger';
 import axios, { AxiosInstance } from 'axios';
 import {
   getTransactionSummaryFromRequest,
@@ -326,7 +327,7 @@ export class LayersSwapService implements ILayersSwapService {
 
       return transaction;
     } catch (error) {
-      console.log('>>> error >>>', error);
+      logger.info({ data: error }, '[LAYERS_SWAP_CREATE_BRIDGE_TX]');
       const isAxiosErr = axios.isAxiosError(error);
       const detail =
         (isAxiosErr ? error.response?.data?.error?.message : null) ||

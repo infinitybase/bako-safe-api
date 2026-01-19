@@ -46,6 +46,7 @@ import {
   IUpdateRequest,
   IUserService,
 } from './types';
+import logger from '@src/config/logger';
 
 export class UserController {
   constructor(
@@ -309,7 +310,7 @@ export class UserController {
 
       return successful(code, Responses.Created);
     } catch (e) {
-      console.log(e);
+      logger.error({ error: e }, '[USER_CREATE]');
       return error(e.error, e.statusCode);
     }
   }

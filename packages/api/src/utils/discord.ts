@@ -1,3 +1,4 @@
+import logger from '@src/config/logger';
 import axios from 'axios';
 import { format } from 'date-fns';
 
@@ -72,7 +73,7 @@ class DiscordUtils {
         });
       }
     } catch (e) {
-      console.log(`[DISCORD] Error on send message: `, e);
+      logger.error({ error: e }, '[DISCORD] Error on send message');
     }
   }
 }

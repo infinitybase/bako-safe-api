@@ -1,4 +1,5 @@
 import { Workspace } from '@src/models/Workspace';
+import { logger } from '@src/config/logger';
 import { TransactionStatus, TransactionType, WitnessStatus } from 'bakosafe';
 import { isUUID } from 'class-validator';
 
@@ -182,12 +183,15 @@ export class TransactionController {
   }: ICreateTransactionRequest) {
     const { predicateAddress, summary, hash } = transaction;
 
-    console.log('[TX_CREATE] Starting transaction creation', {
-      predicateAddress,
-      hash,
-      userId: user?.id,
-      networkUrl: network?.url,
-    });
+    logger.info(
+      {
+        predicateAddress,
+        hash,
+        userId: user?.id,
+        networkUrl: network?.url,
+      },
+      '[TX_CREATE] Starting transaction creation',
+    );
 
     try {
       const existsTx = await Transaction.findOne({
@@ -204,17 +208,22 @@ export class TransactionController {
       });
 
       if (existsTx) {
-        console.log('[TX_CREATE] Transaction already exists', { hash, txId: existsTx.id });
+        logger.info(
+          { data: { hash, txId: existsTx.id } },
+          '[TX_CREATE] Transaction already exists',
+        );
         return successful(existsTx, Responses.Ok);
       }
 
-      console.log('[TX_CREATE] Looking for predicate by address:', predicateAddress);
       const predicate = await this.predicateService.findByAddress(predicateAddress);
-      console.log('[TX_CREATE] Predicate search result:', {
-        found: !!predicate,
-        predicateId: predicate?.id,
-        predicateName: predicate?.name,
-      });
+      logger.info(
+        {
+          found: !!predicate,
+          predicateId: predicate?.id,
+          predicateName: predicate?.name,
+        },
+        '[TX_CREATE] Predicate search result',
+      );
 
       // if possible move this next part to a middleware, but we dont have access to body of request
       // ========================================================================================================
@@ -237,7 +246,10 @@ export class TransactionController {
       // ========================================================================================================
 
       if (!predicate) {
-        console.log('[TX_CREATE] ERROR: Predicate not found for address:', predicateAddress);
+        logger.info(
+          { predicateAddress },
+          '[TX_CREATE] ERROR: Predicate not found for address',
+        );
         throw new BadRequest({
           type: ErrorTypes.NotFound,
           title: 'Predicate not found',
@@ -245,11 +257,14 @@ export class TransactionController {
         });
       }
 
-      console.log('[TX_CREATE] Predicate found:', {
-        predicateId: predicate.id,
-        predicateName: predicate.name,
-        membersCount: predicate.members?.length,
-      });
+      logger.info(
+        {
+          predicateId: predicate.id,
+          predicateName: predicate.name,
+          membersCount: predicate.members?.length,
+        },
+        '[TX_CREATE] Predicate found',
+      );
 
       const witnesses = predicate.members.map(member => ({
         account: member.address,
@@ -336,12 +351,15 @@ export class TransactionController {
 
       return successful(newTransaction, Responses.Created);
     } catch (e) {
-      console.log('[TX_CREATE] ERROR:', {
-        message: e?.message || e?.error?.detail || e,
-        type: e?.error?.type,
-        title: e?.error?.title,
-        stack: e?.stack?.slice(0, 500),
-      });
+      logger.error(
+        {
+          message: e?.message || e?.error?.detail || e,
+          type: e?.error?.type,
+          title: e?.error?.title,
+          stack: e?.stack?.slice(0, 500),
+        },
+        '[TX_CREATE]',
+      );
       return error(e.error, e.statusCode);
     }
   }
@@ -820,7 +838,7 @@ export class TransactionController {
       this.transactionService
         .invalidateCaches(transaction)
         .catch(err =>
-          console.error('[TX_CLOSE] Failed to invalidate caches:', err),
+          logger.error({ error: err }, '[TX_CLOSE] Failed to invalidate caches:'),
         );
 
       return successful(response, Responses.Ok);

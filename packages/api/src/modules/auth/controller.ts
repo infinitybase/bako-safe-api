@@ -1,4 +1,5 @@
 import { addMinutes } from 'date-fns';
+import { logger } from '@src/config/logger';
 import { Address } from 'fuels';
 
 import { RecoverCodeType, User } from '@src/models';
@@ -110,7 +111,7 @@ export class AuthController {
     networkUrl?: string,
   ): Promise<void> {
     if (!userId || !networkUrl) {
-      console.log('[WARMUP] Skipped: missing userId or networkUrl');
+      logger.info('[WARMUP] Skipped: missing userId or networkUrl');
       return;
     }
 
@@ -125,14 +126,17 @@ export class AuthController {
       const predicates = await Predicate.createQueryBuilder('predicate')
         .leftJoin('predicate.members', 'member')
         .leftJoin('predicate.owner', 'owner')
-        .where('member.id = :userId OR (owner.id = :userId AND predicate.root = true)', { userId })
+        .where(
+          'member.id = :userId OR (owner.id = :userId AND predicate.root = true)',
+          { userId },
+        )
         .select(['predicate.predicateAddress'])
         .orderBy('predicate.updatedAt', 'DESC')
         .limit(cacheConfig.warmup.maxPredicates)
         .getMany();
 
       if (predicates.length === 0) {
-        console.log(`[WARMUP] No predicates found for user ${userIdShort}...`);
+        logger.info({ userId }, '[WARMUP] No predicates found for user');
         return;
       }
 
@@ -145,18 +149,25 @@ export class AuthController {
         addressesToWarmup = await balanceCache.filterUncached(addresses, chainId);
 
         if (addressesToWarmup.length === 0) {
-          console.log(
-            `[WARMUP] User ${userIdShort}: All ${addresses.length} predicates already cached`,
+          logger.info(
+            { userId, addressesLength: addresses.length },
+            '[WARMUP] All predicates already cached for user',
           );
           return;
         }
 
-        console.log(
-          `[WARMUP] User ${userIdShort}: ${addressesToWarmup.length}/${addresses.length} need warming`,
+        logger.info(
+          {
+            userId,
+            addressesToWarmupCount: addressesToWarmup.length,
+            addressesCount: addresses.length,
+          },
+          '[WARMUP] Some predicates need warming for user',
         );
       } else {
-        console.log(
-          `[WARMUP] User ${userIdShort}: Warming ${addresses.length} predicates`,
+        logger.info(
+          { userId: userIdShort, addressesCount: addresses.length },
+          '[WARMUP] Warming predicates for user',
         );
       }
 
@@ -190,11 +201,17 @@ export class AuthController {
       CacheMetrics.warmup(successCount);
 
       const elapsed = Date.now() - startTime;
-      console.log(
-        `[WARMUP] User ${userIdShort}: ${successCount}/${addressesToWarmup.length} warmed in ${elapsed}ms`,
+      logger.info(
+        {
+          userId: userIdShort,
+          successCount,
+          addressesToWarmupCount: addressesToWarmup.length,
+          elapsed,
+        },
+        '[WARMUP] User predicates warmed',
       );
     } catch (error) {
-      console.error('[WARMUP] Error:', error);
+      logger.error({ error: error }, '[WARMUP]');
     }
   }
 
@@ -245,7 +262,10 @@ export class AuthController {
         Promise.all(
           WARMUP_NETWORKS.map(networkUrl =>
             this.warmupUserBalances(owner.id, networkUrl).catch(err =>
-              console.error(`[WARMUP] Failed for ${networkUrl}:`, err),
+              logger.error(
+                { newtork: networkUrl, error: err },
+                `[WARMUP] Failed for network`,
+              ),
             ),
           ),
         );

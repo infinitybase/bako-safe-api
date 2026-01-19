@@ -23,8 +23,10 @@ import type {
 import type { ITransactionResponse } from '../transaction/types';
 import App from '@src/server/app';
 import { SocketEvents, SocketUsernames } from "@src/socket/types";
+import logger from '@src/config/logger';
 
-const { API_URL, FUEL_PROVIDER } = process.env;
+
+const { API_URL } = process.env;
 const PREFIX = 'dapp';
 export class DappController {
   private _dappService: IDAppsService;
@@ -374,7 +376,7 @@ export class DappController {
 
       return successful(dapp.network, Responses.Ok);
     } catch (e) {
-      console.log(e);
+      logger.error({ error: e }, '[DAPP_CHANGE_NETWORK]');
       return error(e.error, e.statusCode);
     }
   }

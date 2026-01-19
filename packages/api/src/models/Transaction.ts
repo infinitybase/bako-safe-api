@@ -11,6 +11,7 @@ import {
   TransactionRequest,
 } from 'fuels';
 import { Column, Entity, JoinColumn, ManyToOne, OneToOne } from 'typeorm';
+import { logger } from '@src/config/logger';
 
 import { User } from '@models/User';
 
@@ -205,8 +206,7 @@ class Transaction extends Base {
 
       return witnesses;
     } catch (e) {
-      console.log('[GET_SIGN_ERROR]');
-      console.log(e);
+      logger.error({ error: e }, '[GET_WITNESSES]');
     }
   }
 }

@@ -38,6 +38,7 @@ import { compareBalances } from '@src/utils/balance';
 import { emitBalanceOutdatedPredicate } from '@src/socket/events';
 import { SocketUsernames, SocketEvents } from '@src/socket/types';
 import { ProviderWithCache } from '@src/utils/ProviderWithCache';
+import logger from '@src/config/logger';
 
 export class PredicateService implements IPredicateService {
   private _ordination: IPredicateOrdination = {
@@ -131,7 +132,7 @@ export class PredicateService implements IPredicateService {
       return await this.findById(predicate.id);
       // return predicate;
     } catch (e) {
-      console.log(e);
+      logger.error({ error: e }, 'Error on predicate creation');
       throw new Internal({
         type: ErrorTypes.Internal,
         title: 'Error on predicate creation',
@@ -159,7 +160,7 @@ export class PredicateService implements IPredicateService {
         ])
         .getOne();
     } catch (e) {
-      console.log(e);
+      logger.error({ error: e }, 'Error on predicate findById');
       if (e instanceof GeneralError) {
         throw e;
       }
@@ -204,7 +205,6 @@ export class PredicateService implements IPredicateService {
 
   async findByAddress(address: string): Promise<Predicate> {
     try {
-      console.log(`Finding predicate by address: ${address}`);
       return await Predicate.createQueryBuilder('p')
         .leftJoin('p.owner', 'owner')
         .leftJoin('p.members', 'members')
@@ -236,7 +236,7 @@ export class PredicateService implements IPredicateService {
         .where('p.predicateAddress = :address', { address })
         .getOne();
     } catch (e) {
-      console.log(e);
+      logger.error({ error: e }, 'Error on predicate findByAddress');
       throw new Internal({
         type: ErrorTypes.Internal,
         title: 'Error on predicate findByAddress',
@@ -785,9 +785,9 @@ export class PredicateService implements IPredicateService {
             );
             return { vaultId, balances };
           } catch (err) {
-            console.warn(
-              `[ALLOCATION] Failed to get balances for vault ${vaultId}:`,
-              err?.message,
+            logger.warn(
+              { vaultId, error: err?.message },
+              '[ALLOCATION] Failed to get balances for vault',
             );
             return { vaultId, balances: [] };
           }
@@ -810,9 +810,9 @@ export class PredicateService implements IPredicateService {
           const priceUSD = quotes[assetId] ?? 0;
           return parseFloat(formattedAmount) * priceUSD;
         } catch (err) {
-          console.warn(
-            `[ALLOCATION] Error calculating USD for asset ${assetId}:`,
-            err?.message,
+          logger.warn(
+            { assetId, error: err?.message },
+            '[ALLOCATION] Error calculating USD for asset',
           );
           return 0;
         }
@@ -858,13 +858,16 @@ export class PredicateService implements IPredicateService {
         limit,
       );
     } catch (error) {
-      console.error('[ALLOCATION_ERROR]', {
-        message: error?.message || error,
-        stack: error?.stack,
-        userId: user?.id,
-        predicateId,
-        networkUrl: network?.url,
-      });
+      logger.error(
+        {
+          message: error?.message || error,
+          stack: error?.stack,
+          userId: user?.id,
+          predicateId,
+          networkUrl: network?.url,
+        },
+        '[ALLOCATION_ERROR]',
+      );
       throw new Internal({
         type: ErrorTypes.Internal,
         title: 'Error on get predicate allocation',

@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
+import { logger } from '@src/config/logger';
 import dotenv from 'dotenv';
 import { Network } from 'fuels';
 import {
@@ -20,7 +21,7 @@ const {
 } = process.env;
 
 if (!MELD_PRODUCTION_API_URL || !MELD_PRODUCTION_API_KEY) {
-  console.warn('MELD_API_URL and MELD_API_KEY must be defined in .env');
+  logger.warn('MELD_API_URL and MELD_API_KEY must be defined in .env');
 }
 
 export const FIAT_CURRENCIES = ['BRL', 'USD', 'EUR'];

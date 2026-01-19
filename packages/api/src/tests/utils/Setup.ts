@@ -1,4 +1,5 @@
 import { Application } from 'express';
+import { logger } from '@src/config/logger';
 import request from 'supertest';
 import { newUser } from '@src/tests/mocks/User';
 import { WalletUnlocked, Provider } from 'fuels';
@@ -107,9 +108,9 @@ export class TestEnvironment {
       try {
         await App.stop();
         node?.cleanup();
-        console.log('Cleanup finalizado com sucesso.');
+        logger.info('Cleanup completed successfully.');
       } catch (error) {
-        console.error('Erro durante cleanup:', error);
+        logger.error({ error: error }, 'Error during cleanup');
       }
     };
 

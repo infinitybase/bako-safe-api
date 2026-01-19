@@ -1,4 +1,5 @@
 import { RedisClientType, createClient } from 'redis';
+import { logger } from '@src/config/logger';
 import { RedisMockStore } from './redis-test-mock';
 
 const REDIS_URL_READ = process.env.REDIS_URL_WRITE || 'redis://127.0.0.1:6379';
@@ -12,7 +13,7 @@ export class RedisReadClient {
 
   static async start() {
     if (RedisReadClient.isMock) {
-      console.log('[RedisReadClient] Rodando com mock em memória');
+      logger.info('[RedisReadClient] Running with mock in memory');
       RedisReadClient.client = (RedisMockStore as unknown) as RedisClientType;
       return;
     }
@@ -23,7 +24,7 @@ export class RedisReadClient {
       try {
         await RedisReadClient.client.connect();
       } catch (e) {
-        console.error('[REDIS WRITE CONNECT ERROR]', e);
+        logger.error({ error: e }, '[REDIS WRITE CONNECT ERROR]');
         process.exit(1);
       }
     }
@@ -36,7 +37,7 @@ export class RedisReadClient {
       try {
         await RedisReadClient.client.disconnect();
       } catch (e) {
-        console.error('[REDIS READ DISCONNECT ERROR]', e);
+        logger.error({ error: e }, '[REDIS READ DISCONNECT ERROR]');
         process.exit(1);
       }
     }
@@ -48,7 +49,7 @@ export class RedisReadClient {
         ? await RedisMockStore.get(key)
         : await RedisReadClient.client.get(key);
     } catch (e) {
-      console.error('[CACHE_SESSIONS_GET_ERROR]', e, key);
+      logger.error({ error: e, key }, '[CACHE_SESSIONS_GET_ERROR]');
     }
   }
 
@@ -58,7 +59,7 @@ export class RedisReadClient {
         ? await RedisMockStore.hGetAll(key)
         : await RedisReadClient.client.hGetAll(key);
     } catch (e) {
-      console.error('[CACHE_SESSIONS_GET_ERROR]', e, key);
+      logger.error({ error: e, key }, '[CACHE_SESSIONS_GET_ERROR]');
     }
   }
 
@@ -108,7 +109,7 @@ export class RedisReadClient {
 
       return allKeys;
     } catch (e) {
-      console.error('[CACHE_KEYS_ERROR]', e, pattern);
+      logger.error({ error: e, pattern }, '[CACHE_KEYS_ERROR]');
       return [];
     }
   }
@@ -124,7 +125,7 @@ export class RedisReadClient {
 
       return await RedisReadClient.client.ttl(key);
     } catch (e) {
-      console.error('[CACHE_TTL_ERROR]', e, key);
+      logger.error({ error: e, key }, '[CACHE_TTL_ERROR]');
       return -1;
     }
   }
@@ -142,7 +143,7 @@ export class RedisReadClient {
       const result = await RedisReadClient.client.exists(key);
       return result === 1;
     } catch (e) {
-      console.error('[CACHE_EXISTS_ERROR]', e, key);
+      logger.error({ error: e, key }, '[CACHE_EXISTS_ERROR]');
       return false;
     }
   }

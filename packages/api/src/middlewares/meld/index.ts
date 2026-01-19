@@ -6,6 +6,7 @@ import {
 import crypto from 'crypto';
 import { NextFunction, Response } from 'express';
 import { IAuthRequest } from '../auth/types';
+import logger from '@src/config/logger';
 
 /**
  * Middleware to verify Meld webhook signatures
@@ -77,14 +78,17 @@ export function MeldAuthMiddleware(
       sanitizedReceived !== expectedProductionSignature &&
       sanitizedReceived !== expectedSandboxSignature
     ) {
-      console.error('[MELD] Webhook signature verification failed', {
-        expectedProductionSignature: expectedProductionSignature,
-        expectedSandboxSignature: expectedSandboxSignature,
-        received: sanitizedReceived,
-        stringToSign,
-        url,
-        timestamp,
-      });
+      logger.error(
+        {
+          expectedProductionSignature: expectedProductionSignature,
+          expectedSandboxSignature: expectedSandboxSignature,
+          received: sanitizedReceived,
+          stringToSign,
+          url,
+          timestamp,
+        },
+        '[MELD] Webhook signature verification failed',
+      );
 
       throw new Unauthorized({
         title: UnauthorizedErrorTitles.INVALID_SIGNATURE,

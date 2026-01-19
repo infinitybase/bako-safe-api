@@ -1,4 +1,5 @@
 import { MeldApiFactory } from '@src/modules/meld/utils';
+import { logger } from '@src/config/logger';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import request from 'supertest';
@@ -42,7 +43,7 @@ test('On Ramp endpoints', async t => {
 
   await t.test('should get meld quotes', async () => {
     const mock = t.mock.method(MeldApiFactory, 'getMeldApiByNetwork', () => {
-      console.log('🚀 getMeldQuotes MOCK CALLED');
+      logger.info('🚀 getMeldQuotes MOCK CALLED');
       return {
         getMeldQuotes: async () => mockQuotesResponse(),
       };
@@ -67,7 +68,7 @@ test('On Ramp endpoints', async t => {
 
   await t.test('should create meld widget session', async () => {
     const mock = t.mock.method(MeldApiFactory, 'getMeldApiByNetwork', () => {
-      console.log('🎯 createMeldWidgetSession MOCK CALLED');
+      logger.info('🎯 createMeldWidgetSession MOCK CALLED');
       return { createMeldWidgetSession: async () => widgetSessionMock };
     });
 
@@ -113,7 +114,7 @@ test('On Ramp endpoints', async t => {
 
   await t.test("should process meld's webhook and validate signature", async () => {
     const mock = t.mock.method(axios, 'create', () => {
-      console.log('🎯 getMeldTransactions MOCK CALLED');
+      logger.info('🎯 getMeldTransactions MOCK CALLED');
       return { get: async () => ({ data: meldTransactionListMock }) };
     });
 

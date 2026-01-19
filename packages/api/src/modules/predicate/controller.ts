@@ -1,4 +1,5 @@
 import { TransactionStatus } from 'bakosafe';
+import { logger } from '@src/config/logger';
 
 import { Predicate } from '@src/models/Predicate';
 import { Workspace } from '@src/models/Workspace';
@@ -59,27 +60,30 @@ export class PredicateController {
     network,
     workspace,
   }: ICreatePredicateRequest) {
-    console.log('[PREDICATE_CREATE] Starting predicate creation', {
-      name: payload?.name,
-      predicateAddress: payload?.predicateAddress,
-      userId: user?.id,
-      workspaceId: workspace?.id,
-    });
+    logger.info(
+      {
+        name: payload?.name,
+        predicateAddress: payload?.predicateAddress,
+        userId: user?.id,
+        workspaceId: workspace?.id,
+      },
+      '[PREDICATE_CREATE] Starting predicate creation',
+    );
 
     try {
       // If workspace is not provided, use user's single workspace as default
       let effectiveWorkspace = workspace;
       if (!workspace?.id) {
-        console.log(
+        logger.info(
           '[PREDICATE_CREATE] No workspace provided, fetching user single workspace',
         );
         effectiveWorkspace = await new WorkspaceService()
           .filter({ user: user.id, single: true })
           .list()
           .then((response: Workspace[]) => response[0]);
-        console.log(
+        logger.info(
+          { workspaceId: effectiveWorkspace?.id },
           '[PREDICATE_CREATE] Using single workspace:',
-          effectiveWorkspace?.id,
         );
       }
 
@@ -91,10 +95,13 @@ export class PredicateController {
         effectiveWorkspace,
       );
 
-      console.log('[PREDICATE_CREATE] Predicate created successfully', {
-        predicateId: predicate?.id,
-        predicateName: predicate?.name,
-      });
+      logger.info(
+        {
+          predicateId: predicate?.id,
+          predicateName: predicate?.name,
+        },
+        '[PREDICATE_CREATE] Predicate created successfully',
+      );
 
       const notifyDestination = predicate.members.filter(
         member => user.id !== member.id,
@@ -124,11 +131,14 @@ export class PredicateController {
 
       return successful(predicate, Responses.Created);
     } catch (e) {
-      console.log('[PREDICATE_CREATE] ERROR:', {
-        message: e?.message || e,
-        name: e?.name,
-        stack: e?.stack?.slice(0, 500),
-      });
+      logger.error(
+        {
+          message: e?.message || e,
+          name: e?.name,
+          stack: e?.stack?.slice(0, 500),
+        },
+        '[PREDICATE_CREATE]',
+      );
       return error(e.error, e.statusCode);
     }
   }
@@ -155,13 +165,16 @@ export class PredicateController {
 
   async findByAddress({ params: { address } }: IFindByHashRequest) {
     try {
-      console.log('[PREDICATE_FIND_BY_ADDRESS] Looking for predicate:', address);
+      logger.info(
+        { address },
+        '[PREDICATE_FIND_BY_ADDRESS] Looking for predicate:',
+      );
       const predicate = await this.predicateService.findByAddress(address);
 
       if (!predicate) {
-        console.log(
+        logger.info(
+          { address },
           '[PREDICATE_FIND_BY_ADDRESS] Predicate NOT found for address:',
-          address,
         );
         throw new NotFound({
           type: ErrorTypes.NotFound,
@@ -170,15 +183,18 @@ export class PredicateController {
         });
       }
 
-      console.log('[PREDICATE_FIND_BY_ADDRESS] Predicate found:', {
-        predicateId: predicate.id,
-        predicateName: predicate.name,
-        membersCount: predicate.members?.length,
-      });
+      logger.info(
+        {
+          predicateId: predicate.id,
+          predicateName: predicate.name,
+          membersCount: predicate.members?.length,
+        },
+        '[PREDICATE_FIND_BY_ADDRESS] Predicate found',
+      );
 
       return successful(predicate, Responses.Ok);
     } catch (e) {
-      console.log('[PREDICATE_FIND_BY_ADDRESS] ERROR:', e?.message || e);
+      logger.error({ error: e?.message || e }, '[PREDICATE_FIND_BY_ADDRESS]');
       return error(e.error, e.statusCode);
     }
   }
@@ -271,7 +287,7 @@ export class PredicateController {
         Responses.Ok,
       );
     } catch (e) {
-      console.log(`[RESERVED_COINS_ERROR]`, e);
+      logger.error({ error: e }, '[RESERVED_COINS_ERROR]');
       return error(e.error || e, e.statusCode);
     }
   }

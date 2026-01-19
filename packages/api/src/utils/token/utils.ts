@@ -1,4 +1,5 @@
 import { addMinutes, differenceInMinutes, isPast, parseISO } from 'date-fns';
+import { logger } from '@src/config/logger';
 import { Address } from 'fuels';
 import { MoreThan } from 'typeorm';
 
@@ -272,7 +273,7 @@ export class TokenUtils {
 
       return token;
     } catch (e) {
-      console.log('[RENEW TOKEN ERROR]: DATA FORMAT', e);
+      logger.error({ error: e }, '[RENEW TOKEN ERROR]: DATA FORMAT');
       return token;
     }
   }

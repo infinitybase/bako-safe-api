@@ -95,8 +95,6 @@ test('Transaction Endpoints', async t => {
         .set('Authorization', users[0].token)
         .set('Signeraddress', users[0].payload.address);
 
-      // console.log('[TESTE_PAGINACAO]', res.body);
-
       assert.equal(res.status, 200);
       assert.ok('total' in res.body);
       assert.equal(res.body.currentPage, page);
