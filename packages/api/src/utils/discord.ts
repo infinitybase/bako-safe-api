@@ -1,4 +1,4 @@
-import logger from '@src/config/logger';
+import { logger } from '@src/config/logger';
 import axios from 'axios';
 import { format } from 'date-fns';
 

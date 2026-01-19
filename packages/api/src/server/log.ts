@@ -1,4 +1,4 @@
-import logger from '@src/config/logger';
+import { logger } from '@src/config/logger';
 
 const {
   API_PORT,

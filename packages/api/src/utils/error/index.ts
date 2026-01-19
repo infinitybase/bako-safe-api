@@ -1,4 +1,4 @@
-import logger from '@src/config/logger';
+import { logger } from '@src/config/logger';
 import GeneralError from '@utils/error/GeneralError';
 
 export { default as BadRequest } from './BadRequest';

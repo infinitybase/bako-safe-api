@@ -116,5 +116,3 @@ const pinoConfig: pino.LoggerOptions = {
 };
 
 export const logger = pino(pinoConfig);
-
-export default logger;

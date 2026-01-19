@@ -37,7 +37,7 @@ import { compareBalances } from '@src/utils/balance';
 import { emitBalanceOutdatedUser } from '@src/socket/events';
 import { SocketUsernames, SocketEvents } from '@src/socket/types';
 import { ProviderWithCache } from '@src/utils/ProviderWithCache';
-import logger from '@src/config/logger';
+import { logger } from '@src/config/logger';
 
 const { UI_URL } = process.env;
 

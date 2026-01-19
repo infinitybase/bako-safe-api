@@ -7,7 +7,7 @@ import {
   UnauthorizedErrorTitles,
 } from '@src/utils/error';
 import { Transaction } from '@src/models';
-import logger from '@src/config/logger';
+import { logger } from '@src/config/logger';
 
 export interface ITransactionPermissionMiddlewareOptions {
   transactionSelector: (req: Request) => string;

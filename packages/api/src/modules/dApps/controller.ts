@@ -23,7 +23,7 @@ import type {
 import type { ITransactionResponse } from '../transaction/types';
 import App from '@src/server/app';
 import { SocketEvents, SocketUsernames } from "@src/socket/types";
-import logger from '@src/config/logger';
+import { logger } from '@src/config/logger';
 
 
 const { API_URL } = process.env;

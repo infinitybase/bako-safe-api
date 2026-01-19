@@ -6,7 +6,7 @@ import {
 import crypto from 'crypto';
 import { NextFunction, Response } from 'express';
 import { IAuthRequest } from '../auth/types';
-import logger from '@src/config/logger';
+import { logger } from '@src/config/logger';
 
 /**
  * Middleware to verify Meld webhook signatures

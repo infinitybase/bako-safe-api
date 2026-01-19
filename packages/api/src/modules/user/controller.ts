@@ -46,7 +46,7 @@ import {
   IUpdateRequest,
   IUserService,
 } from './types';
-import logger from '@src/config/logger';
+import { logger } from '@src/config/logger';
 
 export class UserController {
   constructor(

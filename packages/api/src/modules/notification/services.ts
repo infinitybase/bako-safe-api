@@ -17,7 +17,7 @@ import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
 import { Network } from 'fuels';
 import { SocketEvents, SocketUsernames } from '@src/socket/types';
 import { PredicateService } from '../predicate/services';
-import logger from '@src/config/logger';
+import { logger } from '@src/config/logger';
 
 const { API_URL } = process.env;
 
