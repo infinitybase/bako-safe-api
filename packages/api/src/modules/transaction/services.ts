@@ -853,9 +853,6 @@ export class TransactionService implements ITransactionService {
     predicateAddress: string,
     chainId?: number,
   ): Promise<void> {
-    const chainInfo = chainId ?? 'all chains';
-    const addrShort = predicateAddress?.slice(0, 12);
-
     try {
       // Invalidate balance cache
       const balanceCache = App.getInstance()._balanceCache;
@@ -866,7 +863,10 @@ export class TransactionService implements ITransactionService {
       await transactionCache.invalidate(predicateAddress, chainId);
 
       logger.info(
-        { predicateAddress: addrShort, chain: chainInfo },
+        {
+          predicateAddress: predicateAddress?.slice(0, 12),
+          chainId: chainId ?? 'all',
+        },
         '[TX_CACHE] Caches invalidated',
       );
     } catch (error) {
