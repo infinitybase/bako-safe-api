@@ -215,7 +215,10 @@ test('Transaction Endpoints', async t => {
       const previousCount = resBefore.body.ofUser;
 
       const vault = predicates[5];
-      await saveMockTransaction({ vault, user }, app);
+      const { tx, status } = await saveMockTransaction({ vault, user }, app);
+
+      assert.equal(status, 201);
+      assert.equal(tx.status, TransactionStatus.AWAIT_REQUIREMENTS);
 
       const res = await request(app)
         .get(`/transaction/pending`)
