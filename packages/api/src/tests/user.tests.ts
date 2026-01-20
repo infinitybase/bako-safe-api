@@ -5,10 +5,15 @@ import request from 'supertest';
 import { generateNode } from './mocks/Networks';
 import { saveMockPredicate } from './mocks/Predicate';
 import { TestEnvironment } from './utils/Setup';
+import { TransactionStatus, TransactionType } from 'bakosafe';
 
 test('User Endpoints', async t => {
   const { node } = await generateNode();
-  const { app, users, close, predicates, network } = await TestEnvironment.init(2, 1, node);
+  const { app, users, close, predicates, network } = await TestEnvironment.init(
+    2,
+    1,
+    node,
+  );
 
   t.after(async () => {
     await close();
@@ -106,9 +111,11 @@ test('User Endpoints', async t => {
   await t.test(
     'GET /user/transactions should accept both status and type query params',
     async () => {
+      const status = TransactionStatus.SUCCESS;
+      const type = TransactionType.TRANSACTION_SCRIPT;
+
       const res = await request(app)
-        .get('/user/transactions')
-        .query({ status: ['success'], type: 'TRANSACTION_SCRIPT' })
+        .get(`/user/transactions?status[]=${status}&type=${type}`)
         .set('Authorization', users[0].token)
         .set('signeraddress', users[0].payload.address);
 
@@ -159,12 +166,22 @@ test('User Endpoints', async t => {
 
       // Validate response structure
       assert.ok('data' in res.body, 'Response should have data array');
-      assert.ok('totalAmountInUSD' in res.body, 'Response should have totalAmountInUSD');
+      assert.ok(
+        'totalAmountInUSD' in res.body,
+        'Response should have totalAmountInUSD',
+      );
       assert.ok('predicates' in res.body, 'Response should have predicates array');
 
       assert.ok(Array.isArray(res.body.data), 'data should be an array');
-      assert.ok(Array.isArray(res.body.predicates), 'predicates should be an array');
-      assert.equal(typeof res.body.totalAmountInUSD, 'number', 'totalAmountInUSD should be a number');
+      assert.ok(
+        Array.isArray(res.body.predicates),
+        'predicates should be an array',
+      );
+      assert.equal(
+        typeof res.body.totalAmountInUSD,
+        'number',
+        'totalAmountInUSD should be a number',
+      );
 
       // Validate predicate structure if any exist
       if (res.body.predicates.length > 0) {
@@ -173,42 +190,72 @@ test('User Endpoints', async t => {
         assert.ok('name' in predicate, 'Predicate should have name');
         assert.ok('address' in predicate, 'Predicate should have address');
         assert.ok('members' in predicate, 'Predicate should have members count');
-        assert.ok('minSigners' in predicate, 'Predicate should have minSigners count');
+        assert.ok(
+          'minSigners' in predicate,
+          'Predicate should have minSigners count',
+        );
         assert.ok('amountInUSD' in predicate, 'Predicate should have amountInUSD');
 
         assert.equal(typeof predicate.id, 'string', 'id should be string');
         assert.equal(typeof predicate.name, 'string', 'name should be string');
-        assert.equal(typeof predicate.address, 'string', 'address should be string');
-        assert.equal(typeof predicate.members, 'number', 'members should be number');
-        assert.equal(typeof predicate.minSigners, 'number', 'minSigners should be number');
-        assert.equal(typeof predicate.amountInUSD, 'number', 'amountInUSD should be number');
+        assert.equal(
+          typeof predicate.address,
+          'string',
+          'address should be string',
+        );
+        assert.equal(
+          typeof predicate.members,
+          'number',
+          'members should be number',
+        );
+        assert.equal(
+          typeof predicate.minSigners,
+          'number',
+          'minSigners should be number',
+        );
+        assert.equal(
+          typeof predicate.amountInUSD,
+          'number',
+          'amountInUSD should be number',
+        );
       }
 
       // Validate asset allocation structure if any exist
       if (res.body.data.length > 0) {
         const allocation = res.body.data[0];
         assert.ok('assetId' in allocation, 'Allocation should have assetId');
-        assert.ok('amountInUSD' in allocation, 'Allocation should have amountInUSD');
+        assert.ok(
+          'amountInUSD' in allocation,
+          'Allocation should have amountInUSD',
+        );
         assert.ok('percentage' in allocation, 'Allocation should have percentage');
 
-        assert.equal(typeof allocation.amountInUSD, 'number', 'amountInUSD should be number');
-        assert.equal(typeof allocation.percentage, 'number', 'percentage should be number');
+        assert.equal(
+          typeof allocation.amountInUSD,
+          'number',
+          'amountInUSD should be number',
+        );
+        assert.equal(
+          typeof allocation.percentage,
+          'number',
+          'percentage should be number',
+        );
       }
     },
   );
 
-  await t.test(
-    'GET /user/allocation should accept limit query param',
-    async () => {
-      const res = await request(app)
-        .get('/user/allocation')
-        .query({ limit: 3 })
-        .set('Authorization', users[0].token)
-        .set('signeraddress', users[0].payload.address);
+  await t.test('GET /user/allocation should accept limit query param', async () => {
+    const res = await request(app)
+      .get('/user/allocation')
+      .query({ limit: 3 })
+      .set('Authorization', users[0].token)
+      .set('signeraddress', users[0].payload.address);
 
-      assert.equal(res.status, 200);
-      assert.ok(Array.isArray(res.body.predicates));
-      assert.ok(res.body.predicates.length <= 3, 'Should return at most 3 predicates');
-    },
-  );
+    assert.equal(res.status, 200);
+    assert.ok(Array.isArray(res.body.predicates));
+    assert.ok(
+      res.body.predicates.length <= 3,
+      'Should return at most 3 predicates',
+    );
+  });
 });
