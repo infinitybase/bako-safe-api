@@ -214,7 +214,7 @@ test('Transaction Endpoints', async t => {
       assert.equal(resBefore.status, 200);
       const previousCount = resBefore.body.ofUser;
 
-      const vault = predicates[5];
+      const vault = predicates[predicates.length - 1];
       const { tx, status } = await saveMockTransaction({ vault, user }, app);
 
       assert.equal(status, 201);
