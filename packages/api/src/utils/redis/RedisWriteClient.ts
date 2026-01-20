@@ -1,4 +1,5 @@
 import { RedisClientType, createClient } from 'redis';
+import { logger } from '@src/config/logger';
 import { RedisMockStore } from './redis-test-mock';
 
 const REDIS_URL_WRITE = process.env.REDIS_URL_WRITE || 'redis://127.0.0.1:6379';
@@ -22,7 +23,7 @@ export class RedisWriteClient {
       try {
         await RedisWriteClient.client.connect();
       } catch (e) {
-        console.error('[REDIS WRITE CONNECT ERROR]', e);
+        logger.error({ error: e }, '[REDIS WRITE CONNECT ERROR]');
         process.exit(1);
       }
     }
@@ -35,7 +36,7 @@ export class RedisWriteClient {
       try {
         await RedisWriteClient.client.disconnect();
       } catch (e) {
-        console.error('[REDIS WRITE DISCONNECT ERROR]', e);
+        logger.error({ error: e }, '[REDIS WRITE DISCONNECT ERROR]');
         process.exit(1);
       }
     }
@@ -51,7 +52,7 @@ export class RedisWriteClient {
         EX: 60 * 40, // 40 min
       });
     } catch (e) {
-      console.error('[CACHE_SET_ERROR]', e, key, value);
+      logger.error({ error: e, key, value }, '[CACHE_SET_ERROR]');
     }
   }
 
@@ -74,7 +75,7 @@ export class RedisWriteClient {
       await RedisWriteClient.client.hSet(key, fields.flat());
       await RedisWriteClient.client.expire(key, 60 * 40); // 40 min
     } catch (e) {
-      console.error('[CACHE_HMSET_ERROR]', e, key, values);
+      logger.error({ error: e, key, values }, '[CACHE_HMSET_ERROR]');
     }
   }
 
@@ -89,7 +90,7 @@ export class RedisWriteClient {
 
       await RedisWriteClient.client.del(keys);
     } catch (e) {
-      console.error('[CACHE_SESSIONS_REMOVE_ERROR]', e, keys);
+      logger.error({ error: e, keys }, '[CACHE_SESSIONS_REMOVE_ERROR]');
     }
   }
 
@@ -106,7 +107,7 @@ export class RedisWriteClient {
         EX: ttlSeconds,
       });
     } catch (e) {
-      console.error('[CACHE_SET_WITH_TTL_ERROR]', e, key);
+      logger.error({ error: e, key }, '[CACHE_SET_WITH_TTL_ERROR]');
     }
   }
 
@@ -141,7 +142,7 @@ export class RedisWriteClient {
 
       return deletedCount;
     } catch (e) {
-      console.error('[CACHE_DEL_BY_PATTERN_ERROR]', e, pattern);
+      logger.error({ error: e, pattern }, '[CACHE_DEL_BY_PATTERN_ERROR]');
       return 0;
     }
   }

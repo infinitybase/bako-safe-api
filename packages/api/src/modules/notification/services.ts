@@ -17,6 +17,7 @@ import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
 import { Network } from 'fuels';
 import { SocketEvents, SocketUsernames } from '@src/socket/types';
 import { PredicateService } from '../predicate/services';
+import { logger } from '@src/config/logger';
 
 const { API_URL } = process.env;
 
@@ -240,14 +241,14 @@ export class NotificationService implements INotificationService {
                 to: member.email,
                 data: { summary: { ...summary, name: member?.name ?? '' } },
               }).catch(e => {
-                console.error(
-                  '[NOTIFICATION] Failed to send transaction success email',
+                logger.error(
                   {
                     to: member.email,
                     memberId: member?.id,
                     transactionId: summary?.transactionId,
+                    error: e,
                   },
-                  e,
+                  '[NOTIFICATION] Failed to send transaction success email',
                 );
               })
             : Promise.resolve(),

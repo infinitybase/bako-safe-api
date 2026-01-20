@@ -1,7 +1,7 @@
 import { IAuthRequest } from '@middlewares/auth/types';
 import { ErrorTypes, Unauthorized, UnauthorizedErrorTitles } from '@utils/error';
 import { DApp } from '@src/models';
-import { AuthStrategy, IValidatePathParams } from './type';
+import { AuthStrategy } from './type';
 
 export class ConnectorAuthStrategy implements AuthStrategy {
   async authenticate(req: IAuthRequest) {
@@ -44,7 +44,6 @@ export class ConnectorAuthStrategy implements AuthStrategy {
       });
     }
 
-    // console.log()
     return {
       user: dapp.user,
       workspace: null,

@@ -1,4 +1,5 @@
 import { BalanceCache } from '@src/server/storage/balance';
+import { logger } from '@src/config/logger';
 import { cacheConfig } from '@src/config/cache';
 import { Address, CoinQuantity, Provider, ProviderOptions } from 'fuels';
 
@@ -103,15 +104,15 @@ export class ProviderWithCache extends Provider {
       const result = await super.getBalances(address);
 
       // Store in cache (don't await to not block response)
-      cache.set(addressStr, result.balances, chainId, this.url).catch(err => {
-        console.error('[ProviderWithCache] Failed to cache balances:', err);
+      cache.set(addressStr, result.balances, chainId, this.url).catch(error => {
+        logger.error({ error }, '[ProviderWithCache] Failed to cache balances');
       });
 
       return result;
     } catch (error) {
-      console.error(
-        '[ProviderWithCache] Error, falling back to blockchain:',
-        error,
+      logger.error(
+        { error },
+        '[ProviderWithCache] Error, falling back to blockchain',
       );
       // Fallback to blockchain on any cache error
       return super.getBalances(address);
@@ -136,8 +137,8 @@ export class ProviderWithCache extends Provider {
       try {
         const chainId = await this.getCachedChainId();
         await cache.set(addressStr, result.balances, chainId, this.url);
-      } catch (err) {
-        console.error('[ProviderWithCache] Failed to update cache:', err);
+      } catch (error) {
+        logger.error({ error }, '[ProviderWithCache] Failed to update cache');
       }
     }
 

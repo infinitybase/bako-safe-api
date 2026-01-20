@@ -1,4 +1,5 @@
 import { bindMethods, successful } from '@src/utils';
+import { logger } from '@src/config/logger';
 import { error } from '@src/utils/error';
 import { Webhook } from 'svix';
 import {
@@ -17,7 +18,7 @@ export default class WebhookController {
       await this._service.handleMeldCryptoWebhook(request.body);
       return successful({ message: 'Webhook processed successfully' }, 200);
     } catch (e) {
-      console.log(e);
+      logger.error({ error: e }, 'Error processing Meld Crypto webhook');
       return error(e.error, e.statusCode);
     }
   }
@@ -30,10 +31,10 @@ export default class WebhookController {
     const wh = new Webhook(LAYERS_SWAP_WEBHOOK_SECRET);
     try {
       const msg = wh.verify(payload, headers);
-      console.log('Webhook verified:', msg);
+      logger.info({ data: msg }, 'Webhook verified');
       return successful({ message: 'Webhook processed successfully' }, 200);
     } catch (e) {
-      console.error('Error verifying webhook:', e);
+      logger.error({ error: e }, 'Error verifying webhook');
       return error(e?.message || 'Invalid webhook signature', 400);
     }
   }

@@ -1,3 +1,4 @@
+import { logger } from '@src/config/logger';
 import GeneralError from '@utils/error/GeneralError';
 
 export { default as BadRequest } from './BadRequest';
@@ -24,7 +25,7 @@ const error = <ResponsePayload extends GeneralError | Error>(
   payload: ResponsePayload,
   statusCode: Responses = Responses.Internal,
 ): ErrorResponse<ResponsePayload> => {
-  console.log(`[ERROR]`, payload);
+  logger.error({ payload }, '[ERROR]');
   if (payload && 'detail' in payload && process.env.NODE_ENV !== 'development') {
     payload.detail = null;
   }

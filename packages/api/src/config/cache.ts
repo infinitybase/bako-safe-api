@@ -1,4 +1,5 @@
 import { RedisReadClient } from '@src/utils/redis/RedisReadClient';
+import { logger } from '@src/config/logger';
 import { RedisWriteClient } from '@src/utils/redis/RedisWriteClient';
 
 /**
@@ -51,7 +52,7 @@ class CacheMetricsClass {
       await RedisWriteClient.set(`${METRICS_KEY}:${field}`, newValue);
     } catch (error) {
       // Silently fail - metrics should not break the app
-      console.error('[CacheMetrics] Error incrementing:', field, error);
+      logger.error({ field, error }, '[CacheMetrics] Error incrementing:');
     }
   }
 
@@ -91,15 +92,21 @@ class CacheMetricsClass {
   }
 
   async getStats(): Promise<CacheStats> {
-    const [hits, misses, invalidations, warmups, warmupPredicates, errors] =
-      await Promise.all([
-        this.getValue('hits'),
-        this.getValue('misses'),
-        this.getValue('invalidations'),
-        this.getValue('warmups'),
-        this.getValue('warmupPredicates'),
-        this.getValue('errors'),
-      ]);
+    const [
+      hits,
+      misses,
+      invalidations,
+      warmups,
+      warmupPredicates,
+      errors,
+    ] = await Promise.all([
+      this.getValue('hits'),
+      this.getValue('misses'),
+      this.getValue('invalidations'),
+      this.getValue('warmups'),
+      this.getValue('warmupPredicates'),
+      this.getValue('errors'),
+    ]);
 
     const total = hits + misses;
     const uptimeSeconds = Math.floor((Date.now() - this.startTime) / 1000);
@@ -128,7 +135,7 @@ class CacheMetricsClass {
       ]);
       this.startTime = Date.now();
     } catch (error) {
-      console.error('[CacheMetrics] Error resetting:', error);
+      logger.error({ error: error }, '[CacheMetrics] Error resetting:');
     }
   }
 }

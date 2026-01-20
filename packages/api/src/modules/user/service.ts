@@ -37,6 +37,7 @@ import { compareBalances } from '@src/utils/balance';
 import { emitBalanceOutdatedUser } from '@src/socket/events';
 import { SocketUsernames, SocketEvents } from '@src/socket/types';
 import { ProviderWithCache } from '@src/utils/ProviderWithCache';
+import { logger } from '@src/config/logger';
 
 const { UI_URL } = process.env;
 
@@ -162,7 +163,7 @@ export class UserService implements IUserService {
         return user;
       })
       .catch(error => {
-        console.log(`Error on user create: ${JSON.stringify(error)}`);
+        logger.error({ error }, 'Error on user create');
         if (error instanceof GeneralError) throw error;
 
         throw new Internal({
@@ -414,9 +415,9 @@ export class UserService implements IUserService {
               }
             }
           } catch (e) {
-            console.error(
-              `[CHECK_USER_BALANCES] Error checking predicate ${predicate.id}:`,
-              e?.message || e,
+            logger.error(
+              { predicateId: predicate.id, error: e?.message || e },
+              '[CHECK_USER_BALANCES] Error checking predicate',
             );
           }
         },

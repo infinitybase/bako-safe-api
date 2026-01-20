@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
+import { logger } from '@src/config/logger';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -14,7 +15,7 @@ if (
   !LAYERS_SWAP_API_KEY_SANDBOX ||
   !LAYERS_SWAP_API_KEY_PROD
 ) {
-  console.warn(
+  logger.warn(
     'LAYERS_SWAP_API_URL, LAYERS_SWAP_API_KEY_SANDBOX e LAYERS_SWAP_API_KEY_PROD devem estar definidos no .env',
   );
 }

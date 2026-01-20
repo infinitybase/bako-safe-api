@@ -7,6 +7,7 @@ import {
   UnauthorizedErrorTitles,
 } from '@src/utils/error';
 import { Transaction } from '@src/models';
+import { logger } from '@src/config/logger';
 
 export interface ITransactionPermissionMiddlewareOptions {
   transactionSelector: (req: Request) => string;
@@ -52,7 +53,7 @@ export const transactionPermissionMiddleware = (
 
       return next();
     } catch (error) {
-      console.log(error);
+      logger.error({ error }, '[TRANSACTION_PERMISSION_MIDDLEWARE]');
       return next(error);
     }
   };

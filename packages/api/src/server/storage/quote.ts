@@ -7,6 +7,7 @@ import {
   isDevMode,
 } from '@src/utils';
 import { tokensIDS } from '@src/utils/assets-token/addresses';
+import { logger } from '@src/config/logger';
 import axios from 'axios';
 import App from '../app';
 
@@ -53,7 +54,7 @@ export class QuoteStorage {
     const fuelQuote = quotes.find(q => q.assetId === tokensIDS.FUEL);
 
     if (!fuelQuote) {
-      console.warn('FUEL quote not found, cannot calculate stFUEL price');
+      logger.warn('FUEL quote not found, cannot calculate stFUEL price');
       return 0;
     }
 
@@ -63,7 +64,7 @@ export class QuoteStorage {
       // stFUEL vale MAIS que FUEL devido ao acúmulo de recompensas
       return fuelQuote.price * ratio;
     } catch (error) {
-      console.error('Error calculating stFUEL price:', error);
+      logger.error({ error }, 'Error calculating stFUEL price:');
       return 0;
     }
   }

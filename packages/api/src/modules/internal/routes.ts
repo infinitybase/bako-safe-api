@@ -1,4 +1,5 @@
 import { Router, Request, Response, NextFunction } from 'express';
+import { logger } from '@src/config/logger';
 import App from '@src/server/app';
 import { CacheMetrics } from '@src/config/cache';
 
@@ -15,7 +16,7 @@ const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY;
 const requireApiKey = (req: Request, res: Response, next: NextFunction) => {
   if (!INTERNAL_API_KEY) {
     // No API key configured - allow access (development mode)
-    console.warn('[INTERNAL] No INTERNAL_API_KEY configured, allowing access');
+    logger.warn('[INTERNAL] No INTERNAL_API_KEY configured, allowing access');
     return next();
   }
 
@@ -43,7 +44,7 @@ internalRouter.get('/cache/stats', requireApiKey, async (_req, res) => {
       timestamp: Date.now(),
     });
   } catch (error) {
-    console.error('[INTERNAL] cache/stats error:', error);
+    logger.error({ error: error }, '[INTERNAL] cache/stats error:');
     return res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -74,7 +75,7 @@ internalRouter.get('/cache/keys', requireApiKey, async (req, res) => {
       timestamp: Date.now(),
     });
   } catch (error) {
-    console.error('[INTERNAL] cache/keys error:', error);
+    logger.error({ error: error }, '[INTERNAL] cache/keys error');
     return res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -150,7 +151,7 @@ internalRouter.post('/cache/invalidate', requireApiKey, async (req, res) => {
       });
     }
 
-    console.log(`[INTERNAL] cache/invalidate: ${message}`);
+    logger.info({ message }, '[INTERNAL] cache/invalidate');
 
     return res.json({
       success: true,
@@ -161,7 +162,7 @@ internalRouter.post('/cache/invalidate', requireApiKey, async (req, res) => {
       timestamp: Date.now(),
     });
   } catch (error) {
-    console.error('[INTERNAL] cache/invalidate error:', error);
+    logger.error({ error: error }, '[INTERNAL] cache/invalidate error');
     return res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -220,7 +221,9 @@ internalRouter.post('/cache/warmup', requireApiKey, async (req, res) => {
         warmedUp++;
       } catch (err) {
         errors.push(
-          `${predicate.predicateAddress}: ${err instanceof Error ? err.message : 'Unknown error'}`,
+          `${predicate.predicateAddress}: ${
+            err instanceof Error ? err.message : 'Unknown error'
+          }`,
         );
       }
     }
@@ -238,7 +241,7 @@ internalRouter.post('/cache/warmup', requireApiKey, async (req, res) => {
       timestamp: Date.now(),
     });
   } catch (error) {
-    console.error('[INTERNAL] cache/warmup error:', error);
+    logger.error({ error: error }, '[INTERNAL] cache/warmup error');
     return res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -260,7 +263,7 @@ internalRouter.post('/cache/metrics/reset', requireApiKey, async (_req, res) => 
       timestamp: Date.now(),
     });
   } catch (error) {
-    console.error('[INTERNAL] cache/metrics/reset error:', error);
+    logger.error({ error: error }, '[INTERNAL] cache/metrics/reset error');
     return res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',

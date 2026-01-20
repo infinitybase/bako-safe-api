@@ -1,4 +1,5 @@
 import { IQuote } from '@src/server/storage';
+import { logger } from '@src/config/logger';
 import { fetchFuelAssets } from '@src/server/storage/fuelAssetsFetcher';
 import { Assets, NetworkFuel } from 'fuels';
 import { RedisReadClient } from './redis/RedisReadClient';
@@ -177,7 +178,7 @@ export const getAssetsMaps = async (): Promise<AssetsMapsCache> => {
       return { ...data, fuelUnitAssets };
     }
   } catch (error) {
-    console.error('[AssetsCache] Error reading from Redis:', error);
+    logger.error({ error }, '[AssetsCache] Error reading from Redis');
   }
 
   // Cache miss - fetch from source
@@ -208,7 +209,7 @@ export const getAssetsMaps = async (): Promise<AssetsMapsCache> => {
     ASSETS_CACHE_KEY,
     JSON.stringify(dataToCache),
     ASSETS_CACHE_TTL,
-  ).catch(err => console.error('[AssetsCache] Error writing to Redis:', err));
+  ).catch(error => logger.error({ error }, '[AssetsCache] Error writing to Redis'));
 
   return { ...dataToCache, fuelUnitAssets };
 };
@@ -219,6 +220,6 @@ export const clearAssetsMapsCache = async () => {
   try {
     await RedisWriteClient.del([ASSETS_CACHE_KEY]);
   } catch (error) {
-    console.error('[AssetsCache] Error clearing Redis cache:', error);
+    logger.error({ error }, '[AssetsCache] Error clearing Redis cache');
   }
 };

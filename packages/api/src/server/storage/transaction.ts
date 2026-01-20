@@ -1,4 +1,5 @@
 import { RedisReadClient, RedisWriteClient } from '@src/utils';
+import { logger } from '@src/config/logger';
 import { cacheConfig, CacheMetrics } from '@src/config/cache';
 
 const { prefixes } = cacheConfig;
@@ -78,10 +79,7 @@ export class TransactionCache {
   /**
    * Check if cache needs incremental refresh
    */
-  async needsRefresh(
-    predicateAddress: string,
-    chainId: number,
-  ): Promise<boolean> {
+  async needsRefresh(predicateAddress: string, chainId: number): Promise<boolean> {
     const refreshFlag = await RedisReadClient.get(
       this.buildRefreshKey(predicateAddress, chainId),
     );
@@ -123,8 +121,13 @@ export class TransactionCache {
 
       if (needsRefresh) {
         // Cache exists but needs incremental update
-        console.log(
-          `[TxCache] REFRESH needed for ${predicateAddress?.slice(0, 12)}... chain:${chainId} (${data.transactions.length} cached txs)`,
+        logger.info(
+          {
+            predicateAddress: predicateAddress?.slice(0, 12),
+            chainId,
+            cachedTxCount: data.transactions.length,
+          },
+          '[TxCache] REFRESH needed for predicate',
         );
         return {
           cachedTransactions: data.transactions,
@@ -135,8 +138,14 @@ export class TransactionCache {
 
       // Cache is fresh
       CacheMetrics.hit();
-      console.log(
-        `[TxCache] HIT ${predicateAddress?.slice(0, 12)}... chain:${chainId} (${Math.round((Date.now() - data.timestamp) / 1000)}s old, ${data.transactions.length} txs)`,
+      logger.info(
+        {
+          predicateAddress: predicateAddress?.slice(0, 12),
+          chainId,
+          ageSeconds: Math.round((Date.now() - data.timestamp) / 1000),
+          transactionCount: data.transactions.length,
+        },
+        '[TxCache] HIT',
       );
 
       return {
@@ -145,7 +154,7 @@ export class TransactionCache {
         knownHashes,
       };
     } catch (error) {
-      console.error('[TxCache] GET error:', error);
+      logger.error({ error }, '[TxCache] GET');
       CacheMetrics.error();
       return {
         cachedTransactions: [],
@@ -215,11 +224,17 @@ export class TransactionCache {
       // Clear refresh flag after setting new data
       await this.clearRefreshFlag(predicateAddress, chainId);
 
-      console.log(
-        `[TxCache] SET ${predicateAddress?.slice(0, 12)}... chain:${chainId} (${transactions.length} txs, TTL: ${TRANSACTION_CACHE_TTL}s)`,
+      logger.info(
+        {
+          predicateAddress: predicateAddress?.slice(0, 12),
+          chainId,
+          transactionCount: transactions.length,
+          ttl: `${TRANSACTION_CACHE_TTL}s`,
+        },
+        '[TxCache] SET',
       );
     } catch (error) {
-      console.error('[TxCache] SET error:', error);
+      logger.error({ error }, '[TxCache] SET');
       CacheMetrics.error();
     }
   }
@@ -239,8 +254,12 @@ export class TransactionCache {
     });
 
     if (uniqueNewTxs.length > 0) {
-      console.log(
-        `[TxCache] MERGE: ${uniqueNewTxs.length} new txs + ${cached.length} cached`,
+      logger.info(
+        {
+          newTransactionCount: uniqueNewTxs.length,
+          cachedTransactionCount: cached.length,
+        },
+        '[TxCache] MERGE',
       );
     }
 
@@ -257,10 +276,7 @@ export class TransactionCache {
    * Mark cache as needing refresh (instead of deleting)
    * Called when a new transaction is created or confirmed
    */
-  async markForRefresh(
-    predicateAddress: string,
-    chainId?: number,
-  ): Promise<void> {
+  async markForRefresh(predicateAddress: string, chainId?: number): Promise<void> {
     try {
       if (chainId) {
         await RedisWriteClient.setWithTTL(
@@ -269,8 +285,12 @@ export class TransactionCache {
           TRANSACTION_CACHE_TTL, // Flag expires with cache
         );
 
-        console.log(
-          `[TxCache] MARKED for refresh: ${predicateAddress?.slice(0, 12)}... chain:${chainId}`,
+        logger.info(
+          {
+            predicateAddress: predicateAddress?.slice(0, 12),
+            chainId,
+          },
+          '[TxCache] MARKED for refresh',
         );
       } else {
         // Mark all chains for this predicate
@@ -290,12 +310,16 @@ export class TransactionCache {
           }
         }
 
-        console.log(
-          `[TxCache] MARKED for refresh: ${predicateAddress?.slice(0, 12)}... all chains (${keys.length} keys)`,
+        logger.info(
+          {
+            predicateAddress: predicateAddress?.slice(0, 12),
+            keysCount: keys.length,
+          },
+          '[TxCache] MARKED for refresh - all chains',
         );
       }
     } catch (error) {
-      console.error('[TxCache] MARK_REFRESH error:', error);
+      logger.error({ error }, '[TxCache] MARK_REFRESH');
       CacheMetrics.error();
     }
   }
@@ -303,16 +327,11 @@ export class TransactionCache {
   /**
    * Clear refresh flag for a predicate
    */
-  async clearRefreshFlag(
-    predicateAddress: string,
-    chainId: number,
-  ): Promise<void> {
+  async clearRefreshFlag(predicateAddress: string, chainId: number): Promise<void> {
     try {
-      await RedisWriteClient.del([
-        this.buildRefreshKey(predicateAddress, chainId),
-      ]);
+      await RedisWriteClient.del([this.buildRefreshKey(predicateAddress, chainId)]);
     } catch (error) {
-      console.error('[TxCache] CLEAR_REFRESH error:', error);
+      logger.error({ error }, '[TxCache] CLEAR_REFRESH');
     }
   }
 
@@ -333,8 +352,12 @@ export class TransactionCache {
         await RedisWriteClient.del([key]);
         await this.clearRefreshFlag(predicateAddress, chainId);
 
-        console.log(
-          `[TxCache] DELETED ${predicateAddress?.slice(0, 12)}... chain:${chainId}`,
+        logger.info(
+          {
+            predicateAddress: predicateAddress?.slice(0, 12),
+            chainId,
+          },
+          '[TxCache] DELETED',
         );
       } else {
         const pattern = `${TRANSACTION_CACHE_PREFIX}:${predicateAddress}:*`;
@@ -344,12 +367,16 @@ export class TransactionCache {
         const refreshPattern = `${TRANSACTION_CACHE_PREFIX}:refresh:${predicateAddress}:*`;
         await RedisWriteClient.delByPattern(refreshPattern);
 
-        console.log(
-          `[TxCache] DELETED ${predicateAddress?.slice(0, 12)}... all chains (${deletedCount} keys)`,
+        logger.info(
+          {
+            predicateAddress: predicateAddress?.slice(0, 12),
+            deletedCount,
+          },
+          '[TxCache] DELETED - all chains',
         );
       }
     } catch (error) {
-      console.error('[TxCache] DELETE error:', error);
+      logger.error({ error }, '[TxCache] DELETE');
       CacheMetrics.error();
     }
   }
@@ -393,7 +420,7 @@ export class TransactionCache {
         byChain,
       };
     } catch (error) {
-      console.error('[TxCache] STATS error:', error);
+      logger.error({ error }, '[TxCache] STATS');
       return {
         totalKeys: 0,
         refreshPending: 0,
@@ -410,8 +437,13 @@ export class TransactionCache {
   static start(): TransactionCache {
     if (!TransactionCache.instance) {
       TransactionCache.instance = new TransactionCache();
-      console.log(
-        `[TxCache] Started (enabled: ${cacheConfig.enabled}, TTL: ${TRANSACTION_CACHE_TTL}s, incremental: ${INCREMENTAL_FETCH_LIMIT})`,
+      logger.info(
+        {
+          enabled: cacheConfig.enabled,
+          ttl: `${TRANSACTION_CACHE_TTL}s`,
+          incrementalLimit: INCREMENTAL_FETCH_LIMIT,
+        },
+        '[TxCache] Started',
       );
     }
     return TransactionCache.instance;
@@ -423,7 +455,7 @@ export class TransactionCache {
   static stop(): void {
     if (TransactionCache.instance) {
       TransactionCache.instance = undefined;
-      console.log('[TxCache] Stopped');
+      logger.info('[TxCache] Stopped');
     }
   }
 

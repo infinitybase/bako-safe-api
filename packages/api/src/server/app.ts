@@ -1,4 +1,5 @@
 import bodyParser from 'body-parser';
+import { logger } from '@src/config/logger';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import Express from 'express';
@@ -8,7 +9,12 @@ import { router } from '@src/routes';
 import { isDevMode } from '@src/utils';
 
 import { handleErrors } from '@middlewares/index';
-import { QuoteStorage, SessionStorage, BalanceCache, TransactionCache } from './storage';
+import {
+  QuoteStorage,
+  SessionStorage,
+  BalanceCache,
+  TransactionCache,
+} from './storage';
 import Monitoring from './monitoring';
 import Bootstrap from './bootstrap';
 import { RedisWriteClient, RedisReadClient, FuelProvider } from '@src/utils';
@@ -106,7 +112,7 @@ class App {
         App.instance = undefined;
       })
       .catch(error => {
-        console.error('[APP] Error stopping application:', error);
+        logger.error({ error: error }, '[APP] Error stopping application');
       });
   }
 

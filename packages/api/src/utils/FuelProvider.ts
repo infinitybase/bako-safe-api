@@ -1,4 +1,5 @@
 import { Provider, ProviderOptions } from 'fuels';
+import { logger } from '@src/config/logger';
 import { ProviderWithCache } from './ProviderWithCache';
 import { cacheConfig } from '@src/config/cache';
 
@@ -54,7 +55,11 @@ export class FuelProvider {
   /**
    * Get current provider stats
    */
-  static getStats(): { size: number; urls: string[]; chainIds: Record<string, number> } {
+  static getStats(): {
+    size: number;
+    urls: string[];
+    chainIds: Record<string, number>;
+  } {
     if (!FuelProvider.instance) {
       return { size: 0, urls: [], chainIds: {} };
     }
@@ -113,7 +118,7 @@ export class FuelProvider {
       : new Provider(FUEL_PROVIDER, PROVIDER_OPTIONS);
 
     this.providers[FUEL_PROVIDER] = defaultProvider;
-    console.log('[FuelProvider] Reset - cleared all providers and SDK caches');
+    logger.info('[FuelProvider] Reset - cleared all providers and SDK caches');
   }
 
   /**
@@ -127,15 +132,12 @@ export class FuelProvider {
           provider.cache.clear();
         }
       } catch (error) {
-        console.error(
-          `[FuelProvider] Error clearing cache for ${url.slice(0, 30)}:`,
-          error,
-        );
+        logger.error({ url, error }, '[FuelProvider] Error clearing cache');
       }
     }
     // Also clear static SDK caches
     Provider.clearChainAndNodeCaches();
-    console.log('[FuelProvider] Cleared internal SDK caches');
+    logger.info('[FuelProvider] Cleared internal SDK caches');
   }
 
   /**
@@ -163,7 +165,7 @@ export class FuelProvider {
         instance.clearInternalCaches();
       }, CACHE_CLEAR_INTERVAL);
 
-      console.log(
+      logger.info(
         `[FuelProvider] Started (cache clear every ${
           CACHE_CLEAR_INTERVAL / 60000
         }min)`,
