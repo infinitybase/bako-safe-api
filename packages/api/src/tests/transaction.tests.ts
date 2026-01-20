@@ -4,7 +4,6 @@ import request from 'supertest';
 
 import { TestEnvironment } from './utils/Setup';
 import { saveMockPredicate } from './mocks/Predicate';
-import { ZeroBytes32 } from 'fuels';
 import { saveMockTransaction, transactionMock } from '@src/tests/mocks/Transaction';
 import { TransactionStatus, TransactionType, WitnessStatus } from 'bakosafe';
 import { Transaction } from '@src/models';
@@ -15,7 +14,7 @@ test('Transaction Endpoints', async t => {
 
   const { app, users, predicates, wallets, close } = await TestEnvironment.init(
     5,
-    5,
+    6,
     node,
   );
 
@@ -202,29 +201,33 @@ test('Transaction Endpoints', async t => {
   await t.test(
     'GET /transaction/pending should get transactions pending',
     async () => {
-      const vault = predicates[2];
-      await saveMockPredicate(vault, users[2], app);
+      const user = users[0];
 
-      const { payload_transfer } = await transactionMock(vault);
+      // Capture the count before creating the transaction
+      const resBefore = await request(app)
+        .get(`/transaction/pending`)
+        .set('Authorization', user.token)
+        .set('Signeraddress', user.payload.address);
 
-      payload_transfer.status = TransactionStatus.PENDING_SENDER;
+      assert.equal(resBefore.status, 200);
+      const previousCount = resBefore.body.ofUser;
 
-      await request(app)
-        .post('/transaction')
-        .set('Authorization', users[0].token)
-        .set('Signeraddress', users[0].payload.address)
-        .send(payload_transfer);
+      const vault = predicates[predicates.length - 1];
+      const { tx, status } = await saveMockTransaction({ vault, user }, app);
+
+      assert.equal(status, 201);
+      assert.equal(tx.status, TransactionStatus.AWAIT_REQUIREMENTS);
 
       const res = await request(app)
         .get(`/transaction/pending`)
-        .set('Authorization', users[0].token)
-        .set('Signeraddress', users[0].payload.address);
+        .set('Authorization', user.token)
+        .set('Signeraddress', user.payload.address);
 
       assert.equal(res.status, 200);
       assert.ok('ofUser' in res.body);
       assert.ok('transactionsBlocked' in res.body);
       assert.ok('pendingSignature' in res.body);
-      assert.strictEqual(res.body.ofUser, 1);
+      assert.strictEqual(res.body.ofUser, previousCount + 1);
       assert.strictEqual(res.body.transactionsBlocked, true);
       assert.strictEqual(res.body.pendingSignature, true);
     },
