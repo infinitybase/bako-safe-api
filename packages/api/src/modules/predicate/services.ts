@@ -82,8 +82,8 @@ export class PredicateService implements IPredicateService {
     if (exists) {
       throw new BadRequest({
         type,
-        title: 'Predicate name already exists',
-        detail: `A predicate with name "${name}" already exists in this workspace`,
+        title: 'Account name already exists',
+        detail: `Account with name "${name}" already exists`,
       });
     }
   }
