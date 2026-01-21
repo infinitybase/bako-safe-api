@@ -563,6 +563,13 @@ export class TransactionService implements ITransactionService {
 
     const { id, predicate, txData, status, resume } = transaction;
 
+    console.log('[SEND_TO_CHAIN] Transaction data: ', {
+      id: id,
+      status,
+      resume,
+      txData,
+    });
+
     if (status != TransactionStatus.PENDING_SENDER) {
       return await this.findById(id);
     }
@@ -601,6 +608,8 @@ export class TransactionService implements ITransactionService {
 
       return await this.update(id, _api_transaction);
     } catch (e) {
+      console.error('[SEND_TO_CHAIN] Error: ', e);
+
       const error = 'toObject' in e ? e.toObject() : e;
       const _api_transaction: IUpdateTransactionPayload = {
         status: TransactionStatus.FAILED,
