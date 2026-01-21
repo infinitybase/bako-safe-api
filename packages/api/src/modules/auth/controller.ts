@@ -122,7 +122,7 @@ export class AuthController {
       // Get chainId from global cache (avoids extra RPC call)
       const chainId = await FuelProvider.getChainId(networkUrl);
 
-      // Get user's predicates (members + personal vault) ordered by most recently used
+      // Get user's predicates (members + personal account) ordered by most recently used
       const predicates = await Predicate.createQueryBuilder('predicate')
         .leftJoin('predicate.members', 'member')
         .leftJoin('predicate.owner', 'owner')

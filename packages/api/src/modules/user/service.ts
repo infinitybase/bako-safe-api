@@ -143,10 +143,10 @@ export class UserService implements IUserService {
           const hasMultipleVaults = vaults.length > 1;
           const isFirst = i === 0;
           await Predicate.create({
-            name: hasMultipleVaults ? `Predicate ${i + 1}` : 'Personal Vault',
+            name: hasMultipleVaults ? `Predicate ${i + 1}` : 'Personal Account',
             description: `${
               isFirst
-                ? 'This is your first vault. It requires a single signer (you) to execute transactions; a pattern called 1-of-1'
+                ? 'This is your first account. It requires a single signer (you) to execute transactions; a pattern called 1-of-1'
                 : ''
             }`,
             predicateAddress: new Address(vault.address).toB256(),

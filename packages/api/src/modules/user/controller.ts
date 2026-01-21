@@ -427,7 +427,7 @@ export class UserController {
       if (!personalVault) {
         return successful(
           {
-            message: 'Personal vault not found',
+            message: 'Personal Account not found',
             wallet: null,
           },
           Responses.Ok,
