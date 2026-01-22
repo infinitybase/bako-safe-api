@@ -62,6 +62,7 @@ const {
 );
 
 router.get('/:id/advanced-details', handleResponse(findAdvancedDetails));
+router.post('/send/:hash', handleResponse(send));
 
 router.use(authMiddleware);
 
@@ -82,7 +83,7 @@ router.get('/pending', predicatePermissionMiddleware, handleResponse(pending));
 router.get('/:id', handleResponse(findById));
 router.get('/by-hash/:hash', handleResponse(findByHash));
 router.put('/close/:id', validateCloseTransactionPayload, handleResponse(close));
-router.post('/send/:hash', handleResponse(send));
+
 router.put(
   '/sign/:hash',
   validateSignerByIdPayload,
