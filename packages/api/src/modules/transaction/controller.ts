@@ -550,7 +550,12 @@ export class TransactionController {
       transaction.resume.status = newStatus;
       transaction.status = newStatus;
 
-      await transaction.save();
+      const _transaction = await transaction.save();
+
+      console.log('[SIGN_BY_ID] Transaction status updated: ', {
+        status: _transaction.status,
+        resume: _transaction.resume,
+      });
 
       if (newStatus === TransactionStatus.PENDING_SENDER) {
         await this.transactionService.sendToChain(transaction.hash, network);
@@ -580,6 +585,7 @@ export class TransactionController {
 
       return successful(true, Responses.Ok);
     } catch (e) {
+      logger.error({ error: e }, '[SIGN_BY_ID]');
       return error(e.error, e.statusCode);
     }
   }
@@ -855,6 +861,7 @@ export class TransactionController {
       await this.transactionService.sendToChain(hash.slice(2), params.network); // not wait for this
       return successful(true, Responses.Ok);
     } catch (e) {
+      logger.error({ error: e }, '[TX_SEND]');
       return error(e.error, e.statusCode);
     }
   }

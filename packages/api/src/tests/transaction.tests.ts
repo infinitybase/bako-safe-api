@@ -440,4 +440,72 @@ test('Transaction Endpoints', async t => {
       assert.equal(res.status, 200);
     },
   );
+
+  await t.test(
+    'Should correctly handle new transaction with same hash as canceled transaction',
+    async () => {
+      const vault = predicates[2];
+      const user = users[0];
+
+      // Step 1: Create a transaction
+      const { payload_transfer: payload1 } = await transactionMock(vault);
+
+      const { body: createdTx1 } = await request(app)
+        .post('/transaction')
+        .set('Authorization', user.token)
+        .set('Signeraddress', user.payload.address)
+        .send(payload1);
+
+      assert.equal(createdTx1.status, TransactionStatus.AWAIT_REQUIREMENTS);
+      const txHash = createdTx1.hash;
+
+      // Step 2: Cancel the first transaction
+      const { body: canceledTx, status: statusCancel } = await request(app)
+        .put(`/transaction/cancel/${txHash}`)
+        .set('Authorization', user.token)
+        .set('Signeraddress', user.payload.address);
+
+      assert.equal(statusCancel, 200);
+      assert.equal(canceledTx.status, TransactionStatus.CANCELED);
+
+      // Step 3: Create a new transaction with the same hash (identical)
+      const { body: createdTx2 } = await request(app)
+        .post('/transaction')
+        .set('Authorization', user.token)
+        .set('Signeraddress', user.payload.address)
+        .send(payload1);
+
+      assert.equal(createdTx2.status, TransactionStatus.AWAIT_REQUIREMENTS);
+      assert.equal(createdTx2.hash, txHash); // Same hash as canceled transaction
+
+      // Step 4: Sign the new transaction
+      const signature = await wallet.signMessage(txHash);
+      const signPayload = {
+        signature,
+        approve: true,
+      };
+
+      const { body: signedTx, status: statusSign } = await request(app)
+        .put(`/transaction/sign/${txHash}`)
+        .set('Authorization', user.token)
+        .set('Signeraddress', user.payload.address)
+        .send(signPayload);
+
+      assert.equal(statusSign, 200);
+      assert.equal(signedTx, true);
+
+      // Step 5: Verify the transaction status after signing
+      const { body: finalTx, status: finalStatus } = await request(app)
+        .get(`/transaction/${createdTx2.id}`)
+        .set('Authorization', user.token)
+        .set('Signeraddress', user.payload.address);
+
+      assert.equal(finalStatus, 200);
+      assert.equal(finalTx.id, createdTx2.id);
+      assert.ok(
+        finalTx.status === TransactionStatus.SUCCESS ||
+          finalTx.status === TransactionStatus.FAILED,
+      );
+    },
+  );
 });
