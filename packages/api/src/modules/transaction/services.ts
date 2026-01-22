@@ -125,6 +125,10 @@ export class TransactionService implements ITransactionService {
   }
 
   async findById(id: string): Promise<ITransactionResponse> {
+    console.log('[FIND_BY_ID] Finding transaction by ID: ', {
+      id,
+    });
+
     return await Transaction.findOne({
       where: { id },
       relations: [
@@ -545,12 +549,23 @@ export class TransactionService implements ITransactionService {
   //instance tx
   //add witnesses
   async sendToChain(hash: string, network: Network) {
+    console.log('[SEND_TO_CHAIN] Sending transaction to chain: ', {
+      hash,
+      network,
+    });
+
     const transaction = await Transaction.findOne({
       where: {
         hash,
         status: Not(In([TransactionStatus.DECLINED, TransactionStatus.FAILED])),
       },
       relations: ['predicate', 'createdBy'],
+    });
+
+    console.log('[SEND_TO_CHAIN] Transaction data: ', {
+      hash,
+      transaction: !!transaction,
+      status: transaction?.status,
     });
 
     if (!transaction) {
@@ -589,9 +604,17 @@ export class TransactionService implements ITransactionService {
       witnesses: transaction.getWitnesses(),
     });
 
+    console.log('[SEND_TO_CHAIN] Transaction request: ', {
+      tx,
+    });
+
     try {
       const transactionResponse = await vault.send(tx);
       const { gasUsed } = await transactionResponse.waitForResult();
+
+      console.log('[SEND_TO_CHAIN] Transaction response: ', {
+        gasUsed,
+      });
 
       const _api_transaction: IUpdateTransactionPayload = {
         status: TransactionStatus.SUCCESS,
