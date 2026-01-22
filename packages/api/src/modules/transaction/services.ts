@@ -557,8 +557,15 @@ export class TransactionService implements ITransactionService {
     const transaction = await Transaction.findOne({
       where: {
         hash,
-        status: Not(In([TransactionStatus.DECLINED, TransactionStatus.FAILED])),
+        status: Not(
+          In([
+            TransactionStatus.DECLINED,
+            TransactionStatus.FAILED,
+            TransactionStatus.CANCELED,
+          ]),
+        ),
       },
+      order: { createdAt: 'DESC' },
       relations: ['predicate', 'createdBy'],
     });
 
