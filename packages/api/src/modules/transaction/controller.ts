@@ -552,10 +552,10 @@ export class TransactionController {
 
       const _transaction = await transaction.save();
 
-      console.log('[SIGN_BY_ID] Transaction status updated: ', {
-        status: _transaction.status,
-        resume: _transaction.resume,
-      });
+      logger.info(
+        { status: _transaction.status },
+        '[SIGN_BY_ID] Transaction status updated',
+      );
 
       if (newStatus === TransactionStatus.PENDING_SENDER) {
         await this.transactionService.sendToChain(transaction.hash, network);
