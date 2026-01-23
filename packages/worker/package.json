@@ -18,7 +18,7 @@
     "@types/node-cron": "3.0.11",
     "bull": "^4.16.5",
     "express": "4.17.1",
-    "fuels": "0.99.0",
+    "fuels": "0.101.3",
     "ioredis": "^5.7.0",
     "mongodb": "^6.18.0",
     "node-cron": "3.0.3",

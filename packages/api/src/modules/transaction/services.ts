@@ -128,6 +128,8 @@ export class TransactionService implements ITransactionService {
   }
 
   async findById(id: string): Promise<ITransactionResponse> {
+    logger.info({ id }, '[FIND_BY_ID] Finding transaction by ID');
+
     return await Transaction.findOne({
       where: { id },
       relations: [
@@ -596,13 +598,31 @@ export class TransactionService implements ITransactionService {
   //instance tx
   //add witnesses
   async sendToChain(hash: string, network: Network) {
+    logger.info({ hash, network }, '[SEND_TO_CHAIN] Sending transaction to chain');
+
     const transaction = await Transaction.findOne({
       where: {
         hash,
-        status: Not(In([TransactionStatus.DECLINED, TransactionStatus.FAILED])),
+        status: Not(
+          In([
+            TransactionStatus.DECLINED,
+            TransactionStatus.FAILED,
+            TransactionStatus.CANCELED,
+          ]),
+        ),
       },
+      order: { createdAt: 'DESC' },
       relations: ['predicate', 'createdBy'],
     });
+
+    logger.info(
+      {
+        hash,
+        transaction: !!transaction,
+        status: transaction?.status,
+      },
+      '[SEND_TO_CHAIN] Found transaction',
+    );
 
     if (!transaction) {
       throw new NotFound({
@@ -635,9 +655,13 @@ export class TransactionService implements ITransactionService {
       witnesses: w,
     });
 
+    logger.info({ tx }, '[SEND_TO_CHAIN] Transaction request');
+
     try {
       const transactionResponse = await vault.send(tx);
       const { gasUsed } = await transactionResponse.waitForResult();
+
+      logger.info({ gasUsed }, '[SEND_TO_CHAIN] Transaction response');
 
       const _api_transaction: IUpdateTransactionPayload = {
         status: TransactionStatus.SUCCESS,
@@ -659,7 +683,7 @@ export class TransactionService implements ITransactionService {
 
       return await this.update(id, _api_transaction);
     } catch (e) {
-      logger.error({ error: e }, '[TX_SEND_TO_CHAIN]');
+      logger.error({ error: e }, '[SEND_TO_CHAIN]');
       const error = 'toObject' in e ? e.toObject() : e;
       const _api_transaction: IUpdateTransactionPayload = {
         status: TransactionStatus.FAILED,
