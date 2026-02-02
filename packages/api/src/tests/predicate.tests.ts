@@ -223,7 +223,7 @@ test('Predicate Endpoints', async t => {
     'GET /predicate/by-address/:address should return 404 when predicate address is not found',
     async () => {
       // Generate an invalid predicate address that doesn't exist
-      const invalidAddress = '0x' + 'a'.repeat(64);
+      const invalidAddress = '0x' + 'f'.repeat(64);
 
       const res = await request(app)
         .get(`/predicate/by-address/${invalidAddress}`)
