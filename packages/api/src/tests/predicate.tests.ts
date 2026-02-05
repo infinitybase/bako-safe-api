@@ -218,6 +218,22 @@ test('Predicate Endpoints', async t => {
     },
   );
 
+  // IMPORTANT: necessary to ensure backward compatibility of the connector with EVM Wallets
+  await t.test(
+    'GET /predicate/by-address/:address should return 404 when predicate address is not found',
+    async () => {
+      // Generate an invalid predicate address that doesn't exist
+      const invalidAddress = '0x' + 'f'.repeat(64);
+
+      const res = await request(app)
+        .get(`/predicate/by-address/${invalidAddress}`)
+        .set('Authorization', users[0].token)
+        .set('signeraddress', users[0].payload.address);
+
+      assert.equal(res.status, 404);
+    },
+  );
+
   await t.test(
     'GET /predicate/reserved-coins/:id should find predicate balance',
     async () => {
