@@ -399,7 +399,7 @@ $ cd packages/api && pnpm test:build
 
 - [x] Remover variáveis duplicadas dos `.env.example`
 - [x] Corrigir typo `devevelopment` no worker
-- [ ] Criar CONTRIBUTING.md
+- [x] Criar CONTRIBUTING.md
 - [x] Adicionar diagrama de arquitetura (texto no README)
 - [x] Atualizar README do worker com scripts corretos (já estava correto)
 
