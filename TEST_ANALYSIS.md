@@ -10,12 +10,12 @@
 
 | Métrica | Valor | Status |
 |---------|-------|--------|
-| Total de Testes | 34 | ⚠️ |
-| Testes Passando | 33 | ✅ |
-| Testes Falhando | 1 | ❌ |
-| Cobertura de Módulos | 5/8 (62.5%) | ⚠️ |
-| Testes Unitários | 0 | ❌ |
-| CI Configurado | Sim (PRs only) | ⚠️ |
+| Total de Testes | 73 | ✅ |
+| Testes Passando | 73 | ✅ |
+| Testes Falhando | 0 | ✅ |
+| Cobertura de Módulos | 8/8 (100%) | ✅ |
+| Testes Unitários | 0 | ⚠️ |
+| CI Configurado | Sim (PRs + push main/staging) | ✅ |
 
 ---
 
@@ -85,14 +85,14 @@ Things may not work as expected.
 | apiToken | `apiToken.tests.ts` | 3 | 3 | 100% |
 | notification | `notification.tests.ts` | 3 | 2 | 66% |
 
-### Módulos SEM Testes ❌
+### Módulos Anteriormente SEM Testes (CORRIGIDO ✅)
 
-| Módulo | Endpoints | Risco |
-|--------|-----------|-------|
-| **workspace** | 7 | 🔴 CRÍTICO - Permissões |
-| **dApps/connections** | 9 | 🔴 CRÍTICO - Integrações |
-| **external** | 4 | 🟡 MÉDIO |
-| **cliToken** | 3 | 🟡 MÉDIO (testes comentados) |
+| Módulo | Endpoints | Testes | Status |
+|--------|-----------|--------|--------|
+| workspace | 7 | 9 | ✅ CORRIGIDO |
+| dApps/connections | 9 | 10 | ✅ CORRIGIDO |
+| cliToken | 3 | 4 | ✅ CORRIGIDO |
+| external | 4 | 0 | ⚠️ P2 |
 
 ---
 
