@@ -377,29 +377,31 @@ $ cd packages/api && pnpm test:build
 
 ### Prioridade 0 (Bloqueadores)
 
-- [ ] Corrigir `DATABASE_HOST` em `packages/socket-server/.env.example` para `127.0.0.1`
-- [ ] Adicionar mecanismo de retry/wait na inicialização da API e Socket-Server
-- [ ] Documentar que `pnpm dev` pode falhar e como resolver
-- [ ] Corrigir script `migration:run` - aponta para diretório inexistente
-- [ ] Adicionar variáveis de Redis faltando no `.env.example` (`REDIS_URL_WRITE`, `REDIS_URL_READ`)
-- [ ] Adicionar `RIG_ID_CONTRACT` no `.env.example` ou tornar opcional em dev
+- [x] Corrigir `DATABASE_HOST` em `packages/socket-server/.env.example` para `127.0.0.1`
+- [x] Adicionar mecanismo de retry/wait na inicialização da API e Socket-Server
+- [x] Corrigir script `migration:run` - aponta para diretório inexistente (criado database/index.ts)
+- [x] Adicionar variáveis de Redis faltando no `.env.example` (`REDIS_URL_WRITE`, `REDIS_URL_READ`)
+- [x] Adicionar `RIG_ID_CONTRACT` no `.env.example` ou tornar opcional em dev
+- [x] Corrigir race condition no `pnpm dev` (wait-on + healthchecks)
+- [x] Corrigir socket-server database config para aceitar 'postgres' como host local
+- [x] Atualizar Makefiles para Docker Compose V2 syntax
 
 ### Prioridade 1 (Essenciais)
 
-- [ ] Adicionar seção "O que é Bako Safe?" no README
-- [ ] Documentar como rodar migrations
-- [ ] Documentar arquitetura dos packages
-- [ ] Unificar `UI_URL` entre packages (5173 vs 5175)
-- [ ] Adicionar configuração de Redis no `.env.example` da API
+- [x] Adicionar seção "O que é Bako Safe?" no README
+- [x] Documentar como rodar migrations
+- [x] Documentar arquitetura dos packages
+- [x] Unificar `UI_URL` entre packages (5173 vs 5175) -> 5174
+- [x] Adicionar configuração de Redis no `.env.example` da API
 - [ ] Criar documentação Swagger/OpenAPI
 
 ### Prioridade 2 (Melhorias)
 
-- [ ] Remover variáveis duplicadas dos `.env.example`
-- [ ] Corrigir typo `devevelopment` no worker
+- [x] Remover variáveis duplicadas dos `.env.example`
+- [x] Corrigir typo `devevelopment` no worker
 - [ ] Criar CONTRIBUTING.md
-- [ ] Adicionar diagrama de arquitetura
-- [ ] Atualizar README do worker com scripts corretos
+- [x] Adicionar diagrama de arquitetura (texto no README)
+- [x] Atualizar README do worker com scripts corretos (já estava correto)
 
 ---
 
