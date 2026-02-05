@@ -53,7 +53,9 @@ class App {
       this.rigCache = RigInstance.start();
     } else {
       this.rigCache = null;
-      console.log('[APP] RIG_ID_CONTRACT not configured, skipping RIG initialization');
+      logger.info(
+        '[APP] RIG_ID_CONTRACT not configured, skipping RIG initialization',
+      );
     }
   }
 

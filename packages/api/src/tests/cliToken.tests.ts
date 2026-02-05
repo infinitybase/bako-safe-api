@@ -36,10 +36,13 @@ test('Cli token', async t => {
     assert.throws(() => tokenCoder.decode(''), /Invalid token/);
   });
 
-  await t.test('Encode should produce different output for different inputs', () => {
-    const encoded1 = tokenCoder.encode('token1', 'user1');
-    const encoded2 = tokenCoder.encode('token2', 'user2');
+  await t.test(
+    'Encode should produce different output for different inputs',
+    () => {
+      const encoded1 = tokenCoder.encode('token1', 'user1');
+      const encoded2 = tokenCoder.encode('token2', 'user2');
 
-    assert.notStrictEqual(encoded1, encoded2);
-  });
+      assert.notStrictEqual(encoded1, encoded2);
+    },
+  );
 });
