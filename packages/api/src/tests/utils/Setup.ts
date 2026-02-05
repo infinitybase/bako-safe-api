@@ -100,7 +100,7 @@ export class TestEnvironment {
         version,
       );
 
-      await (await wallets[0].transfer(vault.address, 1500)).waitForResult();
+      await (await wallets[0].transfer(vault.address, 100_000)).waitForResult();
       predicates.push(vault);
     }
 

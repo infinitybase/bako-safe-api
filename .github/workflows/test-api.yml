@@ -1,6 +1,13 @@
 name: Run API Tests
 
 on:
+  push:
+    branches:
+      - main
+      - staging
+    paths:
+      - 'packages/api/**'
+      - '.github/workflows/test-api.yml'
   pull_request:
     branches:
       - "**"
