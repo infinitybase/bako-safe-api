@@ -82,9 +82,6 @@ jobs:
     name: Security Audit
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    # Security audit reports vulnerabilities but doesn't block PRs
-    # TODO: Enable blocking after fixing known vulnerabilities in bakosafe dependency
-    continue-on-error: true
 
     steps:
       - name: Checkout repository
