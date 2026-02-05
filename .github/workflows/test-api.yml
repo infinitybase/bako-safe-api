@@ -13,9 +13,15 @@ on:
     branches:
       - "**"
 
+# Cancel in-progress runs when a new run is triggered
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     defaults:
       run:
@@ -28,7 +34,9 @@ jobs:
       - uses: ./.github/actions/setup-forc
 
       - name: Install pnpm
-        run: npm install -g pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -38,6 +46,14 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
+
+      - name: Cache build output
+        uses: actions/cache@v4
+        with:
+          path: packages/api/build
+          key: ${{ runner.os }}-build-${{ hashFiles('packages/api/src/**/*.ts') }}
+          restore-keys: |
+            ${{ runner.os }}-build-
 
       - name: Copy .env.test to .env
         run: cp .env.test .env
