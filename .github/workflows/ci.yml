@@ -18,6 +18,30 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changelog:
+    name: Changelog
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check CHANGELOG.md was updated
+        run: |
+          if git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -q "^CHANGELOG.md$"; then
+            echo "✅ CHANGELOG.md was updated"
+          else
+            echo "❌ CHANGELOG.md was NOT updated"
+            echo ""
+            echo "Please update CHANGELOG.md with your changes."
+            echo "Follow the Keep a Changelog format: https://keepachangelog.com/"
+            exit 1
+          fi
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
