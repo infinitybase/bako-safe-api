@@ -21,7 +21,7 @@ interface ConnectionConfig {
   };
 }
 
-const isLocal = DATABASE_HOST === '127.0.0.1' || DATABASE_HOST === 'db'
+const isLocal = DATABASE_HOST === '127.0.0.1' || DATABASE_HOST === 'localhost' || DATABASE_HOST === 'db' || DATABASE_HOST === 'postgres'
 
 export const defaultConnection: ConnectionConfig = {
   user: DATABASE_USERNAME,

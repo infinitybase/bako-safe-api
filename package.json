@@ -7,6 +7,7 @@
     "./packages/*"
   ],
   "scripts": {
+    "predev": "docker network create bako-network 2>/dev/null || true",
     "start:prod": "turbo run start:prod",
     "start:stg": "turbo run start:stg",
     "dev": "turbo run dev",

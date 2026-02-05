@@ -3,8 +3,8 @@
     "version": "0.22.0",
     "license": "MIT",
     "scripts": {
-        "chain:dev:start": "make -C ./ env_file=.env.chain up",
-        "chain:dev:stop": "make -C ./ env_file=.env.chain"
+        "chain:dev:start": "make -C ./ up && make -C ./ wait",
+        "chain:dev:stop": "make -C ./ down"
      },
      "devDependencies": {
         "husky": "5.2.0"
