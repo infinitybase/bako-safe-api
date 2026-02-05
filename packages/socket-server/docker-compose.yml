@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
  socket-server:
   container_name: bako-socket-server
