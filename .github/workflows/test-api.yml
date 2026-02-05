@@ -1,6 +1,7 @@
 name: Run API Tests
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
