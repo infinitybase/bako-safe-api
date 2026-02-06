@@ -45,8 +45,6 @@ const pinoConfig: pino.LoggerOptions = {
 			'recoveryCode',
 			'pin',
 			'otp',
-			'sessionId',
-			'session_id',
 			'cookie',
 			'cookies',
 			'credentials',

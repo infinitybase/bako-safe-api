@@ -66,6 +66,9 @@ export class DappController {
       let dapp = await new DAppsService().findBySessionID(sessionId, origin);
       const user = await User.findOne({ where: { address: userAddress } });
       const { network } = await TokenUtils.getTokenByUser(user.id);
+
+      logger.info({ id: dapp?.id, name: dapp?.name }, '[DAPP_CONNECT] found dapp in db')
+
       if (!dapp) {
         dapp = await new DAppsService().create({
           sessionId,
@@ -89,9 +92,11 @@ export class DappController {
       await dapp.save();
       const socket = new SocketClient(sessionId, API_URL);
 
+      logger.info({ sessionId, request_id}, '[DAPP_CONNECT] sending message to socket')
+
       socket.sendMessage({
         sessionId,
-        to: '[CONNECTOR]',
+        to: SocketUsernames.CONNECTOR,
         request_id,
         type: '[AUTH_CONFIRMED]',
         data: {
