@@ -67,8 +67,6 @@ export class DappController {
       const user = await User.findOne({ where: { address: userAddress } });
       const { network } = await TokenUtils.getTokenByUser(user.id);
 
-      logger.info({ id: dapp?.id, name: dapp?.name }, '[DAPP_CONNECT] found dapp in db')
-
       if (!dapp) {
         dapp = await new DAppsService().create({
           sessionId,
@@ -90,21 +88,17 @@ export class DappController {
       dapp.network = network;
 
       await dapp.save();
-      const socket = new SocketClient(sessionId, API_URL);
 
-      logger.info({ sessionId, request_id}, '[DAPP_CONNECT] sending message to socket')
-
-      socket.sendMessage({
+      const socketClient = new SocketClient(sessionId, API_URL);
+      socketClient.sendMessage({
         sessionId,
         to: SocketUsernames.CONNECTOR,
         request_id,
-        type: '[AUTH_CONFIRMED]',
+        type: SocketEvents.AUTH_CONFIRMED,
         data: {
           connected: true,
         },
-      }).then(() => {
-        socket.disconnect();
-      })
+      });
 
       await RedisWriteClient.set(`${PREFIX}${sessionId}`, JSON.stringify(dapp));
       return successful(true, Responses.Created);
@@ -365,18 +359,16 @@ export class DappController {
       await RedisWriteClient.set(`${PREFIX}${sessionId}`, JSON.stringify(dapp));
 
       const socketClient = new SocketClient(dapp.user.id, API_URL);
-
-      const socketData = {
-        sessionId: dapp.user.id,
-        to: SocketUsernames.UI,
-        request_id: undefined,
-        type: SocketEvents.SWITCH_NETWORK,
-        data: dapp.network,
-      }
-
-      socketClient.emit(SocketEvents.SWITCH_NETWORK, socketData).then(() => {
-        socketClient.disconnect();
-      })
+      socketClient.emit(
+        SocketEvents.SWITCH_NETWORK,
+        {
+          sessionId: dapp.user.id,
+          to: SocketUsernames.UI,
+          request_id: undefined,
+          type: SocketEvents.SWITCH_NETWORK,
+          data: dapp.network,
+        },
+      );
 
       return successful(dapp.network, Responses.Ok);
     } catch (e) {

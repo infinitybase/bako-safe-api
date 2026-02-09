@@ -58,7 +58,7 @@ export class NotificationService implements INotificationService {
       });
 
     const socketClient = new SocketClient(notification.user_id, API_URL);
-    socketClient.socket.emit(SocketEvents.NOTIFICATION, {
+    socketClient.emit(SocketEvents.NOTIFICATION, {
       sessionId: notification.user_id,
       to: SocketUsernames.UI,
       request_id: undefined,
@@ -66,7 +66,6 @@ export class NotificationService implements INotificationService {
       data: {},
     });
 
-    socketClient.disconnect();
     return notification;
   }
 
@@ -165,14 +164,13 @@ export class NotificationService implements INotificationService {
     await Promise.all(
       members.map(member => {
         const socketClient = new SocketClient(member.id, API_URL);
-        socketClient.socket.emit(SocketEvents.NOTIFICATION, {
+        socketClient.emit(SocketEvents.NOTIFICATION, {
           sessionId: member.id,
           to: SocketUsernames.UI,
           request_id: undefined,
           type: SocketEvents.VAULT_UPDATE,
           data: {},
         });
-        socketClient.disconnect();
         return Promise.resolve();
       }),
     );
@@ -191,14 +189,14 @@ export class NotificationService implements INotificationService {
     await Promise.all(
       members.map(member => {
         const socketClient = new SocketClient(member.id, API_URL);
-        socketClient.socket.emit(SocketEvents.NOTIFICATION, {
+        socketClient.emit(SocketEvents.NOTIFICATION, {
           sessionId: member.id,
           to: SocketUsernames.UI,
           request_id: undefined,
           type: SocketEvents.TRANSACTION,
           data: {},
         });
-        socketClient.disconnect();
+
         return Promise.resolve();
       }),
     );
@@ -256,14 +254,13 @@ export class NotificationService implements INotificationService {
 
         // Socket emit (fire and forget)
         const socketClient = new SocketClient(member.id, API_URL);
-        socketClient.socket.emit(SocketEvents.NOTIFICATION, {
+        socketClient.emit(SocketEvents.NOTIFICATION, {
           sessionId: member.id,
           to: SocketUsernames.UI,
           request_id: undefined,
           type: SocketEvents.TRANSACTION,
           data: {},
         });
-        socketClient.disconnect();
       }),
     );
   }
