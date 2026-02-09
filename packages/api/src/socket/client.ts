@@ -44,18 +44,8 @@ export class SocketClient {
       });
     }
 
-    // Auto-disconnect after timeout to prevent memory leaks
-    // Timeout gives Socket.IO server time to process & route the message
-    setTimeout(() => {
-      try {
-        this._socket.disconnect();
-      } catch (error) {
-        logger.error(
-          { error, event },
-          '[SOCKET CLIENT] Error during auto-disconnect',
-        );
-      }
-    }, timeoutDisconnect);
+    await new Promise(r => setTimeout(r, timeoutDisconnect));
+    this._socket.disconnect();
   }
 
   /**
