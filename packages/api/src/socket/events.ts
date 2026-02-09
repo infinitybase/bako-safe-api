@@ -33,7 +33,7 @@ export type BalanceOutdatedPredicateEvent = {
 
 export function emitTransaction(userId: string, data: TransactionEvent) {
   const socketClient = new SocketClient(userId, API_URL);
-  socketClient.socket.emit(SocketEvents.TRANSACTION, data);
+  socketClient.emit(SocketEvents.TRANSACTION, data);
 }
 
 export function emitBalanceOutdatedUser(
@@ -41,7 +41,7 @@ export function emitBalanceOutdatedUser(
   data: BalanceOutdatedUserEvent,
 ) {
   const socketClient = new SocketClient(userId, API_URL);
-  socketClient.socket.emit(SocketEvents.BALANCE_OUTDATED_USER, data);
+  socketClient.emit(SocketEvents.BALANCE_OUTDATED_USER, data);
 }
 
 export function emitBalanceOutdatedPredicate(
@@ -49,5 +49,5 @@ export function emitBalanceOutdatedPredicate(
   data: BalanceOutdatedPredicateEvent,
 ) {
   const socketClient = new SocketClient(userId, API_URL);
-  socketClient.socket.emit(SocketEvents.BALANCE_OUTDATED_PREDICATE, data);
+  socketClient.emit(SocketEvents.BALANCE_OUTDATED_PREDICATE, data);
 }
