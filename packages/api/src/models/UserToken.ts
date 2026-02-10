@@ -8,12 +8,14 @@ import { networks } from '@src/constants/networks';
 
 const { FUEL_PROVIDER, FUEL_PROVIDER_CHAIN_ID } = process.env;
 
+/* eslint-disable @typescript-eslint/no-duplicate-enum-values */
 export enum Encoder {
   FUEL = 'FUEL',
-  METAMASK = 'FUEL',
+  METAMASK = 'FUEL', // Intentionally same as FUEL - uses same encoder
   WEB_AUTHN = 'WEB_AUTHN',
   EVM = 'EVM',
 }
+/* eslint-enable @typescript-eslint/no-duplicate-enum-values */
 
 export interface IFuelTokenPayload {
   address: string;

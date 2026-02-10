@@ -35,9 +35,7 @@ export class AddPendingTransactionsIndexes1764177686000
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `DROP INDEX IF EXISTS "idx_transactions_pending"`,
-    );
+    await queryRunner.query(`DROP INDEX IF EXISTS "idx_transactions_pending"`);
     await queryRunner.query(
       `DROP INDEX IF EXISTS "idx_transactions_network_chainid"`,
     );

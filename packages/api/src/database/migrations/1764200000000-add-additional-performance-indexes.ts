@@ -10,8 +10,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * - users.address (user lookups by address)
  */
 export class AddAdditionalPerformanceIndexes1764200000000
-  implements MigrationInterface
-{
+  implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Index for predicate address lookups (findByAddress)
     await queryRunner.query(`
@@ -47,16 +46,10 @@ export class AddAdditionalPerformanceIndexes1764200000000
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `DROP INDEX IF EXISTS "idx_notifications_user_id"`,
-    );
+    await queryRunner.query(`DROP INDEX IF EXISTS "idx_notifications_user_id"`);
     await queryRunner.query(`DROP INDEX IF EXISTS "idx_users_address"`);
-    await queryRunner.query(
-      `DROP INDEX IF EXISTS "idx_transactions_created_by"`,
-    );
-    await queryRunner.query(
-      `DROP INDEX IF EXISTS "idx_predicates_workspace_id"`,
-    );
+    await queryRunner.query(`DROP INDEX IF EXISTS "idx_transactions_created_by"`);
+    await queryRunner.query(`DROP INDEX IF EXISTS "idx_predicates_workspace_id"`);
     await queryRunner.query(
       `DROP INDEX IF EXISTS "idx_predicates_predicate_address"`,
     );

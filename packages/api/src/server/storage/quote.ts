@@ -50,6 +50,12 @@ export class QuoteStorage {
    * Ex: Se FUEL = $2 e ratio = 1.05, então stFUEL = $2 * 1.05 = $2.10
    */
   private async calculateStFUELPrice(quotes: IQuote[]): Promise<number> {
+    const rigCache = App.getInstance()._rigCache;
+    if (!rigCache) {
+      // RIG not configured, skip stFUEL quote calculation
+      return 0;
+    }
+
     const DECIMALS = 10 ** 9;
     const fuelQuote = quotes.find(q => q.assetId === tokensIDS.FUEL);
 
@@ -59,7 +65,7 @@ export class QuoteStorage {
     }
 
     try {
-      const rigInstance = await App.getInstance()._rigCache;
+      const rigInstance = await rigCache;
       const ratio = (await rigInstance.getRatio()) / DECIMALS;
       // stFUEL vale MAIS que FUEL devido ao acúmulo de recompensas
       return fuelQuote.price * ratio;
