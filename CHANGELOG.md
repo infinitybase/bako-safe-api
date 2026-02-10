@@ -20,7 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Security vulnerabilities in dependencies (js-yaml, uglify-js)
 - Test infrastructure funding amount for fuel-core compatibility
 - CLI token tests now environment-independent
+- Worker deploy failing due to arm64v8-specific Docker images on amd64 runner
+- Worker deploy workflow modernized to use docker/build-push-action with buildx
 
 ### Security
 - Added pnpm overrides for vulnerable dependencies
 - Security audit job in CI pipeline
+- Upgraded axios from 1.12.0 to 1.13.5 (GHSA-43fc-jf86-j433)
