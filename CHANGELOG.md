@@ -8,15 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
 - Comprehensive CI pipeline with lint, typecheck, security audit, and tests
 - Test coverage for workspace and connections modules
 - Test stability analysis documentation
 
 ### Changed
+
 - Improved README with complete setup instructions
 - Optimized CI workflow with caching and concurrency
+- Removed Docker-based start command for socket-server in development; now runs directly with Node.js for local development.
 
 ### Fixed
+
 - Security vulnerabilities in dependencies (js-yaml, uglify-js)
 - Test infrastructure funding amount for fuel-core compatibility
 - CLI token tests now environment-independent
@@ -24,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Worker deploy workflow modernized to use docker/build-push-action with buildx
 
 ### Security
+
 - Added pnpm overrides for vulnerable dependencies
 - Security audit job in CI pipeline
 - Upgraded axios from 1.12.0 to 1.13.5 (GHSA-43fc-jf86-j433)
