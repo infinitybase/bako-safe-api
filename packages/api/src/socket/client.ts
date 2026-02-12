@@ -2,7 +2,7 @@ import { io, Socket } from 'socket.io-client';
 import { IMessage, SocketEvents, SocketUsernames } from './types';
 import { logger } from '@src/config/logger';
 
-const DEFAULT_DISCONNECT_TIMEOUT_MS = 5 * 1000; // 5 seconds
+const DEFAULT_DISCONNECT_TIMEOUT_MS = 30 * 1000; // 30 seconds
 
 export class SocketClient {
   _socket: Socket = null;
@@ -26,7 +26,7 @@ export class SocketClient {
    *
    * @param event - Socket event name
    * @param data - Event data payload
-   * @param timeoutDisconnect - Auto-disconnect timeout in milliseconds (default: 5000 ms)
+   * @param timeoutDisconnect - Auto-disconnect timeout in milliseconds (default: 30000 ms)
    */
   private async _emitWhenConnectedAndDisconnect(
     event: string,
@@ -59,7 +59,7 @@ export class SocketClient {
    * Automatically disconnects after default timeout.
    *
    * @param message - Message object conforming to IMessage
-   * @param timeoutDisconnect - Optional timeout override in milliseconds (default: 5000 ms)
+   * @param timeoutDisconnect - Optional timeout override in milliseconds (default: 30000 ms)
    */
   async sendMessage(message: IMessage, timeoutDisconnect?: number): Promise<void> {
     await this._emitWhenConnectedAndDisconnect(
@@ -75,7 +75,7 @@ export class SocketClient {
    *
    * @param event - Socket event name
    * @param data - Event data payload
-   * @param timeoutDisconnect - Optional timeout override in milliseconds (default: 5000 ms)
+   * @param timeoutDisconnect - Optional timeout override in milliseconds (default: 30000 ms)
    */
   async emit(event: string, data: any, timeoutDisconnect?: number): Promise<void> {
     await this._emitWhenConnectedAndDisconnect(event, data, timeoutDisconnect);
