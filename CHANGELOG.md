@@ -13,12 +13,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Test coverage for workspace and connections modules
 - Test stability analysis documentation
 
+- Added environment variable `SOCKET_CLIENT_DISCONNECT_TIMEOUT` to allow configuration of the socket client's auto-disconnect timeout.
+
 ### Changed
 
 - Improved README with complete setup instructions
 - Optimized CI workflow with caching and concurrency
 - Removed Docker-based start command for socket-server in development; now runs directly with Node.js for local development.
 – Additional logs for detailed tracking of socket events emitted on the API
+- Increased the socket auto-disconnect timeout after event emission to ensure more reliable delivery and prevent premature disconnections during high-latency operations.
 
 ### Fixed
 
