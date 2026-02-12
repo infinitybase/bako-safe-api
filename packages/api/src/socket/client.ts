@@ -34,10 +34,15 @@ export class SocketClient {
     timeoutDisconnect: number = DEFAULT_DISCONNECT_TIMEOUT_MS,
   ): Promise<void> {
     if (this._socket.connected) {
+      logger.info({ data }, '[EMIT WHEN CONNECTED AND DISCONNECT] Emitting event');
       this._socket.emit(event, data);
     } else {
       await new Promise<void>(resolve => {
         this._socket.once('connect', () => {
+          logger.info(
+            { data },
+            '[EMIT WHEN CONNECTED AND DISCONNECT] Emitting event',
+          );
           this._socket.emit(event, data);
           resolve();
         });
@@ -45,6 +50,7 @@ export class SocketClient {
     }
 
     await new Promise(r => setTimeout(r, timeoutDisconnect));
+    logger.info('[EMIT WHEN CONNECTED AND DISCONNECT] Disconnecting socket');
     this._socket.disconnect();
   }
 
