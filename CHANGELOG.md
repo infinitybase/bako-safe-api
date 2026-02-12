@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved README with complete setup instructions
 - Optimized CI workflow with caching and concurrency
 - Removed Docker-based start command for socket-server in development; now runs directly with Node.js for local development.
+– Additional logs for detailed tracking of socket events emitted on the API
 
 ### Fixed
 

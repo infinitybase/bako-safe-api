@@ -67,6 +67,8 @@ export class DappController {
       const user = await User.findOne({ where: { address: userAddress } });
       const { network } = await TokenUtils.getTokenByUser(user.id);
 
+      logger.info({ id: dapp?.id, name: dapp?.name }, '[DAPP_CONNECT] found dapp in db')
+
       if (!dapp) {
         dapp = await new DAppsService().create({
           sessionId,
