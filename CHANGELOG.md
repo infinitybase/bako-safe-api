@@ -37,3 +37,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added pnpm overrides for vulnerable dependencies
 - Security audit job in CI pipeline
 - Upgraded axios from 1.12.0 to 1.13.5 (GHSA-43fc-jf86-j433)
+- Upgraded nodemailer to 8.0.1 to resolve DoS vulnerability (GHSA-rcmh-qjqh-p98v)
