@@ -111,21 +111,37 @@ export class PredicateController {
         vaultName: predicate.name,
         workspaceId: effectiveWorkspace.id,
       };
-      for await (const member of notifyDestination) {
-        await this.notificationService.create({
-          title: NotificationTitle.NEW_VAULT_CREATED,
-          user_id: member.id,
-          summary: notifyContent,
-          network,
-        });
 
-        if (member.notify) {
-          await sendMail(EmailTemplateType.VAULT_CREATED, {
-            to: member.email,
-            data: { summary: { ...notifyContent, name: member?.name ?? '' } },
-          });
-        }
-      }
+      await Promise.all(
+        notifyDestination.map(async member => {
+          await Promise.all([
+            this.notificationService.create({
+              title: NotificationTitle.NEW_VAULT_CREATED,
+              user_id: member.id,
+              summary: notifyContent,
+              network,
+            }),
+            member.notify && member.email
+              ? sendMail(EmailTemplateType.VAULT_CREATED, {
+                  to: member.email,
+                  data: {
+                    summary: { ...notifyContent, name: member?.name ?? '' },
+                  },
+                }).catch(e => {
+                  logger.error(
+                    {
+                      to: member.email,
+                      memberId: member?.id,
+                      predicateId: predicate.id,
+                      error: e,
+                    },
+                    '[PREDICATE_CREATE] Failed to send vault creation email',
+                  );
+                })
+              : Promise.resolve(),
+          ]);
+        }),
+      );
 
       await new NotificationService().vaultUpdate(predicate.id);
 

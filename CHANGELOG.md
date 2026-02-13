@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CLI token tests now environment-independent
 - Worker deploy failing due to arm64v8-specific Docker images on amd64 runner
 - Worker deploy workflow modernized to use docker/build-push-action with buildx
+- Email sending errors during predicate creation no longer interrupt the creation flow; failures are logged but do not block predicate creation.
 
 ### Security
 
