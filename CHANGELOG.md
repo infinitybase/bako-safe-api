@@ -12,17 +12,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Comprehensive CI pipeline with lint, typecheck, security audit, and tests
 - Test coverage for workspace and connections modules
 - Test stability analysis documentation
-
 - Added environment variable `SOCKET_CLIENT_DISCONNECT_TIMEOUT` to allow configuration of the socket client's auto-disconnect timeout.
+
 
 ### Changed
 
 - Improved README with complete setup instructions
 - Optimized CI workflow with caching and concurrency
-- Removed Docker-based start command for socket-server in development; now runs directly with Node.js for local development.
+- Removed Docker-based start command for socket-server in development; now runs directly with Node.js for local development
 – Additional logs for detailed tracking of socket events emitted on the API
 - Increased the socket auto-disconnect timeout after event emission to ensure more reliable delivery and prevent premature disconnections during high-latency operations.
 - Updated the `build:prod` script to execute `postbuild` after the build process, ensuring all necessary post-build steps are consistently applied in production builds.
+- Method `findById` of PredicateService now returns the `email` and `notify` fields of predicate members.
 
 ### Fixed
 
@@ -31,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CLI token tests now environment-independent
 - Worker deploy failing due to arm64v8-specific Docker images on amd64 runner
 - Worker deploy workflow modernized to use docker/build-push-action with buildx
+- Email sending errors during predicate creation no longer interrupt the creation flow; failures are logged but do not block predicate creation.
 
 ### Security
 
