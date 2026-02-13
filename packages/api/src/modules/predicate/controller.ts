@@ -114,32 +114,33 @@ export class PredicateController {
 
       await Promise.all(
         notifyDestination.map(async member => {
-          await Promise.all([
-            this.notificationService.create({
+          try {
+            await this.notificationService.create({
               title: NotificationTitle.NEW_VAULT_CREATED,
               user_id: member.id,
               summary: notifyContent,
               network,
-            }),
-            member.notify && member.email
-              ? sendMail(EmailTemplateType.VAULT_CREATED, {
-                  to: member.email,
-                  data: {
-                    summary: { ...notifyContent, name: member?.name ?? '' },
-                  },
-                }).catch(e => {
-                  logger.error(
-                    {
-                      to: member.email,
-                      memberId: member?.id,
-                      predicateId: predicate.id,
-                      error: e,
-                    },
-                    '[PREDICATE_CREATE] Failed to send vault creation email',
-                  );
-                })
-              : Promise.resolve(),
-          ]);
+            });
+
+            if (member.notify && member.email) {
+              await sendMail(EmailTemplateType.VAULT_CREATED, {
+                to: member.email,
+                data: {
+                  summary: { ...notifyContent, name: member?.name ?? '' },
+                },
+              });
+            }
+          } catch (e) {
+            logger.error(
+              {
+                memberId: member?.id,
+                to: member.email,
+                predicateId: predicate.id,
+                error: e,
+              },
+              '[PREDICATE_CREATE] Failed to process member notification',
+            );
+          }
         }),
       );
 
