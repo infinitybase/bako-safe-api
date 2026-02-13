@@ -190,6 +190,8 @@ export class PredicateService implements IPredicateService {
           'members.avatar',
           'members.address',
           'members.type',
+          'members.notify',
+          'members.email',
           'owner.id',
           'owner.address',
           'owner.type',
