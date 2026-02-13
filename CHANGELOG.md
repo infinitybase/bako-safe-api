@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed Docker-based start command for socket-server in development; now runs directly with Node.js for local development.
 – Additional logs for detailed tracking of socket events emitted on the API
 - Increased the socket auto-disconnect timeout after event emission to ensure more reliable delivery and prevent premature disconnections during high-latency operations.
+- Updated the `build:prod` script to execute `postbuild` after the build process, ensuring all necessary post-build steps are consistently applied in production builds.
 
 ### Fixed
 
