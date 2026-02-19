@@ -1,7 +1,6 @@
 import { bindMethods, Responses, successful } from '@src/utils';
 import { error, Responses as ErrorResponses } from '@src/utils/error';
 import { IHealthCheckService } from './types';
-import { logger } from '@src/config/logger';
 
 export class HealthCheckController {
   private healthCheckService: IHealthCheckService;
