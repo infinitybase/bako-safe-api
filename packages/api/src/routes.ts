@@ -17,6 +17,7 @@ import { internalRouter } from './modules/internal/routes';
 import workspace from '@modules/workspace/routes';
 // import debugPprof from '@modules/debugPprof/routes';
 import externalRoute from '@modules/external/routes';
+import healtCheckRouter from '@modules/healthCheck/routes';
 
 const { API_ENVIRONMENT, API_NAME } = process.env;
 
@@ -38,13 +39,12 @@ router.use('/ramp-transactions', rampTransactions);
 router.use('/bridge', bridge);
 router.use('/webhooks', webhookRouters);
 router.use('/internal', internalRouter);
+router.use('/healthcheck', healtCheckRouter);
 
 // ping route
 //
 router.get('/ping', ({ res }) =>
   res.send(`${new Date().toISOString()} ${API_NAME} ${API_ENVIRONMENT}`),
 );
-
-router.get('/healthcheck', ({ res }) => res.status(200).send({ status: 'ok' }));
 
 export { router };

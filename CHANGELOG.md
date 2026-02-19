@@ -13,7 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Test coverage for workspace and connections modules
 - Test stability analysis documentation
 - Added environment variable `SOCKET_CLIENT_DISCONNECT_TIMEOUT` to allow configuration of the socket client's auto-disconnect timeout.
-
+- Health check endpoints for API uptime monitoring:
+  - `GET /healthcheck/db` - PostgreSQL connectivity check (executes `SELECT 1`)
+  - `GET /healthcheck/redis` - Redis connectivity check (executes `PING` on both read/write clients)
+  - All endpoints return HTTP 200 with `{ status: 'ok' }` on success or HTTP 5\*\* on failure
+  - Designed for integration with uptime monitoring services (e.g., UptimeRobot, Datadog, New Relic)
 
 ### Changed
 
