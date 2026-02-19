@@ -1,6 +1,7 @@
 import { bindMethods, Responses, successful } from '@src/utils';
-import { error } from '@src/utils/error';
+import { error, Responses as ErrorResponses } from '@src/utils/error';
 import { IHealthCheckService } from './types';
+import { logger } from '@src/config/logger';
 
 export class HealthCheckController {
   private healthCheckService: IHealthCheckService;
@@ -14,8 +15,11 @@ export class HealthCheckController {
     try {
       const result = await this.healthCheckService.checkDatabase();
       return successful(result, Responses.Ok);
-    } catch (e) {
-      return error(e.error, e.statusCode);
+    } catch {
+      return error(
+        new Error('Database health check failed'),
+        ErrorResponses.Internal,
+      );
     }
   }
 
@@ -23,8 +27,8 @@ export class HealthCheckController {
     try {
       const result = await this.healthCheckService.checkRedis();
       return successful(result, Responses.Ok);
-    } catch (e) {
-      return error(e.error, e.statusCode);
+    } catch {
+      return error(new Error('Redis health check failed'), ErrorResponses.Internal);
     }
   }
 }
