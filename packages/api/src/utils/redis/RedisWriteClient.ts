@@ -92,4 +92,15 @@ export class RedisWriteClient {
       console.error('[CACHE_SESSIONS_REMOVE_ERROR]', e, keys);
     }
   }
+
+  static async ping(): Promise<string> {
+    try {
+      return RedisWriteClient.isMock
+        ? 'PONG'
+        : await RedisWriteClient.client.ping();
+    } catch (e) {
+      console.error('[REDIS_WRITE_PING_ERROR]', e);
+      throw e;
+    }
+  }
 }
