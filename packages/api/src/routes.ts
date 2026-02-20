@@ -12,6 +12,7 @@ import workspace from '@modules/workspace/routes';
 import apiToken, { cliAuthRoute } from '@modules/apiToken/routes';
 // import debugPprof from '@modules/debugPprof/routes';
 import externalRoute from '@modules/external/routes';
+import healtCheckRouter from '@modules/healthCheck/routes';
 
 const { API_ENVIRONMENT, API_NAME } = process.env;
 
@@ -29,13 +30,12 @@ router.use('/address-book', addressBook);
 router.use('/transaction', transactions);
 router.use('/notifications', notifications);
 router.use('/external', externalRoute);
+router.use('/healthcheck', healtCheckRouter);
 
 // ping route
 //
 router.get('/ping', ({ res }) =>
   res.send(`${new Date().toISOString()} ${API_NAME} ${API_ENVIRONMENT}`),
 );
-
-router.get('/healthcheck', ({ res }) => res.status(200).send({ status: 'ok' }));
 
 export { router };
