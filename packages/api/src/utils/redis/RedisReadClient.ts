@@ -147,4 +147,13 @@ export class RedisReadClient {
       return false;
     }
   }
+
+  static async ping(): Promise<string> {
+    try {
+      return RedisReadClient.isMock ? 'PONG' : await RedisReadClient.client.ping();
+    } catch (e) {
+      logger.error({ error: e }, '[REDIS_READ_PING_ERROR]');
+      throw e;
+    }
+  }
 }

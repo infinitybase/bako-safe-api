@@ -146,4 +146,15 @@ export class RedisWriteClient {
       return 0;
     }
   }
+
+  static async ping(): Promise<string> {
+    try {
+      return RedisWriteClient.isMock
+        ? 'PONG'
+        : await RedisWriteClient.client.ping();
+    } catch (e) {
+      logger.error({ error: e }, '[REDIS_WRITE_PING_ERROR]');
+      throw e;
+    }
+  }
 }
