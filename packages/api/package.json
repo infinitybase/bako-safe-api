@@ -44,7 +44,7 @@
     "@testcontainers/postgresql": "11.0.0",
     "axios": "1.13.5",
     "bakosafe": "0.6.0",
-    "body-parser": "1.20.4",
+    "body-parser": "2.2.2",
     "cheerio": "1.0.0-rc.12",
     "class-validator": "0.14.0",
     "cookie-parser": "1.4.6",
