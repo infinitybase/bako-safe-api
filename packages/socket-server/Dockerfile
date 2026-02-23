@@ -1,20 +1,42 @@
-FROM arm64v8/node:22-alpine
+# syntax=docker/dockerfile:1.4
+FROM node:22-bookworm AS builder
 
-# Create app directory
-WORKDIR /socket
-ADD . /socket
-
-# Install pnpm
+# Install pnpm globally
 RUN npm install -g pnpm
 
-# Install system dependencies
-RUN apk add --no-cache wget
+# Create the application directory
+WORKDIR /socket
 
-# Install app dependencies
-RUN pnpm install
+# Copy only package.json first (better layer caching)
+COPY package.json ./
+
+# Install dependencies with cache mount for pnpm store
+RUN --mount=type=cache,id=pnpm-socket,target=/root/.local/share/pnpm/store \
+    pnpm install
+
+# Copy source code after dependencies are installed
+COPY . .
 
 # Build the application
 RUN pnpm build
+
+# Production stage - smaller final image
+FROM node:22-alpine AS production
+
+# Install pnpm globally
+RUN npm install -g pnpm
+
+WORKDIR /socket
+
+# Copy package.json
+COPY package.json ./
+
+# Install only production dependencies with cache mount
+RUN --mount=type=cache,id=pnpm-socket,target=/root/.local/share/pnpm/store \
+    pnpm install --prod
+
+# Copy built application from builder stage
+COPY --from=builder /socket/build ./build
 
 # Expose application port
 EXPOSE 3001
