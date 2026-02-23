@@ -22,7 +22,7 @@ jobs:
     name: Changelog
     runs-on: ubuntu-latest
     timeout-minutes: 2
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && github.actor != 'dependabot[bot]'
 
     steps:
       - name: Checkout repository
@@ -106,6 +106,7 @@ jobs:
     name: Security Audit
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    if: github.actor != 'dependabot[bot]'
 
     steps:
       - name: Checkout repository
