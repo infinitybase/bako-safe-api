@@ -2,7 +2,7 @@ name: "[API] Deploy to Amazon ECS"
 
 on:
   push:
-    branches: [main, staging, homologacao]
+    branches: [main, homologacao]
     paths:
       - "packages/api/**"
 
@@ -32,13 +32,6 @@ jobs:
             echo "ecs_cluster=Bako-Safe-ECS" >> $GITHUB_OUTPUT
             echo "task_definition=./packages/api/prod_api_task_definition.json" >> $GITHUB_OUTPUT
             echo "container_name=bako-safe-api" >> $GITHUB_OUTPUT
-          elif [ "$BRANCH" = "staging" ]; then
-            echo "environment=staging" >> $GITHUB_OUTPUT
-            echo "ecr_repository=bako-safe-api-stg" >> $GITHUB_OUTPUT
-            echo "ecs_service=bako-safe-api-stg-service" >> $GITHUB_OUTPUT
-            echo "ecs_cluster=Bako-Safe-Stg" >> $GITHUB_OUTPUT
-            echo "task_definition=./packages/api/stg_api_task_definition.json" >> $GITHUB_OUTPUT
-            echo "container_name=bako-safe-api-stg" >> $GITHUB_OUTPUT
           elif [ "$BRANCH" = "homologacao" ]; then
             echo "environment=homologacao" >> $GITHUB_OUTPUT
             echo "ecr_repository=bako-safe-api-hmg" >> $GITHUB_OUTPUT
