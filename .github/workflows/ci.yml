@@ -8,6 +8,8 @@ on:
       - staging
     paths:
       - 'packages/api/**'
+      - 'packages/socket-server/**'
+      - 'packages/worker/**'
       - '.github/workflows/ci.yml'
   pull_request:
     branches:
@@ -167,6 +169,42 @@ jobs:
           name: build
           path: packages/api/build
           retention-days: 1
+
+  docker-build:
+    name: Docker Build (${{ matrix.package }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - package: api
+            context: packages/api
+            platform: linux/amd64
+          - package: socket-server
+            context: packages/socket-server
+            platform: linux/arm64
+          - package: worker
+            context: packages/worker
+            platform: linux/amd64
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          platforms: ${{ matrix.platform }}
+          push: false
 
   test:
     name: Tests
