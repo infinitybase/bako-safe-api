@@ -105,7 +105,7 @@
     "ts-node-dev": "2.0.0",
     "tsc-alias": "1.8.16",
     "tscpaths": "0.0.9",
-    "tsx": "4.19.3",
+    "tsx": "4.21.0",
     "wait-on": "8.0.3",
     "why-is-node-running": "3.2.2"
   },
