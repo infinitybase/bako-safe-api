@@ -184,7 +184,7 @@ jobs:
             platform: linux/amd64
           - package: socket-server
             context: packages/socket-server
-            platform: linux/arm64
+            platform: linux/amd64
           - package: worker
             context: packages/worker
             platform: linux/amd64
