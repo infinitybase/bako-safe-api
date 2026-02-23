@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1.4
-FROM node:18-bookworm AS builder
+FROM node:22-bookworm AS builder
 
 # Bookworm already has python3/make/g++ - no need to install
 # Build trigger: 2024-11-27
@@ -23,7 +23,7 @@ COPY . .
 RUN pnpm build:prod
 
 # Production stage - smaller final image
-FROM node:18-alpine AS production
+FROM node:22-alpine AS production
 
 # Install pnpm globally
 RUN npm install -g pnpm
