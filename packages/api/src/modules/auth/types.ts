@@ -3,16 +3,11 @@ import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 import { Workspace } from '@src/models/Workspace';
 
 import { Encoder } from '@models/UserToken';
-import {
-  IPermissions,
-  UserSettings,
-  TypeUser,
-  User,
-  WebAuthn,
-} from '@models/index';
+import { IPermissions, UserSettings, User, WebAuthn } from '@models/index';
 
 import { AuthValidatedRequest, UnloggedRequest } from '@middlewares/auth/types';
 import { Network } from 'fuels';
+import { TypeUser } from 'bakosafe';
 
 export interface ICreateUserTokenPayload {
   user: User;

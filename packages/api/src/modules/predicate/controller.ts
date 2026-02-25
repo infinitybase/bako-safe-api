@@ -1,4 +1,5 @@
 import { TransactionStatus } from 'bakosafe';
+import { logger } from '@src/config/logger';
 
 import { Predicate } from '@src/models/Predicate';
 import { Workspace } from '@src/models/Workspace';
@@ -6,7 +7,7 @@ import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
 
 import { NotificationTitle } from '@models/index';
 
-import { error } from '@utils/error';
+import { error, ErrorTypes, NotFound } from '@utils/error';
 import {
   Responses,
   bindMethods,
@@ -21,19 +22,22 @@ import { INotificationService } from '../notification/types';
 
 import { WorkspaceService } from '../workspace/services';
 import {
+  ICheckPredicateBalancesRequest,
   ICreatePredicateRequest,
   IDeletePredicateRequest,
   IFindByHashRequest,
   IFindByIdRequest,
   IFindByNameRequest,
+  IGetAllocationRequest,
   IListRequest,
   IPredicateService,
   ITooglePredicateRequest,
+  IUpdatePredicateRequest,
   PredicateWithHidden,
 } from './types';
 
-import { PredicateService } from './services';
 import { NotificationService } from '../notification/services';
+import { PredicateService } from './services';
 const { FUEL_PROVIDER } = process.env;
 
 export class PredicateController {
@@ -56,41 +60,104 @@ export class PredicateController {
     network,
     workspace,
   }: ICreatePredicateRequest) {
-    const predicateService = new PredicateService();
-    const predicate = await predicateService.create(
-      payload,
-      network,
-      user,
-      workspace,
+    logger.info(
+      {
+        name: payload?.name,
+        predicateAddress: payload?.predicateAddress,
+        userId: user?.id,
+        workspaceId: workspace?.id,
+      },
+      '[PREDICATE_CREATE] Starting predicate creation',
     );
 
-    const notifyDestination = predicate.members.filter(
-      member => user.id !== member.id,
-    );
-    const notifyContent = {
-      vaultId: predicate.id,
-      vaultName: predicate.name,
-      workspaceId: workspace.id,
-    };
-    for await (const member of notifyDestination) {
-      await this.notificationService.create({
-        title: NotificationTitle.NEW_VAULT_CREATED,
-        user_id: member.id,
-        summary: notifyContent,
-        network,
-      });
-
-      if (member.notify) {
-        await sendMail(EmailTemplateType.VAULT_CREATED, {
-          to: member.email,
-          data: { summary: { ...notifyContent, name: member?.name ?? '' } },
-        });
+    try {
+      // If workspace is not provided, use user's single workspace as default
+      let effectiveWorkspace = workspace;
+      if (!workspace?.id) {
+        logger.info(
+          '[PREDICATE_CREATE] No workspace provided, fetching user single workspace',
+        );
+        effectiveWorkspace = await new WorkspaceService()
+          .filter({ user: user.id, single: true })
+          .list()
+          .then((response: Workspace[]) => response[0]);
+        logger.info(
+          { workspaceId: effectiveWorkspace?.id },
+          '[PREDICATE_CREATE] Using single workspace:',
+        );
       }
+
+      const predicateService = new PredicateService();
+      const predicate = await predicateService.create(
+        payload,
+        network,
+        user,
+        effectiveWorkspace,
+      );
+
+      logger.info(
+        {
+          predicateId: predicate?.id,
+          predicateName: predicate?.name,
+        },
+        '[PREDICATE_CREATE] Predicate created successfully',
+      );
+
+      const notifyDestination = predicate.members.filter(
+        member => user.id !== member.id,
+      );
+      const notifyContent = {
+        vaultId: predicate.id,
+        vaultName: predicate.name,
+        workspaceId: effectiveWorkspace.id,
+      };
+
+      await Promise.all(
+        notifyDestination.map(async member => {
+          try {
+            await this.notificationService.create({
+              title: NotificationTitle.NEW_VAULT_CREATED,
+              user_id: member.id,
+              summary: notifyContent,
+              network,
+            });
+
+            if (member.notify && member.email) {
+              await sendMail(EmailTemplateType.VAULT_CREATED, {
+                to: member.email,
+                data: {
+                  summary: { ...notifyContent, name: member?.name ?? '' },
+                },
+              });
+            }
+          } catch (e) {
+            logger.error(
+              {
+                memberId: member?.id,
+                to: member.email,
+                predicateId: predicate.id,
+                error: e,
+              },
+              '[PREDICATE_CREATE] Failed to process member notification',
+            );
+          }
+        }),
+      );
+
+      await new NotificationService().vaultUpdate(predicate.id);
+
+      return successful(predicate, Responses.Created);
+    } catch (e) {
+      logger.error(
+        {
+          message: e?.message || e,
+          name: e?.name,
+          stack: e?.stack?.slice(0, 500),
+        },
+        '[PREDICATE_CREATE]',
+      );
+      return error(e.error, e.statusCode);
     }
-
-    await new NotificationService().vaultUpdate(predicate.id);
-
-    return successful(predicate, Responses.Created);
   }
 
   async delete({ params: { id } }: IDeletePredicateRequest) {
@@ -115,17 +182,45 @@ export class PredicateController {
 
   async findByAddress({ params: { address } }: IFindByHashRequest) {
     try {
+      logger.info(
+        { address },
+        '[PREDICATE_FIND_BY_ADDRESS] Looking for predicate:',
+      );
       const predicate = await this.predicateService.findByAddress(address);
+
+      if (!predicate) {
+        logger.info(
+          { address },
+          '[PREDICATE_FIND_BY_ADDRESS] Predicate NOT found for address:',
+        );
+        throw new NotFound({
+          type: ErrorTypes.NotFound,
+          title: 'Predicate not found',
+          detail: `No predicate found with address ${address}`,
+        });
+      }
+
+      logger.info(
+        {
+          predicateId: predicate.id,
+          predicateName: predicate.name,
+          membersCount: predicate.members?.length,
+        },
+        '[PREDICATE_FIND_BY_ADDRESS] Predicate found',
+      );
 
       return successful(predicate, Responses.Ok);
     } catch (e) {
+      logger.error({ error: e?.message || e }, '[PREDICATE_FIND_BY_ADDRESS]');
       return error(e.error, e.statusCode);
     }
   }
 
   async findByName(req: IFindByNameRequest) {
+    const { ignoreId } = req.query;
     const { params, workspace } = req;
     const { name } = params;
+
     try {
       if (!name || name.length === 0) return successful(false, Responses.Ok);
 
@@ -135,6 +230,10 @@ export class PredicateController {
         .where('LOWER(p.name) = LOWER(:name)', { name: name })
         .andWhere('w.id = :workspace', { workspace: workspace.id })
         .getOne();
+
+      if (ignoreId && response?.id === ignoreId) {
+        return successful(false, Responses.Ok);
+      }
 
       return successful(!!response, Responses.Ok);
     } catch (e) {
@@ -205,8 +304,8 @@ export class PredicateController {
         Responses.Ok,
       );
     } catch (e) {
-      console.log(`[RESERVED_COINS_ERROR]`, e);
-      return error(e.error, e.statusCode);
+      logger.error({ error: e }, '[RESERVED_COINS_ERROR]');
+      return error(e.error || e, e.statusCode);
     }
   }
 
@@ -332,6 +431,55 @@ export class PredicateController {
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
+    }
+  }
+
+  async update(req: IUpdatePredicateRequest) {
+    try {
+      const { predicateId } = req.params;
+      const { description, name } = req.body;
+
+      const updatedPredicate = await this.predicateService.update(predicateId, {
+        name,
+        description,
+      });
+
+      return successful(updatedPredicate, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async allocation({ params, user, network }: IGetAllocationRequest) {
+    const { predicateId } = params;
+    try {
+      const allocation = await this.predicateService.allocation({
+        user,
+        predicateId,
+        network,
+        assetsMap: (await getAssetsMaps()).assetsMapById,
+      });
+
+      return successful(allocation, Responses.Ok);
+    } catch (e) {
+      return error(e.error || e, e.statusCode);
+    }
+  }
+
+  async checkPredicateBalances({
+    params: { predicateId },
+    user,
+    network,
+  }: ICheckPredicateBalancesRequest) {
+    try {
+      await this.predicateService.checkBalances({
+        predicateId,
+        userId: user.id,
+        network,
+      });
+      return successful(null, Responses.Ok);
+    } catch (e) {
+      return error(e.error || e, e.statusCode);
     }
   }
 }

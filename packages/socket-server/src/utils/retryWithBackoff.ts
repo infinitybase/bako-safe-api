@@ -1,3 +1,5 @@
+import { logger } from '@src/config/logger'
+
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
 type RetryOptions = {
@@ -42,7 +44,7 @@ async function retryWithBackoff<T>(fn: () => Promise<T>, url?: string, { retries
 			const jitter = Math.random() * 100
 			const delay = baseDelay * Math.pow(2, attempt) + jitter
 
-			console.warn(`[RETRY] Attempt ${attempt + 1}/${retries + 1} failed (status ${status})${url ? ` for URL: ${url}` : ''}. Retrying in ${Math.round(delay)}ms...`)
+			logger.warn({ attempt: attempt + 1, totalRetries: retries + 1, status, url, delayMs: Math.round(delay) }, '[RETRY] Attempt failed, retrying...')
 
 			await sleep(delay)
 		}

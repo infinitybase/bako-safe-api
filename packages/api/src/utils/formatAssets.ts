@@ -1,4 +1,7 @@
+import { ASSETS, FIAT_CURRENCIES } from '@src/constants/assets';
+import { Transaction, TransactionTypeWithRamp } from '@src/models';
 import {
+  bn,
   BN,
   Operation,
   OperationName,
@@ -13,6 +16,7 @@ export type AssetFormat = {
   assetId: string;
   amount: string;
   to: string;
+  currency?: string;
 };
 
 const formatAssets = (
@@ -93,4 +97,56 @@ const formatAssetFromOperations = (
   return assets;
 };
 
-export { formatAssetFromOperations, formatAssets };
+const formatAssetFromRampTransaction = (
+  transaction: Transaction,
+): AssetFormat[] => {
+  if (!transaction.rampTransaction) return [];
+
+  const {
+    destinationAmount,
+    sourceAmount,
+    destinationCurrency,
+    sourceCurrency,
+    providerData,
+  } = transaction.rampTransaction;
+
+  const isOnRamp = transaction.type === TransactionTypeWithRamp.ON_RAMP_DEPOSIT;
+
+  // BRL amounts from Meld come with comma as decimal separator
+  // We need to replace it with a dot to parse it correctly
+  const formattedSourceAmount =
+    isOnRamp && sourceCurrency === 'BRL'
+      ? sourceAmount.replace(',', '.')
+      : sourceAmount;
+
+  const formattedDestinationAmount =
+    !isOnRamp && destinationCurrency === 'BRL'
+      ? destinationAmount.replace(',', '.')
+      : destinationAmount;
+
+  return [
+    // source currency
+    {
+      amount: bn.parseUnits(formattedSourceAmount).toString('hex'),
+      assetId: isOnRamp ? FIAT_CURRENCIES[sourceCurrency] || '' : ASSETS.FUEL_ETH,
+      to: isOnRamp
+        ? providerData?.transactionData?.cryptoDetails.sourceWalletAddress || ''
+        : transaction.predicate.predicateAddress,
+      currency: sourceCurrency,
+    },
+    // destination currency
+    {
+      assetId: isOnRamp
+        ? ASSETS.FUEL_ETH
+        : FIAT_CURRENCIES[destinationCurrency] || '',
+      amount: bn.parseUnits(formattedDestinationAmount).toString('hex'),
+      to: isOnRamp
+        ? transaction.predicate.predicateAddress
+        : providerData?.transactionData?.cryptoDetails.destinationWalletAddress ||
+          '',
+      currency: destinationCurrency,
+    },
+  ];
+};
+
+export { formatAssetFromOperations, formatAssetFromRampTransaction, formatAssets };

@@ -6,6 +6,7 @@ import { SwitchNetworkEventHandler } from '../modules/switchNetwork'
 
 import { SocketEvents, SocketUsernames } from '../types'
 import { DatabaseClass, retryWithBackoff } from '@src/utils'
+import { logger } from '@src/config/logger'
 
 // import Redis from 'ioredis'
 // import { createAdapter } from '@socket.io/redis-adapter'
@@ -26,12 +27,12 @@ export const setupSocket = (io: SocketIOServer, database: DatabaseClass, api: Ax
 		const requestId = request_id === undefined ? '' : request_id
 
 		if (!sessionId || !username) {
-			console.error('[SOCKET]: missing sessionId or username', socket.handshake.auth)
+			logger.error({ auth: socket.handshake.auth }, '[SOCKET] missing sessionId or username')
 			return socket.disconnect(true)
 		}
 
 		const room = `${sessionId}:${username}${requestId && `:${requestId}`}`
-		console.log('\n[SOCKET]: CONNECTED TO', room, '\n')
+		logger.info({ room }, '[SOCKET] CONNECTED TO')
 
 		socket.data.messageQueue = []
 		await socket.join(room)
@@ -56,12 +57,22 @@ export const setupSocket = (io: SocketIOServer, database: DatabaseClass, api: Ax
             [UI] emite esse evento quando o usuário assina a tx 
                 - verifica se o evento veio da origem correta -> BAKO-UI [http://localhost:5174, https://safe.bako.global]
                 - recupera as infos do dapp que está tentando criar a tx pelo sessionId
-                - usa uma credencial temporária (code) que é utilizada para criar e assinar a tx com o pacote bakosafe
+                - usa uma credencial temporária (code) que é utilizada para criar, assinar e excluir a tx com o pacote bakosafe
                 - consome endpoint /transaction/sign/:hash para assinar a tx
-                - invalida credencial temporária (code) que foi utilizada para criar e assinar a tx
+                - invalida credencial temporária (code) que foi utilizada para criar, assinar e excluir a tx
                 - emite uma mensagem para a [UI] com o resultado da assiantura da tx
             */
 		socket.on(SocketEvents.TX_SIGN, data => transactionEventHandler.sign({ data, socket }))
+
+		/*
+			      [UI] emite esse evento quando a tx é criada, mas não assinada e o popup é fechado
+					    - verifica se o evento veio da origem correta -> BAKO-UI [http://localhost:5174, https://safe.bako.global]
+							- recupera as infos do dapp que está tentando criar a tx pelo sessionId
+							- usa uma credencial temporária (code) que é utilizada para criar, assinar e excluir a tx com o pacote bakosafe
+							- consome o endpoint DELETE - /transaction/by-hash/:hash para excluir a tx
+							- invalida credencial temporária (code) que foi utilizada para criar, assinar e excluir a tx
+		*/
+		socket.on(SocketEvents.TX_DELETE, data => transactionEventHandler.delete({ data, socket }))
 
 		/*
             [CONNECTOR] emite esse evento quando o usuário quer criar uma transação
@@ -85,7 +96,7 @@ export const setupSocket = (io: SocketIOServer, database: DatabaseClass, api: Ax
 				const connectionStateUrl = `/connections/${sessionId}/state`
 				const { data: connected } = await retryWithBackoff(() => api.get(connectionStateUrl), connectionStateUrl)
 
-				console.log('[SOCKET] [CONNECTION_STATE] Connected state for session', sessionId, '->', connected)
+				logger.info({ sessionId, connected }, '[SOCKET] Connected state for session')
 
 				io.to(connectorRoom).emit(SocketEvents.CONNECTION_STATE, {
 					username: SocketUsernames.CONNECTOR,
@@ -96,11 +107,14 @@ export const setupSocket = (io: SocketIOServer, database: DatabaseClass, api: Ax
 					data: connected,
 				})
 			} catch (error) {
-				console.error('[SOCKET] [CONNECTION_STATE] Error:', {
-					message: error.message,
-					status: error.response?.status,
-					url: error.config?.url,
-				})
+				logger.error(
+					{
+						message: error.message,
+						status: error.response?.status,
+						url: error.config?.url,
+					},
+					'[SOCKET] Error fetching connection state for session',
+				)
 				// Returns an error response to the client
 				io.to(connectorRoom).emit(SocketEvents.CONNECTION_STATE, {
 					username: SocketUsernames.CONNECTOR,
@@ -136,9 +150,27 @@ export const setupSocket = (io: SocketIOServer, database: DatabaseClass, api: Ax
 			const { sessionId, to } = data
 			const room = `${sessionId}:${to}`
 			const clientsInRoom = io.sockets.adapter.rooms.get(room) || new Set()
-			console.log('[SOCKET SERVER] [SWITCH_NETWORK] Event: ' + JSON.stringify(data))
+			logger.info({ data }, '[SOCKET SERVER] [SWITCH_NETWORK] Event')
 			if (clientsInRoom.size > 0) {
 				socket.to(room).emit(SocketEvents.SWITCH_NETWORK, data)
+			}
+		})
+
+		socket.on(SocketEvents.BALANCE_OUTDATED_USER, data => {
+			const { sessionId, to } = data
+			const room = `${sessionId}:${to}`
+			const clientsInRoom = io.sockets.adapter.rooms.get(room) || new Set()
+			if (clientsInRoom.size > 0) {
+				socket.to(room).emit(SocketEvents.BALANCE_OUTDATED_USER, data)
+			}
+		})
+
+		socket.on(SocketEvents.BALANCE_OUTDATED_PREDICATE, data => {
+			const { sessionId, to } = data
+			const room = `${sessionId}:${to}`
+			const clientsInRoom = io.sockets.adapter.rooms.get(room) || new Set()
+			if (clientsInRoom.size > 0) {
+				socket.to(room).emit(SocketEvents.BALANCE_OUTDATED_PREDICATE, data)
 			}
 		})
 

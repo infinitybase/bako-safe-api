@@ -1,4 +1,5 @@
 import { addMinutes, differenceInMinutes, isPast, parseISO } from 'date-fns';
+import { logger } from '@src/config/logger';
 import { Address } from 'fuels';
 import { MoreThan } from 'typeorm';
 
@@ -159,7 +160,6 @@ export class TokenUtils {
     const provider = await FuelProvider.create(network ?? FUEL_PROVIDER);
     const _token = await UserToken.findOne({
       where: { user_id: userId },
-      relations: ['workspace'],
     });
 
     const _network = {
@@ -171,7 +171,7 @@ export class TokenUtils {
     await _token.save();
     await App.getInstance()._sessionCache.updateSession(_token.token);
 
-    return true;
+    return _network;
   }
 
   static async createAuthToken(
@@ -189,8 +189,6 @@ export class TokenUtils {
       relations: ['owner'],
       order: { createdAt: 'DESC' },
     });
-
-    console.log('code1', code);
 
     if (!code) {
       throw new Unauthorized({
@@ -275,7 +273,7 @@ export class TokenUtils {
 
       return token;
     } catch (e) {
-      console.log('[RENEW TOKEN ERROR]: DATA FORMAT', e);
+      logger.error({ error: e }, '[RENEW TOKEN ERROR]: DATA FORMAT');
       return token;
     }
   }

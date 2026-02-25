@@ -1,6 +1,7 @@
 import { TransactionStatus } from 'bakosafe';
 import { addMinutes } from 'date-fns';
 
+// eslint-disable-next-line prettier/prettier
 import { type DApp, Predicate, RecoverCodeType, User } from '@src/models';
 import { SocketClient } from '@src/socket/client';
 
@@ -12,6 +13,7 @@ import { RecoverCodeService } from '../recoverCode/services';
 import { TransactionService } from '../transaction/services';
 import { DAppsService } from './service';
 import type {
+  IChangeAccountRequest,
   IChangeNetworkRequest,
   ICreateRecoverCodeRequest,
   ICreateRequest,
@@ -21,8 +23,9 @@ import type {
 import type { ITransactionResponse } from '../transaction/types';
 import App from '@src/server/app';
 import { SocketEvents, SocketUsernames } from "@src/socket/types";
+import { logger } from '@src/config/logger';
 
-const { API_URL, FUEL_PROVIDER } = process.env;
+const { API_URL } = process.env;
 const PREFIX = 'dapp';
 export class DappController {
   private _dappService: IDAppsService;
@@ -32,6 +35,30 @@ export class DappController {
     bindMethods(this);
   }
 
+  async changeAccount({ params, headers }: IChangeAccountRequest) {
+    try {
+      const { sessionId, vault } = params;
+      const { origin } = headers;
+
+      const isAddress = vault.startsWith('0x');
+      const predicate = await Predicate.findOne({ where: (isAddress) ? { predicateAddress: vault } : { id: vault } });
+      if (!predicate) {
+        throw new NotFound({
+          type: ErrorTypes.NotFound,
+          title: 'Predicate not found',
+          detail: 'Predicate not found',
+        });
+      }
+      const dapp = await new DAppsService().findBySessionID(sessionId, origin);
+      dapp.currentVault = predicate;
+      await dapp.save();
+      return successful(dapp.currentVault, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
+
   async connect({ body }: ICreateRequest) {
     try {
       const { vaultId, sessionId, name, origin, userAddress, request_id } = body;
@@ -39,6 +66,9 @@ export class DappController {
       let dapp = await new DAppsService().findBySessionID(sessionId, origin);
       const user = await User.findOne({ where: { address: userAddress } });
       const { network } = await TokenUtils.getTokenByUser(user.id);
+
+      logger.info({ id: dapp?.id, name: dapp?.name }, '[DAPP_CONNECT] found dapp in db')
+
       if (!dapp) {
         dapp = await new DAppsService().create({
           sessionId,
@@ -60,19 +90,17 @@ export class DappController {
       dapp.network = network;
 
       await dapp.save();
-      const socket = new SocketClient(sessionId, API_URL);
 
-      socket.sendMessage({
+      const socketClient = new SocketClient(sessionId, API_URL);
+      socketClient.sendMessage({
         sessionId,
-        to: '[CONNECTOR]',
+        to: SocketUsernames.CONNECTOR,
         request_id,
-        type: '[AUTH_CONFIRMED]',
+        type: SocketEvents.AUTH_CONFIRMED,
         data: {
           connected: true,
         },
-      }).then(() => {
-        socket.disconnect();
-      })
+      });
 
       await RedisWriteClient.set(`${PREFIX}${sessionId}`, JSON.stringify(dapp));
       return successful(true, Responses.Created);
@@ -85,7 +113,7 @@ export class DappController {
     try {
       const dappCache = await RedisReadClient.get(`${PREFIX}${params.sessionId}`);
       const dapp = dappCache ? JSON.parse(dappCache) : null;
-      if(dapp) {
+      if (dapp) {
         return successful(
           dapp.currentVault.predicateAddress,
           Responses.Ok,
@@ -192,7 +220,7 @@ export class DappController {
     try {
       const dappCache = await RedisReadClient.get(`${PREFIX}${params.sessionId}`);
       const dapp = dappCache ? JSON.parse(dappCache) : null;
-      if(dapp) {
+      if (dapp) {
         return successful(
           dapp.currentVault.predicateAddress,
           Responses.Ok,
@@ -209,7 +237,7 @@ export class DappController {
     try {
       const dappCache = await RedisReadClient.get(`${PREFIX}${params.sessionId}`);
       const _dapp = dappCache ? JSON.parse(dappCache) : null;
-      if(_dapp) {
+      if (_dapp) {
         return successful(
           _dapp.network.url,
           Responses.Ok,
@@ -238,7 +266,7 @@ export class DappController {
     try {
       const dappCache = await RedisReadClient.get(`${PREFIX}${params.sessionId}`);
       const dapp = dappCache ? JSON.parse(dappCache) : null;
-      if(dapp) {
+      if (dapp) {
         return successful(
           dapp.vaults.map(vault => vault.predicateAddress),
           Responses.Ok,
@@ -255,26 +283,26 @@ export class DappController {
       return error(e.error, e.statusCode);
     }
   }
-  
+
   async state({ params, headers }: IDappRequest) {
     try {
       const dappCache = await RedisReadClient.get(`${PREFIX}${params.sessionId}`);
       const dapp = dappCache ? JSON.parse(dappCache) : null;
 
-      if(!dapp) {
+      if (!dapp) {
         const _dapp = await this._dappService
           .findBySessionID(params.sessionId, headers.origin || headers.Origin)
           .then((data: DApp) => {
             return data;
           });
 
-          if(!_dapp) {
-            return successful(false, Responses.Ok);
-          }
-          await RedisWriteClient.set(`${PREFIX}${params.sessionId}`, JSON.stringify(_dapp));
-          return successful(true, Responses.Ok);
+        if (!_dapp) {
+          return successful(false, Responses.Ok);
+        }
+        await RedisWriteClient.set(`${PREFIX}${params.sessionId}`, JSON.stringify(_dapp));
+        return successful(true, Responses.Ok);
       }
-      
+
       return successful(
         true,
         Responses.Ok,
@@ -333,22 +361,20 @@ export class DappController {
       await RedisWriteClient.set(`${PREFIX}${sessionId}`, JSON.stringify(dapp));
 
       const socketClient = new SocketClient(dapp.user.id, API_URL);
+      socketClient.emit(
+        SocketEvents.SWITCH_NETWORK,
+        {
+          sessionId: dapp.user.id,
+          to: SocketUsernames.UI,
+          request_id: undefined,
+          type: SocketEvents.SWITCH_NETWORK,
+          data: dapp.network,
+        },
+      );
 
-      const socketData = {
-        sessionId: dapp.user.id,
-        to: SocketUsernames.UI,
-        request_id: undefined,
-        type: SocketEvents.SWITCH_NETWORK,
-        data: dapp.network,
-      }
-
-      socketClient.emit(SocketEvents.SWITCH_NETWORK, socketData).then(() => {
-        socketClient.disconnect();
-      })
-      
       return successful(dapp.network, Responses.Ok);
     } catch (e) {
-      console.log(e);
+      logger.error({ error: e }, '[DAPP_CHANGE_NETWORK]');
       return error(e.error, e.statusCode);
     }
   }

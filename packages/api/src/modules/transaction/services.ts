@@ -1,4 +1,5 @@
 import { IWitnesses, TransactionStatus, Vault, WitnessStatus } from 'bakosafe';
+import { logger } from '@src/config/logger';
 import {
   Address,
   bn,
@@ -8,7 +9,7 @@ import {
   OutputType,
   transactionRequestify,
 } from 'fuels';
-import { Brackets, In, Not } from 'typeorm';
+import { Brackets, EntityNotFoundError, In, Not } from 'typeorm';
 
 import { Predicate, Transaction } from '@models/index';
 
@@ -16,9 +17,11 @@ import { NotFound } from '@utils/error';
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
 import Internal from '@utils/error/Internal';
 import { IOrdination, setOrdination } from '@utils/ordination';
+
 import { IPagination, Pagination, PaginationParams } from '@utils/pagination';
 
-import { FuelProvider } from '@src/utils';
+import { extractPredicatesFromTransaction, FuelProvider } from '@src/utils';
+import App from '@src/server/app';
 import { NotificationService } from '../notification/services';
 import { TransactionPagination, TransactionPaginationParams } from './pagination';
 import {
@@ -125,9 +128,7 @@ export class TransactionService implements ITransactionService {
   }
 
   async findById(id: string): Promise<ITransactionResponse> {
-    console.log('[FIND_BY_ID] Finding transaction by ID: ', {
-      id,
-    });
+    logger.info({ id }, '[FIND_BY_ID] Finding transaction by ID');
 
     return await Transaction.findOne({
       where: { id },
@@ -136,6 +137,7 @@ export class TransactionService implements ITransactionService {
         'predicate.members',
         'predicate.workspace',
         'createdBy',
+        'rampTransaction',
       ],
     })
       .then(transaction => {
@@ -184,6 +186,7 @@ export class TransactionService implements ITransactionService {
       .leftJoin('t.predicate', 'predicate')
       .leftJoin('predicate.members', 'members')
       .leftJoin('predicate.workspace', 'workspace')
+      .leftJoin('t.rampTransaction', 'ramp')
       .addSelect([
         'predicate.name',
         'predicate.id',
@@ -194,6 +197,14 @@ export class TransactionService implements ITransactionService {
         'workspace.id',
         'workspace.name',
         'workspace.single',
+        'ramp.id',
+        'ramp.provider',
+        'ramp.sourceCurrency',
+        'ramp.sourceAmount',
+        'ramp.destinationCurrency',
+        'ramp.destinationAmount',
+        'ramp.paymentMethod',
+        'ramp.providerData',
       ])
       .andWhere(
         // TODO: On release to mainnet we need to remove this condition
@@ -298,12 +309,15 @@ export class TransactionService implements ITransactionService {
       });
     };
 
+    // Apply default limit to prevent loading entire table when no pagination
+    const DEFAULT_LIMIT = 100;
     const transactions = hasPagination
       ? await Pagination.create(queryBuilder)
           .paginate(this._pagination)
           .then(paginationResult => paginationResult)
           .catch(handleInternalError)
       : await queryBuilder
+          .take(DEFAULT_LIMIT)
           .getMany()
           .then(transactions => {
             return transactions ?? [];
@@ -338,6 +352,7 @@ export class TransactionService implements ITransactionService {
       .leftJoin('t.predicate', 'predicate')
       .leftJoin('predicate.members', 'members')
       .leftJoin('predicate.workspace', 'workspace')
+      .leftJoin('t.rampTransaction', 'ramp')
       .addSelect([
         'predicate.name',
         'predicate.id',
@@ -348,6 +363,14 @@ export class TransactionService implements ITransactionService {
         'workspace.id',
         'workspace.name',
         'workspace.single',
+        'ramp.id',
+        'ramp.provider',
+        'ramp.sourceCurrency',
+        'ramp.sourceAmount',
+        'ramp.destinationCurrency',
+        'ramp.destinationAmount',
+        'ramp.paymentMethod',
+        'ramp.providerData',
       ])
       .andWhere(
         `regexp_replace(t.network->>'url', '^https?://[^@]+@', 'https://') = :network`,
@@ -430,12 +453,38 @@ export class TransactionService implements ITransactionService {
       });
   }
 
+  async deleteByHash(hash: string): Promise<boolean> {
+    try {
+      const tx = await Transaction.findOneOrFail({
+        where: { hash, status: TransactionStatus.AWAIT_REQUIREMENTS },
+      });
+
+      tx.deletedAt = new Date();
+      await tx.save();
+
+      return true;
+    } catch (e) {
+      if (e instanceof EntityNotFoundError) {
+        throw new NotFound({
+          type: ErrorTypes.NotFound,
+          title: 'Transaction not found',
+          detail: `Transaction with hash ${hash} and status ${TransactionStatus.AWAIT_REQUIREMENTS} not found`,
+        });
+      }
+
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on transaction delete',
+        detail: e,
+      });
+    }
+  }
+
   async findAdvancedDetailById(id: string): Promise<ITransactionAdvancedDetail> {
     const transaction = await Transaction.findOne({
       where: { id },
       relations: { predicate: true },
     });
-
     if (!transaction) {
       throw new NotFound({
         type: ErrorTypes.NotFound,
@@ -549,10 +598,7 @@ export class TransactionService implements ITransactionService {
   //instance tx
   //add witnesses
   async sendToChain(hash: string, network: Network) {
-    console.log('[SEND_TO_CHAIN] Sending transaction to chain: ', {
-      hash,
-      network,
-    });
+    logger.info({ hash, network }, '[SEND_TO_CHAIN] Sending transaction to chain');
 
     const transaction = await Transaction.findOne({
       where: {
@@ -569,11 +615,14 @@ export class TransactionService implements ITransactionService {
       relations: ['predicate', 'createdBy'],
     });
 
-    console.log('[SEND_TO_CHAIN] Transaction data: ', {
-      hash,
-      transaction: !!transaction,
-      status: transaction?.status,
-    });
+    logger.info(
+      {
+        hash,
+        transaction: !!transaction,
+        status: transaction?.status,
+      },
+      '[SEND_TO_CHAIN] Found transaction',
+    );
 
     if (!transaction) {
       throw new NotFound({
@@ -584,13 +633,6 @@ export class TransactionService implements ITransactionService {
     }
 
     const { id, predicate, txData, status, resume } = transaction;
-
-    console.log('[SEND_TO_CHAIN] Transaction data: ', {
-      id: id,
-      status,
-      resume,
-      txData,
-    });
 
     if (status != TransactionStatus.PENDING_SENDER) {
       return await this.findById(id);
@@ -606,22 +648,20 @@ export class TransactionService implements ITransactionService {
       predicate.version,
     );
 
+    const w = transaction.getWitnesses();
+
     const tx = transactionRequestify({
       ...txData,
-      witnesses: transaction.getWitnesses(),
+      witnesses: w,
     });
 
-    console.log('[SEND_TO_CHAIN] Transaction request: ', {
-      tx,
-    });
+    logger.info({ tx }, '[SEND_TO_CHAIN] Transaction request');
 
     try {
       const transactionResponse = await vault.send(tx);
       const { gasUsed } = await transactionResponse.waitForResult();
 
-      console.log('[SEND_TO_CHAIN] Transaction response: ', {
-        gasUsed,
-      });
+      logger.info({ gasUsed }, '[SEND_TO_CHAIN] Transaction response');
 
       const _api_transaction: IUpdateTransactionPayload = {
         status: TransactionStatus.SUCCESS,
@@ -636,10 +676,14 @@ export class TransactionService implements ITransactionService {
 
       await new NotificationService().transactionSuccess(id, network);
 
+      // Invalidate caches for all predicates involved in this transaction
+      this.invalidateCaches(transaction).catch(err =>
+        logger.error({ error: err }, '[TX_SUCCESS] Failed to invalidate caches'),
+      );
+
       return await this.update(id, _api_transaction);
     } catch (e) {
-      console.error('[SEND_TO_CHAIN] Error: ', e);
-
+      logger.error({ error: e }, '[SEND_TO_CHAIN]');
       const error = 'toObject' in e ? e.toObject() : e;
       const _api_transaction: IUpdateTransactionPayload = {
         status: TransactionStatus.FAILED,
@@ -663,16 +707,39 @@ export class TransactionService implements ITransactionService {
     try {
       let _transactions: ITransactionResponse[] = [];
 
+      const provider = await FuelProvider.create(providerUrl);
+      const chainId = await FuelProvider.getChainId(providerUrl);
+      const transactionCache = App.getInstance()._transactionCache;
+
       for await (const predicate of predicates) {
         const address = Address.fromString(predicate.predicateAddress).toB256();
-        const provider = await FuelProvider.create(providerUrl);
 
-        // TODO: change this to use pagination and order DESC
+        // Check cache with refresh status
+        const cacheResult = await transactionCache.getWithRefreshCheck(
+          address,
+          chainId,
+        );
+
+        if (!cacheResult.needsIncrementalFetch) {
+          // Cache is fresh, use it directly
+          _transactions = [
+            ..._transactions,
+            ...((cacheResult.cachedTransactions as unknown) as ITransactionResponse[]),
+          ];
+          continue;
+        }
+
+        // Need to fetch from blockchain (full or incremental)
+        const fetchLimit =
+          cacheResult.cachedTransactions.length > 0
+            ? transactionCache.getIncrementalFetchLimit() // Incremental: fetch only recent
+            : 57; // Full fetch
+
         const { transactions } = await getTransactionsSummaries({
           provider,
           filters: {
             owner: address,
-            first: 57,
+            first: fetchLimit,
           },
         });
 
@@ -681,19 +748,36 @@ export class TransactionService implements ITransactionService {
           .filter(tx => tx.isStatusSuccess)
           .filter(tx => tx.operations.some(op => op.to?.address === address));
 
-        // formatFueLTransactio needs to be async because of the request to get fuels tokens up to date and use them to get the network units
+        // Format transactions
         const formattedTransactions = await Promise.all(
           filteredTransactions.map(tx =>
             formatFuelTransaction(tx, predicate, provider),
           ),
         );
 
-        _transactions = [..._transactions, ...formattedTransactions];
+        // Merge with cached if incremental, otherwise use fresh data
+        let finalTransactions: ITransactionResponse[];
+        if (cacheResult.cachedTransactions.length > 0) {
+          // Incremental merge - cast to any to handle generic type
+          const cachedTxs = cacheResult.cachedTransactions as ITransactionResponse[];
+          finalTransactions = transactionCache.mergeTransactions(
+            cachedTxs,
+            formattedTransactions,
+            cacheResult.knownHashes,
+          );
+        } else {
+          // Full fetch
+          finalTransactions = formattedTransactions;
+        }
+
+        // Update cache
+        await transactionCache.set(address, finalTransactions, chainId);
+
+        _transactions = [..._transactions, ...finalTransactions];
       }
 
       return _transactions;
     } catch (e) {
-      console.log('[ERROR] fetchFuelTransactions', e);
       return [];
     }
   }
@@ -746,5 +830,72 @@ export class TransactionService implements ITransactionService {
       .innerJoin('t.createdBy', 'u');
 
     return Pagination.create(queryBuilder).paginate(this._pagination);
+  }
+
+  /**
+   * Invalidate all caches for predicates involved in a transaction
+   * Called after successful transactions to ensure fresh data for all affected predicates
+   *
+   * @param transaction - The transaction object containing summary with operations
+   */
+  async invalidateCaches(transaction: Transaction): Promise<void> {
+    try {
+      const predicateAddresses = extractPredicatesFromTransaction(transaction);
+
+      if (predicateAddresses.length === 0) {
+        logger.info('[TX_CACHE] No predicate addresses found in transaction');
+        return;
+      }
+
+      for (const predicateAddress of predicateAddresses) {
+        await this.invalidatePredicateCaches(
+          predicateAddress,
+          transaction.network?.chainId,
+        );
+      }
+
+      logger.info(
+        { predicatesCount: predicateAddresses.length },
+        '[TX_CACHE] Invalidated caches for predicates',
+      );
+    } catch (error) {
+      logger.error(
+        { error: error },
+        '[TX_CACHE] Failed to invalidate transaction caches',
+      );
+    }
+  }
+
+  /**
+   * Invalidate all caches for a predicate after transaction changes
+   * Called after successful transactions to ensure fresh data
+   *
+   * @param predicateAddress - The predicate address to invalidate
+   * @param chainId - Optional chainId for granular invalidation (only invalidates that specific chain)
+   */
+  private async invalidatePredicateCaches(
+    predicateAddress: string,
+    chainId?: number,
+  ): Promise<void> {
+    try {
+      // Invalidate balance cache
+      const balanceCache = App.getInstance()._balanceCache;
+      await balanceCache.invalidate(predicateAddress, chainId);
+
+      // Invalidate transaction cache
+      const transactionCache = App.getInstance()._transactionCache;
+      await transactionCache.invalidate(predicateAddress, chainId);
+
+      logger.info(
+        {
+          predicateAddress: predicateAddress?.slice(0, 12),
+          chainId: chainId ?? 'all',
+        },
+        '[TX_CACHE] Caches invalidated',
+      );
+    } catch (error) {
+      // Don't throw - cache invalidation failure shouldn't break transaction flow
+      logger.error({ error: error }, '[TX_CACHE] Failed to invalidate caches');
+    }
   }
 }

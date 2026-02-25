@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Brackets } from 'typeorm';
 
-import { User } from '@src/models';
+import { Predicate, User } from '@src/models';
 import {
   PermissionRoles,
   Workspace,
@@ -27,13 +27,22 @@ import {
 import App from '@src/server/app';
 
 import { Address, Network } from 'fuels';
-import { Vault } from 'bakosafe';
 import { PredicateService } from '../predicate/services';
 
 import { Maybe } from '@src/utils/types/maybe';
-import { FuelProvider } from '@src/utils';
+import { FuelProvider, processBatch } from '@src/utils';
+import { BalanceCache } from '@src/server/storage/balance';
+import { TransactionCache } from '@src/server/storage/transaction';
+import { compareBalances } from '@src/utils/balance';
+import { emitBalanceOutdatedUser } from '@src/socket/events';
+import { SocketUsernames, SocketEvents } from '@src/socket/types';
+import { ProviderWithCache } from '@src/utils/ProviderWithCache';
+import { logger } from '@src/config/logger';
 
 const { UI_URL } = process.env;
+
+const MAX_PREDICATES_TO_CHECK_BALANCE = 50;
+const PREDICATES_BALANCE_CHECK_BATCH_SIZE = 10;
 
 export class UserService implements IUserService {
   private _pagination: PaginationParams;
@@ -123,47 +132,38 @@ export class UserService implements IUserService {
 
         // insert a root wallet predicate
         const provider = await FuelProvider.create(payload.provider);
-        const configurable = {
-          SIGNATURES_COUNT: 1,
-          SIGNERS: [user.address],
-          network: provider.url,
-          chainId: provider.getChainId(),
-        };
 
-        // on creation, we dont need send the predicate version
-        const predicate = await new PredicateService().instancePredicate(
-          JSON.stringify(configurable),
+        const vaults = await new PredicateService().checkOlderPredicateVersions(
+          user.address,
+          user.type,
           provider.url,
         );
 
-        const network: Network = {
-          url: provider.url,
-          chainId: await provider.getChainId(),
-        };
-
-        await new PredicateService().create(
-          {
-            name: 'Personal Vault',
-            description:
-              'This is your first vault. It requires a single signer (you) to execute transactions; a pattern called 1-of-1',
-            predicateAddress: Address.fromString(
-              predicate.address.toString(),
-            ).toB256(),
-            configurable: JSON.stringify(predicate.configurable),
+        for (const [i, vault] of vaults.entries()) {
+          const hasMultipleVaults = vaults.length > 1;
+          const isFirst = i === 0;
+          await Predicate.create({
+            name: hasMultipleVaults ? `Predicate ${i + 1}` : 'Personal Account',
+            description: `${
+              isFirst
+                ? 'This is your first account. It requires a single signer (you) to execute transactions; a pattern called 1-of-1'
+                : ''
+            }`,
+            predicateAddress: new Address(vault.address).toB256(),
+            configurable: JSON.stringify(vault.configurable),
+            root: isFirst,
+            version: vault.version,
             owner: user,
-            version: predicate.version,
-            members: [user],
             workspace,
-            root: true,
-          },
-          network,
-          user,
-          workspace,
-        );
+            members: [user],
+          }).save();
+        }
 
+        await user.save();
         return user;
       })
       .catch(error => {
+        logger.error({ error }, 'Error on user create');
         if (error instanceof GeneralError) throw error;
 
         throw new Internal({
@@ -324,5 +324,121 @@ export class UserService implements IUserService {
     ]);
 
     return Pagination.create(queryBuilder).paginate(this._pagination);
+  }
+
+  async checkBalances({
+    userId,
+    workspaceId,
+    network,
+  }: {
+    userId: string;
+    workspaceId: string;
+    network: Network;
+  }): Promise<void> {
+    try {
+      // Get all predicates for this user (owner or member)
+      const predicates = await Predicate.createQueryBuilder('p')
+        .leftJoinAndSelect('p.members', 'members')
+        .leftJoinAndSelect('p.workspace', 'predicateWorkspace')
+        .select([
+          'p.id',
+          'p.predicateAddress',
+          'p.configurable',
+          'p.version',
+          'members.id',
+          'predicateWorkspace.id',
+        ])
+        .where('predicateWorkspace.id = :workspaceId', {
+          workspaceId,
+        })
+        .andWhere('(p.owner_id = :userId OR members.id = :userId)', {
+          userId,
+        })
+        .limit(MAX_PREDICATES_TO_CHECK_BALANCE)
+        .getMany();
+
+      const balanceCache = BalanceCache.getInstance();
+      const transactionCache = TransactionCache.getInstance();
+      const predicateService = new PredicateService();
+      const outdatedPredicateIds: string[] = [];
+
+      // Process predicates in batches to control concurrency
+      await processBatch(
+        predicates,
+        PREDICATES_BALANCE_CHECK_BATCH_SIZE,
+        async predicate => {
+          try {
+            const instance = await predicateService.instancePredicate(
+              predicate.configurable,
+              network.url,
+              predicate.version,
+            );
+
+            if (!(instance.provider instanceof ProviderWithCache)) {
+              return;
+            }
+
+            // Get cached balance
+            const cachedBalances = await balanceCache.get(
+              predicate.predicateAddress,
+              network.chainId,
+            );
+
+            // Get current balance directly from blockchain (bypass cache)
+            const currentBalances = (
+              await (instance.provider as ProviderWithCache).getBalancesFromBlockchain(
+                predicate.predicateAddress,
+              )
+            ).balances.filter(a => a.amount.gt(0));
+
+            if (cachedBalances) {
+              const _cachedBalances = cachedBalances.filter(a => a.amount.gt(0));
+
+              const hasChanged = compareBalances(_cachedBalances, currentBalances);
+
+              if (hasChanged) {
+                outdatedPredicateIds.push(predicate.id);
+
+                // Update cache with fresh data
+                await balanceCache.set(
+                  predicate.predicateAddress,
+                  currentBalances,
+                  network.chainId,
+                  network.url,
+                );
+
+                // Invalidate transaction cache
+                await transactionCache.invalidate(
+                  predicate.predicateAddress,
+                  network.chainId,
+                );
+              }
+            }
+          } catch (e) {
+            logger.error(
+              { predicateId: predicate.id, error: e?.message || e },
+              '[CHECK_USER_BALANCES] Error checking predicate',
+            );
+          }
+        },
+      );
+
+      // Emit event to notify balance change only if there are outdated predicates
+      if (outdatedPredicateIds.length > 0) {
+        emitBalanceOutdatedUser(userId, {
+          sessionId: userId,
+          to: SocketUsernames.UI,
+          type: SocketEvents.BALANCE_OUTDATED_USER,
+          workspaceId,
+          outdatedPredicateIds,
+        });
+      }
+    } catch (error) {
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on check user balances',
+        detail: error?.message || error,
+      });
+    }
   }
 }

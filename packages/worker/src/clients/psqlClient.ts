@@ -56,7 +56,7 @@ export class PsqlClient {
     }
   }
 
-  async query (query: string, params?: string[]): Promise<any> {
+  async query (query: string, params?: unknown[]): Promise<any> {
     try {
       const { rows }: QueryResult = await this.client.query(query, params)
       if (rows.length === 1) return rows[0]

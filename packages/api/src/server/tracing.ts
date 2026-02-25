@@ -1,4 +1,5 @@
 import { NodeSDK } from '@opentelemetry/sdk-node';
+import { logger } from '@src/config/logger';
 import { ExpressInstrumentation } from '@opentelemetry/instrumentation-express';
 import { TypeormInstrumentation } from '@opentelemetry/instrumentation-typeorm';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
@@ -27,7 +28,7 @@ const sdk = new NodeSDK({
   ],
 });
 
-if (process.env.API_ENVIRONMENT != 'development') {
-  console.log('[TELEMETRY] Starting');
+if (process.env.API_ENVIRONMENT === 'production') {
+  logger.info('[TELEMETRY] Starting');
   sdk.start();
 }

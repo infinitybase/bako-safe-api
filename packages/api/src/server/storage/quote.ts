@@ -7,6 +7,7 @@ import {
   isDevMode,
 } from '@src/utils';
 import { tokensIDS } from '@src/utils/assets-token/addresses';
+import { logger } from '@src/config/logger';
 import axios from 'axios';
 import App from '../app';
 
@@ -42,42 +43,73 @@ export class QuoteStorage {
     await this.setQuotes(QuotesMock);
   }
 
-  private async getStFUELQuote(QuotesMock: IQuote[]): Promise<number> {
+  /**
+   * Calcula o preço do stFUEL baseado no preço do FUEL e no ratio do Rig
+   * stFUEL é um token de staking líquido que representa FUEL em stake
+   * Formula: preço_stFUEL = preço_FUEL * ratio
+   * Ex: Se FUEL = $2 e ratio = 1.05, então stFUEL = $2 * 1.05 = $2.10
+   */
+  private async calculateStFUELPrice(quotes: IQuote[]): Promise<number> {
+    const rigCache = App.getInstance()._rigCache;
+    if (!rigCache) {
+      // RIG not configured, skip stFUEL quote calculation
+      return 0;
+    }
+
     const DECIMALS = 10 ** 9;
-    const priceFUEL = QuotesMock.find(quote => quote.assetId === tokensIDS.FUEL)
-      .price;
-    const rigInstance = await App.getInstance()._rigCache;
-    const ratioStFuelToFuel = (await rigInstance.getRatio()) / DECIMALS;
-    return priceFUEL / ratioStFuelToFuel;
+    const fuelQuote = quotes.find(q => q.assetId === tokensIDS.FUEL);
+
+    if (!fuelQuote) {
+      logger.warn('FUEL quote not found, cannot calculate stFUEL price');
+      return 0;
+    }
+
+    try {
+      const rigInstance = await rigCache;
+      const ratio = (await rigInstance.getRatio()) / DECIMALS;
+      // stFUEL vale MAIS que FUEL devido ao acúmulo de recompensas
+      return fuelQuote.price * ratio;
+    } catch (error) {
+      logger.error({ error }, 'Error calculating stFUEL price:');
+      return 0;
+    }
   }
 
-  private updateStFUELQuote(quotes: IQuote[], priceStFuel: number) {
-    const stFuelIndex = quotes.findIndex(q => q.assetId === tokensIDS.stFUEL);
-    if (stFuelIndex >= 0) quotes[stFuelIndex].price = priceStFuel;
+  /**
+   * Adiciona tokens derivados (como stFUEL) aos quotes base
+   * Facilita adicionar outros tokens derivados no futuro (ex: wstETH, rETH)
+   */
+  private async enrichWithDerivedTokens(quotes: IQuote[]): Promise<IQuote[]> {
+    const enriched = [...quotes];
+
+    // Adiciona stFUEL calculado dinamicamente
+    const stFuelPrice = await this.calculateStFUELPrice(quotes);
+    enriched.push({
+      assetId: tokensIDS.stFUEL,
+      price: stFuelPrice,
+    });
+
+    return enriched;
   }
 
   private async addQuotes(): Promise<void> {
     const { assets, assetsMapById, QuotesMock } = await getAssetsMaps();
 
+    let baseQuotes: IQuote[];
+
     if (isDevMode) {
-      const priceStFuel = await this.getStFUELQuote(QuotesMock);
-      this.updateStFUELQuote(QuotesMock, priceStFuel);
-
-      await this.addMockQuotes(QuotesMock);
-      return;
+      baseQuotes = QuotesMock;
+    } else {
+      const _assets = this.generateAssets(assets);
+      const params = this.generateParams(assetsMapById, assets);
+      baseQuotes = params ? await this.fetchQuotes(_assets, params) : [];
     }
 
-    const _assets = this.generateAssets(assets);
-    const params = this.generateParams(assetsMapById, assets);
+    // Adiciona tokens derivados (stFUEL, etc)
+    const allQuotes = await this.enrichWithDerivedTokens(baseQuotes);
 
-    if (params) {
-      const quotes = await this.fetchQuotes(_assets, params);
-
-      const priceStFuel = await this.getStFUELQuote(quotes);
-      this.updateStFUELQuote(quotes, priceStFuel);
-
-      await this.setQuotes(quotes);
-    }
+    // Salva todos os quotes no Redis
+    await this.setQuotes(allQuotes);
   }
 
   private generateAssets(assets: IAsset[]) {

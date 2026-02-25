@@ -3,7 +3,6 @@ import { IAuthRequest } from '@middlewares/auth/types';
 import { AuthStrategy } from './type';
 import { TokenUtils } from '@src/utils/token/utils';
 import { Network } from 'fuels';
-import { TypeUser } from '@src/models';
 
 export class TokenAuthStrategy implements AuthStrategy {
   async authenticate(

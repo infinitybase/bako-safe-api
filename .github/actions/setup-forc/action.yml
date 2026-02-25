@@ -1,13 +1,13 @@
-name: "Rust & Forc Setup"
+name: 'Rust & Forc Setup'
 
 inputs:
   rust-version:
     default: 1.81.0
   forc-components:
-    default: "forc@0.66.4, fuel-core@0.40.0"
+    default: 'forc@0.68.1, fuel-core@0.45.1'
 
 runs:
-  using: "composite"
+  using: 'composite'
   steps:
     - name: Install Rust toolchain
       uses: dtolnay/rust-toolchain@master

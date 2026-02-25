@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert';
 import App from '@src/server/app';
 import request from 'supertest';
-import { TypeUser } from '@src/models';
+import { TypeUser } from 'bakosafe';
 import { newUser } from '@src/tests/mocks/User';
 import { networks } from '@src/tests/mocks/Networks';
 

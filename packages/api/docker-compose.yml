@@ -1,4 +1,3 @@
-version: '3'
 services:
   api:
     container_name: ${API_NAME}

@@ -13,6 +13,7 @@ import {
   validateAddPredicatePayload,
   validatePredicateIdParams,
   validateTooglePredicatePayload,
+  validateUpdatePredicatePayload,
 } from './validations';
 
 const permissionMiddlewareById = predicatePermissionMiddleware({
@@ -23,9 +24,11 @@ const permissionMiddlewareById = predicatePermissionMiddleware({
 });
 
 const permissionMiddlewareByAddress = predicatePermissionMiddleware({
-  predicateSelector: req => ({
-    predicateAddress: req.params.address,
-  }),
+  predicateSelector: req => {
+    return {
+      predicateAddress: req.params.address,
+    };
+  },
   permissions: [PermissionRoles.OWNER, PermissionRoles.SIGNER],
 });
 
@@ -41,12 +44,21 @@ const {
   hasReservedCoins,
   checkByAddress,
   tooglePredicateVisibility,
+  update,
+  allocation,
+  checkPredicateBalances,
 } = new PredicateController(predicateService, notificationsService);
 
 router.use(authMiddleware);
 
 router.post('/', validateAddPredicatePayload, handleResponse(create));
 router.get('/', handleResponse(list));
+router.put(
+  '/:predicateId',
+  validatePredicateIdParams,
+  validateUpdatePredicatePayload,
+  handleResponse(update),
+);
 router.get(
   '/:predicateId',
   validatePredicateIdParams,
@@ -62,7 +74,7 @@ router.get(
 );
 router.get(
   '/by-address/:address',
-  permissionMiddlewareByAddress,
+  // permissionMiddlewareByAddress,
   handleResponse(findByAddress),
 );
 router.get('/check/by-address/:address', handleResponse(checkByAddress));
@@ -71,4 +83,16 @@ router.put(
   validateTooglePredicatePayload,
   handleResponse(tooglePredicateVisibility),
 );
+router.get(
+  '/:predicateId/allocation',
+  validatePredicateIdParams,
+  handleResponse(allocation),
+);
+router.get(
+  '/check-balances/:predicateId',
+  validatePredicateIdParams,
+  permissionMiddlewareById,
+  handleResponse(checkPredicateBalances),
+);
+
 export default router;

@@ -1,4 +1,5 @@
 import bodyParser from 'body-parser';
+import { logger } from '@src/config/logger';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import Express from 'express';
@@ -8,11 +9,17 @@ import { router } from '@src/routes';
 import { isDevMode } from '@src/utils';
 
 import { handleErrors } from '@middlewares/index';
-import { QuoteStorage, SessionStorage } from './storage';
+import {
+  QuoteStorage,
+  SessionStorage,
+  BalanceCache,
+  TransactionCache,
+} from './storage';
 import Monitoring from './monitoring';
 import Bootstrap from './bootstrap';
 import { RedisWriteClient, RedisReadClient, FuelProvider } from '@src/utils';
 import { RigInstance } from './storage/rig';
+import { webhookRawRouters } from '@src/modules/webhook/routes';
 
 class App {
   private static instance?: App;
@@ -20,10 +27,13 @@ class App {
   private readonly app: Express.Application;
   private sessionCache: SessionStorage;
   private quoteCache: QuoteStorage;
-  private rigCache: Promise<RigInstance>;
+  private rigCache: Promise<RigInstance> | null;
+  private balanceCache: BalanceCache;
+  private transactionCache: TransactionCache;
 
   protected constructor() {
     this.app = Express();
+    this.app.use('/webhooks', webhookRawRouters);
     this.initMiddlewares();
     this.initRoutes();
     this.setupMonitoring();
@@ -35,7 +45,18 @@ class App {
     // }
     this.sessionCache = SessionStorage.start();
     this.quoteCache = QuoteStorage.start();
-    this.rigCache = RigInstance.start();
+    this.balanceCache = BalanceCache.start();
+    this.transactionCache = TransactionCache.start();
+
+    // RIG is optional - only start if contract address is configured
+    if (process.env.RIG_ID_CONTRACT) {
+      this.rigCache = RigInstance.start();
+    } else {
+      this.rigCache = null;
+      logger.info(
+        '[APP] RIG_ID_CONTRACT not configured, skipping RIG initialization',
+      );
+    }
   }
 
   private initMiddlewares() {
@@ -78,6 +99,14 @@ class App {
     return this.rigCache;
   }
 
+  get _balanceCache() {
+    return this.balanceCache;
+  }
+
+  get _transactionCache() {
+    return this.transactionCache;
+  }
+
   static stop() {
     return Bootstrap.stop()
       .then(() => RedisWriteClient.stop())
@@ -85,12 +114,18 @@ class App {
       .then(() => FuelProvider.stop())
       .then(() => SessionStorage.stop())
       .then(() => QuoteStorage.stop())
-      .then(() => RigInstance.stop())
+      .then(() => {
+        if (process.env.RIG_ID_CONTRACT) {
+          return RigInstance.stop();
+        }
+      })
+      .then(() => BalanceCache.stop())
+      .then(() => TransactionCache.stop())
       .then(() => {
         App.instance = undefined;
       })
       .catch(error => {
-        console.error('[APP] Error stopping application:', error);
+        logger.error({ error: error }, '[APP] Error stopping application');
       });
   }
 

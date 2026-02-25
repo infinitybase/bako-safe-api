@@ -1,6 +1,6 @@
-import { TransactionStatus } from 'bakosafe';
+import { TypeUser } from 'bakosafe';
 
-import { Predicate, TypeUser, User, PermissionAccess } from '@src/models';
+import { User, PermissionAccess } from '@src/models';
 import { PermissionRoles, Workspace } from '@src/models/Workspace';
 import Internal from '@src/utils/error/Internal';
 import {

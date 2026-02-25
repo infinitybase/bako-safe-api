@@ -1,3 +1,4 @@
+import { logger } from '@src/config/logger';
 import { RedisReadClient } from '@src/utils/redis/RedisReadClient';
 import { RedisWriteClient } from '@src/utils/redis/RedisWriteClient';
 import { getDatabaseInstance } from '@src/config/connection';
@@ -12,7 +13,7 @@ export class HealthCheckService implements IHealthCheckService {
       const dataSource = await getDatabaseInstance();
 
       if (!dataSource || !dataSource.isInitialized) {
-        console.error('[HEALTH_CHECK_DATABASE] Database not initialized');
+        logger.error({}, '[HEALTH_CHECK_DATABASE] Database not initialized');
         throw new Error('Database not initialized');
       }
 
@@ -20,7 +21,7 @@ export class HealthCheckService implements IHealthCheckService {
 
       return { status: 'ok' };
     } catch (error) {
-      console.error('[HEALTH_CHECK_DATABASE]', error);
+      logger.error({ error }, '[HEALTH_CHECK_DATABASE]');
       throw error;
     }
   }
@@ -34,7 +35,7 @@ export class HealthCheckService implements IHealthCheckService {
 
       return { status: 'ok' };
     } catch (error) {
-      console.error('[HEALTH_CHECK_REDIS]', error);
+      logger.error({ error }, '[HEALTH_CHECK_REDIS]');
       throw error;
     }
   }

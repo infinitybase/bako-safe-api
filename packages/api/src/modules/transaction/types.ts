@@ -4,11 +4,17 @@ import {
   ITransferAsset,
   IWitnesses,
   TransactionStatus,
+  TypeUser,
 } from 'bakosafe';
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 import { Network, Receipt, TransactionRequest } from 'fuels';
 
-import { Predicate, Transaction, TransactionType, TypeUser } from '@models/index';
+import {
+  Predicate,
+  Transaction,
+  TransactionStatusWithRamp,
+  TransactionType,
+} from '@models/index';
 
 import { AuthValidatedRequest } from '@middlewares/auth/types';
 
@@ -59,7 +65,7 @@ export interface ICreateTransactionPayload {
   name: string;
   hash: string;
   predicateAddress: string;
-  status: TransactionStatus;
+  status: TransactionStatus | TransactionStatusWithRamp;
   txData: TransactionRequest;
   assets: {
     assetId: string;
@@ -149,6 +155,10 @@ interface IDeleteTransactionRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Params]: { id: string };
 }
 
+interface IDeleteTransactionByHashRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Params]: { hash: string };
+}
+
 interface ICloseTransactionRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Body]: ICloseTransactionBody;
   [ContainerTypes.Params]: { id: string };
@@ -224,6 +234,7 @@ export type ICreateTransactionRequest = AuthValidatedRequest<ICreateTransactionR
 export type ICreateTransactionHistoryRequest = AuthValidatedRequest<ICreateTransactionHistoryRequestSchema>;
 export type IUpdateTransactionRequest = AuthValidatedRequest<IUpdateTransactionRequestSchema>;
 export type IDeleteTransactionRequest = AuthValidatedRequest<IDeleteTransactionRequestSchema>;
+export type IDeleteTransactionByHashRequest = AuthValidatedRequest<IDeleteTransactionByHashRequestSchema>;
 export type ICloseTransactionRequest = AuthValidatedRequest<ICloseTransactionRequestSchema>;
 export type ICancelTransactionRequest = AuthValidatedRequest<ICancelTransactionRequestSchema>;
 export type ISendTransactionRequest = AuthValidatedRequest<ISendTransactionRequestSchema>;
@@ -258,6 +269,7 @@ export interface ITransactionService {
   findById: (id: string) => Promise<ITransactionResponse>;
   findByHash: (hash: string) => Promise<ITransactionResponse>;
   delete: (id: string) => Promise<boolean>;
+  deleteByHash: (hash: string) => Promise<boolean>;
   findAdvancedDetailById(id: string): Promise<ITransactionAdvancedDetail>;
 
   // graphql
@@ -279,4 +291,5 @@ export interface ITransactionService {
   checkInvalidConditions: (api_transaction: TransactionStatus) => void;
   validateSignature: (transaction: Transaction, userAddress: string) => boolean;
   listAll(): Promise<IPagination<Transaction>>;
+  invalidateCaches: (transaction: Transaction) => Promise<void>;
 }

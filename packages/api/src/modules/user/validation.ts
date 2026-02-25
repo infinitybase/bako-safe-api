@@ -1,7 +1,10 @@
+import { TransactionStatus, TransactionType } from 'bakosafe';
 import Joi from 'joi';
 
 import { AddressValidator, validator } from '@utils/index';
-import { Address } from 'fuels';
+
+const allowedStatus = Object.values(TransactionStatus);
+const allowedTypes = Object.values(TransactionType);
 
 export const PayloadCreateUserSchema = validator.body(
   Joi.object({
@@ -28,5 +31,25 @@ export const PayloadUpdateUserSchema = validator.body(
 export const FindUserByIDParams = validator.params(
   Joi.object({
     id: Joi.string().uuid(),
+  }),
+);
+
+export const ListUserTransactionsQuerySchema = validator.query(
+  Joi.object({
+    offsetDb: Joi.string().optional().default('0'),
+    offsetFuel: Joi.string().optional().default('0'),
+    perPage: Joi.string().optional().default('5'),
+    type: Joi.string()
+      .optional()
+      .valid(...allowedTypes),
+    status: Joi.array()
+      .items(Joi.string().valid(...allowedStatus))
+      .optional(),
+  }),
+);
+
+export const AllocationQuerySchema = validator.query(
+  Joi.object({
+    limit: Joi.number().integer().min(1).max(50).optional().default(5),
   }),
 );
