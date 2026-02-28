@@ -15,7 +15,7 @@
 		"@socket.io/redis-adapter": "^8.3.0",
 		"axios": "1.13.5",
 		"bakosafe": "0.6.0",
-		"date-fns": "2.30.0",
+		"date-fns": "4.1.0",
 		"express": "4.21.2",
 		"express-joi-validation": "5.0.0",
 		"fuels": "0.101.3",
