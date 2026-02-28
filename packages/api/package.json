@@ -67,7 +67,7 @@
     "pino": "9.6.0",
     "qs": "6.12.1",
     "redis": "4.7.0",
-    "reflect-metadata": "0.1.13",
+    "reflect-metadata": "0.2.2",
     "socket.io": "4.7.2",
     "socket.io-client": "4.7.5",
     "svix": "1.76.1",
