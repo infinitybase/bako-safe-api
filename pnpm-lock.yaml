@@ -105,8 +105,8 @@ importers:
         specifier: 4.21.2
         version: 4.21.2
       express-joi-validation:
-        specifier: 5.0.0
-        version: 5.0.0(joi@17.4.0)
+        specifier: 6.1.0
+        version: 6.1.0(joi@17.4.0)
       fuels:
         specifier: 0.101.3
         version: 0.101.3(vitest@3.0.9(@types/node@20.6.0)(tsx@4.21.0)(yaml@2.8.2))
@@ -303,8 +303,8 @@ importers:
         specifier: 4.21.2
         version: 4.21.2
       express-joi-validation:
-        specifier: 5.0.0
-        version: 5.0.0(joi@17.13.3)
+        specifier: 6.1.0
+        version: 6.1.0(joi@17.13.3)
       fuels:
         specifier: 0.101.3
         version: 0.101.3(vitest@3.0.9(@types/node@20.6.0)(tsx@4.21.0)(yaml@2.8.2))
@@ -3799,9 +3799,9 @@ packages:
     resolution: {integrity: sha512-2Zks0hf1VLFYI1kbh0I5jP3KHHyCHpkfyHBzsSXRFgl/Bg9mWYfMW8oD+PdMPlEwy5HNsR9JutYy6pMeOh61nw==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
 
-  express-joi-validation@5.0.0:
-    resolution: {integrity: sha512-R+jV2SYjoYCGqXRJkHHrCQ5mibwmdqqP04rgOFiCAfXJ21DfFKD8YxdONKimnFo95n83Au344Qq8jkzIxdsaPw==}
-    engines: {node: '>=10.0.0'}
+  express-joi-validation@6.1.0:
+    resolution: {integrity: sha512-dZ//ySohG3PHdtySaZMfQhE38iJUxuWCT0obsrDcjTP2nol8olFak3kaK2IxIHpAnOiPCZmsjZNCubhv1YXFPA==}
+    engines: {node: '>=18.0.0'}
     peerDependencies:
       joi: '17'
 
@@ -10526,11 +10526,11 @@ snapshots:
       jest-message-util: 29.7.0
       jest-util: 29.7.0
 
-  express-joi-validation@5.0.0(joi@17.13.3):
+  express-joi-validation@6.1.0(joi@17.13.3):
     dependencies:
       joi: 17.13.3
 
-  express-joi-validation@5.0.0(joi@17.4.0):
+  express-joi-validation@6.1.0(joi@17.4.0):
     dependencies:
       joi: 17.4.0
 
