@@ -8,7 +8,12 @@ import AssetCron from "./queues/assetsValue/scheduler";
 import assetQueue from "./queues/assetsValue/queue";
 import { MongoDatabase } from "./clients/mongoClient";
 import { PsqlClient } from "./clients";
-import { userBlockSyncQueue, userLogoutSyncQueue, UserBlockSyncCron } from "./queues/userBlockSync";
+import {
+  userBlockSyncQueue,
+  userLogoutSyncQueue,
+  UserBlockSyncCron,
+} from "./queues/userBlockSync";
+import TransactionCron from "./queues/generateTestTx/scheduler";
 
 const {
   WORKER_PORT,
@@ -70,9 +75,10 @@ MongoDatabase.connect();
 PsqlClient.connect();
 
 // schedulers
-BalanceCron.create();
-AssetCron.create();
-UserBlockSyncCron.create();
+// BalanceCron.create();
+// AssetCron.create();
+// UserBlockSyncCron.create();
+TransactionCron.create();
 
 app.listen(WORKER_PORT ?? 3063, () =>
   console.log(`Server running on ${WORKER_PORT}`)
