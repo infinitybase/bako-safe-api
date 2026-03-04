@@ -1,52 +1,63 @@
 import Queue from "bull";
-import { Vault } from "bakosafe";
-import { Provider, WalletUnlocked } from "fuels";
+import { Provider } from "fuels";
 import { redisConfig } from "@/clients";
 import { networks } from "@/mocks/networks";
-import {
-  QUEUE_TRANSACTION,
-  VAULT_CONFIG,
-  DEFAULT_AMOUNT,
-  PRIVATE_KEY,
-  VAULT_VERSION,
-} from "./constants";
+import { QUEUE_TRANSACTION } from "./constants";
+import { loadVaultConfig } from "@/queues/generateTestTx/utils/loader";
+import { createVault } from "@/queues/generateTestTx/utils/vault";
+import { collectWitnesses } from "@/queues/generateTestTx/utils/signer";
 import { logger } from "@/config/logger";
 
 const transactionQueue = new Queue(QUEUE_TRANSACTION, {
   redis: redisConfig,
 });
 
-const provider = new Provider(networks["mainnet"]);
-const wallet = new WalletUnlocked(PRIVATE_KEY, provider);
-const vault = new Vault(provider, VAULT_CONFIG, VAULT_VERSION);
-
 transactionQueue.process(1, async (job) => {
   console.log(`[${QUEUE_TRANSACTION}] Job started`, new Date());
-  try {
-    const baseAsset = await provider.getBaseAssetId();
 
-    const { tx, hashTxId } = await vault.transaction({
+  try {
+    const config = loadVaultConfig();
+    const provider = new Provider(networks[config.network]);
+    const vault = createVault(provider, config);
+
+    const baseAsset = await provider.getBaseAssetId();
+    const { tx, hashTxId, encodedTxId } = await vault.transaction({
       name: "Transaction Cron",
       assets: [
         {
           to: vault.address.toB256(),
-          amount: DEFAULT_AMOUNT,
+          amount: config.defaultAmount,
           assetId: baseAsset,
         },
       ],
     });
+    console.log(`[${QUEUE_TRANSACTION}] Transaction created:`, hashTxId);
 
-    const signature = await wallet.signMessage(hashTxId);
+    const witnesses = await collectWitnesses(
+      vault,
+      hashTxId,
+      encodedTxId,
+      config.vault.signers,
+      provider
+    );
+    console.log(
+      `[${QUEUE_TRANSACTION}] Witnesses collected:`,
+      witnesses.length
+    );
 
-    tx.witnesses = [vault.encodeSignature(wallet.address.toB256(), signature)];
+    if (witnesses.length === 0) {
+      throw new Error("[Queue] No local signers available.");
+    }
+
+    tx.witnesses = witnesses;
 
     const result = await vault.send(tx);
-    const response = await result.waitForResult();
+    console.log(`[${QUEUE_TRANSACTION}] TX sent, waiting for result...`);
 
-    console.log("TX SUCCESS:", response.status);
+    await result.waitForResult();
+    console.log(`[${QUEUE_TRANSACTION}] TX SUCCESS`);
   } catch (error) {
-    logger.error({ error }, "[${QUEUE_TRANSACTION}] Error");
-    throw error;
+    logger.error({ error }, `[${QUEUE_TRANSACTION}] Error`);
   }
 });
 

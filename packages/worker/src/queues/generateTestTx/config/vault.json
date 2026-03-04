@@ -1,0 +1,21 @@
+{
+  "vault": {
+    "signaturesCount": 2,
+    "hashPredicate": "0x223767a84816a4274981acd576fbce2aebae6cefddf4c398856582579e991f09",
+    "version": "0x967aaa71b3db34acd8104ed1d7ff3900e67cff3d153a0ffa86d85957f579aa6a",
+    "signers": [
+      {
+        "address": "0x2bba3b154de16722ddbdbf40843c8464f773638c5383c4aa46d69e611fb3e199",
+        "type": "fuel",
+        "privateKey": "0x096ee6d0fb5ce5654e2f3926f89020924d20e6ffbf27a7c68e9f9f8149eaa829"
+      },
+      {
+        "address": "0x000000000000000000000000dc1b8e7a80edb19a19ece2964bf293994499769a",
+        "type": "evm",
+        "privateKey": "106db0a48940725aa19c4ba00b48ff37ee9ff6c1bcac9cfbd83b290c01f961ce"
+      }
+    ]
+  },
+  "network": "mainnet",
+  "defaultAmount": "0.0000001"
+}

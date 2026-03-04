@@ -1,5 +1,5 @@
 import transactionQueue from "./queue";
-import { QUEUE_TRANSACTION, CRON_EXPRESSION } from "./constants";
+import { QUEUE_TRANSACTION, REPEAT_INTERVAL_MS } from "./constants";
 
 class TransactionCron {
   private static instance: TransactionCron;
@@ -21,24 +21,25 @@ class TransactionCron {
     try {
       this.isRunning = true;
 
+      await transactionQueue.obliterate({ force: true });
+
       await transactionQueue.add(
         {},
         {
           jobId: `startup-${QUEUE_TRANSACTION}`,
-          attempts: 3,
-          backoff: 5000,
+          attempts: 1,
           removeOnComplete: true,
-          priority: 1,
+          removeOnFail: false,
         }
       );
 
       await transactionQueue.add(
         {},
         {
-          repeat: { cron: CRON_EXPRESSION },
+          repeat: { every: REPEAT_INTERVAL_MS },
+          delay: REPEAT_INTERVAL_MS,
           jobId: "transaction-cron-recurrent",
-          attempts: 3,
-          backoff: 5000,
+          attempts: 1,
           removeOnComplete: true,
           removeOnFail: false,
         }
