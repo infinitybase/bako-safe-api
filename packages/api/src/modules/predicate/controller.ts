@@ -3,9 +3,6 @@ import { logger } from '@src/config/logger';
 
 import { Predicate } from '@src/models/Predicate';
 import { Workspace } from '@src/models/Workspace';
-import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
-
-import { NotificationTitle } from '@models/index';
 
 import { error, ErrorTypes, NotFound } from '@utils/error';
 import {
@@ -36,8 +33,8 @@ import {
   PredicateWithHidden,
 } from './types';
 
-import { NotificationService } from '../notification/services';
 import { PredicateService } from './services';
+
 const { FUEL_PROVIDER } = process.env;
 
 export class PredicateController {
@@ -103,48 +100,21 @@ export class PredicateController {
         '[PREDICATE_CREATE] Predicate created successfully',
       );
 
-      const notifyDestination = predicate.members.filter(
-        member => user.id !== member.id,
-      );
-      const notifyContent = {
-        vaultId: predicate.id,
-        vaultName: predicate.name,
-        workspaceId: effectiveWorkspace.id,
-      };
+      const membersToNotify = predicate.members
+        .filter(member => user.id !== member.id)
+        .map(member => member.id);
 
-      await Promise.all(
-        notifyDestination.map(async member => {
-          try {
-            await this.notificationService.create({
-              title: NotificationTitle.NEW_VAULT_CREATED,
-              user_id: member.id,
-              summary: notifyContent,
-              network,
-            });
-
-            if (member.notify && member.email) {
-              await sendMail(EmailTemplateType.VAULT_CREATED, {
-                to: member.email,
-                data: {
-                  summary: { ...notifyContent, name: member?.name ?? '' },
-                },
-              });
-            }
-          } catch (e) {
-            logger.error(
-              {
-                memberId: member?.id,
-                to: member.email,
-                predicateId: predicate.id,
-                error: e,
-              },
-              '[PREDICATE_CREATE] Failed to process member notification',
-            );
-          }
-        }),
-      );
-
-      await new NotificationService().vaultUpdate(predicate.id);
+      this.notificationService
+        .vaultCreate({
+          vaultId: predicate.id,
+          vaultName: predicate.name,
+          workspaceId: effectiveWorkspace.id,
+          network,
+          membersToNotify,
+        })
+        .catch(e =>
+          logger.error({ error: e }, '[PREDICATE_CREATE] Send notification failed'),
+        );
 
       return successful(predicate, Responses.Created);
     } catch (e) {

@@ -22,6 +22,7 @@ import {
   IUserPayload,
   IValidateNameResponse,
   IFindByNameResponse,
+  INotificationInfo,
 } from './types';
 
 import App from '@src/server/app';
@@ -437,6 +438,27 @@ export class UserService implements IUserService {
       throw new Internal({
         type: ErrorTypes.Internal,
         title: 'Error on check user balances',
+        detail: error?.message || error,
+      });
+    }
+  }
+
+  async getNotificationInfo(ids: string[]): Promise<INotificationInfo[]> {
+    if (ids.length === 0) {
+      return [];
+    }
+
+    try {
+      const users = await User.createQueryBuilder('u')
+        .select(['u.id', 'u.name', 'u.notify', 'u.email'])
+        .where('u.id IN (:...ids)', { ids })
+        .getMany();
+
+      return users;
+    } catch (error) {
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on get notification info',
         detail: error?.message || error,
       });
     }
