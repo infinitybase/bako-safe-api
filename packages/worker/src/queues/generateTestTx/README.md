@@ -83,7 +83,7 @@ VAULTCONFIG_SIGNER_2_KEY=0xYOUR_EVM_PRIVATE_KEY
 | `hashPredicate` | Hash of the vault predicate (obtained at deploy time) |
 | `version` | bakosafe predicate version |
 | `signers` | List of up to 10 signers |
-| `network` | Fuel network (`mainnet`, `testnet`) |
+| `network` | Fuel network (`mainnet`, `devnet`) |
 | `defaultAmount` | Amount to send in the transaction (in ETH) |
 
 ### Signer fields
