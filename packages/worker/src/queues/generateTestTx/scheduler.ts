@@ -1,5 +1,6 @@
 import transactionQueue from "./queue";
 import { QUEUE_TRANSACTION, REPEAT_INTERVAL_MS } from "./constants";
+import { logger } from "@/config/logger";
 
 class TransactionCron {
   private static instance: TransactionCron;
@@ -45,12 +46,12 @@ class TransactionCron {
         }
       );
 
-      console.log(
+      logger.info(
         `[${QUEUE_TRANSACTION}] Setup complete: Immediate job added & Cron scheduled.`
       );
     } catch (e) {
       this.isRunning = false;
-      console.error(`[${QUEUE_TRANSACTION}] Error in setup:`, e);
+      logger.error({ error: e }, `[${QUEUE_TRANSACTION}] Error in setup`);
     }
   }
 }

@@ -6,7 +6,7 @@ export enum SignerType {
 export interface SignerConfig {
   address: string;
   type: SignerType;
-  privateKey?: string;
+  envKey: string;
 }
 
 export interface VaultConfigFile {

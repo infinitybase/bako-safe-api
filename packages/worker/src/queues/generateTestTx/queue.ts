@@ -1,11 +1,13 @@
 import Queue from "bull";
-import { Provider } from "fuels";
+import { Provider, bn } from "fuels";
+import type { BN } from "fuels";
 import { redisConfig } from "@/clients";
 import { networks } from "@/mocks/networks";
 import { QUEUE_TRANSACTION } from "./constants";
 import { loadVaultConfig } from "@/queues/generateTestTx/utils/loader";
 import { createVault } from "@/queues/generateTestTx/utils/vault";
 import { collectWitnesses } from "@/queues/generateTestTx/utils/signer";
+import { estimateFeeWithBalance } from "@/queues/generateTestTx/utils/estimateFee";
 import { logger } from "@/config/logger";
 
 const transactionQueue = new Queue(QUEUE_TRANSACTION, {
@@ -13,13 +15,33 @@ const transactionQueue = new Queue(QUEUE_TRANSACTION, {
 });
 
 transactionQueue.process(1, async (job) => {
-  console.log(`[${QUEUE_TRANSACTION}] Job started`, new Date());
+  logger.info(`[${QUEUE_TRANSACTION}] Job started`);
+
+  let maxFee: BN | undefined;
+  let gasPrice: BN | undefined;
+  let balance: BN | undefined;
+
+  const config = loadVaultConfig();
+  logger.info(`[${QUEUE_TRANSACTION}] Network: ${config.network}`);
+
+  const provider = new Provider(networks[config.network]);
+  const vault = createVault(provider, config);
 
   try {
-    const config = loadVaultConfig();
-    const provider = new Provider(networks[config.network]);
-    const vault = createVault(provider, config);
+    ({ maxFee, gasPrice, balance } = await estimateFeeWithBalance(
+      vault,
+      config.defaultAmount
+    ));
+  } catch {
+    try {
+      const baseAssetId = await provider.getBaseAssetId();
+      const { coins } = await vault.getCoins(baseAssetId);
+      balance = coins.reduce((acc, c) => acc.add(c.amount), bn(0));
+      gasPrice = await provider.getLatestGasPrice();
+    } catch {}
+  }
 
+  try {
     const baseAsset = await provider.getBaseAssetId();
     const { tx, hashTxId, encodedTxId } = await vault.transaction({
       name: "Transaction Cron",
@@ -31,7 +53,7 @@ transactionQueue.process(1, async (job) => {
         },
       ],
     });
-    console.log(`[${QUEUE_TRANSACTION}] Transaction created:`, hashTxId);
+    logger.info(`[${QUEUE_TRANSACTION}] Transaction created: ${hashTxId}`);
 
     const witnesses = await collectWitnesses(
       vault,
@@ -40,9 +62,8 @@ transactionQueue.process(1, async (job) => {
       config.vault.signers,
       provider
     );
-    console.log(
-      `[${QUEUE_TRANSACTION}] Witnesses collected:`,
-      witnesses.length
+    logger.info(
+      `[${QUEUE_TRANSACTION}] Witnesses collected: ${witnesses.length}`
     );
 
     if (witnesses.length === 0) {
@@ -52,12 +73,41 @@ transactionQueue.process(1, async (job) => {
     tx.witnesses = witnesses;
 
     const result = await vault.send(tx);
-    console.log(`[${QUEUE_TRANSACTION}] TX sent, waiting for result...`);
+    logger.info(`[${QUEUE_TRANSACTION}] TX sent, waiting for result...`);
 
-    await result.waitForResult();
-    console.log(`[${QUEUE_TRANSACTION}] TX SUCCESS`);
+    const response = await result.waitForResult();
+    logger.info(`[${QUEUE_TRANSACTION}] TX SUCCESS`, {
+      status: response.status,
+      fee: response.fee?.toString(),
+    });
   } catch (error) {
-    logger.error({ error }, `[${QUEUE_TRANSACTION}] Error`);
+    const amountInUnits = bn.parseUnits(config.defaultAmount);
+
+    logger.error(
+      {
+        error:
+          error instanceof Error
+            ? {
+                message: error.message,
+                stack: error.stack,
+                name: error.name,
+              }
+            : String(error),
+        gas: {
+          maxFee: maxFee?.toString() ?? "unavailable",
+          gasPrice: gasPrice?.toString() ?? "unavailable",
+          balance: balance?.toString() ?? "unavailable",
+          totalRequired: maxFee
+            ? maxFee.add(amountInUnits).toString()
+            : "unavailable",
+          isInsufficient:
+            maxFee && balance
+              ? balance.lt(maxFee.add(amountInUnits))
+              : "unavailable",
+        },
+      },
+      `[${QUEUE_TRANSACTION}] Error`
+    );
   }
 });
 

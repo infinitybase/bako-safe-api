@@ -14,7 +14,7 @@ src/queues/generateTestTx/
 │   └── ...
 ├── utils/
 │   ├── loader.ts            # Reads and validates the selected JSON
-│   ├── vault.factory.ts     # Instantiates the Vault from the config
+│   ├── vault.ts             # Instantiates the Vault from the config
 │   └── signer.ts            # Signs the transaction by network type (Fuel/EVM)
 ├── types.ts                 # Shared interfaces and enums
 ├── constants.ts             # Queue constants and execution interval
@@ -27,16 +27,16 @@ src/queues/generateTestTx/
 ## How it works
 
 1. When the worker starts, `TransactionCron` clears old jobs from Redis and schedules two jobs:
-    - **Immediate** — runs as soon as the worker starts
-    - **Recurring** — runs at every interval defined in `REPEAT_INTERVAL_MS`, with an initial delay to avoid colliding with the immediate job
+   - **Immediate** — runs as soon as the worker starts
+   - **Recurring** — runs at every interval defined in `REPEAT_INTERVAL_MS`, with an initial delay to avoid colliding with the immediate job
 
-2. On each execution, `loader.ts` randomly picks a JSON file from the `config/` folder, avoiding repeating the last used vault.
+2. On each execution, `loader.ts` randomly picks a JSON file from the `config/` folder, avoiding repeating the last used vault. The JSON is validated with **Zod** on every read — invalid configs throw a descriptive error.
 
-3. With the config loaded, `vault.factory.ts` instantiates the `Vault` from the `bakosafe` SDK with the configured signers, padded to 10 positions as required by the predicate.
+3. With the config loaded, `vault.ts` instantiates the `Vault` from the `bakosafe` SDK with the configured signers, padded to 10 positions as required by the predicate.
 
-4. `signer.ts` iterates over the signers and signs the `hashTxId` for each one that has a `privateKey` defined. External signers (without `privateKey`) are silently skipped.
+4. `signer.ts` iterates over the signers and loads each private key from the environment variable defined in `envKey`. Signers whose environment variable is not set are silently skipped.
 
-5. The transaction is sent with the collected witnesses. If an error occurs, the logger records it and the job is marked as failed in Redis (no retries).
+5. The transaction is sent with the collected witnesses. If an error occurs, the logger records it along with gas estimation details and the job is marked as failed in Redis (no retries).
 
 ---
 
@@ -54,18 +54,25 @@ Create a `.json` file inside `src/queues/generateTestTx/config/`. The filename c
       {
         "address": "0x2bba3b154de16722ddbdbf40843c8464f773638c5383c4aa46d69e611fb3e199",
         "type": "fuel",
-        "privateKey": "0xYOUR_FUEL_PRIVATE_KEY"
+        "envKey": "VAULTCONFIG_SIGNER_1_KEY"
       },
       {
         "address": "0xAbCdEf1234567890abcdef1234567890abcdef12",
         "type": "evm",
-        "privateKey": "0xYOUR_EVM_PRIVATE_KEY"
+        "envKey": "VAULTCONFIG_SIGNER_2_KEY"
       }
     ]
   },
   "network": "mainnet",
   "defaultAmount": "0.000000001"
 }
+```
+
+Then add the corresponding private keys to your `.env` file:
+
+```env
+VAULTCONFIG_SIGNER_1_KEY=0xYOUR_FUEL_PRIVATE_KEY
+VAULTCONFIG_SIGNER_2_KEY=0xYOUR_EVM_PRIVATE_KEY
 ```
 
 ### Fields
@@ -85,9 +92,9 @@ Create a `.json` file inside `src/queues/generateTestTx/config/`. The filename c
 |---|---|
 | `address` | B256 address for Fuel, `0x` address for EVM |
 | `type` | Network type: `fuel` or `evm` |
-| `privateKey` | Local private key. Omit for external signers |
+| `envKey` | Name of the environment variable that holds the private key for this signer |
 
-> **Important:** the `address` and `privateKey` must be from the same cryptographic key pair. If they don't match, the predicate will reject the signature.
+> **Important:** the `address` must correspond to the private key stored in the environment variable defined by `envKey`. If they don't match, the predicate will reject the signature.
 
 ---
 
@@ -101,7 +108,7 @@ Signs using `WalletUnlocked` from the `fuels` SDK directly with the `hashTxId`.
 {
   "address": "0x2bba3b...",
   "type": "fuel",
-  "privateKey": "0xYOUR_FUEL_KEY"
+  "envKey": "VAULT_1_SIGNER_1_KEY"
 }
 ```
 
@@ -113,18 +120,19 @@ Signs using `ethers.Wallet`. The message format is automatically detected based 
 {
   "address": "0xAbCdEf...",
   "type": "evm",
-  "privateKey": "0xYOUR_EVM_KEY"
+  "envKey": "VAULT_1_SIGNER_2_KEY"
 }
 ```
 
-### External signer (no `privateKey`)
+### External signer (no env key set)
 
-Any signer without a `privateKey` is skipped by the cron. Use this pattern to register real user addresses in the vault — the address must be in the signers array for the predicate to recognize it, but the signature is not collected automatically.
+If the environment variable defined in `envKey` is not set, the signer is skipped by the cron. Use this pattern to register real user addresses in the vault — the address must be in the signers array for the predicate to recognize it, but the signature is not collected automatically.
 
 ```json
 {
   "address": "0xUserAddress...",
-  "type": "fuel"
+  "type": "fuel",
+  "envKey": "VAULT_1_USER_KEY"
 }
 ```
 
@@ -133,7 +141,7 @@ Any signer without a `privateKey` is skipped by the cron. Use this pattern to re
 ## Adding a new vault
 
 1. Create a new JSON file in the `config/` folder following the model above
-2. Fill in the signers with the vault's addresses and keys
+2. Set `envKey` for each signer and add the corresponding private keys to `.env`
 3. Make sure the vault has enough balance to cover the gas fee
 4. No worker restart needed — the loader reads the files on every execution
 
@@ -141,19 +149,46 @@ Any signer without a `privateKey` is skipped by the cron. Use this pattern to re
 
 ## Interval configuration
 
-In `constants.ts`:
+The execution interval can be set via environment variable:
 
-```typescript
-export const REPEAT_INTERVAL_MS = 1 * 60 * 1000; // 1 minute
+```env
+TRANSACTION_CRON_INTERVAL_MS=1200000
 ```
 
-Change the value to adjust the execution frequency. The interval is always relative to the last execution, not the system clock.
+If not set, it defaults to 20 minutes. The interval is always relative to the last execution, not the system clock.
+
+---
+
+## Error logs
+
+Every failed job logs a structured `gas` field alongside the error to help diagnose the failure:
+
+```json
+{
+  "error": { "message": "...", "name": "FuelError" },
+  "gas": {
+    "maxFee": "1500",
+    "gasPrice": "1",
+    "balance": "800",
+    "isInsufficient": true
+  }
+}
+```
+
+| Field | Description |
+|---|---|
+| `maxFee` | Estimated maximum fee for the transaction |
+| `gasPrice` | Current network gas price |
+| `balance` | Current vault balance |
+| `isInsufficient` | `true` if balance is lower than the estimated fee |
+
+All fields show `"unavailable"` when the error occurs before the vault balance can be fetched.
 
 ---
 
 ## Important notes
 
-- **Balance:** Each vault must have enough balance to cover gas. If the balance is insufficient, the job fails and the error is recorded by the logger.
-- **Private keys:** Never commit `.json` files with a `privateKey` filled in. Use environment variables or a secret manager to inject values in production.
+- **Balance:** Each vault must have enough balance to cover gas. If the balance is insufficient, the job fails and the error is recorded by the logger with gas details.
+- **Private keys:** Never put private keys directly in JSON config files. Always use environment variables via `envKey`. Never commit `.env` files with real values — use `.env.example` as a reference.
 - **Redis:** Failed jobs are stored in Redis for inspection via Bull Dashboard. Successful jobs are automatically removed.
 - **SDK version:** The worker uses `bakosafe` + `fuels`. If the network's `fuel-core` version differs from what the SDK supports, a compatibility warning may appear in the logs — it does not block execution, but keeping the SDK up to date is recommended.

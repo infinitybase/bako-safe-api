@@ -4,6 +4,8 @@ import { VaultConfigFile } from "@/queues/generateTestTx/types";
 
 type VaultConfigurable = ConstructorParameters<typeof Vault>[1];
 
+// The Fuel predicate requires exactly 10 positions in the signers array.
+// Unused positions are filled with zeros.
 const MAX_SIGNERS = 10;
 const ZERO = "0x0000000000000000000000000000000000000000000000000000000000000000";
 

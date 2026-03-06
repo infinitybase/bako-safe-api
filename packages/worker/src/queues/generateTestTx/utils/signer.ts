@@ -16,16 +16,18 @@ export async function signWithSigner(
   signer: SignerConfig,
   provider: Provider
 ): Promise<SignResult | null> {
-  if (!signer.privateKey) {
+  const privateKey = process.env[signer.envKey];
+
+  if (!privateKey) {
     console.warn(
-      `[${QUEUE_TRANSACTION}] Skipping external signer (no privateKey): ${signer.address} [${signer.type}]`
+      `[${QUEUE_TRANSACTION}] No private key found for env "${signer.envKey}" — skipping signer ${signer.address} [${signer.type}]`
     );
     return null;
   }
 
   switch (signer.type) {
     case SignerType.FUEL: {
-      const wallet = new WalletUnlocked(signer.privateKey, provider);
+      const wallet = new WalletUnlocked(privateKey, provider);
       const signature = await wallet.signMessage(hashTxId);
       return {
         address: signer.address,
@@ -34,7 +36,7 @@ export async function signWithSigner(
     }
 
     case SignerType.EVM: {
-      const evmWallet = new ethers.Wallet(signer.privateKey);
+      const evmWallet = new ethers.Wallet(privateKey);
 
       const messageToSign = encodedTxId.startsWith("0x")
         ? arrayify(stringToHex(hashTxId))
