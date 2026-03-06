@@ -162,6 +162,7 @@ export class NotificationService implements INotificationService {
   }: IVaultCreateNotificationPayload) {
     try {
       if (membersToNotify.length === 0) {
+        logger.info('[VAULT_CREATE] No members to notify, skipping notifications');
         return;
       }
 
