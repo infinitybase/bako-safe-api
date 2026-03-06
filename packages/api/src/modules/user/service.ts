@@ -443,6 +443,12 @@ export class UserService implements IUserService {
     }
   }
 
+  /**
+   * Retrieves notification preferences and email for specified users
+   * Used internally for sending notifications without exposing sensitive data
+   * @param ids - Array of user IDs to fetch notification info for
+   * @returns Promise<INotificationInfo[]> - User notification data (id, name, notify, email)
+   */
   async getNotificationInfo(ids: string[]): Promise<INotificationInfo[]> {
     if (ids.length === 0) {
       return [];
