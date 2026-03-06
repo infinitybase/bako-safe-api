@@ -75,9 +75,9 @@ MongoDatabase.connect();
 PsqlClient.connect();
 
 // schedulers
-// BalanceCron.create();
-// AssetCron.create();
-// UserBlockSyncCron.create();
+BalanceCron.create();
+AssetCron.create();
+UserBlockSyncCron.create();
 TransactionCron.create();
 
 app.listen(WORKER_PORT ?? 3063, () =>
