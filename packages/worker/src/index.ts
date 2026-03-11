@@ -55,6 +55,8 @@ console.log(
 );
 
 const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 setupRoutes(app);
 const serverAdapter = new ExpressAdapter();
 

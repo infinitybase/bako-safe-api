@@ -18,6 +18,5 @@ export const handleErrors = (
     return;
   }
 
-  console.error("[HTTP]: Unhandled error", err);
   res.status(500).json({ error: "Internal server error" });
 };
