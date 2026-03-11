@@ -14,6 +14,7 @@ import {
   UserBlockSyncCron,
 } from "./queues/userBlockSync";
 import { GaslessUtxoCleanup } from "@/queues/gaslessUtxos/gaslessUtxoCleanup";
+import { setupRoutes } from "@/http";
 
 const {
   WORKER_PORT,
@@ -54,6 +55,7 @@ console.log(
 );
 
 const app = express();
+setupRoutes(app);
 const serverAdapter = new ExpressAdapter();
 
 createBullBoard({
