@@ -6,8 +6,9 @@ import { IDefaultOrdination } from '@src/utils/ordination';
 import { IPagination, PaginationParams } from '@src/utils/pagination';
 
 import { Predicate, User } from '@models/index';
+import { IAssetMapById } from '@src/utils';
+import { BN, Network } from 'fuels';
 import { IPredicateOrdination } from './ordination';
-import { Network } from 'fuels';
 
 export enum OrderBy {
   name = 'name',
@@ -69,6 +70,34 @@ export interface IEndCursorPayload {
     };
   };
 }
+export interface AssetAllocation {
+  assetId: string | null; // null for "others"
+  amount: BN;
+  amountInUSD: number;
+  percentage: number;
+}
+export interface PredicateAllocationInfo {
+  id: string;
+  name: string;
+  address: string;
+  members: number; // total signers count
+  minSigners: number; // required signatures
+  amountInUSD: number;
+}
+
+export interface IPredicateAllocation {
+  data: AssetAllocation[];
+  totalAmountInUSD: number;
+  predicates: PredicateAllocationInfo[];
+}
+
+export interface IPredicateAllocationParams {
+  user: User;
+  predicateId?: string;
+  network: Network;
+  assetsMap: IAssetMapById;
+  limit?: number; // Max number of vaults to process (ordered by most recent tx)
+}
 
 interface ICreatePredicateRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Body]: IPredicatePayload;
@@ -79,8 +108,8 @@ interface ITooglePredicateRequestSchema extends ValidatedRequestSchema {
 }
 
 interface IUpdatePredicateRequestSchema extends ValidatedRequestSchema {
-  [ContainerTypes.Body]: IPredicatePayload;
-  [ContainerTypes.Params]: { id: string };
+  [ContainerTypes.Body]: Pick<IPredicatePayload, 'name' | 'description'>;
+  [ContainerTypes.Params]: { predicateId: string };
 }
 
 interface IDeletePredicateRequestSchema extends ValidatedRequestSchema {
@@ -98,6 +127,9 @@ interface IFindByNameRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Params]: {
     name: string;
   };
+  [ContainerTypes.Query]: {
+    ignoreId?: string;
+  };
 }
 
 interface IListRequestSchema extends ValidatedRequestSchema {
@@ -113,7 +145,20 @@ interface IListRequestSchema extends ValidatedRequestSchema {
     sort: Sort;
     page: string;
     perPage: string;
-    hidden?: boolean;
+    hidden?: string;
+    d?: string;
+  };
+}
+
+interface IGetAllocationRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Params]: {
+    predicateId: string;
+  };
+}
+
+interface ICheckPredicateBalancesRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Params]: {
+    predicateId: string;
   };
 }
 
@@ -139,6 +184,8 @@ export type PredicateWithHidden = Omit<
 > & {
   isHidden: boolean;
 };
+export type IGetAllocationRequest = AuthValidatedRequest<IGetAllocationRequestSchema>;
+export type ICheckPredicateBalancesRequest = AuthValidatedRequest<ICheckPredicateBalancesRequestSchema>;
 
 export interface IPredicateService {
   ordination(ordination?: IPredicateOrdination): this;
@@ -151,7 +198,7 @@ export interface IPredicateService {
     user: User,
     workspace: Workspace,
   ) => Promise<Predicate>;
-  update: (id: string, payload: IPredicatePayload) => Promise<Predicate>;
+  update: (id: string, payload?: Partial<IPredicatePayload>) => Promise<Predicate>;
   delete: (id: string) => Promise<boolean>;
   findById: (id: string, signer?: string) => Promise<Predicate>;
   list: () => Promise<IPagination<Predicate> | Predicate[]>;
@@ -167,4 +214,10 @@ export interface IPredicateService {
     address: string,
     authorization: string,
   ) => Promise<string[]>;
+  allocation: (params: IPredicateAllocationParams) => Promise<IPredicateAllocation>;
+  checkBalances: (params: {
+    predicateId: string;
+    userId: string;
+    network: Network;
+  }) => Promise<void>;
 }

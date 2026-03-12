@@ -1,47 +1,58 @@
 import { addMinutes } from 'date-fns';
 
-import { Predicate, RecoverCode, RecoverCodeType } from '@src/models';
+import {
+  Predicate,
+  RecoverCode,
+  RecoverCodeType,
+  TransactionStatus,
+  TransactionType,
+} from '@src/models';
 import { User } from '@src/models/User';
 import { bindMethods } from '@src/utils/bindMethods';
 
 import {
   BadRequest,
+  error,
   ErrorTypes,
   Unauthorized,
   UnauthorizedErrorTitles,
-  error,
 } from '@utils/error';
 import { IconUtils } from '@utils/icons';
-import { Responses, successful, TokenUtils } from '@utils/index';
+import { getAssetsMaps, Responses, successful, TokenUtils } from '@utils/index';
 
+import App from '@src/server/app';
+import { FuelProvider } from '@src/utils/FuelProvider';
+import { Not } from 'typeorm';
+import { IChangenetworkRequest } from '../auth/types';
 import { PredicateService } from '../predicate/services';
+import { PredicateWithHidden } from '../predicate/types';
 import { RecoverCodeService } from '../recoverCode/services';
 import { TransactionService } from '../transaction/services';
+import { mergeTransactionLists } from '../transaction/utils';
 import { UserService } from './service';
 import {
+  IAllocationRequest,
   ICheckHardwareRequest,
   ICheckNicknameRequest,
+  ICheckUserBalancesRequest,
   ICreateRequest,
   IDeleteRequest,
   IFindByNameRequest,
   IFindOneRequest,
   IListRequest,
+  IListUserTransactionsRequest,
   IMeInfoRequest,
   IMeRequest,
   IUpdateRequest,
   IUserService,
 } from './types';
-import { Not } from 'typeorm';
-import App from '@src/server/app';
-import { IChangenetworkRequest } from '../auth/types';
-import { FuelProvider } from '@src/utils/FuelProvider';
-import { PredicateWithHidden } from '../predicate/types';
+import { logger } from '@src/config/logger';
 
 export class UserController {
-  private userService: IUserService;
-
-  constructor(userService: IUserService) {
-    this.userService = userService;
+  constructor(
+    private userService: IUserService,
+    private transactionService: TransactionService,
+  ) {
     bindMethods(this);
   }
 
@@ -76,28 +87,61 @@ export class UserController {
     );
   }
 
-  async meTransactions(req: IMeRequest) {
+  async meTransactions(req: IListUserTransactionsRequest) {
     try {
-      const { type } = req.query;
+      const { type, status, offsetDb, offsetFuel, perPage } = req.query;
       const { user, network } = req;
 
-      const transactions = await new TransactionService()
+      const ordination = { orderBy: 'createdAt', sort: 'DESC' } as const;
+
+      const transactions = await this.transactionService
         .filter({
           type,
           signer: user.address,
           network: network.url,
+          status,
         })
-        .paginate({ page: '0', perPage: '6' })
-        .ordination({ orderBy: 'createdAt', sort: 'DESC' })
-        .list();
+        .transactionPaginate({ offsetDb, offsetFuel, perPage })
+        .ordination(ordination)
+        .listWithIncomings();
 
-      return successful(
-        transactions,
+      const shouldFetchFuelTxs =
+        (type === TransactionType.DEPOSIT || !type) &&
+        (status
+          ? !status.find(item => item === TransactionStatus.AWAIT_REQUIREMENTS) // dont fetch fuel txs if filtering by AWAIT_REQUIREMENTS status
+          : true);
 
-        Responses.Ok,
-      );
+      let fuelTxs = [];
+      if (shouldFetchFuelTxs) {
+        const predicates = await new PredicateService()
+          .filter({
+            owner: user.id,
+          })
+          // get the latest used predicates
+          .paginate({ page: '0', perPage: '6' })
+          .ordination({ orderBy: 'updatedAt', sort: 'DESC' })
+          .list()
+          .then(res => (Array.isArray(res) ? res : res.data));
+
+        fuelTxs = await this.transactionService
+          .transactionPaginate({
+            perPage,
+            offsetDb,
+            offsetFuel,
+          })
+          .fetchFuelTransactions(predicates, network.url);
+      }
+
+      const response = mergeTransactionLists(transactions, fuelTxs, {
+        offsetDb,
+        offsetFuel,
+        ordination,
+        perPage,
+      });
+
+      return successful(response, Responses.Ok);
     } catch (e) {
-      return error(e.error, e.statusCode);
+      return error(e.error ?? e, e.statusCode);
     }
   }
 
@@ -105,23 +149,12 @@ export class UserController {
     const { user, workspace, network } = req;
     return successful(
       {
-        id: user.id,
-        name: user.name,
-        type: user.type,
-        avatar: user.avatar,
-        address: user.address,
-        webauthn: user.webauthn,
-        first_login: user.first_login,
+        ...user,
         network,
-        settings: user.settings,
         onSingleWorkspace:
           workspace.single && workspace.name.includes(`[${user.id}]`),
         workspace: {
-          id: workspace.id,
-          name: workspace.name,
-          avatar: workspace.avatar,
-          single: workspace.single,
-          description: workspace.description,
+          ...workspace,
           permission: workspace.permissions[user.id],
         },
       },
@@ -277,7 +310,7 @@ export class UserController {
 
       return successful(code, Responses.Created);
     } catch (e) {
-      console.log(e);
+      logger.error({ error: e }, '[USER_CREATE]');
       return error(e.error, e.statusCode);
     }
   }
@@ -363,20 +396,84 @@ export class UserController {
 
   async changeNetwork({ user, body }: IChangenetworkRequest) {
     const { network } = body;
-    const result = await TokenUtils.changeNetwork(user.id, network);
+    const updatedNetwork = await TokenUtils.changeNetwork(user.id, network);
 
-    return successful(!!result, Responses.Ok);
+    return successful(updatedNetwork, Responses.Ok);
   }
 
   async listAll(req: IListRequest) {
     try {
       const { page, perPage } = req.query;
       const response = await this.userService
-        .paginate({ page: page || 0, perPage: perPage || 30 })
+        .paginate({ page: page || '0', perPage: perPage || '30' })
         .listAll();
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
+    }
+  }
+
+  async wallet(req: IMeRequest) {
+    try {
+      const { user } = req;
+
+      const personalVault = await Predicate.findOne({
+        where: {
+          owner: { id: user.id },
+          root: true,
+        },
+      });
+
+      if (!personalVault) {
+        return successful(
+          {
+            message: 'Personal Account not found',
+            wallet: null,
+          },
+          Responses.Ok,
+        );
+      }
+
+      return successful(
+        {
+          address: personalVault.predicateAddress,
+          configurable: personalVault.configurable,
+          version: personalVault.version,
+        },
+        Responses.Ok,
+      );
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async allocation({ user, network, query }: IAllocationRequest) {
+    try {
+      const { limit } = query;
+
+      const allocation = await new PredicateService().allocation({
+        user,
+        network,
+        assetsMap: (await getAssetsMaps()).assetsMapById,
+        limit,
+      });
+
+      return successful(allocation, Responses.Ok);
+    } catch (e) {
+      return error(e.error ?? e, e.statusCode);
+    }
+  }
+
+  async checkUserBalances({ user, workspace, network }: ICheckUserBalancesRequest) {
+    try {
+      await this.userService.checkBalances({
+        userId: user.id,
+        workspaceId: workspace.id,
+        network,
+      });
+      return successful(null, Responses.Ok);
+    } catch (e) {
+      return error(e.error || e, e.statusCode);
     }
   }
 }

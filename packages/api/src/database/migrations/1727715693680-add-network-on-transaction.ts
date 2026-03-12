@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { Provider } from 'fuels';
 import { MigrationInterface, QueryRunner, TableColumn } from 'typeorm';
 
@@ -15,9 +16,10 @@ export class AddNetworkOnTransaction1727715693680 implements MigrationInterface 
     );
 
     const provider = new Provider(FUEL_PROVIDER);
+    await provider.init();
     const network = {
       url: provider.url,
-      chainId: await provider.getChainId(),
+      chainId: await provider.getChainId().catch(() => 0),
     };
 
     const networkString = JSON.stringify(network);

@@ -88,8 +88,17 @@ interface IDappRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Headers]: { origin?: string; Origin?: string };
 }
 
+interface IChangeAccountRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Params]: {
+    sessionId: string;
+    vault: string; // predicateAddress or id
+  };
+  [ContainerTypes.Headers]: { origin: string };
+}
+
 export type ICreateRecoverCodeRequest = UnloggedRequest<ICreateRecoverCodeSchema>;
 export type IConfirmTxRequest = AuthValidatedRequest<IConfirmTx>;
 export type ICreateRequest = AuthValidatedRequest<ICreateRequestSchema>;
+export type IChangeAccountRequest = AuthValidatedRequest<IChangeAccountRequestSchema>;
 export type IDappRequest = AuthValidatedRequest<IDappRequestSchema>;
 export type IChangeNetworkRequest = AuthValidatedRequest<IChangeNetork>;

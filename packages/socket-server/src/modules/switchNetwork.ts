@@ -3,6 +3,7 @@ import { Network, SelectNetworkArguments, TransactionRequestLike } from 'fuels'
 import { Socket } from 'socket.io'
 import { DatabaseClass } from '@utils/database'
 import { DappService, PredicateService } from '@src/services'
+import { logger } from '@src/config/logger'
 
 export interface IEventSwitchNetwork_REQUEST {
 	_network: SelectNetworkArguments
@@ -44,14 +45,7 @@ export class SwitchNetworkEventHandler {
 			const { _network } = data
 
 			const dapp = await this.dappService.getBySessionIdWithPredicate(auth.sessionId)
-			console.log(
-				'[DAPP]: ',
-				JSON.stringify({
-					dapp,
-					origin,
-					host,
-				}),
-			)
+			logger.info({ dapp, origin, host }, '[DAPP]')
 			const isValid = dapp && dapp.origin === origin
 			if (!isValid) return
 
@@ -87,7 +81,7 @@ export class SwitchNetworkEventHandler {
 				},
 			})
 		} catch (e) {
-			console.log(e)
+			logger.error({ error: e }, 'Error in requestSwitchNetwork')
 		}
 	}
 

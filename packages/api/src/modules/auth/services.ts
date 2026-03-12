@@ -1,4 +1,5 @@
 import UserToken from '@models/UserToken';
+import { logger } from '@src/config/logger';
 import { Predicate, User } from '@models/index';
 
 import { ErrorTypes } from '@utils/error/GeneralError';
@@ -68,7 +69,7 @@ export class AuthService implements IAuthService {
 
     const { user, workspace, ...token } = tokenResult;
 
-    // console.log('[FIND_TOKEN_INFO]: ', { user, workspace, token });
+    // logger.info({ data: { user, workspace, token } }, '[FIND_TOKEN_INFO]: ');
     const QBPredicate = Predicate.createQueryBuilder('p')
       .innerJoin('p.owner', 'owner')
       .select(['p.id', 'p.root', 'owner.id'])
@@ -123,7 +124,7 @@ export class AuthService implements IAuthService {
 
       return removedUsers.map(user => user.token);
     } catch (e) {
-      console.log('[CLEAR_EXPIRED_TOKEN_ERROR]', e);
+      logger.error({ data: e }, '[CLEAR_EXPIRED_TOKEN_ERROR]');
     }
   }
 }

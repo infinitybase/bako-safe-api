@@ -1,18 +1,18 @@
 import { Router } from 'express';
 
-import { handleResponse } from '@src/utils';
 import { externAuthMiddleware } from '@src/middlewares';
+import { handleResponse } from '@src/utils';
 
-import { PredicateService } from '../predicate/services';
+import { AddressBookService } from '../addressBook/services';
 import { NotificationService } from '../notification/services';
 import { PredicateController } from '../predicate/controller';
+import { PredicateService } from '../predicate/services';
 import { QuoteController } from '../quote/controller';
 import { QuoteService } from '../quote/services';
+import { TransactionController } from '../transaction/controller';
+import { TransactionService } from '../transaction/services';
 import { UserController } from '../user/controller';
 import { UserService } from '../user/service';
-import { TransactionService } from '../transaction/services';
-import { TransactionController } from '../transaction/controller';
-import { AddressBookService } from '../addressBook/services';
 
 const router = Router();
 
@@ -28,7 +28,7 @@ const predicateContoller = new PredicateController(
   notificationsService,
 );
 const quoteController = new QuoteController(quoteService);
-const userController = new UserController(userService);
+const userController = new UserController(userService, txService);
 const txController = new TransactionController(
   txService,
   predicateService,

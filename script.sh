@@ -2,6 +2,8 @@
 
 set -e
 
+export DOCKER_API_VERSION="${DOCKER_API_VERSION:-1.44}"
+
 # Ensure Docker network exists
 ensure_network() {
   local NETWORK_NAME="bako-network"

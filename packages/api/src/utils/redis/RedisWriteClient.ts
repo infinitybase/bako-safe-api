@@ -1,4 +1,5 @@
 import { RedisClientType, createClient } from 'redis';
+import { logger } from '@src/config/logger';
 import { RedisMockStore } from './redis-test-mock';
 
 const REDIS_URL_WRITE = process.env.REDIS_URL_WRITE || 'redis://127.0.0.1:6379';
@@ -22,7 +23,7 @@ export class RedisWriteClient {
       try {
         await RedisWriteClient.client.connect();
       } catch (e) {
-        console.error('[REDIS WRITE CONNECT ERROR]', e);
+        logger.error({ error: e }, '[REDIS WRITE CONNECT ERROR]');
         process.exit(1);
       }
     }
@@ -35,7 +36,7 @@ export class RedisWriteClient {
       try {
         await RedisWriteClient.client.disconnect();
       } catch (e) {
-        console.error('[REDIS WRITE DISCONNECT ERROR]', e);
+        logger.error({ error: e }, '[REDIS WRITE DISCONNECT ERROR]');
         process.exit(1);
       }
     }
@@ -51,7 +52,7 @@ export class RedisWriteClient {
         EX: 60 * 40, // 40 min
       });
     } catch (e) {
-      console.error('[CACHE_SET_ERROR]', e, key, value);
+      logger.error({ error: e, key, value }, '[CACHE_SET_ERROR]');
     }
   }
 
@@ -74,7 +75,7 @@ export class RedisWriteClient {
       await RedisWriteClient.client.hSet(key, fields.flat());
       await RedisWriteClient.client.expire(key, 60 * 40); // 40 min
     } catch (e) {
-      console.error('[CACHE_HMSET_ERROR]', e, key, values);
+      logger.error({ error: e, key, values }, '[CACHE_HMSET_ERROR]');
     }
   }
 
@@ -89,7 +90,60 @@ export class RedisWriteClient {
 
       await RedisWriteClient.client.del(keys);
     } catch (e) {
-      console.error('[CACHE_SESSIONS_REMOVE_ERROR]', e, keys);
+      logger.error({ error: e, keys }, '[CACHE_SESSIONS_REMOVE_ERROR]');
+    }
+  }
+
+  /**
+   * Set a key with custom TTL (in seconds)
+   */
+  static async setWithTTL(key: string, value: string | number, ttlSeconds: number) {
+    try {
+      if (RedisWriteClient.isMock) {
+        return RedisMockStore.set(key, String(value));
+      }
+
+      await RedisWriteClient.client.set(key, value, {
+        EX: ttlSeconds,
+      });
+    } catch (e) {
+      logger.error({ error: e, key }, '[CACHE_SET_WITH_TTL_ERROR]');
+    }
+  }
+
+  /**
+   * Delete keys matching a pattern using SCAN
+   */
+  static async delByPattern(pattern: string): Promise<number> {
+    try {
+      if (RedisWriteClient.isMock) {
+        const keys = await RedisMockStore.scan(pattern);
+        for (const key of keys.keys()) {
+          await RedisMockStore.set(key, undefined);
+        }
+        return keys.size;
+      }
+
+      let deletedCount = 0;
+      let cursor = 0;
+
+      do {
+        const result = await RedisWriteClient.client.scan(cursor, {
+          MATCH: pattern,
+          COUNT: 100,
+        });
+        cursor = result.cursor;
+
+        if (result.keys.length > 0) {
+          await RedisWriteClient.client.del(result.keys);
+          deletedCount += result.keys.length;
+        }
+      } while (cursor !== 0);
+
+      return deletedCount;
+    } catch (e) {
+      logger.error({ error: e, pattern }, '[CACHE_DEL_BY_PATTERN_ERROR]');
+      return 0;
     }
   }
 
@@ -99,7 +153,7 @@ export class RedisWriteClient {
         ? 'PONG'
         : await RedisWriteClient.client.ping();
     } catch (e) {
-      console.error('[REDIS_WRITE_PING_ERROR]', e);
+      logger.error({ error: e }, '[REDIS_WRITE_PING_ERROR]');
       throw e;
     }
   }

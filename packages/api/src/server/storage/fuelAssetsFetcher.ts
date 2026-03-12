@@ -1,4 +1,5 @@
 import { assets, Assets } from 'fuels';
+import { logger } from '@src/config/logger';
 
 const ASSETS_URL = 'https://verified-assets.fuel.network/assets.json';
 
@@ -21,7 +22,7 @@ export const fetchFuelAssets = async (): Promise<Assets> => {
 
     return cachedAssets;
   } catch (error) {
-    console.error('Error fetching fuel assets:', error);
+    logger.error({ error }, 'Error fetching fuel assets');
     return [] as Assets;
   }
 };

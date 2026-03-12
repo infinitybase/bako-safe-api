@@ -1,9 +1,8 @@
-import test from 'node:test';
 import assert from 'node:assert/strict';
+import test from 'node:test';
 import request from 'supertest';
 
 import { TestEnvironment } from './utils/Setup';
-import { generateNode } from './mocks/Networks';
 
 test('Address Book Endpoints', async t => {
   const { app, users, close } = await TestEnvironment.init(2, 0);
@@ -17,7 +16,7 @@ test('Address Book Endpoints', async t => {
   await t.test('POST /address-book should create a new entry', async () => {
     const adb = {
       nickname: `Underground Seninha ${Date.now()}`,
-      address: users[1].payload.address,
+      address: users[0].payload.address,
     };
 
     const res = await request(app)
@@ -46,7 +45,7 @@ test('Address Book Endpoints', async t => {
         .send({
           nickname: newNickname,
           id: createdId,
-          address: users[1].payload.address,
+          address: users[0].payload.address,
         });
 
       assert.equal(res.status, 200);

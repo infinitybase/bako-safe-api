@@ -2,6 +2,7 @@ import {
   CliAuthStrategy,
   CodeAuthStrategy,
   TokenAuthStrategy,
+  ConnectorAuthStrategy,
   AuthStrategy,
 } from './strategies';
 
@@ -13,6 +14,10 @@ export class AuthStrategyFactory {
 
     if (signature.startsWith('code')) {
       return new CodeAuthStrategy();
+    }
+
+    if (signature.startsWith('connector')) {
+      return new ConnectorAuthStrategy();
     }
 
     return new TokenAuthStrategy();

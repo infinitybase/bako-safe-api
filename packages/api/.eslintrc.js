@@ -20,6 +20,23 @@ module.exports = {
     '@typescript-eslint/explicit-module-boundary-types': ['off'], // Allow inferred function return type
     '@typescript-eslint/no-unused-vars': ['off'], // Enable TS no unused var role
     '@typescript-eslint/no-explicit-any': ['warn'], // Block "any" as a type
+    'no-console': 'error', // Disallow all console.* methods - use logger instead
   },
-  ignorePatterns: ['node_modules'],
+  ignorePatterns: ['node_modules', 'src/contracts/**/*', 'build'],
+  overrides: [
+    {
+      // Allow console only in scripts and migrations (non-production code)
+      files: ['src/scripts/**/*.ts', 'src/database/migrations/**/*.ts'],
+      rules: {
+        'no-console': 'off',
+      },
+    },
+    {
+      // Allow @ts-nocheck in config files (TypeORM dynamic config)
+      files: ['src/config/**/*.ts'],
+      rules: {
+        '@typescript-eslint/ban-ts-comment': 'off',
+      },
+    },
+  ],
 };

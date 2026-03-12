@@ -1,0 +1,193 @@
+name: "[Staging] Deploy to Amazon ECS"
+
+on:
+  push:
+    branches: [staging]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+jobs:
+  detect-changes:
+    name: "[DETECT] Changed Packages"
+    runs-on: ubuntu-latest
+    outputs:
+      api: ${{ steps.filter.outputs.api }}
+      socket-server: ${{ steps.filter.outputs.socket-server }}
+      worker: ${{ steps.filter.outputs.worker }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect changed packages
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            api:
+              - 'packages/api/**'
+            socket-server:
+              - 'packages/socket-server/**'
+            worker:
+              - 'packages/worker/**'
+
+  deploy-api:
+    name: "[API] Deploy to Staging"
+    needs: detect-changes
+    if: needs.detect-changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.BAKO_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.BAKO_AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        id: login_ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push image to Amazon ECR
+        uses: docker/build-push-action@v6
+        with:
+          context: ./packages/api
+          platforms: linux/arm64
+          push: true
+          tags: ${{ steps.login_ecr.outputs.registry }}/bako-safe-api-stg:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ./packages/api/stg_api_task_definition.json
+          container-name: bako-safe-api-stg
+          image: ${{ steps.login_ecr.outputs.registry }}/bako-safe-api-stg:${{ github.sha }}
+
+      - name: Deploy Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: bako-safe-api-stg-service
+          cluster: Bako-Safe-Stg
+          wait-for-service-stability: true
+
+  deploy-socket-server:
+    name: "[Socket Server] Deploy to Staging"
+    needs: detect-changes
+    if: needs.detect-changes.outputs.socket-server == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.BAKO_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.BAKO_AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        id: login_ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push image to Amazon ECR
+        uses: docker/build-push-action@v6
+        with:
+          context: ./packages/socket-server
+          platforms: linux/arm64
+          push: true
+          tags: ${{ steps.login_ecr.outputs.registry }}/bako-safe-socket-server-api-stg:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ./packages/socket-server/stg_socket_task_definition.json
+          container-name: bako-safe-socket-server-api-stg
+          image: ${{ steps.login_ecr.outputs.registry }}/bako-safe-socket-server-api-stg:${{ github.sha }}
+
+      - name: Deploy Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: bako-safe-socket-server-api-stg-service
+          cluster: Bako-Safe-Stg
+          wait-for-service-stability: true
+
+  deploy-worker:
+    name: "[Worker] Deploy to Staging"
+    needs: detect-changes
+    if: needs.detect-changes.outputs.worker == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.BAKO_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.BAKO_AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        id: login_ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push image to Amazon ECR
+        uses: docker/build-push-action@v6
+        with:
+          context: ./packages/worker
+          platforms: linux/arm64
+          push: true
+          tags: ${{ steps.login_ecr.outputs.registry }}/bako-safe-worker:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Fill in the new image ID in the Amazon ECS task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ./packages/worker/worker_task_def.json
+          container-name: bako-safe-worker
+          image: ${{ steps.login_ecr.outputs.registry }}/bako-safe-worker:${{ github.sha }}
+
+      - name: Deploy Amazon ECS task definition
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: bako-safe-worker-service
+          cluster: Bako-Safe-ECS
+          wait-for-service-stability: true

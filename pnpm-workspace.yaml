@@ -1,2 +1,11 @@
 packages:
-  - 'packages/**'
+  - packages/**
+
+ignoredBuiltDependencies:
+  - '@sentry/profiling-node'
+  - cpu-features
+  - esbuild
+  - msgpackr-extract
+  - protobufjs
+  - ssh2
+  - yarn

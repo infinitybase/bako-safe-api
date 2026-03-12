@@ -1,6 +1,6 @@
-// import { BakoSafe } from 'bakosafe';
+import { TypeUser } from 'bakosafe';
 
-import { TypeUser, User, PermissionAccess } from '@src/models';
+import { User, PermissionAccess } from '@src/models';
 import {
   IPermissions,
   PermissionRoles,

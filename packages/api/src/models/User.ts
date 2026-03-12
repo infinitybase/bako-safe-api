@@ -1,6 +1,7 @@
 import { Column, Entity } from 'typeorm';
 
 import { Base } from './Base';
+import { TypeUser } from 'bakosafe';
 
 const { FUEL_PROVIDER } = process.env;
 
@@ -10,12 +11,6 @@ export type WebAuthn = {
   origin: string;
   hardware: string;
 };
-
-export enum TypeUser {
-  FUEL = 'FUEL',
-  WEB_AUTHN = 'WEB_AUTHN',
-  EVM = 'EVM',
-}
 
 export type UserSettings = {
   inactivesPredicates: string[];
@@ -56,6 +51,7 @@ class User extends Base {
   webauthn: WebAuthn;
 
   @Column({
+    type: 'varchar',
     default: TypeUser.FUEL,
   })
   type: TypeUser;

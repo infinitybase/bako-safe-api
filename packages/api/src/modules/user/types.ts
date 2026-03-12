@@ -1,10 +1,17 @@
 import { ContainerTypes, ValidatedRequestSchema } from 'express-joi-validation';
 
 import { AuthValidatedRequest, UnloggedRequest } from '@src/middlewares/auth/types';
-import { UserSettings, TransactionType, TypeUser, User } from '@src/models';
+import {
+  TransactionStatus,
+  TransactionType,
+  User,
+  UserSettings,
+} from '@src/models';
 import { IDefaultOrdination, IOrdination } from '@src/utils/ordination';
 import { IPagination, PaginationParams } from '@src/utils/pagination';
 import { Maybe } from '@src/utils/types/maybe';
+import { TypeUser } from 'bakosafe';
+import { Network } from 'fuels';
 
 export interface IWebAuthnSignUp {
   id: string;
@@ -54,7 +61,17 @@ interface IListRequestSchema extends ValidatedRequestSchema {
     perPage: string;
     sort: 'ASC' | 'DESC';
     orderBy: 'name' | IDefaultOrdination;
-    type: TransactionType;
+  };
+}
+
+interface IListUserTransactionsRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Query]: {
+    type?: TransactionType;
+    page?: string;
+    perPage?: string;
+    offsetDb?: string;
+    offsetFuel?: string;
+    status?: TransactionStatus[];
   };
 }
 
@@ -112,6 +129,18 @@ export type ICheckHardwareRequest = UnloggedRequest<ICheckHardware>;
 
 export type IMeInfoRequest = AuthValidatedRequest<null>;
 
+export type IListUserTransactionsRequest = AuthValidatedRequest<IListUserTransactionsRequestSchema>;
+
+interface IAllocationRequestSchema extends ValidatedRequestSchema {
+  [ContainerTypes.Query]: {
+    limit?: number;
+  };
+}
+
+export type IAllocationRequest = AuthValidatedRequest<IAllocationRequestSchema>;
+
+export type ICheckUserBalancesRequest = AuthValidatedRequest<null>;
+
 export interface IUserService {
   filter(filter: IFilterParams): this;
   paginate(pagination: PaginationParams): this;
@@ -130,4 +159,9 @@ export interface IUserService {
     userId?: string,
   ): Promise<Maybe<IValidateNameResponse>>;
   listAll(): Promise<IPagination<User>>;
+  checkBalances: (params: {
+    userId: string;
+    workspaceId: string;
+    network: Network;
+  }) => Promise<void>;
 }

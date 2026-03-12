@@ -30,7 +30,8 @@ const hasPermission = (
     : false;
 
   const isSigner = permissions.includes(PermissionRoles.SIGNER)
-    ? JSON.parse(predicate.configurable).SIGNERS.includes(user.address)
+    ? JSON.parse(predicate.configurable).SIGNERS?.includes(user.address) ??
+      JSON.parse(predicate.configurable).SIGNER === user.address
     : false;
 
   return isOwner || isSigner;

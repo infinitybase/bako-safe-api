@@ -1,4 +1,4 @@
-import { bytesToHex, hexToBytes } from '@noble/curves/abstract/utils';
+import { hexToBytes } from '@noble/curves/abstract/utils';
 import { secp256r1 } from '@noble/curves/p256';
 import { Signer, hashMessage } from 'fuels';
 import {
@@ -8,7 +8,7 @@ import {
   pubToAddress,
 } from '@ethereumjs/util';
 
-import { TypeUser, User } from '@src/models';
+import { User } from '@src/models';
 
 export const recoverFuelSignature = async (digest: string, signature: string) => {
   return Signer.recoverAddress(hashMessage(digest), signature).toHexString();
@@ -20,7 +20,7 @@ export const recoverEvmSignature = async (digest: string, signature: string) => 
   const { v, r, s } = fromRpcSig(signature);
   const pubKey = ecrecover(msgHash, v, r, s);
   const recoveredAddress = Buffer.from(pubToAddress(pubKey)).toString('hex');
-  
+
   return `0x${recoveredAddress}`;
 };
 

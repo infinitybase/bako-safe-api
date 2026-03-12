@@ -17,6 +17,7 @@ import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
 import { Network } from 'fuels';
 import { SocketEvents, SocketUsernames } from '@src/socket/types';
 import { PredicateService } from '../predicate/services';
+import { logger } from '@src/config/logger';
 
 const { API_URL } = process.env;
 
@@ -57,7 +58,7 @@ export class NotificationService implements INotificationService {
       });
 
     const socketClient = new SocketClient(notification.user_id, API_URL);
-    socketClient.socket.emit(SocketEvents.NOTIFICATION, {
+    socketClient.emit(SocketEvents.NOTIFICATION, {
       sessionId: notification.user_id,
       to: SocketUsernames.UI,
       request_id: undefined,
@@ -65,7 +66,6 @@ export class NotificationService implements INotificationService {
       data: {},
     });
 
-    socketClient.disconnect();
     return notification;
   }
 
@@ -99,12 +99,15 @@ export class NotificationService implements INotificationService {
       this._ordination.sort,
     );
 
+    // Apply default limit to prevent loading entire table when no pagination
+    const DEFAULT_LIMIT = 100;
     return hasPagination
       ? Pagination.create(queryBuilder)
           .paginate(this._pagination)
           .then(result => result)
           .catch(e => Internal.handler(e, 'Error on notification list'))
       : queryBuilder
+          .take(DEFAULT_LIMIT)
           .getMany()
           .then(notifications => notifications)
           .catch(e => Internal.handler(e, 'Error on notification list'));
@@ -157,18 +160,20 @@ export class NotificationService implements INotificationService {
 
     const members = vault.members;
 
-    for await (const member of members) {
-      const socketClient = new SocketClient(member.id, API_URL);
-      socketClient.socket.emit(SocketEvents.NOTIFICATION, {
-        sessionId: member.id,
-        to: SocketUsernames.UI,
-        request_id: undefined,
-        type: SocketEvents.VAULT_UPDATE,
-        data: {},
-      });
-
-      socketClient.disconnect();
-    }
+    // Parallelize socket notifications for all members
+    await Promise.all(
+      members.map(member => {
+        const socketClient = new SocketClient(member.id, API_URL);
+        socketClient.emit(SocketEvents.NOTIFICATION, {
+          sessionId: member.id,
+          to: SocketUsernames.UI,
+          request_id: undefined,
+          type: SocketEvents.VAULT_UPDATE,
+          data: {},
+        });
+        return Promise.resolve();
+      }),
+    );
   }
 
   async transactionUpdate(txId: string) {
@@ -180,18 +185,21 @@ export class NotificationService implements INotificationService {
 
     const members = tx.predicate.members;
 
-    for await (const member of members) {
-      const socketClient = new SocketClient(member.id, API_URL);
-      socketClient.socket.emit(SocketEvents.NOTIFICATION, {
-        sessionId: member.id,
-        to: SocketUsernames.UI,
-        request_id: undefined,
-        type: SocketEvents.TRANSACTION_UPDATE,
-        data: {},
-      });
+    // Parallelize socket notifications for all members
+    await Promise.all(
+      members.map(member => {
+        const socketClient = new SocketClient(member.id, API_URL);
+        socketClient.emit(SocketEvents.NOTIFICATION, {
+          sessionId: member.id,
+          to: SocketUsernames.UI,
+          request_id: undefined,
+          type: SocketEvents.TRANSACTION,
+          data: {},
+        });
 
-      socketClient.disconnect();
-    }
+        return Promise.resolve();
+      }),
+    );
   }
 
   // select all members of predicate
@@ -212,31 +220,48 @@ export class NotificationService implements INotificationService {
       workspaceId: tx.predicate.workspace.id,
     };
 
-    for await (const member of members) {
-      await this.create({
-        title: NotificationTitle.TRANSACTION_COMPLETED,
-        summary,
-        user_id: member.id,
-        network,
-      });
+    // Parallelize notifications for all members
+    // Each member gets: DB notification + email (if enabled) + socket emit
+    await Promise.all(
+      members.map(async member => {
+        // Create notification and send email/socket in parallel
+        await Promise.all([
+          // Create DB notification
+          this.create({
+            title: NotificationTitle.TRANSACTION_COMPLETED,
+            summary,
+            user_id: member.id,
+            network,
+          }),
+          // Send email if user has notifications enabled
+          member.notify
+            ? sendMail(EmailTemplateType.TRANSACTION_COMPLETED, {
+                to: member.email,
+                data: { summary: { ...summary, name: member?.name ?? '' } },
+              }).catch(e => {
+                logger.error(
+                  {
+                    to: member.email,
+                    memberId: member?.id,
+                    transactionId: summary?.transactionId,
+                    error: e,
+                  },
+                  '[NOTIFICATION] Failed to send transaction success email',
+                );
+              })
+            : Promise.resolve(),
+        ]);
 
-      if (member.notify) {
-        await sendMail(EmailTemplateType.TRANSACTION_COMPLETED, {
-          to: member.email,
-          data: { summary: { ...summary, name: member?.name ?? '' } },
+        // Socket emit (fire and forget)
+        const socketClient = new SocketClient(member.id, API_URL);
+        socketClient.emit(SocketEvents.NOTIFICATION, {
+          sessionId: member.id,
+          to: SocketUsernames.UI,
+          request_id: undefined,
+          type: SocketEvents.TRANSACTION,
+          data: {},
         });
-      }
-
-      const socketClient = new SocketClient(member.id, API_URL);
-      socketClient.socket.emit(SocketEvents.NOTIFICATION, {
-        sessionId: member.id,
-        to: SocketUsernames.UI,
-        request_id: undefined,
-        type: SocketEvents.TRANSACTION_UPDATE,
-        data: {},
-      });
-
-      socketClient.disconnect();
-    }
+      }),
+    );
   }
 }

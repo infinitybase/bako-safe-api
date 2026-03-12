@@ -5,6 +5,7 @@ import axios from 'axios'
 
 import { DatabaseClass } from '@utils/database'
 import { setupSocket } from './socket'
+import { logger } from '@src/config/logger'
 
 const { SOCKET_PORT, SOCKET_TIMEOUT_DICONNECT, SOCKET_NAME, API_URL } = process.env
 
@@ -31,7 +32,7 @@ const startServer = async () => {
 	setupSocket(io, database, api)
 
 	server.listen(SOCKET_PORT || 3000, () => {
-		console.log(`Server running on port ${SOCKET_PORT || 3000}`)
+		logger.info(`Server running on port ${SOCKET_PORT || 3000}`)
 	})
 }
 

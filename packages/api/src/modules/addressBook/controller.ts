@@ -6,7 +6,7 @@ import { IPagination } from '@src/utils/pagination';
 import { ErrorTypes, error } from '@utils/error';
 import { Responses, bindMethods, successful } from '@utils/index';
 
-import { TypeUser } from '@src/models';
+import { TypeUser } from 'bakosafe';
 import { IUserService } from '../user/types';
 import { WorkspaceService } from '../workspace/services';
 import { AddressBookService } from './services';

@@ -5,7 +5,7 @@ import { ParsedQs } from 'qs';
 import { Workspace } from '@src/models/Workspace';
 
 import UserToken from '@models/UserToken';
-import { User } from '@models/index';
+import { User, DApp } from '@models/index';
 import { Network } from 'fuels';
 
 export interface AuthValidatedRequest<T extends ValidatedRequestSchema>
@@ -19,6 +19,7 @@ export interface AuthValidatedRequest<T extends ValidatedRequestSchema>
   userToken?: UserToken;
   workspace?: Workspace;
   network?: Network;
+  dapp?: DApp;
 }
 
 export interface UnloggedRequest<T extends ValidatedRequestSchema> extends Request {

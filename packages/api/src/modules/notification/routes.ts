@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { logger } from '@src/config/logger';
 
 import { authMiddleware } from '@src/middlewares';
 import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
@@ -31,7 +32,7 @@ router.get('/mail', async (_, res) => {
     await sendMail(EmailTemplateType.TRANSACTION_SIGNED, { to, data });
     await sendMail(EmailTemplateType.VAULT_CREATED, { to, data });
   } catch (error) {
-    console.log('🚀 ~ router.get ~ error:', error);
+    logger.info({ data: error }, '[NOTIFICATION_MAIL_TEST]');
   }
 
   res.status(200).json();

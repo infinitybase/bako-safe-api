@@ -1,21 +1,45 @@
-import { AddressUtils as BakoAddressUtils, DEFAULT_PREDICATE_VERSION, Vault } from 'bakosafe';
+import {
+  AddressUtils as BakoAddressUtils,
+  DEFAULT_PREDICATE_VERSION,
+  getLatestPredicateVersion,
+  legacyConnectorVersion,
+  TransactionStatus,
+  TypeUser,
+  Vault,
+  Wallet as WalletType,
+} from 'bakosafe';
 import { Brackets, MoreThan } from 'typeorm';
 
 import { NotFound } from '@src/utils/error';
 import { IPagination, Pagination, PaginationParams } from '@src/utils/pagination';
 
-import { Predicate, TypeUser, User, Workspace } from '@models/index';
+import { Predicate, User, Workspace } from '@models/index';
 
 import GeneralError, { ErrorTypes } from '@utils/error/GeneralError';
+import { BadRequest } from '@utils/error';
 import Internal from '@utils/error/Internal';
 
-import { IPredicateFilterParams, IPredicatePayload, IPredicateService, } from './types';
-import { IPredicateOrdination, setOrdination } from './ordination';
-import { Network, ZeroBytes32 } from 'fuels';
-import { UserService } from '../user/service';
-import { IconUtils } from '@src/utils/icons';
-import { FuelProvider } from '@src/utils';
 import App from '@src/server/app';
+import { calculateReservedCoins, FuelProvider, subCoins } from '@src/utils';
+import { IconUtils } from '@src/utils/icons';
+import { bn, BN, Network, ZeroBytes32 } from 'fuels';
+import { UserService } from '../user/service';
+import { IPredicateOrdination, setOrdination } from './ordination';
+import {
+  AssetAllocation,
+  IPredicateAllocation,
+  IPredicateAllocationParams,
+  IPredicateFilterParams,
+  IPredicatePayload,
+  IPredicateService,
+} from './types';
+import { BalanceCache } from '@src/server/storage/balance';
+import { TransactionCache } from '@src/server/storage/transaction';
+import { compareBalances } from '@src/utils/balance';
+import { emitBalanceOutdatedPredicate } from '@src/socket/events';
+import { SocketUsernames, SocketEvents } from '@src/socket/types';
+import { ProviderWithCache } from '@src/utils/ProviderWithCache';
+import { logger } from '@src/config/logger';
 
 export class PredicateService implements IPredicateService {
   private _ordination: IPredicateOrdination = {
@@ -36,7 +60,34 @@ export class PredicateService implements IPredicateService {
     'p.owner',
     'p.configurable',
     'p.root',
+    'p.version',
   ];
+
+  private static async validateUniqueName(
+    name: string,
+    workspaceId: string,
+    type: ErrorTypes,
+    predicateId?: string,
+  ): Promise<void> {
+    const query = Predicate.createQueryBuilder('p')
+      .where('LOWER(p.name) = LOWER(:name)', { name })
+      .andWhere('p.workspace_id = :workspaceId', { workspaceId })
+      .andWhere('p.deletedAt IS NULL');
+
+    if (predicateId) {
+      query.andWhere('p.id != :predicateId', { predicateId });
+    }
+
+    const exists = await query.getOne();
+
+    if (exists) {
+      throw new BadRequest({
+        type,
+        title: 'Predicate name already exists',
+        detail: `A predicate with name "${name}" already exists in this workspace`,
+      });
+    }
+  }
 
   filter(filter: IPredicateFilterParams) {
     this._filter = filter;
@@ -60,32 +111,46 @@ export class PredicateService implements IPredicateService {
     workspace: Workspace,
   ): Promise<Predicate> {
     try {
-      const members = [];
+      await PredicateService.validateUniqueName(
+        payload.name,
+        workspace.id,
+        ErrorTypes.Create,
+      );
+
       const userService = new UserService();
-      //const workspaceService = new WorkspaceService();
+      const config = JSON.parse(payload.configurable);
 
-      // create a pending users
-      const { SIGNERS } = JSON.parse(payload.configurable);
-      const validUsers = SIGNERS.filter(address => address !== ZeroBytes32);
+      let members: User[] = [];
 
-      for await (const member of validUsers) {
-        let user = await userService.findByAddress(member);
-        let type = TypeUser.FUEL;
-        if (BakoAddressUtils.isEvm(member)) {
-          type = TypeUser.EVM;
+      // Connector predicate (SIGNER) - owner is the only member
+      if (config.SIGNER) {
+        members = [owner];
+      }
+      // Multisig predicate (SIGNERS) - process all signers
+      else if (config.SIGNERS) {
+        const validUsers = config.SIGNERS.filter(
+          (address: string) => address !== ZeroBytes32,
+        );
+
+        for await (const member of validUsers) {
+          let user = await userService.findByAddress(member);
+          let type = TypeUser.FUEL;
+          if (BakoAddressUtils.isEvm(member)) {
+            type = TypeUser.EVM;
+          }
+
+          if (!user) {
+            user = await userService.create({
+              address: member,
+              avatar: IconUtils.user(),
+              type,
+              name: member,
+              provider: network.url,
+            });
+          }
+
+          members.push(user);
         }
-
-        if (!user) {
-          user = await userService.create({
-            address: member,
-            avatar: IconUtils.user(),
-            type,
-            name: member,
-            provider: network.url,
-          });
-        }
-
-        members.push(user);
       }
 
       // create a predicate
@@ -100,7 +165,10 @@ export class PredicateService implements IPredicateService {
       return await this.findById(predicate.id);
       // return predicate;
     } catch (e) {
-      console.log(e);
+      logger.error({ error: e }, 'Error on predicate creation');
+
+      if (e instanceof BadRequest) throw e;
+
       throw new Internal({
         type: ErrorTypes.Internal,
         title: 'Error on predicate creation',
@@ -122,13 +190,15 @@ export class PredicateService implements IPredicateService {
           'members.avatar',
           'members.address',
           'members.type',
+          'members.notify',
+          'members.email',
           'owner.id',
           'owner.address',
           'owner.type',
         ])
         .getOne();
     } catch (e) {
-      console.log(e);
+      logger.error({ error: e }, 'Error on predicate findById');
       if (e instanceof GeneralError) {
         throw e;
       }
@@ -173,21 +243,38 @@ export class PredicateService implements IPredicateService {
 
   async findByAddress(address: string): Promise<Predicate> {
     try {
-      return await Predicate.findOne({
-        where: { predicateAddress: address },
-        relations: ['owner', 'members'],
-        select: {
-          owner: {
-            id: true,
-            address: true,
-          },
-          members: {
-            id: true,
-            address: true,
-          },
-        },
-      });
+      return await Predicate.createQueryBuilder('p')
+        .leftJoin('p.owner', 'owner')
+        .leftJoin('p.members', 'members')
+        .leftJoin('p.workspace', 'workspace')
+        .select([
+          // Predicate fields (same as predicateFieldsSelection)
+          'p.id',
+          'p.createdAt',
+          'p.deletedAt',
+          'p.updatedAt',
+          'p.name',
+          'p.predicateAddress',
+          'p.description',
+          'p.configurable',
+          'p.root',
+          'p.version',
+          // Relation fields (same as list() method)
+          'owner.id',
+          'owner.address',
+          'owner.avatar',
+          'members.id',
+          'members.address',
+          'members.avatar',
+          'workspace.id',
+          'workspace.name',
+          'workspace.single',
+          'workspace.avatar',
+        ])
+        .where('p.predicateAddress = :address', { address })
+        .getOne();
     } catch (e) {
+      logger.error({ error: e }, 'Error on predicate findByAddress');
       throw new Internal({
         type: ErrorTypes.Internal,
         title: 'Error on predicate findByAddress',
@@ -222,6 +309,12 @@ export class PredicateService implements IPredicateService {
       if (this._filter.ids) {
         queryBuilder.andWhere('p.id IN (:...ids)', {
           ids: this._filter.ids,
+        });
+      }
+
+      if (this._filter.owner) {
+        queryBuilder.andWhere('owner.id = :owner', {
+          owner: this._filter.owner,
         });
       }
 
@@ -321,7 +414,9 @@ export class PredicateService implements IPredicateService {
       if (hasPagination) {
         return await Pagination.create(queryBuilder).paginate(this._pagination);
       } else {
-        const predicates = await queryBuilder.getMany();
+        // Apply default limit to prevent loading entire table
+        const DEFAULT_LIMIT = 100;
+        const predicates = await queryBuilder.take(DEFAULT_LIMIT).getMany();
         return predicates ?? [];
       }
     } catch (e) {
@@ -337,25 +432,38 @@ export class PredicateService implements IPredicateService {
     }
   }
 
-  async update(id: string, payload?: IPredicatePayload): Promise<Predicate> {
+  async update(
+    id: string,
+    payload?: Partial<IPredicatePayload>,
+  ): Promise<Predicate> {
     try {
-      await Predicate.update(
-        { id },
-        {
-          ...payload,
-          updatedAt: new Date(),
-        },
-      );
+      const currentPredicate = await Predicate.findOne({
+        where: { id },
+        relations: ['workspace'],
+      });
 
-      const updatedPredicate = await this.findById(id);
-
-      if (!updatedPredicate) {
+      if (!currentPredicate) {
         throw new NotFound({
           type: ErrorTypes.NotFound,
           title: 'Predicate not found',
           detail: `Predicate with id ${id} not found after update`,
         });
       }
+
+      if (payload?.name && payload.name !== currentPredicate.name) {
+        await PredicateService.validateUniqueName(
+          payload.name,
+          currentPredicate.workspace.id,
+          ErrorTypes.Update,
+          currentPredicate.id,
+        );
+      }
+
+      const updatedPredicate = await Predicate.merge(currentPredicate, {
+        name: payload?.name,
+        description: payload?.description,
+        updatedAt: new Date(),
+      }).save();
 
       return updatedPredicate;
     } catch (e) {
@@ -394,6 +502,87 @@ export class PredicateService implements IPredicateService {
     }
   }
 
+  /**
+   * Checks and instantiates older predicate versions associated with a user address.
+   *
+   * This function retrieves legacy predicate versions linked to a given `address` and `provider`.
+   * It sorts and filters these versions based on whether they have a balance, instantiates
+   * relevant versions as `Vault` objects, and identifies "invisible" accounts (those without balance).
+   *
+   * ### Behavior:
+   * - Fetches legacy versions using `legacyConnectorVersion`.
+   * - Filters versions that have a balance (`hasBalance`) and sorts them by `versionTime` (newest first).
+   * - Identifies versions without balance and collects their `predicateAddress`.
+   * - If no versions have a balance:
+   *   - Gets the latest predicate version (`getLatestPredicateVersion`).
+   *   - Creates a default predicate instance using `instancePredicate`.
+   * - Otherwise:
+   *   - Instantiates all predicates with balance.
+   *   - Detects whether the origin is `EVM` or `SVM` to set the correct configuration.
+   *
+   * @async
+   * @param {string} address - The user's wallet address.
+   * @param {string} provider - The blockchain provider.
+   *
+   * @returns {Promise<{ invisibleAccounts: string[]; accounts: Vault[] }>}
+   * An object containing:
+   * - `invisibleAccounts`: List of predicate addresses without balance.
+   * - `accounts`: List of active `Vault` instances (with balance).
+   *
+   * @example
+   * ```ts
+   * const { invisibleAccounts, accounts } = await checkOlderPredicateVersions(
+   *   "0x1234abcd...",
+   *   "https://testnet.fuel.network/v1/graphql"
+   * );
+   *
+   * console.log(invisibleAccounts); // ["0xabc123...", "0xdef456..."]
+   * console.log(accounts); // [Vault {...}, Vault {...}]
+   * ```
+   */
+  async checkOlderPredicateVersions(
+    address: string,
+    userType: TypeUser,
+    provider: string,
+  ): Promise<Vault[]> {
+    const isEvm = BakoAddressUtils.isEvm(address);
+
+    if (isEvm && userType === TypeUser.EVM) {
+      const legacyVersions = await legacyConnectorVersion(address, provider);
+
+      const vaults = await Promise.all(
+        legacyVersions.map(async v => {
+          const isFromConnector =
+            v.details.origin === WalletType.EVM ||
+            v.details.origin === WalletType.SVM;
+
+          const config = isFromConnector
+            ? { SIGNER: address }
+            : { SIGNERS: [address], SIGNATURES_COUNT: 1 };
+
+          return this.instancePredicate(
+            JSON.stringify(config),
+            provider,
+            v.version,
+          );
+        }),
+      );
+
+      return vaults;
+    }
+
+    const latest = getLatestPredicateVersion(WalletType.FUEL);
+    const config = { SIGNERS: [address], SIGNATURES_COUNT: 1 };
+
+    const vault = await this.instancePredicate(
+      JSON.stringify(config),
+      provider,
+      latest.version,
+    );
+
+    return [vault];
+  }
+
   async instancePredicate(
     configurable: string,
     provider: string,
@@ -403,6 +592,7 @@ export class PredicateService implements IPredicateService {
     const _provider = await FuelProvider.create(
       provider.replace(/^https?:\/\/[^@]+@/, 'https://'),
     );
+
     return new Vault(_provider, conf, version);
   }
 
@@ -423,5 +613,415 @@ export class PredicateService implements IPredicateService {
     }
 
     return await Pagination.create(queryBuilder).paginate(this._pagination);
+  }
+
+  /**
+   * Extract signers info from vault configurable JSON
+   */
+  private parseVaultSigners(
+    configurable: string,
+  ): { members: number; minSigners: number } {
+    try {
+      const config = JSON.parse(configurable);
+      const signers = (config.SIGNERS || []).filter(
+        (addr: string) =>
+          addr !==
+          '0x0000000000000000000000000000000000000000000000000000000000000000',
+      );
+      return {
+        members: signers.length,
+        minSigners: config.SIGNATURES_COUNT || 1,
+      };
+    } catch {
+      return { members: 1, minSigners: 1 };
+    }
+  }
+
+  /**
+   * Build final allocation response from processed data
+   * @param limit - Maximum number of predicates to return in the response (default: 5)
+   */
+  private buildAllocationResponse(
+    vaultInfoMap: Map<
+      string,
+      {
+        name: string;
+        address: string;
+        members: number;
+        minSigners: number;
+        amountInUSD: number;
+      }
+    >,
+    allocationMap: Map<string, AssetAllocation>,
+    totalAmountInUSD: number,
+    limit: number = 5,
+  ): IPredicateAllocation {
+    // Calculate percentages and sort
+    const allocationArray = Array.from(allocationMap.values())
+      .filter(allocation => allocation.amountInUSD > 0)
+      .map(allocation => ({
+        ...allocation,
+        percentage:
+          totalAmountInUSD > 0
+            ? (allocation.amountInUSD / totalAmountInUSD) * 100
+            : 0,
+      }));
+
+    allocationArray.sort((a, b) => b.percentage - a.percentage);
+
+    // Split into top 3 and others
+    const top3 = allocationArray.slice(0, 3);
+    const remaining = allocationArray.slice(3);
+    const finalData = [...top3];
+
+    if (remaining.length > 0) {
+      finalData.push({
+        assetId: null,
+        amountInUSD: remaining.reduce((sum, item) => sum + item.amountInUSD, 0),
+        amount: remaining.reduce((sum, item) => sum.add(item.amount), bn(0)),
+        percentage: remaining.reduce((sum, item) => sum + item.percentage, 0),
+      });
+    }
+
+    // Convert vaultInfoMap to array, sorted by amountInUSD descending, limited to top N
+    const predicatesArray = Array.from(vaultInfoMap.entries())
+      .map(([id, info]) => ({
+        id,
+        name: info.name,
+        address: info.address,
+        members: info.members,
+        minSigners: info.minSigners,
+        amountInUSD: info.amountInUSD,
+      }))
+      .sort((a, b) => b.amountInUSD - a.amountInUSD)
+      .slice(0, limit);
+
+    return {
+      data: finalData,
+      totalAmountInUSD,
+      predicates: predicatesArray,
+    };
+  }
+
+  async allocation({
+    predicateId,
+    user,
+    network,
+    assetsMap,
+    limit,
+  }: IPredicateAllocationParams): Promise<IPredicateAllocation> {
+    try {
+      // ========================================
+      // PARALLEL: Fetch vault structures and cache data
+      // ========================================
+      // Fetch ALL predicates for total balance calculation (no limit here)
+      const structureQuery = Predicate.createQueryBuilder('p')
+        .leftJoin('p.owner', 'owner')
+        .leftJoin('p.members', 'members')
+        .select([
+          'p.id',
+          'p.name',
+          'p.predicateAddress',
+          'p.configurable',
+          'p.version',
+          'p.updatedAt',
+        ])
+        .distinctOn(['p.id'])
+        .orderBy('p.id')
+        .addOrderBy('p.updatedAt', 'DESC');
+
+      if (predicateId) {
+        // if a specific predicateId is requested, fetch only that predicate
+        structureQuery.andWhere('p.id = :predicateId', { predicateId });
+      } else {
+        // otherwise fetch predicates related to the user and exclude inactives
+        structureQuery.andWhere('(owner.id = :userId OR members.id = :userId)', {
+          userId: user.id,
+        });
+
+        structureQuery.andWhere(
+          `
+          p.predicateAddress NOT IN (
+            SELECT jsonb_array_elements_text(u.settings->'inactivesPredicates')
+            FROM users u
+            WHERE u.id = :userId
+          )
+          `,
+          { userId: user.id },
+        );
+      }
+
+      // Run vault query and cache fetch in parallel
+      const [vaultStructures, { fuelUnitAssets }, quotes] = await Promise.all([
+        structureQuery.getMany(),
+        import('@src/utils/assets').then(m => m.getAssetsMaps()),
+        App.getInstance()._quoteCache.getActiveQuotes(),
+      ]);
+
+      // Build vault info map from structures
+      const vaultInfoMap = new Map<
+        string,
+        {
+          name: string;
+          address: string;
+          members: number;
+          minSigners: number;
+          configurable: string;
+          version: string;
+          amountInUSD: number;
+        }
+      >();
+
+      for (const vault of vaultStructures) {
+        const { members, minSigners } = this.parseVaultSigners(vault.configurable);
+        vaultInfoMap.set(vault.id, {
+          name: vault.name,
+          address: vault.predicateAddress,
+          members,
+          minSigners,
+          configurable: vault.configurable,
+          version: vault.version,
+          amountInUSD: 0,
+        });
+      }
+
+      const vaultIds = Array.from(vaultInfoMap.keys());
+
+      if (vaultIds.length === 0) {
+        return { data: [], totalAmountInUSD: 0, predicates: [] };
+      }
+
+      // ========================================
+      // PARALLEL: Fetch reserved coins and balances
+      // ========================================
+      const transactionsQuery = Predicate.createQueryBuilder('p')
+        .leftJoin(
+          'p.transactions',
+          't',
+          "t.status IN (:...status) AND regexp_replace(t.network->>'url', '^https?://[^@]+@', 'https://') = :network",
+          {
+            status: [
+              TransactionStatus.AWAIT_REQUIREMENTS,
+              TransactionStatus.PENDING_SENDER,
+            ],
+            network: network.url.replace(/^https?:\/\/[^@]+@/, 'https://'),
+          },
+        )
+        .where('p.id IN (:...vaultIds)', { vaultIds })
+        .select(['p.id', 't.txData']);
+
+      // Fetch reserved coins query (runs in parallel with balance fetches)
+      const reservedCoinsPromise = transactionsQuery
+        .getMany()
+        .then(predicatesWithTx => {
+          const map = new Map<string, ReturnType<typeof calculateReservedCoins>>();
+          for (const pred of predicatesWithTx) {
+            map.set(pred.id, calculateReservedCoins(pred.transactions));
+          }
+          return map;
+        });
+
+      // Fetch all balances in parallel with error handling per vault
+      const balancesPromise = Promise.all(
+        Array.from(vaultInfoMap.entries()).map(async ([vaultId, info]) => {
+          try {
+            const instance = await this.instancePredicate(
+              info.configurable,
+              network.url,
+              info.version,
+            );
+            const balances = (await instance.getBalances()).balances.filter(a =>
+              a.amount.gt(0),
+            );
+            return { vaultId, balances };
+          } catch (err) {
+            logger.warn(
+              { vaultId, error: err?.message },
+              '[ALLOCATION] Failed to get balances for vault',
+            );
+            return { vaultId, balances: [] };
+          }
+        }),
+      );
+
+      // Wait for both to complete
+      const [reservedCoinsMap, vaultBalances] = await Promise.all([
+        reservedCoinsPromise,
+        balancesPromise,
+      ]);
+
+      // ========================================
+      // Process balances and build allocation
+      // ========================================
+      const calculateBalanceUSD = (assetId: string, amount: BN): number => {
+        try {
+          const units = fuelUnitAssets(network.chainId, assetId);
+          const formattedAmount = amount.format({ units }).replace(/,/g, '');
+          const priceUSD = quotes[assetId] ?? 0;
+          return parseFloat(formattedAmount) * priceUSD;
+        } catch (err) {
+          logger.warn(
+            { assetId, error: err?.message },
+            '[ALLOCATION] Error calculating USD for asset',
+          );
+          return 0;
+        }
+      };
+
+      const allocationMap = new Map<string, AssetAllocation>();
+      let totalAmountInUSD = 0;
+
+      for (const { vaultId, balances } of vaultBalances) {
+        const vaultInfo = vaultInfoMap.get(vaultId);
+        if (!vaultInfo) continue;
+
+        const reservedCoins = reservedCoinsMap.get(vaultId) || [];
+        const assets =
+          reservedCoins.length > 0 ? subCoins(balances, reservedCoins) : balances;
+
+        // Filter out NFTs
+        const assetsWithoutNFT = assets.filter(({ amount, assetId }) => {
+          const hasFuelMapped = assetsMap[assetId];
+          const isOneUnit = amount.eq(1);
+          return !(!hasFuelMapped && isOneUnit);
+        });
+
+        for (const { assetId, amount } of assetsWithoutNFT) {
+          const usdBalance = calculateBalanceUSD(assetId, amount);
+          totalAmountInUSD += usdBalance;
+          vaultInfo.amountInUSD += usdBalance;
+
+          const existing = allocationMap.get(assetId);
+          allocationMap.set(assetId, {
+            assetId,
+            amountInUSD: existing ? existing.amountInUSD + usdBalance : usdBalance,
+            amount: existing ? existing.amount.add(amount) : amount,
+            percentage: 0,
+          });
+        }
+      }
+
+      return this.buildAllocationResponse(
+        vaultInfoMap,
+        allocationMap,
+        totalAmountInUSD,
+        limit,
+      );
+    } catch (error) {
+      logger.error(
+        {
+          message: error?.message || error,
+          stack: error?.stack,
+          userId: user?.id,
+          predicateId,
+          networkUrl: network?.url,
+        },
+        '[ALLOCATION_ERROR]',
+      );
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on get predicate allocation',
+        detail: error?.message || error,
+      });
+    }
+  }
+
+  async checkBalances({
+    predicateId,
+    userId,
+    network,
+  }: {
+    predicateId: string;
+    userId: string;
+    network: Network;
+  }): Promise<void> {
+    try {
+      const predicate = await Predicate.createQueryBuilder('p')
+        .leftJoinAndSelect('p.workspace', 'workspace')
+        .select([
+          'p.id',
+          'p.predicateAddress',
+          'p.configurable',
+          'p.version',
+          'workspace.id',
+        ])
+        .where('p.id = :predicateId', { predicateId })
+        .getOne();
+
+      if (!predicate) {
+        throw new NotFound({
+          type: ErrorTypes.NotFound,
+          title: 'Predicate not found',
+          detail: `No predicate found with id ${predicateId}`,
+        });
+      }
+
+      const balanceCache = BalanceCache.getInstance();
+      const instance = await this.instancePredicate(
+        predicate.configurable,
+        network.url,
+        predicate.version,
+      );
+
+      // Only proceed if provider is ProviderWithCache
+      if (!(instance.provider instanceof ProviderWithCache)) {
+        return;
+      }
+
+      // Get cached balance
+      const cachedBalances = await balanceCache.get(
+        predicate.predicateAddress,
+        network.chainId,
+      );
+
+      // Get current balance directly from blockchain (bypass cache)
+      const currentBalances = (
+        await (instance.provider as ProviderWithCache).getBalancesFromBlockchain(
+          predicate.predicateAddress,
+        )
+      ).balances.filter(a => a.amount.gt(0));
+
+      if (cachedBalances) {
+        const _cachedBalances = cachedBalances.filter(a => a.amount.gt(0));
+
+        const hasChanged = compareBalances(_cachedBalances, currentBalances);
+
+        if (hasChanged) {
+          // Update cache with fresh data
+          await balanceCache.set(
+            predicate.predicateAddress,
+            currentBalances,
+            network.chainId,
+            network.url,
+          );
+
+          // Invalidate transaction cache
+          const transactionCache = TransactionCache.getInstance();
+          await transactionCache.invalidate(
+            predicate.predicateAddress,
+            network.chainId,
+          );
+
+          // Emit event to notify balance change
+          emitBalanceOutdatedPredicate(userId, {
+            sessionId: userId,
+            to: SocketUsernames.UI,
+            type: SocketEvents.BALANCE_OUTDATED_PREDICATE,
+            predicateId: predicate.id,
+            workspaceId: predicate.workspace.id,
+          });
+        }
+      }
+    } catch (error) {
+      if (error instanceof NotFound) {
+        throw error;
+      }
+
+      throw new Internal({
+        type: ErrorTypes.Internal,
+        title: 'Error on check predicate balance',
+        detail: error?.message || error,
+      });
+    }
   }
 }

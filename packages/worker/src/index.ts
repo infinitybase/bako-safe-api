@@ -8,6 +8,7 @@ import AssetCron from "./queues/assetsValue/scheduler";
 import assetQueue from "./queues/assetsValue/queue";
 import { MongoDatabase } from "./clients/mongoClient";
 import { PsqlClient } from "./clients";
+import { userBlockSyncQueue, userLogoutSyncQueue, UserBlockSyncCron } from "./queues/userBlockSync";
 
 const {
   WORKER_PORT,
@@ -51,7 +52,12 @@ const app = express();
 const serverAdapter = new ExpressAdapter();
 
 createBullBoard({
-  queues: [new BullAdapter(balanceQueue), new BullAdapter(assetQueue)],
+  queues: [
+    new BullAdapter(balanceQueue),
+    new BullAdapter(assetQueue),
+    new BullAdapter(userBlockSyncQueue),
+    new BullAdapter(userLogoutSyncQueue),
+  ],
   serverAdapter,
 });
 
@@ -66,6 +72,7 @@ PsqlClient.connect();
 // schedulers
 BalanceCron.create();
 AssetCron.create();
+UserBlockSyncCron.create();
 
 app.listen(WORKER_PORT ?? 3063, () =>
   console.log(`Server running on ${WORKER_PORT}`)

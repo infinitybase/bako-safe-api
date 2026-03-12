@@ -1,5 +1,5 @@
 import { networks } from '@src/tests/mocks/Networks';
-import { TypeUser } from '@src/models';
+import { TypeUser } from 'bakosafe';
 import { WalletUnlocked } from 'fuels';
 
 export const newUser = () => {

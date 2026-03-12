@@ -32,7 +32,9 @@ const wkPermissionMiddleware = workspacePermissionMiddleware({
 });
 
 const txPermissionMiddleware = transactionPermissionMiddleware({
-  transactionSelector: req => req.params.hash,
+  transactionSelector: req => {
+    return req.params.hash;
+  },
 });
 
 const router = Router();
@@ -54,6 +56,7 @@ const {
   createHistory,
   cancel,
   findAdvancedDetails,
+  deleteByHash,
 } = new TransactionController(
   transactionService,
   predicateService,
@@ -86,11 +89,16 @@ router.put('/close/:id', validateCloseTransactionPayload, handleResponse(close))
 
 router.put(
   '/sign/:hash',
-  validateSignerByIdPayload,
+  // validateSignerByIdPayload,
   txPermissionMiddleware,
   handleResponse(signByID),
 );
 router.put('/cancel/:hash', txPermissionMiddleware, handleResponse(cancel));
 router.get('/history/:id/:predicateId', handleResponse(createHistory));
+router.delete(
+  '/by-hash/:hash',
+  txPermissionMiddleware,
+  handleResponse(deleteByHash),
+);
 
 export default router;

@@ -3,13 +3,18 @@ import { Router } from 'express';
 import users from '@src/modules/user/routes';
 
 import addressBook from '@modules/addressBook/routes';
+import apiToken, { cliAuthRoute } from '@modules/apiToken/routes';
 import auth from '@modules/auth/routes';
 import dApp from '@modules/dApps/routes';
+import meld from '@modules/meld/routes';
 import notifications from '@modules/notification/routes';
 import predicates from '@modules/predicate/routes';
+import rampTransactions from '@modules/rampTransactions/routes';
+import bridge from '@src/modules/bridge/routes';
 import transactions from '@modules/transaction/routes';
+import { webhookRouters } from './modules/webhook/routes';
+import { internalRouter } from './modules/internal/routes';
 import workspace from '@modules/workspace/routes';
-import apiToken, { cliAuthRoute } from '@modules/apiToken/routes';
 // import debugPprof from '@modules/debugPprof/routes';
 import externalRoute from '@modules/external/routes';
 import healtCheckRouter from '@modules/healthCheck/routes';
@@ -25,11 +30,15 @@ router.use('/connections', dApp);
 router.use('/api-token', apiToken);
 router.use('/workspace', workspace);
 router.use('/predicate', predicates);
-// router.use('/debug-pprof', debugPprof);
 router.use('/address-book', addressBook);
 router.use('/transaction', transactions);
 router.use('/notifications', notifications);
 router.use('/external', externalRoute);
+router.use('/ramp-transactions/meld', meld);
+router.use('/ramp-transactions', rampTransactions);
+router.use('/bridge', bridge);
+router.use('/webhooks', webhookRouters);
+router.use('/internal', internalRouter);
 router.use('/healthcheck', healtCheckRouter);
 
 // ping route

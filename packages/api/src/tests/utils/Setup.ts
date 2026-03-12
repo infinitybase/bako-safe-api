@@ -1,10 +1,10 @@
 import { Application } from 'express';
+import { logger } from '@src/config/logger';
 import request from 'supertest';
 import { newUser } from '@src/tests/mocks/User';
-import { WalletUnlocked, Wallet, Provider } from 'fuels';
-import { TypeUser } from '@src/models';
+import { WalletUnlocked, Provider } from 'fuels';
 import App from '@src/server/app';
-import { Vault } from 'bakosafe';
+import { Vault, TypeUser } from 'bakosafe';
 import { getPredicateVersion } from '../mocks/Predicate';
 import { DeployContractConfig, LaunchTestNodeReturn } from 'fuels/test-utils';
 import { networks } from '../mocks/Networks';
@@ -100,7 +100,7 @@ export class TestEnvironment {
         version,
       );
 
-      await (await wallets[0].transfer(vault.address, 1000)).waitForResult();
+      await (await wallets[0].transfer(vault.address, 100_000)).waitForResult();
       predicates.push(vault);
     }
 
@@ -108,9 +108,9 @@ export class TestEnvironment {
       try {
         await App.stop();
         node?.cleanup();
-        console.log('Cleanup finalizado com sucesso.');
+        logger.info('Cleanup completed successfully.');
       } catch (error) {
-        console.error('Erro durante cleanup:', error);
+        logger.error({ error: error }, 'Error during cleanup');
       }
     };
 

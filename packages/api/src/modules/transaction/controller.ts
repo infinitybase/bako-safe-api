@@ -1,13 +1,9 @@
-import { PermissionRoles, Workspace } from '@src/models/Workspace';
-import {
-  Unauthorized,
-  UnauthorizedErrorTitles,
-} from '@src/utils/error/Unauthorized';
-import { validatePermissionGeneral } from '@src/utils/permissionValidate';
+import { Workspace } from '@src/models/Workspace';
+import { logger } from '@src/config/logger';
 import { TransactionStatus, TransactionType, WitnessStatus } from 'bakosafe';
 import { isUUID } from 'class-validator';
 
-import { NotificationTitle, Predicate, Transaction } from '@models/index';
+import { NotificationTitle, Predicate, Transaction, User } from '@models/index';
 
 import { IPredicateService } from '@modules/predicate/types';
 
@@ -31,7 +27,7 @@ import { IAddressBookService } from '../addressBook/types';
 import { NotificationService } from '../notification/services';
 import { INotificationService } from '../notification/types';
 import { PredicateService } from '../predicate/services';
-import { UserService } from '../user/service';
+
 import { WorkspaceService } from '../workspace/services';
 import { TransactionService } from './services';
 import {
@@ -39,6 +35,7 @@ import {
   ICloseTransactionRequest,
   ICreateTransactionHistoryRequest,
   ICreateTransactionRequest,
+  IDeleteTransactionByHashRequest,
   IFindTransactionByHashRequest,
   IFindTransactionByIdRequest,
   IListRequest,
@@ -81,32 +78,58 @@ export class TransactionController {
   // pending tx
   async pending(req: IListRequest) {
     try {
-      const { workspace, user, network } = req;
+      const { user, network } = req;
       const { predicateId } = req.query;
       const predicate =
         predicateId && predicateId.length > 0 ? predicateId[0] : undefined;
 
+      // Use chainId for filtering (faster than URL regex, uses index)
+      const chainId = String(network.chainId);
+
       if (!predicate) {
-        const qb = Transaction.createQueryBuilder('t')
-          .innerJoinAndSelect('t.predicate', 'pred')
-          .innerJoin('pred.workspace', 'wks', 'wks.id = :workspaceId', {
-            workspaceId: workspace.id,
-          })
-          .addSelect(['t.status', 't.resume'])
-          .where('t.status = :status', {
+        // Query 1: Get count of pending transactions (fast, no data transfer)
+        const countQb = Transaction.createQueryBuilder('t')
+          .select('COUNT(DISTINCT t.id)', 'count')
+          .innerJoin('t.predicate', 'pred')
+          .leftJoin('pred.members', 'pm')
+          .leftJoin('pred.owner', 'owner')
+          .where('(pm.id = :userId OR owner.id = :userId)', { userId: user.id })
+          .andWhere('t.status = :status', {
             status: TransactionStatus.AWAIT_REQUIREMENTS,
           })
-          .andWhere(
-            // TODO: On release to mainnet we need to remove this condition
-            `regexp_replace(t.network->>'url', '^https?://[^@]+@', 'https://') = :network`,
+          .andWhere(`t.network->>'chainId' = :chainId`, { chainId });
+
+        const countResult = await countQb.getRawOne();
+        const ofUser = Number(countResult?.count ?? 0);
+
+        // Early return if no pending transactions
+        if (ofUser === 0) {
+          return successful(
             {
-              network: network.url.replace(/^https?:\/\/[^@]+@/, 'https://'),
+              ofUser: 0,
+              transactionsBlocked: false,
+              pendingSignature: false,
             },
+            Responses.Ok,
           );
+        }
 
-        const transactions = await qb.getMany();
+        // Query 2: Check if user has pending signature (only fetch resume)
+        const pendingSignatureQb = Transaction.createQueryBuilder('t')
+          .select(['t.id', 't.resume'])
+          .distinctOn(['t.id'])
+          .innerJoin('t.predicate', 'pred')
+          .leftJoin('pred.members', 'pm')
+          .leftJoin('pred.owner', 'owner')
+          .where('(pm.id = :userId OR owner.id = :userId)', { userId: user.id })
+          .andWhere('t.status = :status', {
+            status: TransactionStatus.AWAIT_REQUIREMENTS,
+          })
+          .andWhere(`t.network->>'chainId' = :chainId`, { chainId })
+          .orderBy('t.id', 'ASC');
 
-        const ofUser = transactions.length;
+        const transactions = await pendingSignatureQb.getMany();
+
         const pendingSignature = transactions.some(tx =>
           tx.resume?.witnesses?.some(
             w => w.account === user.address && !w.signature,
@@ -123,19 +146,14 @@ export class TransactionController {
         );
       }
 
+      // With predicateId filter
       const qb = Transaction.createQueryBuilder('t')
-        .addSelect(['t.resume'])
+        .select(['t.id', 't.resume'])
         .where('t.status = :status', {
           status: TransactionStatus.AWAIT_REQUIREMENTS,
         })
         .andWhere('t.predicateId = :predicate', { predicate })
-        .andWhere(
-          // TODO: On release to mainnet we need to remove this condition
-          `regexp_replace(t.network->>'url', '^https?://[^@]+@', 'https://') = :network`,
-          {
-            network: network.url.replace(/^https?:\/\/[^@]+@/, 'https://'),
-          },
-        );
+        .andWhere(`t.network->>'chainId' = :chainId`, { chainId });
 
       const transactions = await qb.getMany();
 
@@ -165,6 +183,16 @@ export class TransactionController {
   }: ICreateTransactionRequest) {
     const { predicateAddress, summary, hash } = transaction;
 
+    logger.info(
+      {
+        predicateAddress,
+        hash,
+        userId: user?.id,
+        networkUrl: network?.url,
+      },
+      '[TX_CREATE] Starting transaction creation',
+    );
+
     try {
       const existsTx = await Transaction.findOne({
         where: {
@@ -180,33 +208,63 @@ export class TransactionController {
       });
 
       if (existsTx) {
+        logger.info(
+          { data: { hash, txId: existsTx.id } },
+          '[TX_CREATE] Transaction already exists',
+        );
         return successful(existsTx, Responses.Ok);
       }
 
-      const predicate = await new PredicateService()
-        .filter({ address: predicateAddress })
-        .list()
-        .then((result: Predicate[]) => result[0]);
+      const predicate = await this.predicateService.findByAddress(predicateAddress);
+      logger.info(
+        {
+          found: !!predicate,
+          predicateId: predicate?.id,
+          predicateName: predicate?.name,
+        },
+        '[TX_CREATE] Predicate search result',
+      );
 
       // if possible move this next part to a middleware, but we dont have access to body of request
       // ========================================================================================================
-      const hasPermission = validatePermissionGeneral(workspace, user.id, [
-        PermissionRoles.OWNER,
-        PermissionRoles.ADMIN,
-        PermissionRoles.MANAGER,
-      ]);
-      const isMemberOfPredicate = predicate.members.find(
-        member => member.id === user.id,
-      );
+      // const hasPermission = validatePermissionGeneral(workspace, user.id, [
+      //   PermissionRoles.OWNER,
+      //   PermissionRoles.ADMIN,
+      //   PermissionRoles.MANAGER,
+      // ]);
+      // const isMemberOfPredicate = predicate.members.find(
+      //   member => member.id === user.id,
+      // );
 
-      if (!isMemberOfPredicate && !hasPermission) {
-        throw new Unauthorized({
-          type: ErrorTypes.Unauthorized,
-          title: UnauthorizedErrorTitles.MISSING_PERMISSION,
-          detail: 'You do not have permission to access this resource',
+      // if (!isMemberOfPredicate && !hasPermission) {
+      //   throw new Unauthorized({
+      //     type: ErrorTypes.Unauthorized,
+      //     title: UnauthorizedErrorTitles.MISSING_PERMISSION,
+      //     detail: 'You do not have permission to access this resource',
+      //   });
+      // }
+      // ========================================================================================================
+
+      if (!predicate) {
+        logger.info(
+          { predicateAddress },
+          '[TX_CREATE] ERROR: Predicate not found for address',
+        );
+        throw new BadRequest({
+          type: ErrorTypes.NotFound,
+          title: 'Predicate not found',
+          detail: `No predicate found with address ${predicateAddress}`,
         });
       }
-      // ========================================================================================================
+
+      logger.info(
+        {
+          predicateId: predicate.id,
+          predicateName: predicate.name,
+          membersCount: predicate.members?.length,
+        },
+        '[TX_CREATE] Predicate found',
+      );
 
       const witnesses = predicate.members.map(member => ({
         account: member.address,
@@ -270,7 +328,7 @@ export class TransactionController {
             vaultName: predicate.name,
             transactionName: name,
             transactionId: id,
-            workspaceId: predicate.workspace.id,
+            workspaceId: predicate.workspace?.id,
           },
           user_id: member.id,
           network,
@@ -293,6 +351,15 @@ export class TransactionController {
 
       return successful(newTransaction, Responses.Created);
     } catch (e) {
+      logger.error(
+        {
+          message: e?.message || e?.error?.detail || e,
+          type: e?.error?.type,
+          title: e?.error?.title,
+          stack: e?.stack?.slice(0, 500),
+        },
+        '[TX_CREATE]',
+      );
       return error(e.error, e.statusCode);
     }
   }
@@ -322,8 +389,6 @@ export class TransactionController {
   }
 
   static async formatTransactionsHistory(data: Transaction) {
-    const userService = new UserService();
-
     const events = [
       createTxHistoryEvent(
         TransactionHistory.CREATED,
@@ -339,18 +404,26 @@ export class TransactionController {
         witness.status === WitnessStatus.CANCELED,
     );
 
+    // Batch fetch all users at once instead of N individual queries
+    const witnessAddresses = _witnesses.map(w => w.account);
+    const users =
+      witnessAddresses.length > 0
+        ? await User.find({ where: { address: In(witnessAddresses) } })
+        : [];
+    const userMap = new Map(users.map(u => [u.address, u]));
+
     const witnessEventMap = {
       [WitnessStatus.DONE]: TransactionHistory.SIGN,
       [WitnessStatus.REJECTED]: TransactionHistory.DECLINE,
       [WitnessStatus.CANCELED]: TransactionHistory.CANCEL,
     };
-    const witnessEvents = await Promise.all(
-      _witnesses.map(async witness => {
-        const user = await userService.findByAddress(witness.account);
-        const eventType = witnessEventMap[witness.status];
-        return createTxHistoryEvent(eventType, witness.updatedAt, user);
-      }),
-    );
+
+    // Use pre-fetched users from map (O(1) lookup instead of DB call)
+    const witnessEvents = _witnesses.map(witness => {
+      const user = userMap.get(witness.account);
+      const eventType = witnessEventMap[witness.status];
+      return createTxHistoryEvent(eventType, witness.updatedAt, user);
+    });
 
     events.push(...witnessEvents);
 
@@ -436,12 +509,13 @@ export class TransactionController {
     try {
       const transaction = await Transaction.findOne({
         where: {
-          hash: txHash,
+          hash: txHash.startsWith(`0x`) ? txHash.slice(2) : txHash,
           status: Not(
             In([
               TransactionStatus.DECLINED,
               TransactionStatus.FAILED,
               TransactionStatus.CANCELED,
+              TransactionStatus.SUCCESS,
             ]),
           ),
         },
@@ -478,10 +552,10 @@ export class TransactionController {
 
       const _transaction = await transaction.save();
 
-      console.log('[SIGN_BY_ID] Transaction status updated: ', {
-        status: _transaction.status,
-        resume: _transaction.resume,
-      });
+      logger.info(
+        { status: _transaction.status },
+        '[SIGN_BY_ID] Transaction status updated',
+      );
 
       if (newStatus === TransactionStatus.PENDING_SENDER) {
         await this.transactionService.sendToChain(transaction.hash, network);
@@ -511,7 +585,7 @@ export class TransactionController {
 
       return successful(true, Responses.Ok);
     } catch (e) {
-      console.error('[SIGN_BY_ID] Error: ', e);
+      logger.error({ error: e }, '[SIGN_BY_ID]');
       return error(e.error, e.statusCode);
     }
   }
@@ -673,7 +747,6 @@ export class TransactionController {
 
       return successful(response, Responses.Ok);
     } catch (e) {
-      console.log(`[INCOMING_ERROR]`, e);
       return error(e.error, e.statusCode);
     }
   }
@@ -754,12 +827,26 @@ export class TransactionController {
     params: { id },
   }: ICloseTransactionRequest) {
     try {
+      // Get transaction with predicate to invalidate cache
+      const transaction = await Transaction.findOne({
+        where: { id },
+        relations: ['predicate'],
+      });
+
       const response = await this.transactionService.update(id, {
         status: TransactionStatus.SUCCESS,
         sendTime: new Date(),
         gasUsed,
         resume: transactionResult,
       });
+
+      // Invalidate caches for all predicates involved in this transaction
+      this.transactionService
+        .invalidateCaches(transaction)
+        .catch(err =>
+          logger.error({ error: err }, '[TX_CLOSE] Failed to invalidate caches:'),
+        );
+
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);
@@ -774,7 +861,7 @@ export class TransactionController {
       await this.transactionService.sendToChain(hash.slice(2), params.network); // not wait for this
       return successful(true, Responses.Ok);
     } catch (e) {
-      console.log('[TX_ERROR]', e);
+      logger.error({ error: e }, '[TX_SEND]');
       return error(e.error, e.statusCode);
     }
   }
@@ -783,7 +870,7 @@ export class TransactionController {
     try {
       const { page, perPage } = req.query;
       const response = await this.transactionService
-        .paginate({ page: page || 0, perPage: perPage || 30 })
+        .paginate({ page: page || '0', perPage: perPage || '30' })
         .listAll();
       return successful(response, Responses.Ok);
     } catch (e) {
@@ -795,6 +882,18 @@ export class TransactionController {
     try {
       const { id } = req.params;
       const response = await this.transactionService.findAdvancedDetailById(id);
+      return successful(response, Responses.Ok);
+    } catch (e) {
+      return error(e.error, e.statusCode);
+    }
+  }
+
+  async deleteByHash(req: IDeleteTransactionByHashRequest) {
+    try {
+      const { hash } = req.params;
+      const response = await this.transactionService.deleteByHash(
+        hash.startsWith(`0x`) ? hash.slice(2) : hash,
+      );
       return successful(response, Responses.Ok);
     } catch (e) {
       return error(e.error, e.statusCode);

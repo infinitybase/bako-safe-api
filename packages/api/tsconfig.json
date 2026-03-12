@@ -4,6 +4,8 @@
     "module": "CommonJS",
     "outDir": "build",
     "baseUrl": "./src",
+    "incremental": true,
+    "tsBuildInfoFile": "./build/.tsbuildinfo",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "resolveJsonModule": true,
