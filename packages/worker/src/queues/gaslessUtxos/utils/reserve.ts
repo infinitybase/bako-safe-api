@@ -7,7 +7,10 @@ export const reserve = async (
 ): Promise<GaslessUtxo | null> => {
   const { reservedBy, estimatedMaxFee } = options;
 
-  const minAmount = String(Math.ceil(estimatedMaxFee * 1.5));
+  const minAmount = (
+    (BigInt(Math.floor(estimatedMaxFee)) * BigInt(150)) /
+    BigInt(100)
+  ).toString();
 
   return collection.findOneAndUpdate(
     { status: "available", amount: { $gte: minAmount } },

@@ -5,12 +5,21 @@ export const getStats = async (
   collection: Collection<GaslessUtxo>
 ): Promise<GaslessUtxoStats> => {
   const result = await collection
-    .aggregate<{ _id: string; count: number; totalAmount: string }>([
+    .aggregate<{ _id: string; count: number; totalAmount: number }>([
       {
         $group: {
           _id: "$status",
           count: { $sum: 1 },
-          totalAmount: { $sum: { $toLong: "$amount" } },
+          totalAmount: {
+            $sum: {
+              $convert: {
+                input: "$amount",
+                to: "long",
+                onError: 0,
+                onNull: 0,
+              },
+            },
+          },
         },
       },
     ])

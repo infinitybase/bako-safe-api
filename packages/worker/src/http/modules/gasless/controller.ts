@@ -22,7 +22,12 @@ export class GaslessController {
         throw new AppError(400, "estimatedMaxFee must be a positive number");
       }
 
-      // TODO: space for blocking rules
+      if (
+        accountId !== undefined &&
+        (typeof accountId !== "string" || accountId.trim().length === 0)
+      ) {
+        throw new AppError(400, "accountId must be a non-empty string");
+      }
 
       const db = await MongoDatabase.connect();
       const utxos = gaslessUtxosCollection(
