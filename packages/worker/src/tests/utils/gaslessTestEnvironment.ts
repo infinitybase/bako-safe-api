@@ -34,6 +34,7 @@ export class GaslessTestEnvironment {
       txId: u.txId ?? "0xabc",
       outputIndex: u.outputIndex ?? 0,
       amount: u.amount ?? "200000000000000",
+      owner: u.owner ?? "0xdefault-owner",
       status: u.status ?? "available",
       createdAt: u.createdAt ?? new Date(),
       ...(u.reservedBy && { reservedBy: u.reservedBy }),

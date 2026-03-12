@@ -3,6 +3,11 @@ import assert from "node:assert/strict";
 import { gaslessUtxosCollection } from "@/queues/gaslessUtxos";
 import { GaslessTestEnvironment } from "@/tests/utils/gaslessTestEnvironment";
 
+const DEFAULT_FEE = 100;
+const DEFAULT_AMOUNT = "200";
+const LOW_AMOUNT = "100";
+const DEFAULT_AMOUNT_WEI = "200000000000000";
+
 test("gaslessUtxos", async (t) => {
   const env = new GaslessTestEnvironment();
 
@@ -52,35 +57,73 @@ test("gaslessUtxos", async (t) => {
       await env.clear();
     });
 
-    await t.test("should reserve an available UTXO", async () => {
-      await env.seed([{ utxoId: "utxo-1", status: "available" }]);
+    await t.test(
+      "should reserve a UTXO with amount >= estimatedMaxFee * 1.5",
+      async () => {
+        await env.seed([
+          { utxoId: "utxo-1", status: "available", amount: DEFAULT_AMOUNT },
+        ]);
 
-      const utxos = gaslessUtxosCollection(env.collection);
-      const reserved = await utxos.reserve({ reservedBy: "reservation-123" });
+        const utxos = gaslessUtxosCollection(env.collection);
+        const reserved = await utxos.reserve({
+          reservedBy: "reservation-123",
+          estimatedMaxFee: DEFAULT_FEE,
+        });
 
-      assert.ok(reserved);
-      assert.equal(reserved.utxoId, "utxo-1");
-      assert.equal(reserved.status, "reserved");
-      assert.equal(reserved.reservedBy, "reservation-123");
-      assert.ok(reserved.reservedAt instanceof Date);
-    });
+        assert.ok(reserved);
+        assert.equal(reserved.utxoId, "utxo-1");
+        assert.equal(reserved.status, "reserved");
+        assert.equal(reserved.reservedBy, "reservation-123");
+        assert.ok(reserved.reservedAt instanceof Date);
+      }
+    );
 
     await t.test("should return null when no UTXOs available", async () => {
-      await env.seed([{ utxoId: "utxo-1", status: "spent" }]);
+      await env.seed([
+        { utxoId: "utxo-1", status: "spent", amount: DEFAULT_AMOUNT },
+      ]);
 
       const utxos = gaslessUtxosCollection(env.collection);
-      const reserved = await utxos.reserve({ reservedBy: "reservation-123" });
+      const reserved = await utxos.reserve({
+        reservedBy: "reservation-123",
+        estimatedMaxFee: DEFAULT_FEE,
+      });
 
       assert.equal(reserved, null);
     });
 
+    await t.test(
+      "should return null when UTXO amount is insufficient for estimatedMaxFee",
+      async () => {
+        await env.seed([
+          { utxoId: "utxo-1", status: "available", amount: LOW_AMOUNT },
+        ]);
+
+        const utxos = gaslessUtxosCollection(env.collection);
+        const reserved = await utxos.reserve({
+          reservedBy: "reservation-123",
+          estimatedMaxFee: DEFAULT_FEE,
+        });
+
+        assert.equal(reserved, null);
+      }
+    );
+
     await t.test("should not reserve an already reserved UTXO", async () => {
       await env.seed([
-        { utxoId: "utxo-1", status: "reserved", reservedBy: "reservation-abc" },
+        {
+          utxoId: "utxo-1",
+          status: "reserved",
+          reservedBy: "reservation-abc",
+          amount: DEFAULT_AMOUNT,
+        },
       ]);
 
       const utxos = gaslessUtxosCollection(env.collection);
-      const reserved = await utxos.reserve({ reservedBy: "reservation-xyz" });
+      const reserved = await utxos.reserve({
+        reservedBy: "reservation-xyz",
+        estimatedMaxFee: DEFAULT_FEE,
+      });
 
       assert.equal(reserved, null);
     });
@@ -88,13 +131,21 @@ test("gaslessUtxos", async (t) => {
     await t.test(
       "should handle race condition — only one reservation wins",
       async () => {
-        await env.seed([{ utxoId: "utxo-1", status: "available" }]);
+        await env.seed([
+          { utxoId: "utxo-1", status: "available", amount: DEFAULT_AMOUNT },
+        ]);
 
         const utxos = gaslessUtxosCollection(env.collection);
 
         const [first, second] = await Promise.all([
-          utxos.reserve({ reservedBy: "reservation-A" }),
-          utxos.reserve({ reservedBy: "reservation-B" }),
+          utxos.reserve({
+            reservedBy: "reservation-A",
+            estimatedMaxFee: DEFAULT_FEE,
+          }),
+          utxos.reserve({
+            reservedBy: "reservation-B",
+            estimatedMaxFee: DEFAULT_FEE,
+          }),
         ]);
 
         const winners = [first, second].filter(Boolean);
@@ -102,7 +153,6 @@ test("gaslessUtxos", async (t) => {
 
         assert.equal(winners.length, 1);
         assert.equal(losers.length, 1);
-
         assert.equal(winners[0]!.status, "reserved");
       }
     );
@@ -111,16 +161,25 @@ test("gaslessUtxos", async (t) => {
       "should handle race condition with multiple UTXOs",
       async () => {
         await env.seed([
-          { utxoId: "utxo-1", status: "available" },
-          { utxoId: "utxo-2", status: "available" },
+          { utxoId: "utxo-1", status: "available", amount: DEFAULT_AMOUNT },
+          { utxoId: "utxo-2", status: "available", amount: DEFAULT_AMOUNT },
         ]);
 
         const utxos = gaslessUtxosCollection(env.collection);
 
         const results = await Promise.all([
-          utxos.reserve({ reservedBy: "reservation-A" }),
-          utxos.reserve({ reservedBy: "reservation-B" }),
-          utxos.reserve({ reservedBy: "reservation-C" }),
+          utxos.reserve({
+            reservedBy: "reservation-A",
+            estimatedMaxFee: DEFAULT_FEE,
+          }),
+          utxos.reserve({
+            reservedBy: "reservation-B",
+            estimatedMaxFee: DEFAULT_FEE,
+          }),
+          utxos.reserve({
+            reservedBy: "reservation-C",
+            estimatedMaxFee: DEFAULT_FEE,
+          }),
         ]);
 
         const winners = results.filter(Boolean);
@@ -226,14 +285,14 @@ test("gaslessUtxos", async (t) => {
       await env.clear();
     });
 
-    await t.test("should return correct counts per status", async () => {
+    await t.test("should return correct counts and totalValue", async () => {
       await env.seed([
-        { utxoId: "utxo-1", status: "available" },
-        { utxoId: "utxo-2", status: "available" },
-        { utxoId: "utxo-3", status: "reserved" },
-        { utxoId: "utxo-4", status: "spent" },
-        { utxoId: "utxo-5", status: "spent" },
-        { utxoId: "utxo-6", status: "spent" },
+        { utxoId: "utxo-1", status: "available", amount: "200" },
+        { utxoId: "utxo-2", status: "available", amount: "200" },
+        { utxoId: "utxo-3", status: "reserved", amount: "200" },
+        { utxoId: "utxo-4", status: "spent", amount: "200" },
+        { utxoId: "utxo-5", status: "spent", amount: "200" },
+        { utxoId: "utxo-6", status: "spent", amount: "200" },
       ]);
 
       const utxos = gaslessUtxosCollection(env.collection);
@@ -242,8 +301,24 @@ test("gaslessUtxos", async (t) => {
       assert.equal(stats.available, 2);
       assert.equal(stats.reserved, 1);
       assert.equal(stats.spent, 3);
-      assert.equal(stats.total, 6);
+      assert.equal(stats.totalValue, "1200");
     });
+
+    await t.test(
+      "should sum amounts correctly across different statuses",
+      async () => {
+        await env.seed([
+          { utxoId: "utxo-1", status: "available", amount: "300" },
+          { utxoId: "utxo-2", status: "reserved", amount: "500" },
+          { utxoId: "utxo-3", status: "spent", amount: "200" },
+        ]);
+
+        const utxos = gaslessUtxosCollection(env.collection);
+        const stats = await utxos.getStats();
+
+        assert.equal(stats.totalValue, "1000");
+      }
+    );
 
     await t.test("should return zeros when collection is empty", async () => {
       const utxos = gaslessUtxosCollection(env.collection);
@@ -252,7 +327,7 @@ test("gaslessUtxos", async (t) => {
       assert.equal(stats.available, 0);
       assert.equal(stats.reserved, 0);
       assert.equal(stats.spent, 0);
-      assert.equal(stats.total, 0);
+      assert.equal(stats.totalValue, "0");
     });
   });
 
@@ -356,5 +431,116 @@ test("gaslessUtxos", async (t) => {
 
       assert.equal(released, 0);
     });
+  });
+
+  await t.test("complete flow", async (t) => {
+    t.afterEach(async () => {
+      await env.clear();
+    });
+
+    await t.test(
+      "reserve -> release should return UTXO to available",
+      async () => {
+        await env.seed([
+          { utxoId: "utxo-1", status: "available", amount: DEFAULT_AMOUNT },
+        ]);
+
+        const utxos = gaslessUtxosCollection(env.collection);
+
+        const reserved = await utxos.reserve({
+          reservedBy: "reservation-123",
+          estimatedMaxFee: DEFAULT_FEE,
+        });
+
+        assert.ok(reserved);
+        assert.equal(reserved.status, "reserved");
+
+        const released = await utxos.release("utxo-1");
+
+        assert.ok(released);
+        assert.equal(released.status, "available");
+        assert.equal(released.reservedBy, undefined);
+        assert.equal(released.reservedAt, undefined);
+      }
+    );
+
+    await t.test(
+      "reserve -> release -> reserve should allow UTXO to be reused",
+      async () => {
+        await env.seed([
+          { utxoId: "utxo-1", status: "available", amount: DEFAULT_AMOUNT },
+        ]);
+
+        const utxos = gaslessUtxosCollection(env.collection);
+
+        const firstReservation = await utxos.reserve({
+          reservedBy: "reservation-A",
+          estimatedMaxFee: DEFAULT_FEE,
+        });
+        assert.ok(firstReservation);
+        assert.equal(firstReservation.status, "reserved");
+
+        await utxos.release("utxo-1");
+
+        const secondReservation = await utxos.reserve({
+          reservedBy: "reservation-B",
+          estimatedMaxFee: DEFAULT_FEE,
+        });
+        assert.ok(secondReservation);
+        assert.equal(secondReservation.utxoId, "utxo-1");
+        assert.equal(secondReservation.status, "reserved");
+        assert.equal(secondReservation.reservedBy, "reservation-B");
+      }
+    );
+
+    await t.test("should return null when pool is exhausted", async () => {
+      await env.seed([
+        { utxoId: "utxo-1", status: "spent", amount: DEFAULT_AMOUNT },
+      ]);
+
+      const utxos = gaslessUtxosCollection(env.collection);
+
+      const reserved = await utxos.reserve({
+        reservedBy: "reservation-123",
+        estimatedMaxFee: DEFAULT_FEE,
+      });
+
+      assert.equal(reserved, null);
+    });
+
+    await t.test(
+      "should return null when UTXO amount is insufficient for estimatedMaxFee",
+      async () => {
+        await env.seed([
+          { utxoId: "utxo-1", status: "available", amount: LOW_AMOUNT },
+        ]);
+
+        const utxos = gaslessUtxosCollection(env.collection);
+
+        const reserved = await utxos.reserve({
+          reservedBy: "reservation-123",
+          estimatedMaxFee: DEFAULT_FEE,
+        });
+
+        assert.equal(reserved, null);
+      }
+    );
+
+    await t.test(
+      "should use default seed amount (wei) and reserve correctly",
+      async () => {
+        await env.seed([{ utxoId: "utxo-1", status: "available" }]);
+
+        const utxos = gaslessUtxosCollection(env.collection);
+
+        const reserved = await utxos.reserve({
+          reservedBy: "reservation-123",
+          estimatedMaxFee: 100000000000000,
+        });
+
+        assert.ok(reserved);
+        assert.equal(reserved.amount, DEFAULT_AMOUNT_WEI);
+      }
+    );
   });
 });
