@@ -49,4 +49,23 @@ export class GaslessController {
       next(err);
     }
   }
+
+  static async stats(
+    _req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    try {
+      const db = await MongoDatabase.connect();
+      const utxos = gaslessUtxosCollection(
+        db.getCollection<GaslessUtxo>(COLLECTION_GASLESS_UTXOS)
+      );
+
+      const stats = await utxos.getStats();
+
+      res.status(200).json(stats);
+    } catch (err) {
+      next(err);
+    }
+  }
 }

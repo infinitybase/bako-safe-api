@@ -18,7 +18,7 @@ export interface GaslessUtxoStats {
   available: number;
   reserved: number;
   spent: number;
-  total: number;
+  totalValue: string;
 }
 
 export interface ReserveUtxoOptions {
