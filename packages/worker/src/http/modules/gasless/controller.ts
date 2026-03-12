@@ -40,7 +40,7 @@ export class GaslessController {
       });
 
       if (!utxo) {
-        throw new AppError(503, "POOL_EXHAUSTED");
+        throw new AppError(503, "Pool exhausted - no UTXOs available");
       }
 
       res.status(200).json({

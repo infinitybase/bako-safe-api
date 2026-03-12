@@ -1,5 +1,6 @@
 import { Collection } from "mongodb";
 import { GaslessUtxo, ReserveUtxoOptions } from "../types";
+import { SAFETY_MARGIN_PERCENT } from "../constants";
 
 export const reserve = async (
   collection: Collection<GaslessUtxo>,
@@ -8,7 +9,7 @@ export const reserve = async (
   const { reservedBy, estimatedMaxFee } = options;
 
   const minAmount = (
-    (BigInt(Math.floor(estimatedMaxFee)) * BigInt(150)) /
+    (BigInt(Math.floor(estimatedMaxFee)) * BigInt(SAFETY_MARGIN_PERCENT)) /
     BigInt(100)
   ).toString();
 
