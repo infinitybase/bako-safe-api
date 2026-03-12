@@ -6,6 +6,7 @@ export interface GaslessUtxo {
   txId: string;
   outputIndex: number;
   amount: string;
+  owner: string;
   status: "available" | "reserved" | "spent";
   reservedAt?: Date;
   reservedBy?: string;
@@ -22,5 +23,5 @@ export interface GaslessUtxoStats {
 
 export interface ReserveUtxoOptions {
   reservedBy: string;
-  ttlSeconds?: number;
+  estimatedMaxFee: number;
 }

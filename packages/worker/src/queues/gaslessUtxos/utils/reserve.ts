@@ -1,15 +1,16 @@
 import { Collection } from "mongodb";
 import { GaslessUtxo, ReserveUtxoOptions } from "../types";
-import { DEFAULT_TTL_SECONDS } from "@/queues/gaslessUtxos/constants";
 
 export const reserve = async (
   collection: Collection<GaslessUtxo>,
   options: ReserveUtxoOptions
 ): Promise<GaslessUtxo | null> => {
-  const { reservedBy, ttlSeconds = DEFAULT_TTL_SECONDS } = options;
+  const { reservedBy, estimatedMaxFee } = options;
+
+  const minAmount = String(Math.ceil(estimatedMaxFee * 1.5));
 
   return collection.findOneAndUpdate(
-    { status: "available" },
+    { status: "available", amount: { $gte: minAmount } },
     {
       $set: {
         status: "reserved",
