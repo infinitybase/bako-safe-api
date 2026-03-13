@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Increased the socket auto-disconnect timeout after event emission to ensure more reliable delivery and prevent premature disconnections during high-latency operations.
 - Updated the `build:prod` script to execute `postbuild` after the build process, ensuring all necessary post-build steps are consistently applied in production builds.
 - Method `findById` of PredicateService now returns the `email` and `notify` fields of predicate members.
+- Refactored vault notification logic: moved email sending logic from PredicateController to NotificationService's `vaultCreate` method.
 
 ### Fixed
 
