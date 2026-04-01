@@ -1,4 +1,4 @@
-import cron from "node-cron";
+import * as cron from "node-cron";
 import userBlockSyncQueue from "./queue";
 import {
   CRON_EXPRESSION_USER_SYNC,
