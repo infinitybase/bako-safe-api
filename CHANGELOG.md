@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Upgrade fuels SDK to 0.103.0 and bakosafe to 0.6.2 for fuel-core 0.47.1 compatibility, fixing gas price estimation on transaction submit
+
 ### Added
 
 - Comprehensive CI pipeline with lint, typecheck, security audit, and tests
