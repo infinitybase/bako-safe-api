@@ -10,13 +10,15 @@ import {
   IFilterNotificationParams,
   INotificationService,
   IUpdateNotificationPayload,
+  IVaultCreateNotificationPayload,
 } from './types';
 import { DeepPartial } from 'typeorm';
 import { TransactionService } from '../transaction/services';
+import { UserService } from '../user/service';
 import { EmailTemplateType, sendMail } from '@src/utils/EmailSender';
 import { Network } from 'fuels';
 import { SocketEvents, SocketUsernames } from '@src/socket/types';
-import { PredicateService } from '../predicate/services';
+
 import { logger } from '@src/config/logger';
 
 const { API_URL } = process.env;
@@ -151,29 +153,73 @@ export class NotificationService implements INotificationService {
       });
   }
 
-  async vaultUpdate(vaultId: string) {
-    const vault = await new PredicateService().findById(vaultId);
+  async vaultCreate({
+    vaultId,
+    vaultName,
+    workspaceId,
+    network,
+    membersToNotify,
+  }: IVaultCreateNotificationPayload) {
+    try {
+      if (membersToNotify.length === 0) {
+        logger.info('[VAULT_CREATE] No members to notify, skipping notifications');
+        return;
+      }
 
-    if (!vault) {
-      return;
+      const membersNotificationInfos = await new UserService().getNotificationInfo(
+        membersToNotify,
+      );
+
+      const notifyContent = {
+        vaultId,
+        vaultName,
+        workspaceId,
+      };
+
+      // Create notifications and send emails in parallel
+      await Promise.all(
+        membersNotificationInfos.map(async member => {
+          await this.create({
+            title: NotificationTitle.NEW_VAULT_CREATED,
+            user_id: member.id,
+            summary: notifyContent,
+            network,
+          });
+
+          if (member.notify && member.email) {
+            await sendMail(EmailTemplateType.VAULT_CREATED, {
+              to: member.email,
+              data: {
+                summary: { ...notifyContent, name: member?.name ?? '' },
+              },
+            });
+          }
+        }),
+      );
+
+      // Parallelize socket notifications for all members
+      await Promise.all(
+        membersNotificationInfos.map(member => {
+          const socketClient = new SocketClient(member.id, API_URL);
+          socketClient.emit(SocketEvents.NOTIFICATION, {
+            sessionId: member.id,
+            to: SocketUsernames.UI,
+            request_id: undefined,
+            type: SocketEvents.VAULT_UPDATE,
+            data: {},
+          });
+          return Promise.resolve();
+        }),
+      );
+    } catch (error) {
+      logger.error(
+        {
+          vaultId,
+          error: error?.message || error,
+        },
+        '[VAULT_CREATE] Error on vault create notifications',
+      );
     }
-
-    const members = vault.members;
-
-    // Parallelize socket notifications for all members
-    await Promise.all(
-      members.map(member => {
-        const socketClient = new SocketClient(member.id, API_URL);
-        socketClient.emit(SocketEvents.NOTIFICATION, {
-          sessionId: member.id,
-          to: SocketUsernames.UI,
-          request_id: undefined,
-          type: SocketEvents.VAULT_UPDATE,
-          data: {},
-        });
-        return Promise.resolve();
-      }),
-    );
   }
 
   async transactionUpdate(txId: string) {

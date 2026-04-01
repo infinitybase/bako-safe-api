@@ -193,9 +193,7 @@ test('Transaction Endpoints', async t => {
         const member = predicate.members.find(
           member => member.id === element.owner.id,
         );
-        for (const key of Object.keys(element.owner)) {
-          assert.deepStrictEqual(member[key], element.owner[key]);
-        }
+        assert.deepStrictEqual(element.owner, member);
       });
     },
   );

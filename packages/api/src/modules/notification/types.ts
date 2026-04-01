@@ -41,6 +41,14 @@ interface IListNotificationsRequestSchema extends ValidatedRequestSchema {
   };
 }
 
+export interface IVaultCreateNotificationPayload {
+  vaultId: string;
+  vaultName: string;
+  workspaceId: string;
+  network: Network;
+  membersToNotify: string[];
+}
+
 type IReadAllNotificationsRequestSchema = ValidatedRequestSchema;
 
 export type IListNotificationsRequest = AuthValidatedRequest<IListNotificationsRequestSchema>;
@@ -58,4 +66,5 @@ export interface INotificationService {
     networkUrl: string,
     payload: IUpdateNotificationPayload,
   ) => Promise<boolean>;
+  vaultCreate: (payload: IVaultCreateNotificationPayload) => Promise<void>;
 }

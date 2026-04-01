@@ -49,6 +49,13 @@ export interface IValidateNameResponse {
   type: TypeUser;
 }
 
+export interface INotificationInfo {
+  id: string;
+  name?: string;
+  notify: boolean;
+  email?: string;
+}
+
 interface ICreateRequestSchema extends ValidatedRequestSchema {
   [ContainerTypes.Body]: IUserPayload;
 }
@@ -164,4 +171,5 @@ export interface IUserService {
     workspaceId: string;
     network: Network;
   }) => Promise<void>;
+  getNotificationInfo(ids: string[]): Promise<INotificationInfo[]>;
 }
