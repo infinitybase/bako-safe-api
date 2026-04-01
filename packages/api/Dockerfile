@@ -34,8 +34,9 @@ WORKDIR /api
 COPY package.json ./
 
 # Install only production dependencies with cache mount
+# --ignore-scripts prevents pnpm v10 from prompting for build script approval (no TTY in CI)
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
-    pnpm install --prod
+    pnpm install --prod --ignore-scripts
 
 # Copy built application from builder stage
 COPY --from=builder /api/build ./build
