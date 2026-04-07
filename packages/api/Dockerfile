@@ -2,7 +2,7 @@
 FROM node:22-bookworm AS builder
 
 # Bookworm already has python3/make/g++ - no need to install
-# Build trigger: 2024-11-27
+# Build trigger: 2026-04-07
 # Install pnpm globally
 RUN npm install -g pnpm
 
