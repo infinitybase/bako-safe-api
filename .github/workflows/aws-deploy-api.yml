@@ -44,14 +44,11 @@ jobs:
   deploy:
     name: "[API] Deploy to ${{ needs.setup.outputs.environment }}"
     needs: setup
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -72,7 +69,6 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./packages/api
-          platforms: linux/arm64
           push: true
           tags: ${{ steps.login_ecr.outputs.registry }}/${{ needs.setup.outputs.ecr_repository }}:${{ github.sha }}
           cache-from: type=gha
