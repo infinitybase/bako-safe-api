@@ -178,7 +178,7 @@ submitTransactionQueue.process(async (job) => {
      FROM transactions
      WHERE hash = $1
        AND status NOT IN ('declined', 'failed', 'canceled')
-     ORDER BY "createdAt" DESC
+     ORDER BY created_at DESC
      LIMIT 1`,
     [hash]
   );
@@ -261,8 +261,8 @@ submitTransactionQueue.process(async (job) => {
     await psql.query(
       `UPDATE transactions
        SET status = 'success',
-           "sendTime" = NOW(),
-           "gasUsed" = $1,
+           send_time = NOW(),
+           gas_used = $1,
            resume = $2,
            retry_attempts = $3
        WHERE id = $4`,
@@ -362,8 +362,8 @@ submitTransactionQueue.process(async (job) => {
     await psql.query(
       `UPDATE transactions
        SET status = 'failed',
-           "sendTime" = NOW(),
-           "gasUsed" = '0.0',
+           send_time = NOW(),
+           gas_used = '0.0',
            resume = $1,
            retry_attempts = $2
        WHERE id = $3`,
