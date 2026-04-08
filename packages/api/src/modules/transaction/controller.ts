@@ -51,6 +51,7 @@ import { createTxHistoryEvent, mergeTransactionLists } from './utils';
 
 import { emitTransaction } from '@src/socket/events';
 import { SocketEvents, SocketUsernames } from '@src/socket/types';
+import { enqueueTransactionSubmit } from '@src/utils/submitTransactionQueue';
 
 // todo: use this provider by session, and move to transactions
 const { FUEL_PROVIDER } = process.env;
@@ -558,7 +559,7 @@ export class TransactionController {
       );
 
       if (newStatus === TransactionStatus.PENDING_SENDER) {
-        await this.transactionService.sendToChain(transaction.hash, network);
+        await enqueueTransactionSubmit(transaction.hash, network.url);
       }
 
       await new NotificationService().transactionUpdate(transaction.id);
@@ -858,7 +859,7 @@ export class TransactionController {
       params: { hash },
     } = params;
     try {
-      await this.transactionService.sendToChain(hash.slice(2), params.network); // not wait for this
+      await enqueueTransactionSubmit(hash.slice(2), params.network.url);
       return successful(true, Responses.Ok);
     } catch (e) {
       logger.error({ error: e }, '[TX_SEND]');
