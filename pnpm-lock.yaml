@@ -84,6 +84,9 @@ importers:
       body-parser:
         specifier: 1.20.4
         version: 1.20.4
+      bull:
+        specifier: ^4.16.5
+        version: 4.16.5
       cheerio:
         specifier: 1.0.0-rc.12
         version: 1.0.0-rc.12
@@ -120,6 +123,9 @@ importers:
       handlebars:
         specifier: 4.7.8
         version: 4.7.8
+      ioredis:
+        specifier: ^5.7.0
+        version: 5.9.2
       joi:
         specifier: 17.4.0
         version: 17.4.0
@@ -430,6 +436,9 @@ importers:
       '@types/node-cron':
         specifier: 3.0.11
         version: 3.0.11
+      bakosafe:
+        specifier: 0.6.3
+        version: 0.6.3(fuels@0.103.0(vitest@3.0.9(@types/node@20.6.0)(tsx@4.21.0)(yaml@2.8.2)))(typescript@5.4.5)
       bull:
         specifier: ^4.16.5
         version: 4.16.5
@@ -454,6 +463,9 @@ importers:
       redis:
         specifier: 4.7.0
         version: 4.7.0
+      socket.io-client:
+        specifier: 4.7.5
+        version: 4.7.5
       ts-node:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@20.6.0)(typescript@5.4.5)

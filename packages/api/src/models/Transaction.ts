@@ -112,6 +112,13 @@ class Transaction extends Base {
   @ManyToOne(() => Predicate)
   predicate: Predicate;
 
+  @Column({
+    type: 'jsonb',
+    name: 'retry_attempts',
+    default: () => "'[]'",
+  })
+  retryAttempts: object[];
+
   @OneToOne(() => RampTransaction, rampTransaction => rampTransaction.transaction, {
     nullable: true,
   })

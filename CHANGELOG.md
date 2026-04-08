@@ -7,9 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Bull queue for async transaction submission with automatic retry (120 attempts, ~30min cyclic backoff)
+- Retry attempt auditing via `retry_attempts` column with grouped consecutive errors
+- Structured JSON logs for transaction submission monitoring (start, retry, success, failure)
+- RFC documentation for transaction submit queue architecture
+
 ### Fixed
 
 - Upgrade fuels SDK to 0.103.0 and bakosafe to 0.6.2 for fuel-core 0.47.1 compatibility, fixing gas price estimation on transaction submit
+- `test:build` script now loads `.env.test` via `DOTENV_CONFIG_PATH`
+
+### Changed
+
+- Transaction submission is now non-blocking — `signByID` and `send` enqueue to Bull instead of calling `sendToChain` synchronously
 
 ### Added
 
