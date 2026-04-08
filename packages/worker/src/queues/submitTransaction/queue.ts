@@ -115,9 +115,15 @@ async function notifyTransactionResult(transactionId: string): Promise<void> {
   const API_URL = process.env.WORKER_API_URL || "http://localhost:3333";
 
   try {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    const workerSecret = process.env.WORKER_SHARED_SECRET;
+    if (workerSecret) {
+      headers["x-worker-secret"] = workerSecret;
+    }
+
     const response = await fetch(
       `${API_URL}/transaction/notify-result/${transactionId}`,
-      { method: "POST", headers: { "Content-Type": "application/json" } }
+      { method: "POST", headers }
     );
 
     if (!response.ok) {

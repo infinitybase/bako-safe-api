@@ -875,12 +875,41 @@ export class TransactionController {
   async notifyResult(params: any) {
     const { params: { id } } = params;
     try {
+      // Validate shared secret (skip if not configured)
+      const expectedSecret = process.env.WORKER_SHARED_SECRET;
+      if (expectedSecret) {
+        const secret = params.headers?.['x-worker-secret'];
+        if (secret !== expectedSecret) {
+          logger.warn({ id }, '[TX_NOTIFY_RESULT] Unauthorized request');
+          return error(
+            new BadRequest({
+              type: ErrorTypes.Unauthorized,
+              title: 'Unauthorized',
+              detail: 'Invalid worker secret',
+            }),
+            401,
+          );
+        }
+      }
+
       const transaction = await Transaction.findOne({
         where: { id },
         relations: ['predicate', 'createdBy'],
       });
 
       if (!transaction) {
+        return successful(false, Responses.Ok);
+      }
+
+      // Only notify for terminal statuses
+      if (
+        transaction.status !== TransactionStatus.SUCCESS &&
+        transaction.status !== TransactionStatus.FAILED
+      ) {
+        logger.info(
+          { id, status: transaction.status },
+          '[TX_NOTIFY_RESULT] Skipping non-terminal status',
+        );
         return successful(false, Responses.Ok);
       }
 
