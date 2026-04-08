@@ -867,6 +867,58 @@ export class TransactionController {
     }
   }
 
+  /**
+   * Internal endpoint called by the worker after updating transaction status.
+   * Handles notification, cache invalidation and socket emission with full
+   * transaction data — replicating what sendToChain did after on-chain confirmation.
+   */
+  async notifyResult(params: any) {
+    const { params: { id } } = params;
+    try {
+      const transaction = await Transaction.findOne({
+        where: { id },
+        relations: ['predicate', 'createdBy'],
+      });
+
+      if (!transaction) {
+        return successful(false, Responses.Ok);
+      }
+
+      // Notification (email + in-app) on success
+      if (transaction.status === TransactionStatus.SUCCESS) {
+        await new NotificationService().transactionSuccess(id, transaction.network);
+      }
+
+      // Cache invalidation (Redis balance + tx cache)
+      await this.transactionService.invalidateCaches(transaction);
+
+      // Socket emission with full formatted data
+      const predicate = await this.predicateService.findByAddress(
+        transaction.predicate.predicateAddress,
+      );
+
+      const formattedTransaction = Transaction.formatTransactionResponse(transaction);
+      const transactionHistory = await TransactionController.formatTransactionsHistory(
+        transaction,
+      );
+
+      for (const member of predicate.members) {
+        emitTransaction(member.id, {
+          sessionId: member.id,
+          to: SocketUsernames.UI,
+          type: SocketEvents.TRANSACTION_UPDATED,
+          transaction: formattedTransaction,
+          history: transactionHistory as ITransactionHistory[],
+        });
+      }
+
+      return successful(true, Responses.Ok);
+    } catch (e) {
+      logger.error({ error: e }, '[TX_NOTIFY_RESULT]');
+      return error(e?.error ?? e, e?.statusCode ?? 500);
+    }
+  }
+
   async listAll(req: IListRequest) {
     try {
       const { page, perPage } = req.query;

@@ -57,6 +57,7 @@ const {
   cancel,
   findAdvancedDetails,
   deleteByHash,
+  notifyResult,
 } = new TransactionController(
   transactionService,
   predicateService,
@@ -66,6 +67,7 @@ const {
 
 router.get('/:id/advanced-details', handleResponse(findAdvancedDetails));
 router.post('/send/:hash', handleResponse(send));
+router.post('/notify-result/:id', handleResponse(notifyResult));
 
 router.use(authMiddleware);
 

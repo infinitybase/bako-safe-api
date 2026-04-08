@@ -3,7 +3,6 @@ import { redisConfig, PsqlClient } from "@/clients";
 import { Vault, TransactionStatus } from "bakosafe";
 import { Provider, transactionRequestify } from "fuels";
 import { hexlify } from "fuels";
-import { io } from "socket.io-client";
 import {
   QUEUE_SUBMIT_TRANSACTION,
   BACKOFF_STEP_MS,
@@ -108,70 +107,36 @@ function appendAttempt(
 }
 
 /**
- * Notifies vault members via socket with minimal transaction data.
- * The frontend receives this and invalidates its cache, triggering
- * a refetch from the API to get fully formatted data.
+ * Calls the API's /notify-result endpoint after updating the DB.
+ * The API handles notification (email + in-app), cache invalidation (Redis),
+ * and socket emission with full formatted transaction data.
  */
-async function notifyTransactionUpdate(
-  transaction: { id: string; hash: string; status: string; predicateId: string },
-  psql: any
-): Promise<void> {
+async function notifyTransactionResult(transactionId: string): Promise<void> {
+  const API_URL = process.env.WORKER_API_URL || "http://localhost:3333";
+
   try {
-    const members = await psql.query(
-      `SELECT user_id as id FROM predicate_members WHERE predicate_id = $1`,
-      [transaction.predicateId]
+    const response = await fetch(
+      `${API_URL}/transaction/notify-result/${transactionId}`,
+      { method: "POST", headers: { "Content-Type": "application/json" } }
     );
-    const memberList = Array.isArray(members)
-      ? members
-      : members
-        ? [members]
-        : [];
 
-    if (memberList.length === 0) return;
-
-    const isDev = process.env.NODE_ENV === "development";
-    const SOCKET_URL = isDev
-      ? process.env.SOCKET_URL
-      : process.env.WORKER_API_URL;
-
-    if (!SOCKET_URL) return;
-
-    for (const member of memberList) {
-      const socket = io(SOCKET_URL, {
-        autoConnect: true,
-        auth: {
-          username: "[API]",
-          data: new Date(),
-          sessionId: member.id,
-          origin: SOCKET_URL,
-        },
-      });
-
-      socket.on("connect", () => {
-        socket.emit("[TRANSACTION]", {
-          sessionId: member.id,
-          to: "[UI]",
-          type: "[UPDATED]",
-          transaction: {
-            id: transaction.id,
-            hash: transaction.hash,
-            status: transaction.status,
-            predicateId: transaction.predicateId,
-          },
-        });
-        setTimeout(() => socket.disconnect(), 5000);
-      });
-
-      socket.on("connect_error", () => {
-        socket.disconnect();
-      });
+    if (!response.ok) {
+      console.error(
+        JSON.stringify({
+          event: "tx_notify_result_failed",
+          queue: QUEUE_SUBMIT_TRANSACTION,
+          transactionId,
+          status: response.status,
+          timestamp: new Date().toISOString(),
+        })
+      );
     }
   } catch (e) {
     console.error(
       JSON.stringify({
-        event: "tx_notify_error",
+        event: "tx_notify_result_error",
         queue: QUEUE_SUBMIT_TRANSACTION,
-        transactionId: transaction.id,
+        transactionId,
         error: (e as Error).message,
         timestamp: new Date().toISOString(),
       })
@@ -303,11 +268,8 @@ submitTransactionQueue.process(async (job) => {
       ]
     );
 
-    // 7. Notificar membros via socket
-    await notifyTransactionUpdate(
-      { id: transaction.id, hash, status: "success", predicateId: transaction.predicateId },
-      psql
-    );
+    // 7. Notify API (email, cache invalidation, socket with full tx data)
+    await notifyTransactionResult(transaction.id);
 
     console.log(
       JSON.stringify({
@@ -406,11 +368,8 @@ submitTransactionQueue.process(async (job) => {
       ]
     );
 
-    // Notificar falha via socket
-    await notifyTransactionUpdate(
-      { id: transaction.id, hash, status: "failed", predicateId: transaction.predicateId },
-      psql
-    );
+    // Notify API (socket with full tx data)
+    await notifyTransactionResult(transaction.id);
 
     console.error(
       JSON.stringify({
