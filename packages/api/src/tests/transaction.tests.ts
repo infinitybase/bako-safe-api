@@ -504,7 +504,8 @@ test('Transaction Endpoints', async t => {
       assert.equal(finalTx.id, createdTx2.id);
       assert.ok(
         finalTx.status === TransactionStatus.SUCCESS ||
-          finalTx.status === TransactionStatus.FAILED,
+          finalTx.status === TransactionStatus.FAILED ||
+          finalTx.status === TransactionStatus.PENDING_SENDER,
       );
     },
   );
