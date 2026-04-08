@@ -108,17 +108,18 @@ function appendAttempt(
 }
 
 /**
- * Notifica membros do vault via socket apos mudanca de status da tx.
- * Replica o pattern de emitTransaction() da API (socket/events.ts:34-37).
+ * Notifies vault members via socket with minimal transaction data.
+ * The frontend receives this and invalidates its cache, triggering
+ * a refetch from the API to get fully formatted data.
  */
-async function emitTransactionUpdate(
-  predicateId: string,
+async function notifyTransactionUpdate(
+  transaction: { id: string; hash: string; status: string; predicateId: string },
   psql: any
 ): Promise<void> {
   try {
     const members = await psql.query(
       `SELECT user_id as id FROM predicate_members WHERE predicate_id = $1`,
-      [predicateId]
+      [transaction.predicateId]
     );
     const memberList = Array.isArray(members)
       ? members
@@ -133,12 +134,7 @@ async function emitTransactionUpdate(
       ? process.env.SOCKET_URL
       : process.env.WORKER_API_URL;
 
-    if (!SOCKET_URL) {
-      console.warn(
-        `[${QUEUE_SUBMIT_TRANSACTION}] No SOCKET_URL configured, skipping notification`
-      );
-      return;
-    }
+    if (!SOCKET_URL) return;
 
     for (const member of memberList) {
       const socket = io(SOCKET_URL, {
@@ -156,6 +152,12 @@ async function emitTransactionUpdate(
           sessionId: member.id,
           to: "[UI]",
           type: "[UPDATED]",
+          transaction: {
+            id: transaction.id,
+            hash: transaction.hash,
+            status: transaction.status,
+            predicateId: transaction.predicateId,
+          },
         });
         setTimeout(() => socket.disconnect(), 5000);
       });
@@ -166,8 +168,13 @@ async function emitTransactionUpdate(
     }
   } catch (e) {
     console.error(
-      `[${QUEUE_SUBMIT_TRANSACTION}] Failed to emit socket:`,
-      e
+      JSON.stringify({
+        event: "tx_notify_error",
+        queue: QUEUE_SUBMIT_TRANSACTION,
+        transactionId: transaction.id,
+        error: (e as Error).message,
+        timestamp: new Date().toISOString(),
+      })
     );
   }
 }
@@ -297,7 +304,10 @@ submitTransactionQueue.process(async (job) => {
     );
 
     // 7. Notificar membros via socket
-    await emitTransactionUpdate(transaction.predicateId, psql);
+    await notifyTransactionUpdate(
+      { id: transaction.id, hash, status: "success", predicateId: transaction.predicateId },
+      psql
+    );
 
     console.log(
       JSON.stringify({
@@ -397,7 +407,10 @@ submitTransactionQueue.process(async (job) => {
     );
 
     // Notificar falha via socket
-    await emitTransactionUpdate(transaction.predicateId, psql);
+    await notifyTransactionUpdate(
+      { id: transaction.id, hash, status: "failed", predicateId: transaction.predicateId },
+      psql
+    );
 
     console.error(
       JSON.stringify({
