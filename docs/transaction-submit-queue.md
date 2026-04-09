@@ -1,7 +1,7 @@
 # RFC: Bull Queue for Transaction Submission
 
 **Date:** 2026-04-08
-**Status:** Proposal
+**Status:** Implementation
 **Author:** Guilherme Roque
 
 ---
@@ -10,173 +10,302 @@
 
 `sendToChain()` lives in the API and is called synchronously, blocking the HTTP response. If `vault.send()` fails (network timeout, provider unavailable, gas estimation error), the transaction is permanently marked as `FAILED` with no retry. Additionally, it blocks the HTTP response indefinitely while waiting for on-chain confirmation.
 
+---
+
+## Architecture Overview
+
+```
+┌─────────────┐         ┌──────────────┐         ┌──────────────┐
+│  Frontend    │         │  API (stg)   │         │  API (prod)  │
+│  (UI/SDK)    │         │              │         │              │
+└──────┬───────┘         └──────┬───────┘         └──────┬───────┘
+       │                        │                        │
+       │ PUT /sign/:hash        │                        │
+       │ POST /send/:hash       │                        │
+       │───────────────────────>│                        │
+       │                        │                        │
+       │    HTTP 200 (immediate)│                        │
+       │<───────────────────────│                        │
+       │                        │                        │
+       │                ┌───────┴────────┐       ┌───────┴────────┐
+       │                │ Redis (hmg)    │       │ Redis (prod)   │
+       │                │ LPUSH job      │       │ LPUSH job      │
+       │                └───────┬────────┘       └───────┬────────┘
+       │                        │                        │
+       │                        └───────────┬────────────┘
+       │                                    │
+       │                           ┌────────┴────────┐
+       │                           │     Worker      │
+       │                           │  (single inst)  │
+       │                           │                 │
+       │                           │ consumes both   │
+       │                           │ Redis queues    │
+       │                           └────────┬────────┘
+       │                                    │
+       │                                    │ vault.send(tx)
+       │                                    │ (direct to blockchain)
+       │                                    │
+       │                           ┌────────┴────────┐
+       │                           │  Fuel Blockchain │
+       │                           └────────┬────────┘
+       │                                    │
+       │                                    │ result (success/failed)
+       │                                    │
+       │                           ┌────────┴────────┐
+       │                           │     Worker      │
+       │                           │                 │
+       │                           │ POST /notify-   │
+       │                           │ result/:id      │
+       │                           │ (uses apiUrl    │
+       │                           │  from job)      │
+       │                           └───────┬─────────┘
+       │                                   │
+       │                    ┌──────────────┴──────────────┐
+       │                    │ API (correct environment)    │
+       │                    │                              │
+       │                    │ • Update DB (status, gas)    │
+       │                    │ • Send email notification    │
+       │                    │ • Invalidate Redis cache     │
+       │                    │ • Emit socket with full tx   │
+       │                    └──────────────┬───────────────┘
+       │                                   │
+       │          socket [TRANSACTION]     │
+       │<──────────────────────────────────┘
+       │
+       │ handleAsyncResult:
+       │ toast.success() or toast.error()
+```
+
+---
+
+## Step-by-step Flow
+
+### 1. User signs the last required signature (Frontend)
+
+```
+useSendTransaction → executeTransaction()
+  → toast.loading("Sending your transaction")
+  → setIsCurrentTxPending({ isPending: true, transactionId: tx.id })
+  → vault.send(tx)
+    → BakoProvider.send(hash)
+      → POST /transaction/send/:hash
+```
+
+### 2. API receives and enqueues (API — staging or prod)
+
+The API serializes all transaction data into a "fat job" payload. The worker needs nothing else — no DB access required.
+
+```
+controller.signByID() or controller.send():
+  → enqueueTransactionSubmit({
+      hash,
+      transactionId,
+      apiUrl: process.env.API_URL,     ← "https://stg-api.bako.global" or "https://api.bako.global"
+      networkUrl,                       ← Fuel provider URL
+      txData,                           ← full TransactionRequest (JSONB)
+      resume,                           ← witnesses, signatures, requiredSigners
+      predicateConfigurable,            ← vault config (JSON string)
+      predicateVersion,                 ← predicate version
+    })
+  → Bull LPUSH to Redis of the current environment
+  → HTTP 200 returns immediately
+```
+
+### 3. Frontend receives HTTP 200
+
+```
+BakoProvider.send() returns
+getByHash(hash) → status = PENDING_SENDER (worker hasn't processed yet)
+validateResult(PENDING_SENDER) → no action (loading toast already active)
+
+handleAsyncResult is listening for socket events...
+```
+
+### 4. Worker picks the job from Redis
+
+The worker is stateless for transaction submission — all data comes from the job payload.
+
+```
+Worker consumes from Redis hmg (staging) AND/OR Redis prod
+  → job.data has everything needed
+  → new Provider(networkUrl)           ← regular Provider, NEVER BakoProvider
+  → new Vault(provider, predicateConfigurable, predicateVersion)
+  → extractWitnesses(resume, txData)
+  → transactionRequestify({...txData, witnesses})
+  → vault.send(tx)                    ← direct to Fuel blockchain
+  → waitForResult()                   ← waits for on-chain confirmation
+```
+
+> **CRITICAL:** The worker uses `Provider` from fuels, never `BakoProvider`.
+> `Vault.send()` checks `provider instanceof BakoProvider` internally:
+> - BakoProvider → calls `POST /transaction/send/:hash` → enqueues again → **infinite loop**
+> - Regular Provider → `provider.operations.submit()` → direct to blockchain
+
+### 5a. Success
+
+```
+Worker:
+  → POST {apiUrl}/transaction/notify-result/{transactionId}
+    headers: { x-worker-secret: WORKER_SHARED_SECRET }
+    body: { status: "success", gasUsed: "0.001", retryAttempts: [...] }
+
+API /notify-result:
+  → Update transaction in DB (status=SUCCESS, gasUsed, sendTime, retryAttempts)
+  → NotificationService.transactionSuccess() — email + in-app notification
+  → invalidateCaches() — Redis balance + tx cache
+  → emitTransaction() — socket [TRANSACTION] with full formatted tx data
+
+Frontend:
+  → useTransactionsSocketListener receives socket
+    → updateTransactions: replaces tx in React Query cache (full data)
+    → updateHistory: updates transaction history
+    → handleSignaturePending: invalidates pending queries
+  → useSendTransaction.handleAsyncResult:
+    → detects: isCurrentTxPending + matching transactionId + status SUCCESS + has name
+    → toast.success(tx) — closes loading toast, shows success with "View on explorer"
+    → setIsCurrentTxPending(false)
+```
+
+### 5b. Transient error (e.g., network timeout)
+
+```
+Worker:
+  → vault.send() throws error
+  → isTransientError("ETIMEDOUT") → true
+  → isLastAttempt? no (attempt 1/120)
+  → stores retry attempt in memory
+  → throw error → Bull retries with cyclic backoff (5s, 10s, 15s, 20s, 25s, 5s...)
+
+Frontend: nothing happens, loading toast continues
+```
+
+### 5c. Permanent error or attempts exhausted
+
+```
+Worker:
+  → POST {apiUrl}/transaction/notify-result/{transactionId}
+    body: { status: "failed", gasUsed: "0.0", errorData: {...}, retryAttempts: [...] }
+
+API /notify-result:
+  → Update transaction in DB (status=FAILED)
+  → invalidateCaches()
+  → emitTransaction() — socket with full tx data
+
+Frontend handleAsyncResult:
+  → detects status FAILED
+  → toast.error("Transaction failed")
+  → setIsCurrentTxPending(false)
+```
+
+---
+
+## Dual Redis — Single Worker for Multiple Environments
+
+A single worker instance consumes from both staging and production Redis queues. Each job carries `apiUrl` identifying which API to call back.
+
+```
+┌─────────────────┐     ┌─────────────────┐
+│  API Staging     │     │  API Production  │
+│                  │     │                  │
+│  enqueue job     │     │  enqueue job     │
+│  apiUrl=stg-api  │     │  apiUrl=api      │
+└────────┬─────────┘     └────────┬─────────┘
+         │                        │
+         ▼                        ▼
+┌─────────────────┐     ┌─────────────────┐
+│  Redis hmg      │     │  Redis prod     │
+│  (WORKER_REDIS  │     │  (WORKER_REDIS  │
+│   _HOST)        │     │   _HOST_PROD)   │
+└────────┬─────────┘     └────────┬─────────┘
+         │                        │
+         └───────────┬────────────┘
+                     │
+            ┌────────┴────────┐
+            │     Worker      │
+            │                 │
+            │  Queue 1: hmg   │
+            │  Queue 2: prod  │
+            │  Same processor │
+            └────────┬────────┘
+                     │
+                     │ On completion:
+                     │ POST {job.apiUrl}/transaction/notify-result/:id
+                     │
+         ┌───────────┴───────────┐
+         │                       │
+         ▼                       ▼
+  stg-api.bako.global    api.bako.global
+  (updates stg DB)       (updates prod DB)
+```
+
+### Configuration
+
+| Environment Variable | Where | Value |
+|---------------------|-------|-------|
+| `WORKER_REDIS_HOST` | Worker | `master.bako-safe-hmg-elasticache...` (staging Redis) |
+| `WORKER_REDIS_HOST_PROD` | Worker | `master.bako-safe-prod-elasticache...` (prod Redis) |
+| `WORKER_SHARED_SECRET` | Worker + API | Shared secret for `/notify-result` auth (optional) |
+| `API_URL` | API staging | `https://stg-api.bako.global` |
+| `API_URL` | API prod | `https://api.bako.global` |
+| `REDIS_URL_WRITE` | API staging | `rediss://master.bako-safe-hmg-elasticache...:6379` |
+| `REDIS_URL_WRITE` | API prod | `rediss://master.bako-safe-prod-elasticache...:6379` |
+
+If `WORKER_REDIS_HOST_PROD` is not set, the worker only consumes from the default Redis.
+
+---
+
 ## Entry Point Mapping
 
-All on-chain send paths converge to `sendToChain()` in `services.ts:600`. No component sends directly to the blockchain outside this method.
-
-### Direct call sites of `sendToChain()`
+All on-chain send paths converge to `enqueueTransactionSubmit()`. No component sends directly to the blockchain outside this path.
 
 | # | Location | Trigger | Entry path |
 |---|----------|---------|------------|
-| 1 | `controller.ts:561` — `signByID()` | Signature quorum reached | `PUT /transaction/sign/:hash` |
-| 2 | `controller.ts:861` — `send()` | Explicit send call | `POST /transaction/send/:hash` |
+| 1 | `controller.ts` — `signByID()` | Signature quorum reached | `PUT /transaction/sign/:hash` |
+| 2 | `controller.ts` — `send()` | Explicit send call | `POST /transaction/send/:hash` |
 
 ### Who calls these endpoints
 
 ```
-                                    ┌─────────────────────────────────────┐
-                                    │         sendToChain()               │
-                                    │         services.ts:600             │
-                                    └──────────┬──────────────┬───────────┘
-                                               │              │
-                              signByID()       │    send()     │
-                              controller:561   │    controller:861
-                                               │              │
-                    ┌──────────────────────────┤              │
-                    │                          │              │
-         PUT /sign/:hash              PUT /sign/:hash    POST /send/:hash
-              │                            │                  │
-              │                            │                  │
-    ┌─────────┴──────────┐     ┌───────────┴────────┐   ┌────┴──────────────────┐
-    │  UI: user signs    │     │ Socket Server:      │   │ SDK: BakoProvider     │
-    │  from vault        │     │ TX_SIGN handler     │   │   .send(hash)         │
-    │  dashboard         │     │ (dApp flow)         │   │   → Service           │
-    │                    │     │                     │   │   .sendTransaction()  │
-    └────────────────────┘     └─────────────────────┘   └───────────────────────┘
-                                        │
-                                        │ (previous step)
-                                ┌───────┴───────────┐
-                                │ Socket Server:     │
-                                │ TX_CREATE handler  │
-                                │ vault.BakoTransfer │
-                                │ (only CREATES tx,  │
-                                │  does NOT send)    │
-                                └────────────────────┘
+                                  ┌──────────────────────────────────────┐
+                                  │       enqueueTransactionSubmit()     │
+                                  └──────────┬──────────────┬────────────┘
+                                             │              │
+                            signByID()       │    send()     │
+                                             │              │
+                  ┌──────────────────────────┤              │
+                  │                          │              │
+       PUT /sign/:hash              PUT /sign/:hash    POST /send/:hash
+            │                            │                  │
+  ┌─────────┴──────────┐     ┌───────────┴────────┐   ┌────┴──────────────────┐
+  │  UI: user signs    │     │ Socket Server:      │   │ SDK: BakoProvider     │
+  │  from vault        │     │ TX_SIGN handler     │   │   .send(hash)         │
+  │  dashboard         │     │ (dApp flow)         │   │   → Service           │
+  │                    │     │                     │   │   .sendTransaction()  │
+  └────────────────────┘     └─────────────────────┘   └───────────────────────┘
 ```
-
-### Flow 1: User signs from vault dashboard (UI)
-
-```
-UI → useSendTransaction() → Vault.send() with BakoProvider
-   → BakoProvider.send(hash) → Service.sendTransaction(hash)
-   → POST /transaction/send/:hash → sendToChain()
-```
-
-### Flow 2: dApp via socket (connector)
-
-```
-dApp Connector → Socket TX_REQUEST → Socket Server creates recovery code
-              → Socket TX_CREATE → Socket Server calls vault.BakoTransfer() (only saves tx to DB)
-              → UI displays tx for user review
-              → User signs → Socket TX_SIGN
-              → Socket Server calls PUT /transaction/sign/:hash on the API
-              → signByID() checks quorum → sendToChain()
-```
-
-The socket server is an authentication intermediary (temporary 2-min recovery codes). It **never** sends on-chain — it delegates to the API via `PUT /sign/:hash`.
-
-### Flow 3: Standalone SDK (without BakoProvider)
-
-```
-Vault.send() with regular Provider → provider.operations.submit() → direct to blockchain
-```
-
-This flow **does not go through the API** — it's for standalone SDK usage, outside the Bako Safe ecosystem. Not affected by the queue.
-
-### Conclusion
-
-Replacing `sendToChain()` with `enqueueTransactionSubmit()` at the **2 API call sites** (signByID and send) covers all app flows: direct signing, SDK-based sending, and dApp flow via socket.
-
-## Before vs After
-
-### How it works TODAY
-
-```
-User signs → quorum reached → API calls vault.send() immediately
-                                         │
-                                    blocks HTTP
-                                    waiting for blockchain
-                                         │
-                                    ┌─────┴──────┐
-                                    │             │
-                                 success       failure
-                                 STATUS=SUCCESS  STATUS=FAILED
-                                                 (permanent, no retry)
-```
-
-- HTTP response only returns after blockchain confirms (or fails)
-- Network error, timeout, provider down — that's it. Tx dies as FAILED
-- User must create a new tx from scratch
-
-### How it will work AFTER
-
-```
-User signs → quorum reached → API enqueues to Bull → HTTP 200 immediate
-                                                              │
-                                                    Worker picks from queue
-                                                    calls vault.send()
-                                                              │
-                                                    ┌─────────┴──────────┐
-                                                    │                    │
-                                                 success              failure
-                                                 STATUS=SUCCESS          │
-                                                                   transient error?
-                                                                   (network, timeout)
-                                                                    ┌────┴────┐
-                                                                   YES       NO
-                                                                    │         │
-                                                              Bull retries  STATUS=FAILED
-                                                              up to 20x     (permanent)
-                                                              (5s,10s,15s,20s,25s,
-                                                               5s,10s,15s,20s,25s...)
-```
-
-### Key differences
-
-| Aspect | Before | After |
-|--------|--------|-------|
-| HTTP response | Blocks until blockchain confirms | Returns immediately |
-| Network/timeout failure | Tx dies as FAILED | Bull retries up to 20x over ~5 min |
-| Permanent error (funds, signature) | FAILED | FAILED (same) |
-| Attempt auditing | None | `retry_attempts` column with timestamp, error, duration |
-| Frontend changes | — | None. Tx shows "Sending..." during retries, socket notifies on resolution |
 
 ---
 
-## Solution
+## Fat Job Payload
 
-Create a Bull queue `QUEUE_SUBMIT_TRANSACTION` in the worker. Every transaction that reaches quorum is enqueued. The worker executes the send logic (build Vault, `vault.send()`, `waitForResult()`) with automatic retry on transient errors.
+The API serializes all data needed for submission into the job. The worker is stateless — no DB access required for transaction processing.
 
-## Architecture Decisions
+```typescript
+{
+  hash: string;                  // transaction hash
+  transactionId: string;         // transaction UUID (for notify-result callback)
+  apiUrl: string;                // API URL of the originating environment
+  networkUrl: string;            // Fuel provider URL (blockchain)
+  txData: TransactionRequest;    // full transaction data (inputs, outputs, witnesses)
+  resume: ITransactionResume;    // witnesses with signatures, requiredSigners
+  predicateConfigurable: string; // vault configurable (JSON string)
+  predicateVersion: string;      // predicate version
+}
+```
 
-### 1. Send logic moves to the worker
+---
 
-`sendToChain` moves from the API to the Bull queue processor in the worker. Add `bakosafe` as a worker dependency (already has `fuels@0.103.0`). Eliminates coupling of a heavy operation to the HTTP cycle.
-
-### 2. API only enqueues
-
-`signByID` and `send` now call `enqueueTransactionSubmit(hash, networkUrl)` and return immediately. The API gains `bull` and `ioredis` as dependencies (producer only — never consumer).
-
-### 3. Worker accesses DB directly
-
-Already has `PsqlClient` (raw SQL via `pg`). Fetches transaction, predicate, updates status, records attempts. Does not use TypeORM.
-
-### 4. Worker emits socket events
-
-Uses `socket.io-client` (same lib the API uses in `SocketClient`) to notify vault members in real time after success or failure.
-
-### 5. Error classification
-
-- **Transient** (retry): ECONNREFUSED, ETIMEDOUT, ENOTFOUND, socket hang up, network error, timeout, 502, 503, 504, rate limit, AbortError, FetchError
-- **Permanent** (FAILED): insufficient funds, predicate validation, invalid signature, not enough coins
-
-If transient and attempts remain: status stays `PENDING_SENDER`, Bull retries. If permanent or attempts exhausted: status goes to `FAILED`.
-
-### 6. Automatic retry — no manual retry
-
-Fully automatic system. No manual retry endpoint, no button in the frontend.
-
-### 7. Retry configuration
+## Retry Configuration
 
 | Parameter | Value |
 |-----------|-------|
@@ -185,18 +314,27 @@ Fully automatic system. No manual retry endpoint, no button in the frontend.
 | Delay pattern | 5s, 10s, 15s, 20s, 25s, 5s, 10s, 15s, 20s, 25s, ... |
 | Worst case total | ~30 minutes until terminal FAILED (24 cycles x 75s) |
 
-Backoff implemented via Bull's custom `backoffStrategies`:
+### Error classification
 
-```typescript
-backoffStrategies: {
-  cyclic: (attemptsMade: number) => {
-    const position = ((attemptsMade - 1) % 5) + 1;
-    return position * 5000;
-  },
-}
+- **Transient** (retry): ECONNREFUSED, ETIMEDOUT, ENOTFOUND, socket hang up, network error, timeout, 502, 503, 504, rate limit, AbortError, FetchError
+- **Permanent** (FAILED immediately): insufficient funds, predicate validation, invalid signature, not enough coins
+
+### Timing diagram (worst case)
+
+```
+Each cycle: 5s + 10s + 15s + 20s + 25s = 75s
+
+Cycle  1-5:   75s each   (375s cumulative)
+Cycle  6-10:  75s each   (750s cumulative)
+Cycle 11-15:  75s each   (1125s cumulative)
+Cycle 16-20:  75s each   (1500s cumulative)
+Cycle 21-24:  75s each   (1800s cumulative)
+                          ~30 min → FAILED
 ```
 
-### 8. Attempt auditing
+---
+
+## Attempt Auditing
 
 New column `retry_attempts jsonb` (array) on the `transactions` table. Consecutive attempts with the same error are grouped into a single entry to avoid duplication:
 
@@ -215,124 +353,98 @@ New column `retry_attempts jsonb` (array) on the `transactions` table. Consecuti
 Example: 85 consecutive ETIMEDOUT errors followed by a 503 phase and then success:
 ```json
 [
-  { "error": "ETIMEDOUT", "first_attempt": 1, "last_attempt": 85, "count": 85, "avg_duration_ms": 5000, ... },
-  { "error": "503", "first_attempt": 86, "last_attempt": 100, "count": 15, "avg_duration_ms": 3200, ... },
-  { "error": null, "first_attempt": 101, "last_attempt": 101, "count": 1, "avg_duration_ms": 2100, ... }
+  { "error": "ETIMEDOUT", "first_attempt": 1, "last_attempt": 85, "count": 85, "avg_duration_ms": 5000 },
+  { "error": "503", "first_attempt": 86, "last_attempt": 100, "count": 15, "avg_duration_ms": 3200 },
+  { "error": null, "first_attempt": 101, "last_attempt": 101, "count": 1, "avg_duration_ms": 2100 }
 ]
 ```
 
 ---
 
-## Flow
+## Notify Result Endpoint
 
-```
-1. signByID: quorum reached
-   → enqueueTransactionSubmit(hash, networkUrl)
-   → HTTP 200 returns immediately
+`POST /transaction/notify-result/:id` — internal endpoint called by the worker after on-chain submission.
 
-2. Bull queue: job arrives at worker
+### Authentication
 
-3. Worker processor:
-   a. Fetch transaction from Postgres (status, txData, resume, network)
-   b. Fetch predicate (configurable, version)
-   c. Create FuelProvider with network URL
-   d. Instantiate Vault (bakosafe) with configurable and version
-   e. Extract witnesses (signatures) from resume
-   f. Build TransactionRequest via transactionRequestify()
-   g. vault.send(tx) + waitForResult()
+- If `WORKER_SHARED_SECRET` is configured: validates `x-worker-secret` header
+- If not configured: endpoint is open (for dev/staging without the secret)
 
-4. Result:
-   SUCCESS
-     → UPDATE status='success', gasUsed, retry_attempts
-     → Emit socket TRANSACTION_UPDATED to members
-     → Bull marks job as completed
+### Request body
 
-   TRANSIENT ERROR (attempts remaining)
-     → UPDATE retry_attempts (record attempt)
-     → Status remains PENDING_SENDER
-     → throw → Bull retries with cyclic backoff
-
-   PERMANENT ERROR or LAST ATTEMPT
-     → UPDATE status='failed', retry_attempts
-     → Emit socket TRANSACTION_UPDATED to members
-     → Bull marks job as completed
+```typescript
+{
+  status: "success" | "failed";
+  gasUsed?: string;
+  errorData?: any;
+  retryAttempts?: RetryAttemptEntry[];
+}
 ```
 
-### Timing diagram (worst case)
+### What it does
 
-```
-Each cycle: 5s + 10s + 15s + 20s + 25s = 75s
-
-Cycle  1-5:   75s each   (375s cumulative)
-Cycle  6-10:  75s each   (750s cumulative)
-Cycle 11-15:  75s each   (1125s cumulative)
-Cycle 16-20:  75s each   (1500s cumulative)
-Cycle 21-24:  75s each   (1800s cumulative)
-                          ~30 min → FAILED
-```
+1. Validates shared secret (if configured)
+2. Validates status is terminal (success or failed)
+3. Updates transaction in DB (status, sendTime, gasUsed, resume, retryAttempts)
+4. Sends email + in-app notification on success
+5. Invalidates Redis cache (balance + transactions)
+6. Emits socket `[TRANSACTION]` with fully formatted transaction data + history
 
 ---
 
-## Modified files
+## Deduplication
+
+Jobs use a deterministic `jobId: tx_submit_{hash}`. Bull prevents duplicate jobs with the same ID.
+
+| Job state | New enqueue with same hash | Result |
+|-----------|---------------------------|--------|
+| waiting/active/delayed | Skipped (logged) | Protected |
+| completed (`removeOnComplete: true`) | Accepted (job was removed) | Re-send works |
+| failed (`removeOnFail: false`) | Previous job removed, new one created | Manual retry via `/send/:hash` works |
+
+---
+
+## Modified Files
 
 ### Worker (`packages/worker/`)
 
 | File | Action |
 |------|--------|
-| `package.json` | Add `bakosafe@0.6.3`, `socket.io-client@4.7.5` |
-| `src/queues/submitTransaction/types.ts` | New — job types and audit entry |
-| `src/queues/submitTransaction/constants.ts` | New — queue name, max attempts, backoff config |
-| `src/queues/submitTransaction/utils.ts` | New — `isTransientError()` |
-| `src/queues/submitTransaction/queue.ts` | New — processor with on-chain send logic |
-| `src/queues/submitTransaction/index.ts` | New — exports |
-| `src/index.ts` | Register queue in Bull Board |
+| `package.json` | Add `bakosafe@0.6.3` |
+| `src/queues/submitTransaction/types.ts` | Fat job type + audit entry type |
+| `src/queues/submitTransaction/constants.ts` | Queue name, max attempts, backoff config |
+| `src/queues/submitTransaction/utils.ts` | `isTransientError()` |
+| `src/queues/submitTransaction/queue.ts` | Stateless processor, dual Redis, notify-result callback |
+| `src/queues/submitTransaction/index.ts` | Exports |
+| `src/index.ts` | Register both queues in Bull Board |
 
 ### API (`packages/api/`)
 
 | File | Action |
 |------|--------|
 | `package.json` | Add `bull@^4.16.5`, `ioredis@^5.7.0` |
-| `src/utils/submitTransactionQueue.ts` | New — Bull producer + `enqueueTransactionSubmit()` |
-| `src/modules/transaction/controller.ts` | `signByID` and `send`: replace `await sendToChain` with `enqueueTransactionSubmit` |
+| `src/utils/submitTransactionQueue.ts` | Bull producer with fat job payload |
+| `src/modules/transaction/controller.ts` | `signByID`/`send`: enqueue fat job; `notifyResult`: update DB + notify + socket |
+| `src/modules/transaction/routes.ts` | Add `POST /notify-result/:id` route |
 | `src/models/Transaction.ts` | Add `retryAttempts` column |
-| `src/migrations/` | New migration: `AddRetryAttemptsToTransactions` |
+| `src/migrations/` | `AddRetryAttemptsToTransactions` |
 
-### Removed/deprecated
+### Frontend (`bako-safe-ui-stg`)
 
 | File | Action |
 |------|--------|
-| `src/modules/transaction/services.ts` | `sendToChain()` can be removed (logic moved to worker) |
+| `src/modules/transactions/hooks/send/useSendTransaction.ts` | `handleAsyncResult`: listens socket for tx completion, resolves loading toast |
 
 ---
 
-## Frontend impact
-
-No mandatory changes. The frontend already:
-- Shows "Sending..." for `PENDING_SENDER` status
-- Shows "Error" for `FAILED` status
-- Listens to socket events `TRANSACTION_UPDATED` for real-time updates
-
-Optional: display attempt count by reading `resume.retry.count` in the `Status.tsx` component.
-
----
-
-## Verification
-
-1. **Enqueue**: reach quorum in signByID, verify job appears in Bull Board (`/worker/queues`)
-2. **Send**: verify worker executes `vault.send()` and tx appears on-chain
-3. **Retry**: mock invalid provider URL, verify 120 attempts with cyclic backoff in Bull Board
-4. **Auditing**: verify `retry_attempts` column with an entry per attempt
-5. **Non-blocking**: signByID returns HTTP 200 before `vault.send()` completes
-6. **Socket**: frontend receives real-time update via socket after success/failure
-
----
-
-## Risks and mitigations
+## Risks and Mitigations
 
 | Risk | Mitigation |
 |------|------------|
-| **Infinite loop with BakoProvider** | Worker MUST use `Provider` from fuels, NEVER `BakoProvider`. `Vault.send()` in bakosafe checks `provider instanceof BakoProvider` — if BakoProvider, it calls `POST /transaction/send/:hash` which enqueues again → infinite loop. With a regular `Provider`, it goes directly to the blockchain via `provider.operations.submit()`. The API currently uses `FuelProvider` (a `Provider` wrapper from fuels) — the worker must do the same. |
-| Duplicate tx on-chain (vault.send ok but waitForResult timeout) | Before sending, check if tx hash already exists on-chain via provider |
-| Worker and API with different bakosafe versions | Keep the same version in both package.json files |
-| Resume JSONB concurrency (worker and API writing) | Worker is the only writer after enqueue — API only reads |
-| Bull queue loses jobs (Redis restart) | `removeOnFail: false` keeps failed jobs visible; Redis with AOF persistence |
+| **Infinite loop with BakoProvider** | Worker uses `Provider` from fuels, never `BakoProvider`. Enforced by code comment and architecture. |
+| **Duplicate tx on-chain** | `vault.send()` ok but `waitForResult()` times out → check on-chain before retrying |
+| **Worker/API bakosafe version mismatch** | Keep same version in both package.json files |
+| **notify-result abuse** | Shared secret validation via `WORKER_SHARED_SECRET` + only accepts terminal statuses |
+| **Bull queue loses jobs** | `removeOnFail: false` keeps failed jobs visible; Redis with AOF persistence |
+| **Worker restart loses in-memory retry attempts** | Attempts are re-accumulated from scratch on restart; worst case is less granular audit data |
+| **API_URL not configured** | Fat job carries `apiUrl` — if empty, notify-result silently fails; transaction stays PENDING_SENDER |
