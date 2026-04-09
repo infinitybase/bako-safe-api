@@ -9,9 +9,15 @@ const BACKOFF_STEP_MS = 5000;
 const BACKOFF_CYCLE = 5;
 const MAX_ATTEMPTS = 120;
 
-type SubmitTransactionJob = {
+export type SubmitTransactionJob = {
   hash: string;
-  network_url: string;
+  transactionId: string;
+  apiUrl: string;
+  networkUrl: string;
+  txData: any;
+  resume: any;
+  predicateConfigurable: string;
+  predicateVersion: string;
 };
 
 function parseRedisUrl(url: string) {
@@ -45,54 +51,48 @@ function jobIdForHash(hash: string) {
 
 /**
  * Enqueues a transaction for on-chain submission.
- *
- * Uses a deterministic jobId (tx_submit_{hash}) to prevent duplicates.
- * If a failed job already exists for this hash, it is removed first
- * so the transaction can be re-enqueued with fresh attempts.
+ * The job carries all data the worker needs — no DB access required.
  */
-export async function enqueueTransactionSubmit(
-  hash: string,
-  networkUrl: string,
-) {
-  const jobId = jobIdForHash(hash);
+export async function enqueueTransactionSubmit(payload: SubmitTransactionJob) {
+  const jobId = jobIdForHash(payload.hash);
 
   try {
-    // Remove any existing failed job for this hash so it can be re-enqueued
     const existingJob = await submitTransactionQueue.getJob(jobId);
     if (existingJob) {
       const state = await existingJob.getState();
       if (state === 'failed') {
         await existingJob.remove();
         logger.info(
-          { hash, jobId, previousState: state },
+          { hash: payload.hash, jobId, previousState: state },
           '[SUBMIT_TX_QUEUE] Removed previous failed job for re-enqueue',
         );
-      } else if (state === 'active' || state === 'waiting' || state === 'delayed') {
+      } else if (
+        state === 'active' ||
+        state === 'waiting' ||
+        state === 'delayed'
+      ) {
         logger.info(
-          { hash, jobId, state },
+          { hash: payload.hash, jobId, state },
           '[SUBMIT_TX_QUEUE] Job already in queue, skipping duplicate',
         );
         return;
       }
     }
 
-    const job = await submitTransactionQueue.add(
-      { hash, network_url: networkUrl },
-      {
-        attempts: MAX_ATTEMPTS,
-        backoff: { type: 'cyclic' as any },
-        removeOnComplete: true,
-        removeOnFail: false,
-        jobId,
-      },
-    );
+    const job = await submitTransactionQueue.add(payload, {
+      attempts: MAX_ATTEMPTS,
+      backoff: { type: 'cyclic' as any },
+      removeOnComplete: true,
+      removeOnFail: false,
+      jobId,
+    });
     logger.info(
-      { hash, jobId: job.id, network: networkUrl, maxAttempts: MAX_ATTEMPTS },
+      { hash: payload.hash, jobId: job.id, maxAttempts: MAX_ATTEMPTS },
       '[SUBMIT_TX_QUEUE] Transaction enqueued for submission',
     );
   } catch (e) {
     logger.error(
-      { error: e, hash, network: networkUrl },
+      { error: e, hash: payload.hash },
       '[SUBMIT_TX_QUEUE] Failed to enqueue transaction',
     );
   }

@@ -559,7 +559,16 @@ export class TransactionController {
       );
 
       if (newStatus === TransactionStatus.PENDING_SENDER) {
-        await enqueueTransactionSubmit(transaction.hash, network.url);
+        await enqueueTransactionSubmit({
+          hash: transaction.hash,
+          transactionId: transaction.id,
+          apiUrl: process.env.API_URL || '',
+          networkUrl: network.url,
+          txData: transaction.txData,
+          resume: transaction.resume,
+          predicateConfigurable: transaction.predicate.configurable,
+          predicateVersion: transaction.predicate.version,
+        });
       }
 
       await new NotificationService().transactionUpdate(transaction.id);
@@ -859,7 +868,26 @@ export class TransactionController {
       params: { hash },
     } = params;
     try {
-      await enqueueTransactionSubmit(hash.slice(2), params.network.url);
+      const txHash = hash.startsWith('0x') ? hash.slice(2) : hash;
+      const transaction = await Transaction.findOne({
+        where: { hash: txHash },
+        relations: ['predicate'],
+      });
+
+      if (!transaction) {
+        return successful(false, Responses.Ok);
+      }
+
+      await enqueueTransactionSubmit({
+        hash: transaction.hash,
+        transactionId: transaction.id,
+        apiUrl: process.env.API_URL || '',
+        networkUrl: params.network.url,
+        txData: transaction.txData,
+        resume: transaction.resume,
+        predicateConfigurable: transaction.predicate.configurable,
+        predicateVersion: transaction.predicate.version,
+      });
       return successful(true, Responses.Ok);
     } catch (e) {
       logger.error({ error: e }, '[TX_SEND]');
@@ -873,7 +901,7 @@ export class TransactionController {
    * transaction data — replicating what sendToChain did after on-chain confirmation.
    */
   async notifyResult(params: any) {
-    const { params: { id } } = params;
+    const { params: { id }, body } = params;
     try {
       // Validate shared secret (skip if not configured)
       const expectedSecret = process.env.WORKER_SHARED_SECRET;
@@ -892,6 +920,13 @@ export class TransactionController {
         }
       }
 
+      const { status, gasUsed, errorData, retryAttempts } = body || {};
+
+      // Only accept terminal statuses
+      if (status !== 'success' && status !== 'failed') {
+        return successful(false, Responses.Ok);
+      }
+
       const transaction = await Transaction.findOne({
         where: { id },
         relations: ['predicate', 'createdBy'],
@@ -901,17 +936,22 @@ export class TransactionController {
         return successful(false, Responses.Ok);
       }
 
-      // Only notify for terminal statuses
-      if (
-        transaction.status !== TransactionStatus.SUCCESS &&
-        transaction.status !== TransactionStatus.FAILED
-      ) {
-        logger.info(
-          { id, status: transaction.status },
-          '[TX_NOTIFY_RESULT] Skipping non-terminal status',
-        );
-        return successful(false, Responses.Ok);
+      // Update transaction in DB
+      transaction.status = status === 'success'
+        ? TransactionStatus.SUCCESS
+        : TransactionStatus.FAILED;
+      transaction.sendTime = new Date();
+      transaction.gasUsed = gasUsed || '0.0';
+      transaction.resume = {
+        ...transaction.resume,
+        gasUsed: gasUsed || '0.0',
+        status: transaction.status,
+        ...(errorData ? { error: errorData } : {}),
+      };
+      if (retryAttempts) {
+        transaction.retryAttempts = retryAttempts;
       }
+      await transaction.save();
 
       // Notification (email + in-app) on success
       if (transaction.status === TransactionStatus.SUCCESS) {

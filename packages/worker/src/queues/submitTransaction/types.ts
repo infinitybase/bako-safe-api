@@ -1,6 +1,12 @@
 export type QueueSubmitTransaction = {
   hash: string;
-  network_url: string;
+  transactionId: string;
+  apiUrl: string;
+  networkUrl: string;
+  txData: any;
+  resume: any;
+  predicateConfigurable: string;
+  predicateVersion: string;
 };
 
 export type RetryAttemptEntry = {

@@ -9,7 +9,7 @@ import assetQueue from "./queues/assetsValue/queue";
 import { MongoDatabase } from "./clients/mongoClient";
 import { PsqlClient } from "./clients";
 import { userBlockSyncQueue, userLogoutSyncQueue, UserBlockSyncCron } from "./queues/userBlockSync";
-import { submitTransactionQueue } from "./queues/submitTransaction";
+import { submitTransactionQueue, submitTransactionQueueProd } from "./queues/submitTransaction";
 
 const {
   WORKER_PORT,
@@ -59,6 +59,7 @@ createBullBoard({
     new BullAdapter(userBlockSyncQueue),
     new BullAdapter(userLogoutSyncQueue),
     new BullAdapter(submitTransactionQueue),
+    ...(submitTransactionQueueProd ? [new BullAdapter(submitTransactionQueueProd)] : []),
   ],
   serverAdapter,
 });

@@ -1,5 +1,5 @@
 import Queue from "bull";
-import { redisConfig, PsqlClient } from "@/clients";
+import { redisConfig } from "@/clients";
 import { Vault, TransactionStatus } from "bakosafe";
 import { Provider, transactionRequestify } from "fuels";
 import { hexlify } from "fuels";
@@ -11,31 +11,41 @@ import {
 import type { QueueSubmitTransaction, RetryAttemptEntry } from "./types";
 import { isTransientError } from "./utils";
 
+const { WORKER_REDIS_HOST_PROD } = process.env;
+
+const queueSettings = {
+  backoffStrategies: {
+    cyclic: (attemptsMade: number) => {
+      const position = ((attemptsMade - 1) % BACKOFF_CYCLE) + 1;
+      return position * BACKOFF_STEP_MS;
+    },
+  },
+};
+
+// Primary queue — consumes from the default Redis (hmg/staging)
 const submitTransactionQueue = new Queue<QueueSubmitTransaction>(
   QUEUE_SUBMIT_TRANSACTION,
-  {
-    redis: redisConfig,
-    settings: {
-      backoffStrategies: {
-        cyclic: (attemptsMade: number) => {
-          // Progressao de +5s, reseta a cada 5 tentativas
-          // 5s, 10s, 15s, 20s, 25s, 5s, 10s, 15s, 20s, 25s, ...
-          const position = ((attemptsMade - 1) % BACKOFF_CYCLE) + 1;
-          return position * BACKOFF_STEP_MS;
-        },
-      },
-    },
-  }
+  { redis: redisConfig, settings: queueSettings }
 );
 
+// Secondary queue — consumes from prod Redis (if configured)
+const isLocal = WORKER_REDIS_HOST_PROD?.includes("127.") ?? false;
+const submitTransactionQueueProd = WORKER_REDIS_HOST_PROD
+  ? new Queue<QueueSubmitTransaction>(QUEUE_SUBMIT_TRANSACTION, {
+      redis: {
+        host: WORKER_REDIS_HOST_PROD,
+        port: 6379,
+        ...(!isLocal ? { tls: { rejectUnauthorized: false } } : {}),
+      },
+      settings: queueSettings,
+    })
+  : null;
+
 /**
- * Extrai witnesses de uma transacao, replicando a logica de Transaction.getWitnesses()
- * da API (models/Transaction.ts:185-211).
+ * Extracts witnesses from resume and txData, replicating
+ * Transaction.getWitnesses() from the API (models/Transaction.ts:192-214).
  */
-function extractWitnesses(
-  resume: any,
-  txData: any
-): string[] {
+function extractWitnesses(resume: any, txData: any): string[] {
   const witnesses = (resume.witnesses || [])
     .filter((w: any) => !!w.signature)
     .map((w: any) => w.signature);
@@ -62,9 +72,7 @@ function extractWitnesses(
 }
 
 /**
- * Appends an attempt to the retry_attempts array, grouping consecutive
- * entries with the same error. If the last entry has the same error,
- * it increments count and updates last_* fields instead of creating a new entry.
+ * Groups consecutive retry attempts with the same error into a single entry.
  */
 function appendAttempt(
   attempts: RetryAttemptEntry[],
@@ -76,7 +84,6 @@ function appendAttempt(
   const last = attempts.length > 0 ? attempts[attempts.length - 1] : null;
 
   if (last && last.error === error) {
-    // Same error as last entry — merge
     const updated = [...attempts];
     const prev = updated[updated.length - 1];
     const totalDuration = prev.avg_duration_ms * prev.count + durationMs;
@@ -91,7 +98,6 @@ function appendAttempt(
     return updated;
   }
 
-  // Different error — new entry
   return [
     ...attempts,
     {
@@ -107,23 +113,37 @@ function appendAttempt(
 }
 
 /**
- * Calls the API's /notify-result endpoint after updating the DB.
- * The API handles notification (email + in-app), cache invalidation (Redis),
- * and socket emission with full formatted transaction data.
+ * Calls the API's /notify-result endpoint to update DB, invalidate cache,
+ * emit socket with full data, and send notifications.
  */
-async function notifyTransactionResult(transactionId: string): Promise<void> {
-  const API_URL = process.env.WORKER_API_URL || "http://localhost:3333";
+async function notifyTransactionResult(
+  apiUrl: string,
+  transactionId: string,
+  body: {
+    status: string;
+    gasUsed?: string;
+    errorData?: any;
+    retryAttempts?: RetryAttemptEntry[];
+  }
+): Promise<void> {
+  const baseUrl = apiUrl.replace(/\/+$/, "");
 
   try {
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
     const workerSecret = process.env.WORKER_SHARED_SECRET;
     if (workerSecret) {
       headers["x-worker-secret"] = workerSecret;
     }
 
     const response = await fetch(
-      `${API_URL}/transaction/notify-result/${transactionId}`,
-      { method: "POST", headers }
+      `${baseUrl}/transaction/notify-result/${transactionId}`,
+      {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body),
+      }
     );
 
     if (!response.ok) {
@@ -132,6 +152,7 @@ async function notifyTransactionResult(transactionId: string): Promise<void> {
           event: "tx_notify_result_failed",
           queue: QUEUE_SUBMIT_TRANSACTION,
           transactionId,
+          apiUrl: baseUrl,
           status: response.status,
           timestamp: new Date().toISOString(),
         })
@@ -143,6 +164,7 @@ async function notifyTransactionResult(transactionId: string): Promise<void> {
         event: "tx_notify_result_error",
         queue: QUEUE_SUBMIT_TRANSACTION,
         transactionId,
+        apiUrl: baseUrl,
         error: (e as Error).message,
         timestamp: new Date().toISOString(),
       })
@@ -150,12 +172,26 @@ async function notifyTransactionResult(transactionId: string): Promise<void> {
   }
 }
 
-submitTransactionQueue.process(async (job) => {
-  const { hash, network_url } = job.data;
+// Track retry attempts in memory per job (not persisted — sent to API on completion)
+const jobAttempts = new Map<string, RetryAttemptEntry[]>();
+
+async function processSubmitTransaction(job: Queue.Job<QueueSubmitTransaction>) {
+  const {
+    hash,
+    transactionId,
+    apiUrl,
+    networkUrl,
+    txData,
+    resume,
+    predicateConfigurable,
+    predicateVersion,
+  } = job.data;
+
   const startTime = Date.now();
   const attemptNumber = job.attemptsMade + 1;
   const maxAttempts = (job.opts.attempts as number) || 120;
   const isFirstAttempt = attemptNumber === 1;
+  const jobKey = job.id?.toString() || hash;
 
   console.log(
     JSON.stringify({
@@ -164,118 +200,46 @@ submitTransactionQueue.process(async (job) => {
       hash,
       attempt: attemptNumber,
       maxAttempts,
-      network: network_url,
+      apiUrl,
+      network: networkUrl,
       jobId: job.id,
       timestamp: new Date().toISOString(),
     })
   );
 
-  const psql = await PsqlClient.connect();
-
-  // 1. Buscar tx no Postgres
-  const transaction = await psql.query(
-    `SELECT id, hash, tx_data as "txData", status, resume, network, predicate_id as "predicateId"
-     FROM transactions
-     WHERE hash = $1
-       AND status NOT IN ('declined', 'failed', 'canceled')
-     ORDER BY created_at DESC
-     LIMIT 1`,
-    [hash]
-  );
-
-  if (!transaction) {
-    console.log(
-      `[${QUEUE_SUBMIT_TRANSACTION}] Transaction ${hash} not found or not eligible`
-    );
-    return { hash, status: "skipped" };
-  }
-
-  if (transaction.status !== TransactionStatus.PENDING_SENDER) {
-    console.log(
-      `[${QUEUE_SUBMIT_TRANSACTION}] Transaction ${hash} status is ${transaction.status}, skipping`
-    );
-    return { hash, status: "skipped" };
-  }
-
-  // 2. Buscar predicate
-  const predicate = await psql.query(
-    `SELECT configurable, version, predicate_address as "predicateAddress"
-     FROM predicates
-     WHERE id = $1`,
-    [transaction.predicateId]
-  );
-
-  if (!predicate) {
-    console.error(
-      `[${QUEUE_SUBMIT_TRANSACTION}] Predicate not found for tx ${hash}`
-    );
-    return { hash, status: "error", reason: "predicate_not_found" };
-  }
-
-  // 3. Montar Vault e tx
-  // IMPORTANTE: usar Provider do fuels, NUNCA BakoProvider.
-  // Vault.send() verifica `provider instanceof BakoProvider`:
-  //   - BakoProvider → chama POST /transaction/send/:hash → enfileira de novo → LOOP INFINITO
-  //   - Provider normal → provider.operations.submit() → direto na blockchain
-  const providerUrl = network_url.replace(/^https?:\/\/[^@]+@/, "https://");
+  // Build Vault and transaction from job data — no DB access needed
+  // IMPORTANT: use Provider from fuels, NEVER BakoProvider.
+  // Vault.send() checks `provider instanceof BakoProvider`:
+  //   - BakoProvider → calls POST /transaction/send/:hash → enqueues again → INFINITE LOOP
+  //   - Regular Provider → provider.operations.submit() → direct to blockchain
+  const providerUrl = networkUrl.replace(/^https?:\/\/[^@]+@/, "https://");
   const provider = new Provider(providerUrl);
   const vault = new Vault(
     provider,
-    JSON.parse(predicate.configurable),
-    predicate.version
+    JSON.parse(predicateConfigurable),
+    predicateVersion
   );
 
-  // 4. Extrair witnesses
-  const { resume, txData } = transaction;
   const witnesses = extractWitnesses(resume, txData);
+  const tx = transactionRequestify({ ...txData, witnesses });
 
-  const tx = transactionRequestify({
-    ...txData,
-    witnesses,
-  });
+  // Get accumulated attempts for this job
+  const previousAttempts = jobAttempts.get(jobKey) || [];
 
-  // 5. Enviar on-chain
   try {
     const transactionResponse = await vault.send(tx);
     const { gasUsed } = await transactionResponse.waitForResult();
     const durationMs = Date.now() - startTime;
 
-    // 6. Sucesso: atualizar DB
-    const updatedResume = {
-      ...resume,
-      gasUsed: gasUsed.format(),
+    const retryAttempts = appendAttempt(previousAttempts, attemptNumber, null, durationMs);
+    jobAttempts.delete(jobKey);
+
+    // Notify API — it handles DB update, cache, socket, notification
+    await notifyTransactionResult(apiUrl, transactionId, {
       status: "success",
-    };
-
-    const existing = await psql.query(
-      `SELECT retry_attempts FROM transactions WHERE id = $1`,
-      [transaction.id]
-    );
-    const retryAttempts = appendAttempt(
-      existing?.retry_attempts || [],
-      attemptNumber,
-      null,
-      durationMs
-    );
-
-    await psql.query(
-      `UPDATE transactions
-       SET status = 'success',
-           send_time = NOW(),
-           gas_used = $1,
-           resume = $2,
-           retry_attempts = $3
-       WHERE id = $4`,
-      [
-        gasUsed.format(),
-        JSON.stringify(updatedResume),
-        JSON.stringify(retryAttempts),
-        transaction.id,
-      ]
-    );
-
-    // 7. Notify API (email, cache invalidation, socket with full tx data)
-    await notifyTransactionResult(transaction.id);
+      gasUsed: gasUsed.format(),
+      retryAttempts,
+    });
 
     console.log(
       JSON.stringify({
@@ -300,34 +264,11 @@ submitTransactionQueue.process(async (job) => {
     const retriable = isTransientError(e);
     const isLastAttempt = attemptNumber >= maxAttempts;
 
-    const existing = await psql.query(
-      `SELECT retry_attempts FROM transactions WHERE id = $1`,
-      [transaction.id]
-    );
-    const retryAttempts = appendAttempt(
-      existing?.retry_attempts || [],
-      attemptNumber,
-      errorStr,
-      durationMs
-    );
+    const retryAttempts = appendAttempt(previousAttempts, attemptNumber, errorStr, durationMs);
 
     if (retriable && !isLastAttempt) {
-      // Erro transiente, ainda tem tentativas: manter PENDING_SENDER
-      await psql.query(
-        `UPDATE transactions
-         SET resume = $1,
-             retry_attempts = $2
-         WHERE id = $3`,
-        [
-          JSON.stringify({
-            ...resume,
-            error: errorObj,
-            retry: { count: attemptNumber },
-          }),
-          JSON.stringify(retryAttempts),
-          transaction.id,
-        ]
-      );
+      // Store attempts in memory for next retry
+      jobAttempts.set(jobKey, retryAttempts);
 
       const cyclePosition = ((attemptNumber - 1) % BACKOFF_CYCLE) + 1;
       const nextDelay = cyclePosition * BACKOFF_STEP_MS;
@@ -351,31 +292,15 @@ submitTransactionQueue.process(async (job) => {
       throw e; // Re-throw → Bull retries with cyclic backoff
     }
 
-    // Erro permanente ou ultima tentativa: marcar FAILED
-    const updatedResume = {
-      ...resume,
-      gasUsed: "0.0",
+    jobAttempts.delete(jobKey);
+
+    // Permanent failure — notify API
+    await notifyTransactionResult(apiUrl, transactionId, {
       status: "failed",
-      error: errorObj,
-    };
-
-    await psql.query(
-      `UPDATE transactions
-       SET status = 'failed',
-           send_time = NOW(),
-           gas_used = '0.0',
-           resume = $1,
-           retry_attempts = $2
-       WHERE id = $3`,
-      [
-        JSON.stringify(updatedResume),
-        JSON.stringify(retryAttempts),
-        transaction.id,
-      ]
-    );
-
-    // Notify API (socket with full tx data)
-    await notifyTransactionResult(transaction.id);
+      gasUsed: "0.0",
+      errorData: errorObj,
+      retryAttempts,
+    });
 
     console.error(
       JSON.stringify({
@@ -388,43 +313,54 @@ submitTransactionQueue.process(async (job) => {
         retriable: false,
         isLastAttempt,
         duration_ms: durationMs,
-        totalElapsed_ms: Date.now() - startTime,
         jobId: job.id,
         timestamp: new Date().toISOString(),
       })
     );
     return { hash, status: "failed" };
   }
-});
+}
 
-// Event handlers
-submitTransactionQueue.on("completed", (job, result) => {
-  console.log(
-    JSON.stringify({
-      event: "tx_submit_job_completed",
-      queue: QUEUE_SUBMIT_TRANSACTION,
-      hash: result.hash,
-      result: result.status,
-      jobId: job.id,
-      totalAttempts: job.attemptsMade + 1,
-      timestamp: new Date().toISOString(),
-    })
-  );
-});
+function registerEventHandlers(queue: Queue.Queue<QueueSubmitTransaction>) {
+  queue.on("completed", (job, result) => {
+    console.log(
+      JSON.stringify({
+        event: "tx_submit_job_completed",
+        queue: QUEUE_SUBMIT_TRANSACTION,
+        hash: result.hash,
+        result: result.status,
+        jobId: job.id,
+        totalAttempts: job.attemptsMade + 1,
+        timestamp: new Date().toISOString(),
+      })
+    );
+  });
 
-submitTransactionQueue.on("failed", (job, err) => {
-  console.error(
-    JSON.stringify({
-      event: "tx_submit_job_failed",
-      queue: QUEUE_SUBMIT_TRANSACTION,
-      hash: job.data.hash,
-      attempt: job.attemptsMade,
-      maxAttempts: job.opts.attempts,
-      error: err.message,
-      jobId: job.id,
-      timestamp: new Date().toISOString(),
-    })
-  );
-});
+  queue.on("failed", (job, err) => {
+    console.error(
+      JSON.stringify({
+        event: "tx_submit_job_failed",
+        queue: QUEUE_SUBMIT_TRANSACTION,
+        hash: job.data.hash,
+        attempt: job.attemptsMade,
+        maxAttempts: job.opts.attempts,
+        error: err.message,
+        jobId: job.id,
+        timestamp: new Date().toISOString(),
+      })
+    );
+  });
+}
 
+// Register processor and event handlers on both queues
+submitTransactionQueue.process(processSubmitTransaction);
+registerEventHandlers(submitTransactionQueue);
+
+if (submitTransactionQueueProd) {
+  submitTransactionQueueProd.process(processSubmitTransaction);
+  registerEventHandlers(submitTransactionQueueProd);
+  console.log(`[${QUEUE_SUBMIT_TRANSACTION}] Prod Redis queue registered`);
+}
+
+export { submitTransactionQueueProd };
 export default submitTransactionQueue;
