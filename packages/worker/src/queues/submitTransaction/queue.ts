@@ -214,6 +214,9 @@ async function processSubmitTransaction(job: Queue.Job<QueueSubmitTransaction>) 
   //   - Regular Provider → provider.operations.submit() → direct to blockchain
   const providerUrl = networkUrl.replace(/^https?:\/\/[^@]+@/, "https://");
   const provider = new Provider(providerUrl);
+  // Ensure provider has fetched chain info and consensus parameters
+  // before using it. Without this, estimatePredicates may fail with OutOfGas.
+  await provider.getChain();
   const vault = new Vault(
     provider,
     JSON.parse(predicateConfigurable),
