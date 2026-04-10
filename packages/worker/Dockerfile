@@ -21,8 +21,9 @@ COPY . .
 # Build the application
 RUN pnpm build
 
-# Production stage - smaller final image
-FROM node:22-alpine AS production
+# Production stage - use bookworm-slim (glibc) instead of alpine (musl)
+# because @envio-dev/hypersync-client has no prebuilt binary for linux-arm64-musl
+FROM node:22-bookworm-slim AS production
 
 # Install pnpm globally
 RUN npm install -g pnpm

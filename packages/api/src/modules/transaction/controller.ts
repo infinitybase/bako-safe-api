@@ -51,6 +51,7 @@ import { createTxHistoryEvent, mergeTransactionLists } from './utils';
 
 import { emitTransaction } from '@src/socket/events';
 import { SocketEvents, SocketUsernames } from '@src/socket/types';
+import { enqueueTransactionSubmit } from '@src/utils/submitTransactionQueue';
 
 // todo: use this provider by session, and move to transactions
 const { FUEL_PROVIDER } = process.env;
@@ -558,7 +559,16 @@ export class TransactionController {
       );
 
       if (newStatus === TransactionStatus.PENDING_SENDER) {
-        await this.transactionService.sendToChain(transaction.hash, network);
+        await enqueueTransactionSubmit({
+          hash: transaction.hash,
+          transactionId: transaction.id,
+          apiUrl: process.env.API_URL || '',
+          networkUrl: network.url,
+          txData: transaction.txData,
+          resume: transaction.resume,
+          predicateConfigurable: transaction.predicate.configurable,
+          predicateVersion: transaction.predicate.version,
+        });
       }
 
       await new NotificationService().transactionUpdate(transaction.id);
@@ -858,11 +868,123 @@ export class TransactionController {
       params: { hash },
     } = params;
     try {
-      await this.transactionService.sendToChain(hash.slice(2), params.network); // not wait for this
+      const txHash = hash.startsWith('0x') ? hash.slice(2) : hash;
+      const transaction = await Transaction.findOne({
+        where: { hash: txHash },
+        relations: ['predicate'],
+      });
+
+      if (!transaction) {
+        return successful(false, Responses.Ok);
+      }
+
+      await enqueueTransactionSubmit({
+        hash: transaction.hash,
+        transactionId: transaction.id,
+        apiUrl: process.env.API_URL || '',
+        networkUrl: params.network.url,
+        txData: transaction.txData,
+        resume: transaction.resume,
+        predicateConfigurable: transaction.predicate.configurable,
+        predicateVersion: transaction.predicate.version,
+      });
       return successful(true, Responses.Ok);
     } catch (e) {
       logger.error({ error: e }, '[TX_SEND]');
       return error(e.error, e.statusCode);
+    }
+  }
+
+  /**
+   * Internal endpoint called by the worker after updating transaction status.
+   * Handles notification, cache invalidation and socket emission with full
+   * transaction data — replicating what sendToChain did after on-chain confirmation.
+   */
+  async notifyResult(params: any) {
+    const { params: { id }, body } = params;
+    try {
+      // Validate shared secret (skip if not configured)
+      const expectedSecret = process.env.WORKER_SHARED_SECRET;
+      if (expectedSecret) {
+        const secret = params.headers?.['x-worker-secret'];
+        if (secret !== expectedSecret) {
+          logger.warn({ id }, '[TX_NOTIFY_RESULT] Unauthorized request');
+          return error(
+            new BadRequest({
+              type: ErrorTypes.Unauthorized,
+              title: 'Unauthorized',
+              detail: 'Invalid worker secret',
+            }),
+            401,
+          );
+        }
+      }
+
+      const { status, gasUsed, errorData, retryAttempts } = body || {};
+
+      // Only accept terminal statuses
+      if (status !== 'success' && status !== 'failed') {
+        return successful(false, Responses.Ok);
+      }
+
+      const transaction = await Transaction.findOne({
+        where: { id },
+        relations: ['predicate', 'createdBy'],
+      });
+
+      if (!transaction) {
+        return successful(false, Responses.Ok);
+      }
+
+      // Update transaction in DB
+      transaction.status = status === 'success'
+        ? TransactionStatus.SUCCESS
+        : TransactionStatus.FAILED;
+      transaction.sendTime = new Date();
+      transaction.gasUsed = gasUsed || '0.0';
+      transaction.resume = {
+        ...transaction.resume,
+        gasUsed: gasUsed || '0.0',
+        status: transaction.status,
+        ...(errorData ? { error: errorData } : {}),
+      };
+      if (retryAttempts) {
+        transaction.retryAttempts = retryAttempts;
+      }
+      await transaction.save();
+
+      // Notification (email + in-app) on success
+      if (transaction.status === TransactionStatus.SUCCESS) {
+        await new NotificationService().transactionSuccess(id, transaction.network);
+      }
+
+      // Cache invalidation (Redis balance + tx cache)
+      await this.transactionService.invalidateCaches(transaction);
+
+      // Socket emission with full formatted data
+      const predicate = await this.predicateService.findByAddress(
+        transaction.predicate.predicateAddress,
+      );
+
+      const formattedTransaction = Transaction.formatTransactionResponse(transaction);
+      const transactionHistory = await TransactionController.formatTransactionsHistory(
+        transaction,
+      );
+
+      for (const member of predicate.members) {
+        emitTransaction(member.id, {
+          sessionId: member.id,
+          to: SocketUsernames.UI,
+          type: SocketEvents.TRANSACTION_UPDATED,
+          transaction: formattedTransaction,
+          history: transactionHistory as ITransactionHistory[],
+        });
+      }
+
+      return successful(true, Responses.Ok);
+    } catch (e) {
+      logger.error({ error: e }, '[TX_NOTIFY_RESULT]');
+      return error(e?.error ?? e, e?.statusCode ?? 500);
     }
   }
 
